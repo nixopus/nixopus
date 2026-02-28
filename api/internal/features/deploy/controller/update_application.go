@@ -60,18 +60,30 @@ func (c *DeployController) UpdateApplication(f fuego.ContextWithBody[types.Updat
 
 	c.logger.Log(logger.Info, "attempting to update application", "id: "+data.ID.String()+", user_id: "+user.ID.String())
 
-	// application, err := c.service.UpdateDeployment(&data, user.ID, organizationID)
-	// if err != nil {
-	// 	c.logger.Log(logger.Error, "failed to update application", "id: "+data.ID.String()+", error: "+err.Error())
-	// 	return nil, fuego.HTTPError{
-	// 		Err:    err,
-	// 		Status: http.StatusInternalServerError,
-	// 	}
-	// }
+	// Sync domains if provided
+	if data.Domains != nil {
+		if err := c.syncApplicationDomains(data.ID, organizationID, data.Domains); err != nil {
+			c.logger.Log(logger.Error, "failed to sync application domains", err.Error())
+			return nil, fuego.HTTPError{
+				Err:    err,
+				Status: http.StatusBadRequest,
+			}
+		}
+	}
 
 	application, err := c.taskService.UpdateDeployment(&data, user.ID, organizationID)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to create deployment", "name: "+data.Name+", error: "+err.Error())
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	// Reload application with domains for response
+	application, err = c.service.GetApplicationById(data.ID.String(), organizationID)
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to reload application", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,

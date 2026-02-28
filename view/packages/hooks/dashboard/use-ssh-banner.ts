@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useRouter } from 'next/navigation';
+import { getBaseUrl } from '@/redux/conf';
 
 const SSH_BANNER_KEY = 'ssh_banner_dismissed';
 
@@ -23,22 +24,8 @@ export default function useSshBanner() {
 
     const checkSSHStatus = async () => {
       try {
-        // Get API base URL from config with timeout
-        const configController = new AbortController();
-        const configTimeout = setTimeout(() => configController.abort(), 5000);
-
-        const configResponse = await fetch('/api/config', {
-          signal: configController.signal
-        });
-        clearTimeout(configTimeout);
-
-        if (!configResponse.ok || !isMounted) {
-          if (isMounted) setIsLoading(false);
-          return;
-        }
-
-        const config = await configResponse.json();
-        const apiBaseUrl = config.baseUrl || 'http://localhost:8080/api';
+        // Use shared config cache to avoid duplicate /api/config fetches
+        const apiBaseUrl = (await getBaseUrl()) || 'http://localhost:8080/api';
 
         // Check SSH status with timeout
         const sshController = new AbortController();

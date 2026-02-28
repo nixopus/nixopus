@@ -73,6 +73,7 @@ type UpdateDeploymentRequest struct {
 	Force                bool                     `json:"force,omitempty"`
 	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
 	BasePath             string                   `json:"base_path,omitempty"`
+	Domains              []string                 `json:"domains,omitempty"`
 }
 
 type DeleteDeploymentRequest struct {
@@ -240,6 +241,12 @@ type RecoverResponse struct {
 	Status  string        `json:"status"`
 	Message string        `json:"message"`
 	Data    RecoverResult `json:"data"`
+}
+
+type IndexCodebaseResponse struct {
+	Status  string      `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
 }
 
 var (

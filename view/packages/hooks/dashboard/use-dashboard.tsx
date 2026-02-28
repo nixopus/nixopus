@@ -32,9 +32,10 @@ export const useDashboard = () => {
     skip: !activeOrganization
   });
 
-  // Check for updates on dashboard load and auto update if user has auto_update enabled
+  // Defer update check - cache for 5 min to avoid refetch on every dashboard visit
   useCheckForUpdatesQuery(undefined, {
-    skip: !isAuthenticated
+    skip: !isAuthenticated,
+    refetchOnMountOrArgChange: 300
   });
 
   const [showDragHint, setShowDragHint] = React.useState(false);

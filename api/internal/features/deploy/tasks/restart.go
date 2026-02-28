@@ -2,8 +2,8 @@ package tasks
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/docker/docker/api/types/swarm"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -39,8 +39,22 @@ func (t *TaskService) RestartDeployment(request *types.RestartDeploymentRequest,
 	return RestartQueue.Add(TaskRestart.WithArgs(context.Background(), payload))
 }
 
-// HandleRestart restarts currently running swarm service for the application and updates status/logs
+// HandleRestart routes restart based on the application's BuildPack type
 func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	switch TaskPayload.Application.BuildPack {
+	case shared_types.DockerFile:
+		return s.HandleRestartDockerfileDeployment(ctx, TaskPayload)
+	case shared_types.DockerCompose:
+		return s.HandleRestartDockerComposeDeployment(ctx, TaskPayload)
+	case shared_types.Static:
+		return s.HandleRestartStaticDeployment(ctx, TaskPayload)
+	default:
+		return types.ErrInvalidBuildPack
+	}
+}
+
+// HandleRestartDockerfileDeployment restarts currently running swarm service for the application
+func (s *TaskService) HandleRestartDockerfileDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	taskCtx := s.NewTaskContext(TaskPayload)
 
 	taskCtx.LogAndUpdateStatus("Restarting application service", shared_types.Deploying)
@@ -65,19 +79,10 @@ func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_type
 
 	taskCtx.AddLog("Restarting service " + existingService.ID)
 
-	// Get current service spec
-	services, err := dockerService.GetClusterServices()
+	currentService, err := dockerService.GetServiceByID(existingService.ID)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to get service details: "+err.Error(), shared_types.Failed)
 		return err
-	}
-
-	var currentService swarm.Service
-	for _, service := range services {
-		if service.ID == existingService.ID {
-			currentService = service
-			break
-		}
 	}
 
 	if currentService.ID == "" {
@@ -85,7 +90,6 @@ func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_type
 		return types.ErrContainerNotRunning
 	}
 
-	// Note : Restart service by updating it with the same spec will restart the service so we don't need to specifically restart the services
 	err = dockerService.UpdateService(existingService.ID, currentService.Spec, "")
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to restart service: "+err.Error(), shared_types.Failed)
@@ -94,4 +98,15 @@ func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_type
 
 	taskCtx.LogAndUpdateStatus("Application service restarted", shared_types.Running)
 	return nil
+}
+
+// HandleRestartDockerComposeDeployment handles restart of a Docker Compose application
+func (s *TaskService) HandleRestartDockerComposeDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	return s.deployDockerCompose(ctx, TaskPayload, string(shared_types.DeploymentTypeRestart))
+}
+
+// HandleRestartStaticDeployment handles restart of a static application
+func (s *TaskService) HandleRestartStaticDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	// TODO: Implement static restart
+	return fmt.Errorf("static restart not yet implemented")
 }

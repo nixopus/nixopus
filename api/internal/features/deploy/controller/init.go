@@ -34,6 +34,7 @@ type DeployController struct {
 	taskService      *tasks.TaskService
 	reconcilerDaemon *caddy.ReconcilerDaemon
 	healthMonitor    *caddy.HealthMonitor
+	githubService    *github_service.GithubConnectorService
 }
 
 func NewDeployController(
@@ -71,6 +72,7 @@ func NewDeployController(
 		taskService:      taskService,
 		reconcilerDaemon: reconcilerDaemon,
 		healthMonitor:    healthMonitor,
+		githubService:    github_service,
 	}, nil
 }
 

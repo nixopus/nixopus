@@ -125,13 +125,8 @@ export function DuplicateProjectDialog({ application }: DuplicateProjectDialogPr
     trigger,
     dialogTitle,
     dialogDescription,
-    isLoading,
-    isDisabled
+    isLoading
   } = useDuplicateProject({ application });
-
-  if (isDisabled) {
-    return trigger;
-  }
 
   return (
     <DialogWrapper

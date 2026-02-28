@@ -1,3 +1,103 @@
+# [0.1.0-alpha.132](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.131...v0.1.0-alpha.132) (2026-02-28)
+
+
+### Bug Fixes
+
+* auth page ui/ux and logo update ([230eaf3](https://github.com/raghavyuva/nixopus/commit/230eaf346c0d9b8cd652b3ad1dbd5ac652502329))
+* cache eviction of ssh pools ([5467d14](https://github.com/raghavyuva/nixopus/commit/5467d140cb4b40713e505bc3620d08428a4916d3))
+* caddy healthcheck indefinite attempt restart loop ([83f5a1b](https://github.com/raghavyuva/nixopus/commit/83f5a1b5f47b331357ba8e40781db21a7082a46d))
+* extension routes registration ([d98c319](https://github.com/raghavyuva/nixopus/commit/d98c319435f406de481b850463b5c7e4a45aa195))
+* field lvl validation msgs & deprecate`/dashboard` paths ([#1060](https://github.com/raghavyuva/nixopus/issues/1060)) ([fec060b](https://github.com/raghavyuva/nixopus/commit/fec060bf0b1f2dd6b1fdb83f328a69d3baada917)), closes [#1067](https://github.com/raghavyuva/nixopus/issues/1067) [#1069](https://github.com/raghavyuva/nixopus/issues/1069) [#1070](https://github.com/raghavyuva/nixopus/issues/1070) [#1072](https://github.com/raghavyuva/nixopus/issues/1072) [#1074](https://github.com/raghavyuva/nixopus/issues/1074)
+* increase deployment worker counts and transanction support for db writes ([4c51597](https://github.com/raghavyuva/nixopus/commit/4c515979bfb13e95fbce2807a5888e74fad1fe51))
+* log refreshing shows no logs available ([bdc4769](https://github.com/raghavyuva/nixopus/commit/bdc476993adb723d66b2fbec77f0935c3122206c))
+* openapi spec customizer for uuid fields ([97ca6d6](https://github.com/raghavyuva/nixopus/commit/97ca6d64bfcefcf8ddcd00258b63fc983b92df90))
+* org context passing in deployment triggers ([73ea469](https://github.com/raghavyuva/nixopus/commit/73ea46906b8ea22cc6c70f635620b8f49bd0ebbc))
+* path traversal issue across api ([#1073](https://github.com/raghavyuva/nixopus/issues/1073)) ([777465e](https://github.com/raghavyuva/nixopus/commit/777465ea3b72d028e1f5d3b6cbdcb9545feb7f2e))
+* permissive restriction for caddy reconciler status filtering ([6ec27fa](https://github.com/raghavyuva/nixopus/commit/6ec27fa4c5e1a53c765981dff439f6aeabb1a6a8))
+* race condition on ssh pooler ([10c07ea](https://github.com/raghavyuva/nixopus/commit/10c07eae623fde46e38c009434aeca2ddd8d0cc0))
+* remove cli s3 step for building creds of aws ([bba5e1c](https://github.com/raghavyuva/nixopus/commit/bba5e1cc0719277d6d438be1c05183cc807af6af))
+* return failure response on enqueue failure to deployment ([610bc3e](https://github.com/raghavyuva/nixopus/commit/610bc3ebc3f1b0cadfa44ab040ae7e0c0c804007))
+* skeleton loader misleading on feature flags loading ([1196493](https://github.com/raghavyuva/nixopus/commit/11964937dc95ef3b4163561cee8e60786aaeaaa2))
+* ssh hammering from monitoring tikcer ([b3f322f](https://github.com/raghavyuva/nixopus/commit/b3f322f0052d3ab00fe8e663122cdf05c75e109d))
+* taskQ redistribution, register page logo, and deprecate Exec APIs ([#1076](https://github.com/raghavyuva/nixopus/issues/1076)) ([8f102df](https://github.com/raghavyuva/nixopus/commit/8f102df87b2f2367ed0f9380cfab84e3c6078c7a))
+* too many args to extension route ([2be8d5d](https://github.com/raghavyuva/nixopus/commit/2be8d5d4dbb048d799bd0d256d3472123bf93838))
+* update deployment form to use compose path when build pack is compose file ([39f72e4](https://github.com/raghavyuva/nixopus/commit/39f72e40144aea538b01023957100d3412900f89))
+* update go mod ([5bf5a4f](https://github.com/raghavyuva/nixopus/commit/5bf5a4f528f0eab16793675398770f8110aa0764))
+* update provision_details.status to provision_details.steps ([#1055](https://github.com/raghavyuva/nixopus/issues/1055)) ([f0b0ea1](https://github.com/raghavyuva/nixopus/commit/f0b0ea13864f298f5b285e94acb430399bb1f178)), closes [#1058](https://github.com/raghavyuva/nixopus/issues/1058) [#1059](https://github.com/raghavyuva/nixopus/issues/1059)
+* workflow streaming and  attaching app context ([b1e3f06](https://github.com/raghavyuva/nixopus/commit/b1e3f062bfb96a805d05be588e824755817c4940))
+
+
+### Features
+
+* add api client sync  action ([f709f03](https://github.com/raghavyuva/nixopus/commit/f709f033d2660fe9e905577825d2e98984c83e39))
+* add cli build workflow ([497ca22](https://github.com/raghavyuva/nixopus/commit/497ca2270ea85c913c52a2ca2413023815259a1f))
+* add docker compose build pack in api ([afdeae5](https://github.com/raghavyuva/nixopus/commit/afdeae57e18cfeccec8bfb73522dfb4a1b50434b))
+* add s3 compatible file uploads ([92569f1](https://github.com/raghavyuva/nixopus/commit/92569f16555898440964d73558cce875196aa997))
+* add support for configurable environment removing restricted enum ([3c7fa5a](https://github.com/raghavyuva/nixopus/commit/3c7fa5aaef8981295cffac4988bb93643731decd))
+* api for recovering of crashed apps  ([#1068](https://github.com/raghavyuva/nixopus/issues/1068)) ([35b8180](https://github.com/raghavyuva/nixopus/commit/35b8180ea9fa43b433dc3fd539fd7ca5e6674f9b))
+* **api:** add codebase indexing controller and route registration ([b94336f](https://github.com/raghavyuva/nixopus/commit/b94336f783d2ea6d9535d5dc356fb708a50b8df9))
+* **api:** add websocket handler for codebase indexing ([58045e8](https://github.com/raghavyuva/nixopus/commit/58045e89e1112ca2907adafa314dd0f8b398717f))
+* chat sheet view changes ([#1091](https://github.com/raghavyuva/nixopus/issues/1091)) ([ea8afea](https://github.com/raghavyuva/nixopus/commit/ea8afea7f319f5cf4cb8d5a344b0695443029477))
+* enable domain update through frontend after app creation ([f880411](https://github.com/raghavyuva/nixopus/commit/f8804111c749d0487a509c38919734c8eb9695b1))
+* **i18n:** add workflow and AI chat translation strings ([d3bd65c](https://github.com/raghavyuva/nixopus/commit/d3bd65cc514d6847bfdbabc4323ec6b25ab1765f))
+* queue based proxy reconcillation for proxy failure handling ([#1071](https://github.com/raghavyuva/nixopus/issues/1071)) ([1a04ea5](https://github.com/raghavyuva/nixopus/commit/1a04ea5d6d141dc0f961eb6f7328fdc3e2eebe19))
+* s3 archive build images ([#1066](https://github.com/raghavyuva/nixopus/issues/1066)) ([498faaf](https://github.com/raghavyuva/nixopus/commit/498faaf34acdfb4003a8706570a1507845b56c68))
+* **view:** add agent chat communication hook ([e0f53b5](https://github.com/raghavyuva/nixopus/commit/e0f53b5a42c2f9c9e17b3d5e0acbe76026f817f5))
+* **view:** add agent client library and API proxy route ([c880d04](https://github.com/raghavyuva/nixopus/commit/c880d04e950aa02a2b632bbefcd443da35cbb1dc))
+* **view:** add AI chat component and chat page ([9181d26](https://github.com/raghavyuva/nixopus/commit/9181d26506639b9739a06e59e3fb1389f2da9cc1))
+* **view:** add chat context provider and memory search hook ([8716887](https://github.com/raghavyuva/nixopus/commit/87168876115d0f0462c25f17fa6b10eccf8aca75))
+* **view:** add chat thread management hook ([5928b02](https://github.com/raghavyuva/nixopus/commit/5928b02b847a9767e969a95eb4e8bd97dc1c7d2b))
+* **view:** add stepgraph to ReactFlow graph conversion ([cacb164](https://github.com/raghavyuva/nixopus/commit/cacb16471c36785f086eefbb53e7c8b54bdf7297))
+* **view:** add workflow editor component ([c9d4fd2](https://github.com/raghavyuva/nixopus/commit/c9d4fd297923fea72a84e88c09c083e72f43663e))
+* **view:** add workflow editor pages and routing ([26cfcb3](https://github.com/raghavyuva/nixopus/commit/26cfcb384076da4990c8f78c2d65713a11c5877f))
+* **view:** add workflow editor state management hook ([ec3b881](https://github.com/raghavyuva/nixopus/commit/ec3b881442318ce287258c6ebde271d6cca1e21f))
+* **view:** add workflow list and management hooks ([028b933](https://github.com/raghavyuva/nixopus/commit/028b9333e1aac4702a251353ebef3aa64e8f2b9d))
+* **view:** add workflow persistence and storage layer ([249a68d](https://github.com/raghavyuva/nixopus/commit/249a68dc80808ce3a55c285e838032f8000b00cd))
+* **view:** add workflow type definitions ([af26dc2](https://github.com/raghavyuva/nixopus/commit/af26dc2ae5cf1db1760a4d466ac9b5cac739fb0d))
+* **view:** add workflow utility functions ([5247cb8](https://github.com/raghavyuva/nixopus/commit/5247cb8b1bff9645bec1bb9eb6612b7eb8fb0641))
+* **view:** update sidebar navigation and translation hooks ([dc167fd](https://github.com/raghavyuva/nixopus/commit/dc167fd9db237e71a7145a5e01f880d634b1d519))
+
+
+### Performance Improvements
+
+* add caching to extension read endpoints and invalidations for mutation ([d0c2a30](https://github.com/raghavyuva/nixopus/commit/d0c2a30ba17ebe515ad6e2814e88f898b40065cc))
+* add caching to is admin registered endpoint ([f26aa4d](https://github.com/raghavyuva/nixopus/commit/f26aa4d2671c8dc0f7dd3ba4472a4f316b353ad5))
+* optimize build flow speed ([7a57b6c](https://github.com/raghavyuva/nixopus/commit/7a57b6ca52fb2e7a54b0dcab91e7a8007add23af))
+* optimize session calls and config proxy rtk queries ([#1089](https://github.com/raghavyuva/nixopus/issues/1089)) ([1922b4c](https://github.com/raghavyuva/nixopus/commit/1922b4c44112e4c2a1bc58fd6746f63b11c7f723))
+* service discovery and handle graceful cleanup of services on failure ([5bd3e98](https://github.com/raghavyuva/nixopus/commit/5bd3e98874d751c6d62b73b2d579c1c7a8bd4e1b))
+
+
+
+# [0.1.0-alpha.131](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.130...v0.1.0-alpha.131) (2026-02-24)
+
+
+### Bug Fixes
+
+* race condition on ssh pooler ([2c6ec90](https://github.com/raghavyuva/nixopus/commit/2c6ec90fab5655b1b07b7ca8afd2042d1031ec13))
+
+
+
+# [0.1.0-alpha.130](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.129...v0.1.0-alpha.130) (2026-02-20)
+
+
+### Bug Fixes
+
+* cache eviction of ssh pools ([d04bf4c](https://github.com/raghavyuva/nixopus/commit/d04bf4c31ed994d8d33419d2a145a627e05c3daa))
+* field lvl validation msgs & deprecate`/dashboard` paths ([#1060](https://github.com/raghavyuva/nixopus/issues/1060)) ([2774ff5](https://github.com/raghavyuva/nixopus/commit/2774ff51a455dd324e90421704d2418eac7d70c5)), closes [#1067](https://github.com/raghavyuva/nixopus/issues/1067) [#1069](https://github.com/raghavyuva/nixopus/issues/1069) [#1070](https://github.com/raghavyuva/nixopus/issues/1070) [#1072](https://github.com/raghavyuva/nixopus/issues/1072) [#1074](https://github.com/raghavyuva/nixopus/issues/1074)
+* log refreshing shows no logs available ([bd6c85c](https://github.com/raghavyuva/nixopus/commit/bd6c85c7a3dfd08f6007940866d7c5cfe746a94f))
+* org context passing in deployment triggers ([2c299ad](https://github.com/raghavyuva/nixopus/commit/2c299ad06c7405e1735df3976f5233d62a8022a1))
+* path traversal issue across api ([#1073](https://github.com/raghavyuva/nixopus/issues/1073)) ([8316116](https://github.com/raghavyuva/nixopus/commit/83161167c99e8fd58950cd3fd97ac82c7e14778d))
+* ssh hammering from monitoring tikcer ([3f711a7](https://github.com/raghavyuva/nixopus/commit/3f711a77d885500d3899663ca70c09bddb340fbc))
+
+
+### Features
+
+* api for recovering of crashed apps  ([#1068](https://github.com/raghavyuva/nixopus/issues/1068)) ([292ad74](https://github.com/raghavyuva/nixopus/commit/292ad741e7cafce65bc3f6ced03d1b68793c314b))
+* queue based proxy reconcillation for proxy failure handling ([#1071](https://github.com/raghavyuva/nixopus/issues/1071)) ([2a82775](https://github.com/raghavyuva/nixopus/commit/2a8277591fda40d84b653d79796587bb5bf48b97))
+* s3 archive build images ([#1066](https://github.com/raghavyuva/nixopus/issues/1066)) ([795d25e](https://github.com/raghavyuva/nixopus/commit/795d25e5dd0bfa25345665577894d0a8428d7adb))
+
+
+
 # [0.1.0-alpha.129](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.128...v0.1.0-alpha.129) (2026-02-18)
 
 

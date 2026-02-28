@@ -8,7 +8,7 @@ import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { useUpdateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
 import { UpdateDeploymentRequest, Environment } from '@/redux/types/applications';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
-import { parsePort } from '@/packages/utils/util';
+import { parsePort, SHARED_DOMAIN_REGEX } from '@/packages/utils/util';
 import { useAppSelector } from '@/redux/hooks';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
@@ -24,6 +24,7 @@ interface UseUpdateDeploymentProps {
   force?: boolean;
   DockerfilePath?: string;
   base_path?: string;
+  domains?: string[];
 }
 
 function useUpdateDeployment({
@@ -37,14 +38,15 @@ function useUpdateDeployment({
   id = '',
   force = false,
   DockerfilePath = '/Dockerfile',
-  base_path = '/'
+  base_path = '/',
+  domains = []
 }: UseUpdateDeploymentProps = {}) {
   const { t } = useTranslation();
   const { isReady, message, sendJsonMessage } = useWebSocket();
   const [updateDeployment, { isLoading }] = useUpdateDeploymentMutation();
   const router = useRouter();
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const { data: domains } = useGetAllDomainsQuery();
+  const { data: organizationDomains } = useGetAllDomainsQuery();
 
   const deploymentFormSchema = z.object({
     name: z
@@ -54,7 +56,12 @@ function useUpdateDeployment({
         message: t('selfHost.deployForm.validation.applicationName.invalidFormat')
       })
       .optional(),
-    environment: z.string().optional(),
+    environment: z
+      .string()
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
+        message: t('selfHost.deployForm.validation.environment.invalidValue')
+      })
+      .optional(),
     pre_run_command: z.string().optional(),
     post_run_command: z.string().optional(),
     build_variables: z.record(z.string(), z.string()).optional().default({}),
@@ -63,7 +70,33 @@ function useUpdateDeployment({
     id: z.string().optional(),
     force: z.boolean().optional().default(false),
     DockerfilePath: z.string().optional().default(DockerfilePath),
-    base_path: z.string().optional().default(base_path)
+    base_path: z.string().optional().default(base_path),
+    domains: z
+      .array(z.string())
+      .optional()
+      .default([])
+      .refine(
+        (arr) => {
+          const nonEmpty = arr?.filter((d) => d && d.trim() !== '') ?? [];
+          return nonEmpty.length <= 5;
+        },
+        { message: t('selfHost.deployForm.validation.domain.maxDomains') }
+      )
+      .refine(
+        (arr) => {
+          const nonEmpty = arr?.filter((d) => d && d.trim() !== '') ?? [];
+          const unique = new Set(nonEmpty.map((d) => d.trim().toLowerCase()));
+          return unique.size === nonEmpty.length;
+        },
+        { message: t('selfHost.deployForm.validation.domain.duplicate') }
+      )
+      .refine(
+        (arr) => {
+          const nonEmpty = arr?.filter((d) => d && d.trim() !== '') ?? [];
+          return nonEmpty.every((d) => !d.trim() || SHARED_DOMAIN_REGEX.test(d.trim()));
+        },
+        { message: t('selfHost.deployForm.validation.domain.invalidFormat') }
+      )
   });
 
   const form = useForm<z.infer<typeof deploymentFormSchema>>({
@@ -79,7 +112,8 @@ function useUpdateDeployment({
       id,
       force,
       DockerfilePath,
-      base_path
+      base_path,
+      domains: domains.length > 0 ? domains : ['']
     }
   });
 
@@ -101,6 +135,7 @@ function useUpdateDeployment({
 
     // Initialize form with server values
     form.setValue('name', name);
+    form.setValue('domains', domains && domains.length > 0 ? domains : ['']);
     if (environment) form.setValue('environment', environment);
     if (pre_run_command) form.setValue('pre_run_command', pre_run_command);
     if (post_run_command) form.setValue('post_run_command', post_run_command);
@@ -115,10 +150,12 @@ function useUpdateDeployment({
     form.setValue('force', force);
 
     initializedForIdRef.current = id;
-  }, [id, name]);
+  }, [id, name, domains]);
 
   async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
     try {
+      const filteredDomains = values.domains?.filter((d) => d && d.trim() !== '') ?? [];
+
       const updateData: UpdateDeploymentRequest = {
         name: values.name,
         environment: values.environment as Environment | undefined,
@@ -130,7 +167,8 @@ function useUpdateDeployment({
         id: values.id,
         force: values.force,
         dockerfile_path: values.DockerfilePath,
-        base_path: values.base_path
+        base_path: values.base_path,
+        domains: filteredDomains
       };
 
       const data = await updateDeployment(updateData).unwrap();
@@ -185,7 +223,7 @@ function useUpdateDeployment({
     form,
     onSubmit,
     isLoading,
-    domains
+    organizationDomains
   };
 }
 

@@ -10,18 +10,31 @@ import (
 
 type AuthService struct {
 	storage storage.AuthRepository
+	Cache   *AuthCache
 	Ctx     context.Context
 	logger  logger.Logger
 }
 
 func NewAuthService(
 	storage storage.AuthRepository,
-	logger logger.Logger,
+	l logger.Logger,
 	ctx context.Context,
+	redisURL string,
 ) *AuthService {
+	var authCache *AuthCache
+	if redisURL != "" {
+		c, err := NewAuthCache(redisURL)
+		if err != nil {
+			l.Log(logger.Error, "failed to create auth cache, proceeding without cache", err.Error())
+		} else {
+			authCache = c
+		}
+	}
+
 	return &AuthService{
 		storage: storage,
-		logger:  logger,
+		Cache:   authCache,
+		logger:  l,
 		Ctx:     ctx,
 	}
 }

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useMemo, useRef } from 'react';
 import { useGetAllFeatureFlagsQuery } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useAppSelector } from '@/redux/hooks';
 import type { FeatureFlag } from '@/packages/types/feature-flags';
@@ -19,22 +19,21 @@ const FeatureFlagsContext = createContext<FeatureFlagsContextType>({
 
 export const FeatureFlagsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isInitialized } = useAppSelector((state) => state.auth);
-  const activeOrganization = useAppSelector((state) => state.user.activeOrganization);
+  const hasLoadedRef = useRef(false);
 
   const {
     data: features = [],
     isLoading,
-    error,
-    refetch
+    error
   } = useGetAllFeatureFlagsQuery(undefined, {
     skip: !isAuthenticated || !isInitialized
   });
 
-  useEffect(() => {
-    if (isAuthenticated && isInitialized) {
-      refetch();
-    }
-  }, [isAuthenticated, isInitialized, activeOrganization?.id, refetch]);
+  if (!isLoading && isAuthenticated && isInitialized) {
+    hasLoadedRef.current = true;
+  }
+
+  const isInitialLoading = isLoading && !hasLoadedRef.current;
 
   const isFeatureEnabled = useMemo(() => {
     return (featureName: string): boolean => {
@@ -46,11 +45,11 @@ export const FeatureFlagsProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const value = useMemo(
     () => ({
       features: isAuthenticated ? features : [],
-      isLoading: isAuthenticated ? isLoading : false,
+      isLoading: isAuthenticated ? isInitialLoading : false,
       error: isAuthenticated ? error : null,
       isFeatureEnabled
     }),
-    [features, isLoading, error, isFeatureEnabled, isAuthenticated]
+    [features, isInitialLoading, error, isFeatureEnabled, isAuthenticated]
   );
 
   return <FeatureFlagsContext.Provider value={value}>{children}</FeatureFlagsContext.Provider>;

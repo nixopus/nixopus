@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"net/http"
+	"strings"
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
@@ -225,4 +226,63 @@ func (c *DeployController) RemoveApplicationDomain(f fuego.ContextWithBody[Remov
 		Message: "Domain removed successfully",
 		Data:    application,
 	}, nil
+}
+
+// syncApplicationDomains syncs application domains to match the desired list.
+// Removes domains no longer in the list (and updates Caddy), adds new domains.
+func (c *DeployController) syncApplicationDomains(appID uuid.UUID, organizationID uuid.UUID, desiredDomains []string) error {
+	// Normalize desired domains: trim, filter empty
+	desiredSet := make(map[string]bool)
+	for _, d := range desiredDomains {
+		trimmed := strings.TrimSpace(d)
+		if trimmed != "" {
+			desiredSet[strings.ToLower(trimmed)] = true
+		}
+	}
+
+	existingDomains, err := c.storage.GetApplicationDomains(appID)
+	if err != nil {
+		return err
+	}
+
+	existingSet := make(map[string]string) // lowercase -> actual
+	for _, d := range existingDomains {
+		existingSet[strings.ToLower(d.Domain)] = d.Domain
+	}
+
+	// Remove domains that are no longer desired
+	for existingLower, actualDomain := range existingSet {
+		if !desiredSet[existingLower] {
+			if err := c.storage.RemoveApplicationDomain(appID, actualDomain); err != nil {
+				return err
+			}
+			orgCtx := context.WithValue(c.ctx, shared_types.OrganizationIDKey, organizationID.String())
+			if err := caddy.RemoveDomainsWithRetry(orgCtx, nil, &c.logger, []string{actualDomain}); err != nil {
+				c.logger.Log(logger.Warning, "failed to remove domain from proxy, enqueueing for retry", err.Error())
+				if enqErr := caddy.EnqueuePendingRemoval(organizationID, actualDomain); enqErr != nil {
+					c.logger.Log(logger.Error, "failed to enqueue pending removal", enqErr.Error())
+				}
+			}
+		}
+	}
+
+	// Add domains that are new
+	var toAdd []string
+	for desiredLower := range desiredSet {
+		if _, exists := existingSet[desiredLower]; !exists {
+			// Get actual casing from desired list
+			for _, d := range desiredDomains {
+				if strings.ToLower(strings.TrimSpace(d)) == desiredLower {
+					toAdd = append(toAdd, strings.TrimSpace(d))
+					break
+				}
+			}
+		}
+	}
+
+	if len(toAdd) > 0 {
+		return c.storage.AddApplicationDomains(appID, toAdd)
+	}
+
+	return nil
 }

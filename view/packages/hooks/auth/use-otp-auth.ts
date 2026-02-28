@@ -102,9 +102,15 @@ function useOtpAuth() {
     }
   };
 
+  const handleChangeEmail = () => {
+    setOtpSent(false);
+    setOtp('');
+  };
+
   return {
     handleSendOtp,
     handleVerifyOtp,
+    handleChangeEmail,
     handleEmailChange,
     handleOtpChange,
     isSendingOtp,

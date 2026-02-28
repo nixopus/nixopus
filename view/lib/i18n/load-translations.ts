@@ -16,7 +16,9 @@ const domainLoaders: Record<string, Record<string, () => Promise<any>>> = {
     navigation: () => import('@/lib/i18n/locales/en/navigation.json'),
     layout: () => import('@/lib/i18n/locales/en/layout.json'),
     user: () => import('@/lib/i18n/locales/en/user.json'),
-    toasts: () => import('@/lib/i18n/locales/en/toasts.json')
+    toasts: () => import('@/lib/i18n/locales/en/toasts.json'),
+    ai: () => import('@/lib/i18n/locales/en/ai.json'),
+    workflows: () => import('@/lib/i18n/locales/en/workflows.json')
   },
   es: {
     common: () => import('@/lib/i18n/locales/es/common.json'),
@@ -33,7 +35,9 @@ const domainLoaders: Record<string, Record<string, () => Promise<any>>> = {
     navigation: () => import('@/lib/i18n/locales/es/navigation.json'),
     layout: () => import('@/lib/i18n/locales/es/layout.json'),
     user: () => import('@/lib/i18n/locales/es/user.json'),
-    toasts: () => import('@/lib/i18n/locales/es/toasts.json')
+    toasts: () => import('@/lib/i18n/locales/es/toasts.json'),
+    ai: () => import('@/lib/i18n/locales/es/ai.json'),
+    workflows: () => import('@/lib/i18n/locales/en/workflows.json')
   },
   fr: {
     common: () => import('@/lib/i18n/locales/fr/common.json'),
@@ -50,7 +54,9 @@ const domainLoaders: Record<string, Record<string, () => Promise<any>>> = {
     navigation: () => import('@/lib/i18n/locales/fr/navigation.json'),
     layout: () => import('@/lib/i18n/locales/fr/layout.json'),
     user: () => import('@/lib/i18n/locales/fr/user.json'),
-    toasts: () => import('@/lib/i18n/locales/fr/toasts.json')
+    toasts: () => import('@/lib/i18n/locales/fr/toasts.json'),
+    ai: () => import('@/lib/i18n/locales/fr/ai.json'),
+    workflows: () => import('@/lib/i18n/locales/en/workflows.json')
   },
   kn: {
     common: () => import('@/lib/i18n/locales/kn/common.json'),
@@ -67,7 +73,9 @@ const domainLoaders: Record<string, Record<string, () => Promise<any>>> = {
     navigation: () => import('@/lib/i18n/locales/kn/navigation.json'),
     layout: () => import('@/lib/i18n/locales/kn/layout.json'),
     user: () => import('@/lib/i18n/locales/kn/user.json'),
-    toasts: () => import('@/lib/i18n/locales/kn/toasts.json')
+    toasts: () => import('@/lib/i18n/locales/kn/toasts.json'),
+    ai: () => import('@/lib/i18n/locales/kn/ai.json'),
+    workflows: () => import('@/lib/i18n/locales/en/workflows.json')
   },
   ml: {
     common: () => import('@/lib/i18n/locales/ml/common.json'),
@@ -84,7 +92,9 @@ const domainLoaders: Record<string, Record<string, () => Promise<any>>> = {
     navigation: () => import('@/lib/i18n/locales/ml/navigation.json'),
     layout: () => import('@/lib/i18n/locales/ml/layout.json'),
     user: () => import('@/lib/i18n/locales/ml/user.json'),
-    toasts: () => import('@/lib/i18n/locales/ml/toasts.json')
+    toasts: () => import('@/lib/i18n/locales/ml/toasts.json'),
+    ai: () => import('@/lib/i18n/locales/ml/ai.json'),
+    workflows: () => import('@/lib/i18n/locales/en/workflows.json')
   }
 };
 

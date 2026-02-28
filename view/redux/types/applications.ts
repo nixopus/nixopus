@@ -97,9 +97,9 @@ export type Status =
   | 'running'
   | 'stopped';
 
-export type Environment = 'development' | 'staging' | 'production';
+export type Environment = string;
 
-export type BuildPack = 'dockerfile' | 'dockerCompose' | 'static';
+export type BuildPack = 'dockerfile' | 'docker-compose' | 'static';
 
 export interface CreateApplicationRequest {
   name: string;
@@ -129,6 +129,7 @@ export interface UpdateDeploymentRequest {
   force?: boolean;
   dockerfile_path?: string;
   base_path?: string;
+  domains?: string[];
 }
 
 export interface ReDeployApplicationRequest {

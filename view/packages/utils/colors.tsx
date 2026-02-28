@@ -31,10 +31,7 @@ export interface ThemeColors {
   };
 }
 
-export const palette = [
-  'light',
-  'dark'
-];
+export const palette = ['light', 'dark'];
 
 export const themeColors: ThemeColors = {
   light: {
@@ -94,7 +91,7 @@ export const themeColors: ThemeColors = {
 
 export function getDeploymentStatusIcon(status?: string): React.ReactElement {
   const statusLower = String(status || '').toLowerCase();
-  
+
   switch (statusLower) {
     case 'deployed':
       return <CheckCircle2 className="h-4 w-4 text-primary" />;
@@ -111,7 +108,7 @@ export function getDeploymentStatusIcon(status?: string): React.ReactElement {
 
 export function getDeploymentStatusColor(status?: string): string {
   const statusLower = String(status || '').toLowerCase();
-  
+
   switch (statusLower) {
     case 'deployed':
       return 'bg-primary';
@@ -128,7 +125,7 @@ export function getDeploymentStatusColor(status?: string): string {
 
 export function getDeploymentStatusBadgeClasses(status?: string): string {
   const statusLower = String(status || '').toLowerCase();
-  
+
   switch (statusLower) {
     case 'deployed':
       return 'bg-primary/10 text-primary';
@@ -142,4 +139,3 @@ export function getDeploymentStatusBadgeClasses(status?: string): string {
       return 'bg-muted text-muted-foreground';
   }
 }
-

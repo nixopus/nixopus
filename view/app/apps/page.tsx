@@ -46,7 +46,23 @@ function page() {
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
 
   if (isFeatureFlagsLoading) {
-    return <Skeleton />;
+    return (
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-9 w-32 rounded-md" />
+        </div>
+        <div className="flex items-center justify-between gap-4">
+          <Skeleton className="h-10 flex-1 max-w-sm rounded-md" />
+          <Skeleton className="h-10 w-36 rounded-md" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <AppItemSkeleton key={i} />
+          ))}
+        </div>
+      </PageLayout>
+    );
   }
 
   if (!isFeatureEnabled(FeatureNames.FeatureSelfHosted)) {

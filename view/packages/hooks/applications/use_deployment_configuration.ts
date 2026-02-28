@@ -7,6 +7,7 @@ interface UseDeploymentConfigurationProps {
   build_pack?: BuildPack;
   env_variables?: Record<string, string>;
   build_variables?: Record<string, string>;
+  domainsEditable?: boolean;
 }
 
 export function useDeploymentConfiguration({
@@ -14,24 +15,12 @@ export function useDeploymentConfiguration({
   domains = [],
   build_pack = BuildPack.Dockerfile,
   env_variables = {},
-  build_variables = {}
+  build_variables = {},
+  domainsEditable = false
 }: UseDeploymentConfigurationProps) {
   const { t } = useTranslation();
 
-  const environmentOptions = [
-    {
-      label: t('selfHost.deployForm.fields.environment.options.staging'),
-      value: 'staging'
-    },
-    {
-      label: t('selfHost.deployForm.fields.environment.options.production'),
-      value: 'production'
-    },
-    {
-      label: t('selfHost.deployForm.fields.environment.options.development'),
-      value: 'development'
-    }
-  ];
+  const isDockerCompose = build_pack === BuildPack.DockerCompose;
 
   const dockerConfigFields = [
     {
@@ -41,10 +30,14 @@ export function useDeploymentConfiguration({
       descriptionText: t('selfHost.configuration.fields.basePath.description')
     },
     {
-      label: t('selfHost.configuration.fields.dockerfilePath.label'),
+      label: isDockerCompose
+        ? t('selfHost.configuration.fields.dockerComposePath.label')
+        : t('selfHost.configuration.fields.dockerfilePath.label'),
       name: 'DockerfilePath',
-      placeholder: 'Dockerfile',
-      descriptionText: t('selfHost.configuration.fields.dockerfilePath.description')
+      placeholder: isDockerCompose ? 'docker-compose.yml' : 'Dockerfile',
+      descriptionText: isDockerCompose
+        ? t('selfHost.configuration.fields.dockerComposePath.description')
+        : t('selfHost.configuration.fields.dockerfilePath.description')
     }
   ];
 
@@ -80,11 +73,15 @@ export function useDeploymentConfiguration({
       value: branch,
       description: t('selfHost.configuration.fields.branch.description')
     },
-    {
-      label: t('selfHost.configuration.fields.domain.label'),
-      value: domains && domains.length > 0 ? domains.join(', ') : '',
-      description: t('selfHost.configuration.fields.domain.description')
-    },
+    ...(domainsEditable
+      ? []
+      : [
+          {
+            label: t('selfHost.configuration.fields.domain.label'),
+            value: domains && domains.length > 0 ? domains.join(', ') : '',
+            description: t('selfHost.configuration.fields.domain.description')
+          }
+        ]),
     {
       label: t('selfHost.configuration.fields.buildPack.label'),
       value: build_pack,
@@ -93,7 +90,6 @@ export function useDeploymentConfiguration({
   ];
 
   return {
-    environmentOptions,
     dockerConfigFields,
     envVariableEditors,
     commandFields,

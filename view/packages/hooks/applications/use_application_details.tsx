@@ -12,15 +12,16 @@ import {
   ApplicationDeployment,
   ApplicationDeploymentStatus
 } from '@/redux/types/applications';
-import { BuildPack, Environment } from '@/redux/types/deploy-form';
+import { BuildPack } from '@/redux/types/deploy-form';
 import type { TabItem } from '@nixopus/ui';
-import { Activity, Settings, Layers, ScrollText, Box } from 'lucide-react';
+import { Activity, Settings, Layers, ScrollText, Box, Workflow } from 'lucide-react';
 import DeploymentsList, {
   ApplicationLogs,
   Monitor
 } from '@/packages/components/application-details';
 import { DeployConfigureForm } from '@/packages/components/application-form';
 import { ApplicationResources } from '@/packages/components/application-resources';
+import { WorkflowsList } from '@/packages/components/workflows';
 import { useTranslation } from '../shared/use-translation';
 
 interface WebSocketMessage {
@@ -59,7 +60,13 @@ function useApplicationDetails() {
   const applicationRef = useRef<Application | undefined>(applicationData);
   const [currentPage, setCurrentPage] = useState(1);
   const searchParams = useSearchParams();
-  const defaultTab = searchParams.get('logs') === 'true' ? 'logs' : 'monitoring';
+  const tabParam = searchParams.get('tab');
+  const defaultTab =
+    searchParams.get('logs') === 'true'
+      ? 'logs'
+      : tabParam === 'workflows'
+        ? 'workflows'
+        : 'monitoring';
   const [activeTab, setActiveTab] = useState(defaultTab);
   const { message } = useApplicationWebSocket(applicationId);
 
@@ -117,7 +124,7 @@ function useApplicationDetails() {
           <DeployConfigureForm
             application_name={application?.name}
             domains={application?.domains?.map((d) => d.domain)}
-            environment={application?.environment as Environment | undefined}
+            environment={application?.environment}
             env_variables={envVariables}
             build_variables={buildVariables}
             build_pack={application?.build_pack as BuildPack}
@@ -144,6 +151,12 @@ function useApplicationDetails() {
             onPageChange={setDeploymentsPage}
           />
         )
+      },
+      {
+        value: 'workflows',
+        label: t('selfHost.application.tabs.workflows'),
+        icon: Workflow,
+        content: <WorkflowsList applicationId={applicationId} />
       },
       {
         value: 'resources',

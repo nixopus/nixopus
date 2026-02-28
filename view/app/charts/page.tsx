@@ -46,7 +46,21 @@ function DashboardPage() {
   } = useDashboard();
 
   if (isFeatureFlagsLoading) {
-    return <Skeleton />;
+    return (
+      <PageLayout maxWidth="full" padding="md" spacing="lg">
+        <Skeleton className="h-8 w-40" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <SystemInfoCardSkeleton />
+          <LoadAverageCardSkeleton />
+          <CPUUsageCardSkeleton />
+          <MemoryUsageCardSkeleton />
+          <DiskUsageCardSkeleton />
+          <div className="md:col-span-2">
+            <ContainersWidgetSkeleton />
+          </div>
+        </div>
+      </PageLayout>
+    );
   }
 
   if (!isDashboardEnabled) {

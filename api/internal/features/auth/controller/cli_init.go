@@ -83,7 +83,7 @@ func (ar *AuthController) HandleCLIInit(c fuego.ContextWithBody[CLIInitRequest])
 	deployService := deploy_service.NewDeployService(ar.store, ar.ctx, ar.logger, deployStorage)
 
 	// Create project request with defaults
-	environment := shared_types.Development
+	environment := shared_types.Environment("development")
 	if req.Branch == "" {
 		req.Branch = "main" // Default branch
 	}

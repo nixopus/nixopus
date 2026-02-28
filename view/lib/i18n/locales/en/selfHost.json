@@ -51,6 +51,7 @@
         "monitoring": "Monitoring",
         "configuration": "Configuration",
         "deployments": "Deployments",
+        "workflows": "Workflows",
         "logs": "Logs",
         "resources": "Resources"
       },
@@ -195,6 +196,11 @@
           "label": "Dockerfile Path",
           "description": "Path to your Dockerfile relative to the build base path. Default is 'Dockerfile' in the base path directory.",
           "helperText": "If your Dockerfile is in the base path root, use 'Dockerfile'. If it's in a subdirectory, specify the relative path (e.g., 'docker/Dockerfile.prod')."
+        },
+        "dockerComposePath": {
+          "label": "Docker Compose Path",
+          "description": "Path to your docker-compose.yml file relative to the build base path. Default is 'docker-compose.yml' in the base path directory.",
+          "helperText": "If your docker-compose.yml is in the base path root, use 'docker-compose.yml'. If it's in a subdirectory, specify the relative path (e.g., 'docker/docker-compose.prod.yml')."
         },
         "environmentVariables": {
           "label": "Environment Variables",
@@ -401,6 +407,12 @@
           "description": "Path to your Dockerfile relative to the build base path. Default is 'Dockerfile' in the base path directory.",
           "placeholder": "Dockerfile",
           "helperText": "If your Dockerfile is in the base path root, use 'Dockerfile'. If it's in a subdirectory, specify the relative path (e.g., 'docker/Dockerfile.prod')."
+        },
+        "dockerComposePath": {
+          "label": "Docker Compose Path",
+          "description": "Path to your docker-compose.yml file relative to the build base path. Default is 'docker-compose.yml' in the base path directory.",
+          "placeholder": "docker-compose.yml",
+          "helperText": "If your docker-compose.yml is in the base path root, use 'docker-compose.yml'. If it's in a subdirectory, specify the relative path (e.g., 'docker/docker-compose.prod.yml')."
         },
         "branch": {
           "label": "Branch",

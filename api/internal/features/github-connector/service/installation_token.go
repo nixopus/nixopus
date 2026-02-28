@@ -35,7 +35,7 @@ func (c *GithubConnectorService) getInstallationToken(jwt string, installation_i
 	if resp.StatusCode != http.StatusCreated {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		bodyStr := string(bodyBytes)
-		
+
 		// Handle specific error cases
 		if resp.StatusCode == http.StatusNotFound {
 			return "", fmt.Errorf("installation not found: the GitHub installation ID '%s' is invalid or the app does not have access to it. Please reconnect your GitHub account", installation_id)
@@ -43,7 +43,7 @@ func (c *GithubConnectorService) getInstallationToken(jwt string, installation_i
 		if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
 			return "", fmt.Errorf("authentication failed: the GitHub App credentials are invalid or expired. Please check your app configuration")
 		}
-		
+
 		errMsg := fmt.Sprintf("Failed to get installation token: %s - %s", resp.Status, bodyStr)
 		return "", errors.New(errMsg)
 	}

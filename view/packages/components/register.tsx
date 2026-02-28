@@ -405,11 +405,16 @@ export const RegisterFormComponent = ({
                 </form>
               </div>
             </div>
-            <div className="bg-muted relative hidden md:block">
+            <div className="bg-muted relative hidden md:flex md:items-center md:justify-center p-8">
               <img
-                src={nixopusLogo.src}
+                src="/logo_black.png"
                 alt="Nixopus Logo"
-                className="absolute inset-0 h-full w-full object-cover"
+                className="max-h-56 max-w-56 object-contain dark:hidden"
+              />
+              <img
+                src="/logo_white.png"
+                alt="Nixopus Logo"
+                className="max-h-56 max-w-56 object-contain hidden dark:block"
               />
             </div>
           </CardContent>

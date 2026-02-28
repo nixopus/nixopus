@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
@@ -29,20 +30,22 @@ func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*types.SMTPConf
 		}
 	}
 
-	orgID := ""
-	for _, org := range user.Organizations {
-		if org.ID.String() == id {
-			orgID = org.ID.String()
-			break
-		}
-	}
-
-	if orgID == "" {
+	// Use org from context (already verified by AuthMiddleware via Better Auth).
+	// Query param id must match the authenticated org to prevent cross-org access.
+	ctxOrg := utils.GetOrganizationID(r)
+	if ctxOrg == uuid.Nil {
 		return nil, fuego.HTTPError{
 			Err:    notification.ErrUserDoesNotBelongToOrganization,
 			Status: http.StatusForbidden,
 		}
 	}
+	if ctxOrg.String() != id {
+		return nil, fuego.HTTPError{
+			Err:    notification.ErrUserDoesNotBelongToOrganization,
+			Status: http.StatusForbidden,
+		}
+	}
+	orgID := id
 
 	SMTPConfigs, err := c.service.GetSmtp(user.ID.String(), orgID)
 	if err != nil {

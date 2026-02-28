@@ -80,6 +80,7 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 		b.TaskContext.LogAndUpdateStatus("Failed to start remote build: "+err.Error(), shared_types.Failed)
 		return "", err
 	}
+	defer buildOutput.Close()
 	b.TaskContext.AddLog("Docker build started on remote server")
 
 	logReader := &LogReader{
@@ -107,17 +108,19 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 
 // createBuildContextArchiveFromRemote runs docker build on the remote server (build context stays on remote).
 // Returns the build output stream for logging. No network transfer of build context.
-func (s *TaskService) createBuildContextArchiveFromRemote(ctx context.Context, b BuildConfig, contextPath, dockerfilePath string) (io.Reader, error) {
+// The caller must defer Close() on the returned reader to avoid SSH connection leaks.
+func (s *TaskService) createBuildContextArchiveFromRemote(ctx context.Context, b BuildConfig, contextPath, dockerfilePath string) (*remoteBuildReader, error) {
 	sshManager, err := sshpkg.GetSSHManagerFromContext(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	clientConn, err := sshManager.Connect()
+	clientConn, release, err := sshManager.Borrow("")
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect via SSH: %w", err)
 	}
 	session, err := clientConn.NewSession()
 	if err != nil {
+		release()
 		if sshpkg.IsClosedConnectionError(err) {
 			sshManager.CloseConnection("")
 		}
@@ -141,29 +144,46 @@ func (s *TaskService) createBuildContextArchiveFromRemote(ctx context.Context, b
 	stdout, err := session.StdoutPipe()
 	if err != nil {
 		session.Close()
+		release()
 		return nil, fmt.Errorf("failed to get stdout pipe: %w", err)
 	}
 	if err := session.Start(buildCmd); err != nil {
 		session.Close()
+		release()
 		return nil, fmt.Errorf("failed to start docker build: %w", err)
 	}
 	return &remoteBuildReader{
 		stdout:  stdout,
 		session: session,
-		client:  clientConn,
+		release: release,
 	}, nil
 }
 
-// remoteBuildReader streams docker build output and returns build failure as Read error when command exits non-zero
+// remoteBuildReader streams docker build output and returns build failure as Read error when command exits non-zero.
+// Always call Close() when done (e.g. via defer) to release the pooled SSH connection borrow.
 type remoteBuildReader struct {
 	stdout  io.Reader
 	session interface {
 		Wait() error
 		Close() error
 	}
-	client  interface{ Close() error }
+	release func()
 	closed  bool
 	errored bool
+}
+
+// Close releases the SSH session and pool borrow. Safe to call multiple times.
+func (r *remoteBuildReader) Close() {
+	if r.closed {
+		return
+	}
+	r.closed = true
+	if r.session != nil {
+		r.session.Close()
+	}
+	if r.release != nil {
+		r.release()
+	}
 }
 
 func (r *remoteBuildReader) Read(p []byte) (n int, err error) {
@@ -172,23 +192,15 @@ func (r *remoteBuildReader) Read(p []byte) (n int, err error) {
 	}
 	n, err = r.stdout.Read(p)
 	if err == io.EOF {
-		r.closed = true
 		waitErr := r.checkWait()
-		r.session.Close()
-		if r.client != nil {
-			r.client.Close()
-		}
+		r.Close()
 		if waitErr != nil {
 			return n, waitErr
 		}
 		return n, io.EOF
 	}
 	if err != nil {
-		r.closed = true
-		r.session.Close()
-		if r.client != nil {
-			r.client.Close()
-		}
+		r.Close()
 	}
 	return n, err
 }
@@ -244,12 +256,13 @@ func (s *TaskService) prepareLabels(d BuildConfig) map[string]string {
 	return labels
 }
 
-// processBuildOutput reads the build output stream from the provided LogReader and
-// displays it to stdout. For Docker API JSON output it uses DisplayJSONMessagesStream;
-// for plain output (remote build) it streams directly. LogReader processes and logs each line.
+// processBuildOutput reads the build output stream from the provided LogReader.
+// The LogReader's Read method intercepts each line for logging to the database,
+// so we just need to drain the reader. Output is discarded rather than written to
+// server stdout (which is useless in production and adds I/O overhead).
 func (s *TaskService) processBuildOutput(logReader *LogReader) error {
 	if logReader.PlainOutput {
-		_, err := io.Copy(os.Stdout, logReader)
+		_, err := io.Copy(io.Discard, logReader)
 		if err != nil {
 			errorMsg := fmt.Sprintf("Build output processing failed: %v", err)
 			s.Logger.Log(logger.Error, errorMsg, logReader.deployment_config.ID.String())
@@ -259,7 +272,7 @@ func (s *TaskService) processBuildOutput(logReader *LogReader) error {
 		return nil
 	}
 	termFd, isTerm := term.GetFdInfo(os.Stdout)
-	err := jsonmessage.DisplayJSONMessagesStream(logReader, os.Stdout, termFd, isTerm, nil)
+	err := jsonmessage.DisplayJSONMessagesStream(logReader, io.Discard, termFd, isTerm, nil)
 	if err != nil {
 		errorMsg := fmt.Sprintf("Build output processing failed: %v", err)
 		s.Logger.Log(logger.Error, errorMsg, logReader.deployment_config.ID.String())

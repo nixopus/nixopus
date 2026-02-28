@@ -59,10 +59,14 @@ func (dockerComposeModule) Execute(ctx context.Context, _ *ssh.SSH, step types.S
 }
 
 func composeUp(ctx context.Context, svc deploydocker.DockerRepository, file string) (string, func(), error) {
-	if err := svc.ComposeUp(file, map[string]string{}); err != nil {
+	output, err := svc.ComposeUp(file, map[string]string{})
+	if err != nil {
 		return "", nil, err
 	}
 	compensate := func() { _ = svc.ComposeDown(file) }
+	if output != "" {
+		return output, compensate, nil
+	}
 	return "compose up", compensate, nil
 }
 
@@ -70,7 +74,7 @@ func composeDown(ctx context.Context, svc deploydocker.DockerRepository, file st
 	if err := svc.ComposeDown(file); err != nil {
 		return "", nil, err
 	}
-	compensate := func() { _ = svc.ComposeUp(file, map[string]string{}) }
+	compensate := func() { _, _ = svc.ComposeUp(file, map[string]string{}) }
 	return "compose down", compensate, nil
 }
 

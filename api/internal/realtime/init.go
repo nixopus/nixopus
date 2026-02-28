@@ -2,6 +2,7 @@ package realtime
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -46,6 +47,7 @@ type LiveDevNotificationHandler func(channel, payload string)
 type SocketServer struct {
 	conns               *sync.Map // conn -> userID
 	orgIDs              *sync.Map // conn -> organizationID
+	connWriteMu         sync.Map  // conn -> *sync.Mutex (per-connection write serialization)
 	topicsMu            sync.RWMutex
 	topics              map[string]map[*websocket.Conn]bool
 	shutdown            chan struct{}
@@ -150,6 +152,7 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 // Returns:
 //   - nil
 func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
+	fmt.Println("[ws] handleDisconnect: client disconnected, cleaning up")
 	s.conns.Delete(conn)
 	s.orgIDs.Delete(conn)
 
@@ -167,7 +170,9 @@ func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 
 	s.terminalMutex.Lock()
 	if terminalSessions, exists := s.terminals[conn]; exists {
-		for _, terminalSession := range terminalSessions {
+		fmt.Printf("[ws] handleDisconnect: closing %d terminal session(s)\n", len(terminalSessions))
+		for id, terminalSession := range terminalSessions {
+			fmt.Printf("[ws] handleDisconnect: closing terminal %s\n", id)
 			terminalSession.Close()
 		}
 		delete(s.terminals, conn)
@@ -189,6 +194,7 @@ func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 	s.applicationMutex.Unlock()
 
 	conn.Close()
+	s.connWriteMu.Delete(conn)
 }
 
 // SetLiveDevHandler registers a handler for live_dev_logs and live_dev_status
@@ -211,8 +217,26 @@ func (s *SocketServer) handlePing(conn *websocket.Conn) {
 	_, _ = s.conns.Load(conn)
 }
 
+// getConnWriteMu returns the per-connection write mutex, creating one if needed.
+func (s *SocketServer) getConnWriteMu(conn *websocket.Conn) *sync.Mutex {
+	if mu, ok := s.connWriteMu.Load(conn); ok {
+		return mu.(*sync.Mutex)
+	}
+	mu := &sync.Mutex{}
+	actual, _ := s.connWriteMu.LoadOrStore(conn, mu)
+	return actual.(*sync.Mutex)
+}
+
+// writeJSON serializes all writes to a connection through its per-connection mutex.
+func (s *SocketServer) writeJSON(conn *websocket.Conn, v interface{}) error {
+	mu := s.getConnWriteMu(conn)
+	mu.Lock()
+	defer mu.Unlock()
+	return conn.WriteJSON(v)
+}
+
 func (s *SocketServer) sendError(conn *websocket.Conn, message string) {
-	conn.WriteJSON(types.Payload{
+	s.writeJSON(conn, types.Payload{
 		Action: "error",
 		Data:   message,
 	})

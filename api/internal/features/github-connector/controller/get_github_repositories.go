@@ -48,7 +48,7 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 	repositories, totalCount, err := c.service.GetGithubRepositoriesPaginated(user.ID.String(), page, pageSize, connectorID, search, sortBy, sortDirection)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		
+
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "invalid GitHub installation") || strings.Contains(errMsg, "installation not found") {
 			return nil, fuego.HTTPError{
@@ -68,7 +68,7 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 				Status: http.StatusUnauthorized,
 			}
 		}
-		
+
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Status: http.StatusInternalServerError,

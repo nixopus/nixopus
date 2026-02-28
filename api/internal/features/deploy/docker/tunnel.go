@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -26,8 +27,9 @@ type SSHTunnel struct {
 	listener    net.Listener
 	cleanup     func() error
 
-	conn   *goph.Client
-	connMu sync.Mutex
+	conn          *goph.Client
+	connMu        sync.Mutex
+	stopKeepalive chan struct{} // closed to stop the keepalive goroutine
 }
 
 // CreateSSHTunnel creates a local Unix socket and forwards all connections
@@ -60,6 +62,7 @@ func CreateSSHTunnel(sshClient *ssh.SSH, lgr logger.Logger) (*SSHTunnel, error) 
 }
 
 // getConn returns the persistent SSH connection, creating it on first call.
+// Starts an SSH keepalive goroutine to prevent NAT/firewall idle timeouts.
 func (t *SSHTunnel) getConn() (*goph.Client, error) {
 	t.connMu.Lock()
 	defer t.connMu.Unlock()
@@ -71,13 +74,20 @@ func (t *SSHTunnel) getConn() (*goph.Client, error) {
 		return nil, err
 	}
 	t.conn = conn
+	t.stopKeepalive = make(chan struct{})
+	ssh.StartKeepalive(conn, ssh.KeepaliveInterval, ssh.KeepaliveMaxMissed, t.stopKeepalive)
 	return conn, nil
 }
 
-// resetConn closes the current connection so the next getConn creates a fresh one.
+// resetConn closes the current connection and its keepalive so the next
+// getConn creates a fresh one.
 func (t *SSHTunnel) resetConn() {
 	t.connMu.Lock()
 	defer t.connMu.Unlock()
+	if t.stopKeepalive != nil {
+		close(t.stopKeepalive)
+		t.stopKeepalive = nil
+	}
 	if t.conn != nil {
 		t.conn.Close()
 		t.conn = nil
@@ -106,6 +116,10 @@ func (t *SSHTunnel) handleConnections(lgr logger.Logger) {
 	for {
 		localConn, err := t.listener.Accept()
 		if err != nil {
+			// Expected when Close() closes the listener (cache invalidation, replacement)
+			if errors.Is(err, net.ErrClosed) || isConnectionLevelError(err) {
+				return
+			}
 			lgr.Log(logger.Error, "SSH tunnel listener error", err.Error())
 			return
 		}

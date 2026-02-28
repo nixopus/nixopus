@@ -7,7 +7,8 @@ import FormSelectField from '@/components/ui/form-select-field';
 import { MultipleDomainInput } from '@/packages/components/multi-domains';
 import { EnvVariablesEditor } from '@/components/ui/env-variables-editor';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@nixopus/ui';
-import { BuildPack, Environment } from '@/redux/types/deploy-form';
+import { BuildPack } from '@/redux/types/deploy-form';
+import { EnvironmentInputField } from '@/packages/components/environment-input-field';
 import useUpdateDeployment from '@/packages/hooks/applications/use_update_deployment';
 import { useDeploymentConfiguration } from '@/packages/hooks/applications/use_deployment_configuration';
 import { parsePort } from '@/packages/utils/util';
@@ -29,7 +30,7 @@ import { Plus } from 'lucide-react';
 
 interface DeployConfigureProps {
   application_name?: string;
-  environment?: Environment;
+  environment?: string;
   branch?: string;
   port?: string;
   domains?: string[];
@@ -102,7 +103,7 @@ const CollapsibleSection = ({
 
 export const DeployConfigureForm = ({
   application_name = '',
-  environment = Environment.Production,
+  environment = 'production',
   branch = '',
   port = '3000',
   domains: applicationDomains = [],
@@ -113,9 +114,12 @@ export const DeployConfigureForm = ({
   pre_run_commands = '',
   post_run_commands = '',
   application_id = '',
-  dockerFilePath = '/Dockerfile',
+  dockerFilePath,
   base_path = '/'
 }: DeployConfigureProps) => {
+  const resolvedDockerFilePath =
+    dockerFilePath ||
+    (build_pack === BuildPack.DockerCompose ? '/docker-compose.yml' : '/Dockerfile');
   const { t } = useTranslation();
 
   const { validateEnvVar, form, onSubmit, isLoading } = useUpdateDeployment({
@@ -128,23 +132,22 @@ export const DeployConfigureForm = ({
     port: parsePort(port) || 3000,
     force: true,
     id: application_id,
-    DockerfilePath: dockerFilePath,
-    base_path
+    DockerfilePath: resolvedDockerFilePath,
+    base_path,
+    domains: applicationDomains
   });
 
-  const {
-    environmentOptions,
-    dockerConfigFields,
-    envVariableEditors,
-    commandFields,
-    readOnlyFields
-  } = useDeploymentConfiguration({
-    branch,
-    domains: applicationDomains,
-    build_pack,
-    env_variables,
-    build_variables
-  });
+  const { dockerConfigFields, envVariableEditors, commandFields, readOnlyFields } =
+    useDeploymentConfiguration({
+      branch,
+      domains: applicationDomains,
+      build_pack,
+      env_variables,
+      build_variables,
+      domainsEditable: true
+    });
+
+  const isDockerCompose = build_pack === BuildPack.DockerCompose;
 
   const renderReadOnlyField = (
     label: string,
@@ -236,15 +239,13 @@ export const DeployConfigureForm = ({
                   name="name"
                   placeholder={t('selfHost.configuration.fields.applicationName.label')}
                 />
-                <FormSelectField
+                <EnvironmentInputField
                   form={form}
-                  label={t('selfHost.configuration.fields.environment.label')}
                   name="environment"
-                  placeholder={t('selfHost.deployForm.fields.environment.placeholder')}
-                  selectOptions={environmentOptions}
+                  label={t('selfHost.configuration.fields.environment.label')}
                   required={false}
                 />
-                {build_pack !== BuildPack.Static && (
+                {build_pack !== BuildPack.Static && !isDockerCompose && (
                   <FormInputField
                     form={form}
                     label={t('selfHost.configuration.fields.port.label')}
@@ -253,6 +254,16 @@ export const DeployConfigureForm = ({
                     validator={(value) => parsePort(value) !== null}
                   />
                 )}
+              </div>
+              <div className="mt-4">
+                <MultipleDomainInput
+                  form={form}
+                  label={t('selfHost.configuration.fields.domain.label')}
+                  name="domains"
+                  placeholder="example.com"
+                  required={false}
+                  maxDomains={5}
+                />
               </div>
             </CollapsibleSection>
 

@@ -1,11 +1,7 @@
-export enum Environment {
-  Production = 'production',
-  Staging = 'staging',
-  Development = 'development'
-}
+export const SUGGESTED_ENVIRONMENTS = ['production', 'staging', 'development'] as const;
 
 export enum BuildPack {
   Dockerfile = 'dockerfile',
-  DockerCompose = 'dockerCompose',
+  DockerCompose = 'docker-compose',
   Static = 'static'
 }

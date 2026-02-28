@@ -1,7 +1,8 @@
-import { BuildPack, Environment } from '@/redux/types/deploy-form';
+import { BuildPack } from '@/redux/types/deploy-form';
 import { z } from 'zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { useRouter } from 'next/navigation';
@@ -12,7 +13,7 @@ import { defaultValidator } from './use_multiple_domains';
 
 interface DeploymentFormValues {
   application_name: string;
-  environment: Environment;
+  environment: string;
   branch: string;
   port: string;
   domains?: string[];
@@ -28,7 +29,7 @@ interface DeploymentFormValues {
 
 function useCreateDeployment({
   application_name = '',
-  environment = Environment.Production,
+  environment = 'production',
   branch = '',
   port = '3000',
   domains = [],
@@ -38,9 +39,13 @@ function useCreateDeployment({
   build_variables = {},
   pre_run_commands = '',
   post_run_commands = '',
-  DockerfilePath = '/Dockerfile',
+  DockerfilePath,
   base_path = '/'
 }: DeploymentFormValues) {
+  // Set default DockerfilePath based on build_pack
+  const defaultDockerfilePath =
+    DockerfilePath ||
+    (build_pack === BuildPack.DockerCompose ? '/docker-compose.yml' : '/Dockerfile');
   const { isReady, message, sendJsonMessage } = useWebSocket();
   const [createDeployment, { isLoading }] = useCreateDeploymentMutation();
   const router = useRouter();
@@ -54,27 +59,26 @@ function useCreateDeployment({
         message: t('selfHost.deployForm.validation.applicationName.invalidFormat')
       }),
     environment: z
-      .enum([Environment.Production, Environment.Staging, Environment.Development])
-      .refine((value) => value === 'production' || value === 'staging' || value === 'development', {
+      .string()
+      .min(1, { message: t('selfHost.deployForm.validation.environment.invalidValue') })
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
         message: t('selfHost.deployForm.validation.environment.invalidValue')
       }),
     branch: z.string().min(3, { message: t('selfHost.deployForm.validation.branch.minLength') }),
     port: z
       .string()
-      .regex(/^[0-9]+$/, { message: t('selfHost.deployForm.validation.port.invalidFormat') }),
+      .regex(/^[0-9]+$/, { message: t('selfHost.deployForm.validation.port.invalidFormat') })
+      .optional(),
     domains: z
       .array(z.string())
       .optional()
       .refine(
         (val) => {
           if (!val || val.length === 0) return true;
-          // Filter out empty domains and validate non-empty ones
           const nonEmpty = val.filter((d) => d && d.trim() !== '');
-          if (nonEmpty.length > 5) return false; // Max 5 domains
-          // Check uniqueness
+          if (nonEmpty.length > 5) return false;
           const unique = new Set(nonEmpty.map((d) => d.trim().toLowerCase()));
           if (unique.size !== nonEmpty.length) return false;
-          // Validate format using shared validator
           return nonEmpty.every((d) => defaultValidator(d));
         },
         {
@@ -89,27 +93,20 @@ function useCreateDeployment({
         message: t('selfHost.deployForm.validation.repository.invalidFormat')
       }),
     build_pack: z
-      .enum([BuildPack.Dockerfile /* , BuildPack.DockerCompose */ /* BuildPack.Static */])
-      .refine(
-        (value) => value === BuildPack.Dockerfile /* || value === BuildPack.DockerCompose */,
-        // DockerCompose build pack option commented out for deployment
-        // Static build pack option commented out for deployment
-        // value === BuildPack.Static,
-        {
-          message: t('selfHost.deployForm.validation.buildPack.invalidValue')
-        }
-      ),
+      .enum([BuildPack.Dockerfile, BuildPack.DockerCompose /* BuildPack.Static */])
+      .refine((value) => value === BuildPack.Dockerfile || value === BuildPack.DockerCompose, {
+        message: t('selfHost.deployForm.validation.buildPack.invalidValue')
+      }),
     env_variables: z.record(z.string(), z.string()).optional().default({}),
     build_variables: z.record(z.string(), z.string()).optional().default({}),
     pre_run_commands: z.string().optional(),
     post_run_commands: z.string().optional(),
-    DockerfilePath: z.string().optional().default(DockerfilePath),
+    DockerfilePath: z.string().optional().default(defaultDockerfilePath),
     base_path: z.string().optional().default(base_path)
   });
 
-  // Static and DockerCompose build pack options commented out for deployment - default to Dockerfile
-  // Since schema only accepts Dockerfile, ensure we always use Dockerfile
-  const validBuildPack = BuildPack.Dockerfile;
+  const validBuildPack =
+    build_pack === BuildPack.DockerCompose ? BuildPack.DockerCompose : BuildPack.Dockerfile;
 
   const form = useForm<z.infer<typeof deploymentFormSchema>>({
     resolver: zodResolver(deploymentFormSchema),
@@ -125,7 +122,7 @@ function useCreateDeployment({
       build_variables,
       pre_run_commands,
       post_run_commands,
-      DockerfilePath,
+      DockerfilePath: defaultDockerfilePath,
       base_path
     }
   });
@@ -134,19 +131,26 @@ function useCreateDeployment({
     if (application_name) form.setValue('application_name', application_name);
     if (environment) form.setValue('environment', environment);
     if (branch) form.setValue('branch', branch);
-    if (port) form.setValue('port', port);
+    const isDockerCompose = build_pack === BuildPack.DockerCompose;
+    if (port && !isDockerCompose) form.setValue('port', port);
     if (domains && domains.length > 0) form.setValue('domains', domains);
     if (repository) form.setValue('repository', repository);
-    // Static and DockerCompose build pack options commented out for deployment - always use Dockerfile
-    // Schema only accepts Dockerfile, so always set to Dockerfile regardless of input
-    form.setValue('build_pack', BuildPack.Dockerfile);
+    form.setValue('build_pack', validBuildPack);
     if (env_variables && Object.keys(env_variables).length > 0)
       form.setValue('env_variables', env_variables);
     if (build_variables && Object.keys(build_variables).length > 0)
       form.setValue('build_variables', build_variables);
     if (pre_run_commands) form.setValue('pre_run_commands', pre_run_commands);
     if (post_run_commands) form.setValue('post_run_commands', post_run_commands);
-    if (DockerfilePath) form.setValue('DockerfilePath', DockerfilePath);
+    // Set DockerfilePath - use provided value or default based on build_pack
+    if (DockerfilePath) {
+      form.setValue('DockerfilePath', DockerfilePath);
+    } else {
+      const currentBuildPack = form.getValues('build_pack') as string;
+      const expectedPath =
+        currentBuildPack === BuildPack.DockerCompose ? '/docker-compose.yml' : '/Dockerfile';
+      form.setValue('DockerfilePath', expectedPath);
+    }
     if (base_path) form.setValue('base_path', base_path);
   }, [
     form,
@@ -165,13 +169,29 @@ function useCreateDeployment({
     base_path
   ]);
 
+  // Watch build_pack changes and update DockerfilePath accordingly
+  const currentBuildPack = useWatch({ control: form.control, name: 'build_pack' });
+  useEffect(() => {
+    if (currentBuildPack) {
+      const currentPath = form.getValues('DockerfilePath');
+      const expectedPath =
+        (currentBuildPack as string) === BuildPack.DockerCompose
+          ? '/docker-compose.yml'
+          : '/Dockerfile';
+      // Only update if current path matches one of the defaults (user hasn't customized it)
+      if (currentPath === '/Dockerfile' || currentPath === '/docker-compose.yml') {
+        form.setValue('DockerfilePath', expectedPath);
+      }
+    }
+  }, [currentBuildPack, form]);
+
   async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
     try {
       const deploymentData: any = {
         name: values.application_name,
         environment: values.environment,
         branch: values.branch,
-        port: parseInt(values.port, 10),
+        port: values.port && values.port.trim() ? parseInt(values.port, 10) : 3000,
         repository: values.repository,
         build_pack: values.build_pack,
         environment_variables: values.env_variables,
@@ -182,11 +202,10 @@ function useCreateDeployment({
         base_path: values.base_path
       };
 
-      // Handle domains array
       if (values.domains && values.domains.length > 0) {
         const nonEmptyDomains = values.domains
-          .filter((d) => d && d.trim() !== '')
-          .map((d) => d.trim());
+          .filter((d: string) => d && d.trim() !== '')
+          .map((d: string) => d.trim());
         if (nonEmptyDomains.length > 0) {
           deploymentData.domains = nonEmptyDomains;
         }
