@@ -1,3 +1,12 @@
+# [0.1.0-alpha.133](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.132...v0.1.0-alpha.133) (2026-02-28)
+
+
+### Bug Fixes
+
+* update base node image in view to version 22 ([0085a2f](https://github.com/raghavyuva/nixopus/commit/0085a2fb1f3e3bd5f509c38ff2d9491269d724b1))
+
+
+
 # [0.1.0-alpha.132](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.131...v0.1.0-alpha.132) (2026-02-28)
 
 
