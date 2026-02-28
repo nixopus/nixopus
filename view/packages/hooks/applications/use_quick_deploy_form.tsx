@@ -1,10 +1,14 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { BuildPack } from '@/redux/types/deploy-form';
 import { useGetGithubRepositoryBranchesMutation } from '@/redux/services/connector/githubConnectorApi';
-import { useCreateProjectMutation } from '@/redux/services/deploy/applicationsApi';
+import {
+  useCreateProjectMutation,
+  usePreviewComposeServicesMutation
+} from '@/redux/services/deploy/applicationsApi';
+import { PreviewComposeService } from '@/redux/types/applications';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,10 +32,15 @@ export function useQuickDeployForm({
   const [getGithubRepositoryBranches, { isLoading: isLoadingBranches }] =
     useGetGithubRepositoryBranchesMutation();
   const [createProject, { isLoading: isCreatingProject }] = useCreateProjectMutation();
+  const [previewCompose] = usePreviewComposeServicesMutation();
 
   const [availableBranches, setAvailableBranches] = useState<{ label: string; value: string }[]>(
     []
   );
+  const [composeServices, setComposeServices] = useState<PreviewComposeService[]>([]);
+  const [isPreviewingCompose, setIsPreviewingCompose] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
+  const previewDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const quickDeploySchema = useMemo(
     () =>
@@ -106,6 +115,25 @@ export function useQuickDeployForm({
             });
           })
           .default([]),
+        compose_domains: z
+          .array(
+            z.object({
+              domain: z.string(),
+              service_name: z.string(),
+              port: z.number()
+            })
+          )
+          .optional()
+          .default([]),
+        compose_services: z
+          .array(
+            z.object({
+              service_name: z.string(),
+              port: z.number()
+            })
+          )
+          .optional()
+          .default([]),
         branch: z
           .string()
           .min(1, { message: t('selfHost.deployForm.validation.branch.minLength') }),
@@ -120,6 +148,8 @@ export function useQuickDeployForm({
     defaultValues: {
       application_name: application_name,
       domains: [],
+      compose_domains: [],
+      compose_services: [],
       branch: 'main',
       build_pack: 'dockerfile',
       repository: repository || ''
@@ -168,6 +198,69 @@ export function useQuickDeployForm({
       form.setValue('repository', repository);
     }
   }, [application_name, repository, form]);
+
+  const watchedBuildPack = form.watch('build_pack');
+  const watchedBranch = form.watch('branch');
+
+  useEffect(() => {
+    if (watchedBuildPack !== 'docker-compose') {
+      setComposeServices([]);
+      setPreviewError(null);
+      form.setValue('compose_domains', []);
+      form.setValue('compose_services', []);
+      return;
+    }
+
+    const currentDomains = form.getValues('compose_domains') || [];
+    if (currentDomains.length === 0) {
+      form.setValue('compose_domains', [{ domain: '', service_name: '', port: 0 }]);
+    }
+
+    if (!watchedBranch || !repository_full_name) return;
+
+    if (previewDebounceRef.current) {
+      clearTimeout(previewDebounceRef.current);
+    }
+
+    previewDebounceRef.current = setTimeout(async () => {
+      setIsPreviewingCompose(true);
+      setPreviewError(null);
+
+      try {
+        const services = await previewCompose({
+          repository: repository_full_name,
+          branch: watchedBranch
+        }).unwrap();
+
+        setComposeServices(services);
+        form.setValue('compose_services', services);
+
+        if (services.length > 0) {
+          const currentDomains = form.getValues('compose_domains') || [];
+          if (currentDomains.length === 0) {
+            form.setValue('compose_domains', [{ domain: '', service_name: '', port: 0 }]);
+          }
+        }
+      } catch (err: any) {
+        const detail = err?.data?.error || err?.data?.message || err?.message;
+        setPreviewError(
+          detail
+            ? `Could not preview compose file: ${detail}. You can still deploy — assign domains after the first deploy.`
+            : 'Could not preview compose file. You can still deploy — assign domains from the Configuration tab after the first deploy.'
+        );
+        setComposeServices([]);
+        form.setValue('compose_services', []);
+      } finally {
+        setIsPreviewingCompose(false);
+      }
+    }, 500);
+
+    return () => {
+      if (previewDebounceRef.current) {
+        clearTimeout(previewDebounceRef.current);
+      }
+    };
+  }, [watchedBuildPack, watchedBranch, repository_full_name, previewCompose, form]);
 
   const handleCreate = async () => {
     const isValid = await form.trigger();
@@ -225,6 +318,8 @@ export function useQuickDeployForm({
     }
 
     const values = form.getValues();
+    const isCompose = values.build_pack === 'docker-compose';
+
     try {
       const projectData: any = {
         name: values.application_name,
@@ -233,11 +328,18 @@ export function useQuickDeployForm({
         build_pack: values.build_pack as BuildPack
       };
 
-      // Handle domains array
-      if (values.domains && values.domains.length > 0) {
+      if (isCompose) {
+        const validDomains = (values.compose_domains || []).filter(
+          (cd: any) => cd.domain && cd.domain.trim() !== '' && cd.port > 0
+        );
+        if (validDomains.length > 0) {
+          projectData.compose_domains = validDomains;
+        }
+        projectData.compose_services = composeServices;
+      } else if (values.domains && values.domains.length > 0) {
         const nonEmptyDomains = values.domains
-          .filter((d) => d && d.trim() !== '')
-          .map((d) => d.trim());
+          .filter((d: string) => d && d.trim() !== '')
+          .map((d: string) => d.trim());
         if (nonEmptyDomains.length > 0) {
           projectData.domains = nonEmptyDomains;
         }
@@ -255,6 +357,8 @@ export function useQuickDeployForm({
     }
   };
 
+  const isComposeMode = watchedBuildPack === 'docker-compose';
+
   const formFields = useMemo(
     () => [
       {
@@ -265,14 +369,23 @@ export function useQuickDeployForm({
         placeholder: t('selfHost.quickDeploy.fields.appName.placeholder'),
         required: true
       },
-      {
-        key: 'domains',
-        type: 'multi-domains' as const,
-        label: t('selfHost.quickDeploy.fields.domain.label'),
-        name: 'domains',
-        placeholder: t('selfHost.quickDeploy.fields.domain.placeholder'),
-        required: false
-      },
+      isComposeMode
+        ? {
+            key: 'compose_domains',
+            type: 'compose-domains' as const,
+            label: t('selfHost.quickDeploy.fields.domain.label'),
+            name: 'compose_domains',
+            placeholder: t('selfHost.quickDeploy.fields.domain.placeholder'),
+            required: false
+          }
+        : {
+            key: 'domains',
+            type: 'multi-domains' as const,
+            label: t('selfHost.quickDeploy.fields.domain.label'),
+            name: 'domains',
+            placeholder: t('selfHost.quickDeploy.fields.domain.placeholder'),
+            required: false
+          },
       {
         key: 'branch',
         type: 'select' as const,
@@ -299,7 +412,7 @@ export function useQuickDeployForm({
         required: false
       }
     ],
-    [t, availableBranches, isLoadingBranches]
+    [t, availableBranches, isLoadingBranches, isComposeMode]
   );
 
   const headerContent = useMemo(
@@ -333,6 +446,9 @@ export function useQuickDeployForm({
     handleCreate,
     buttonLabel,
     isLoadingBranches,
-    isCreatingProject
+    isCreatingProject,
+    composeServices,
+    isPreviewingCompose,
+    previewError
   };
 }

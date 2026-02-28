@@ -199,34 +199,63 @@ func (r *Reconciler) buildDeployDomains(ctx context.Context, organizationID uuid
 	var routes []DomainRoute
 
 	for _, app := range apps {
-		domains, err := r.Storage.GetApplicationDomains(app.ID)
-		if err != nil {
-			r.Logger.Log(logger.Warning, "failed to get domains for app "+app.Name, err.Error())
+		if len(app.Domains) == 0 {
 			continue
 		}
 
-		if len(domains) == 0 {
-			continue
-		}
-
-		publishedPort, err := r.getPublishedPort(ctx, app.Name)
-		if err != nil {
-			r.Logger.Log(logger.Warning,
-				fmt.Sprintf("service %s unreachable, skipping %d domain(s)", app.Name, len(domains)),
-				err.Error())
-			continue
-		}
-
-		dial := fmt.Sprintf("%s:%d", upstreamHost, publishedPort)
-		for _, d := range domains {
-			if d.Domain == "" {
-				continue
-			}
-			routes = append(routes, DomainRoute{Domain: d.Domain, UpstreamDial: dial})
+		if app.BuildPack == shared_types.DockerCompose {
+			routes = append(routes, r.buildComposeRoutes(app, upstreamHost)...)
+		} else {
+			routes = append(routes, r.buildSwarmRoutes(ctx, app, upstreamHost)...)
 		}
 	}
 
 	return routes, nil
+}
+
+// buildComposeRoutes resolves ports from the domain's linked ComposeService or
+// port override. Orphaned domains (no service, no override) are skipped.
+func (r *Reconciler) buildComposeRoutes(app shared_types.Application, upstreamHost string) []DomainRoute {
+	var routes []DomainRoute
+	for _, d := range app.Domains {
+		if d.Domain == "" {
+			continue
+		}
+
+		port := d.ResolvePort()
+		if port == 0 {
+			r.Logger.Log(logger.Warning,
+				fmt.Sprintf("skipping orphaned compose domain %s (no service linked, no port override)", d.Domain), "")
+			continue
+		}
+
+		routes = append(routes, DomainRoute{
+			Domain:       d.Domain,
+			UpstreamDial: fmt.Sprintf("%s:%d", upstreamHost, port),
+		})
+	}
+	return routes
+}
+
+// buildSwarmRoutes uses Swarm service discovery to resolve published ports.
+func (r *Reconciler) buildSwarmRoutes(ctx context.Context, app shared_types.Application, upstreamHost string) []DomainRoute {
+	publishedPort, err := r.getPublishedPort(ctx, app.Name)
+	if err != nil {
+		r.Logger.Log(logger.Warning,
+			fmt.Sprintf("service %s unreachable, skipping %d domain(s)", app.Name, len(app.Domains)),
+			err.Error())
+		return nil
+	}
+
+	dial := fmt.Sprintf("%s:%d", upstreamHost, publishedPort)
+	var routes []DomainRoute
+	for _, d := range app.Domains {
+		if d.Domain == "" {
+			continue
+		}
+		routes = append(routes, DomainRoute{Domain: d.Domain, UpstreamDial: dial})
+	}
+	return routes
 }
 
 func (r *Reconciler) getPublishedPort(ctx context.Context, serviceName string) (int, error) {

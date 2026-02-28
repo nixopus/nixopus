@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -161,8 +162,18 @@ func (c *ContextTask) PrepareCreateDeploymentContext() (shared_types.TaskPayload
 		return shared_types.TaskPayload{}, err
 	}
 
-	// Add domains to application_domains table
+	// Add domains to application_domains table.
+	// For compose apps, extract domain names from ComposeDomains.
+	// Service linkage is deferred until compose services are discovered during deploy.
 	domains := deployment.Domains
+	if len(domains) == 0 && len(deployment.ComposeDomains) > 0 {
+		for _, cd := range deployment.ComposeDomains {
+			d := strings.TrimSpace(cd.Domain)
+			if d != "" {
+				domains = append(domains, d)
+			}
+		}
+	}
 	if len(domains) > 0 {
 		if err := c.TaskService.Storage.AddApplicationDomains(application.ID, domains); err != nil {
 			return shared_types.TaskPayload{}, err

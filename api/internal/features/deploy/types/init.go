@@ -23,9 +23,17 @@ type IsPortAlreadyTakenRequest struct {
 	Port int `json:"port"`
 }
 
+// ComposeDomain maps a domain to a specific compose service or port override.
+type ComposeDomain struct {
+	Domain      string `json:"domain"`
+	ServiceName string `json:"service_name,omitempty"`
+	Port        int    `json:"port,omitempty"`
+}
+
 type CreateDeploymentRequest struct {
 	Name                 string                   `json:"name"`
 	Domains              []string                 `json:"domains,omitempty"`
+	ComposeDomains       []ComposeDomain          `json:"compose_domains,omitempty"`
 	Environment          shared_types.Environment `json:"environment"`
 	BuildPack            shared_types.BuildPack   `json:"build_pack"`
 	Repository           string                   `json:"repository"`
@@ -43,6 +51,8 @@ type CreateDeploymentRequest struct {
 type CreateProjectRequest struct {
 	Name                 string                   `json:"name"`
 	Domains              []string                 `json:"domains,omitempty"`
+	ComposeDomains       []ComposeDomain          `json:"compose_domains,omitempty"`
+	ComposeServices      []PreviewComposeService  `json:"compose_services,omitempty"`
 	Environment          shared_types.Environment `json:"environment,omitempty"`
 	BuildPack            shared_types.BuildPack   `json:"build_pack,omitempty"`
 	Repository           string                   `json:"repository"`
@@ -54,6 +64,22 @@ type CreateProjectRequest struct {
 	Port                 int                      `json:"port,omitempty"`
 	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
 	BasePath             string                   `json:"base_path,omitempty"`
+}
+
+type PreviewComposeRequest struct {
+	Repository     string `json:"repository"`
+	Branch         string `json:"branch"`
+	BasePath       string `json:"base_path,omitempty"`
+	DockerfilePath string `json:"dockerfile_path,omitempty"`
+}
+
+type PreviewComposeService struct {
+	ServiceName string `json:"service_name"`
+	Port        int    `json:"port"`
+}
+
+type PreviewComposeResponse struct {
+	Services []PreviewComposeService `json:"services"`
 }
 
 // DeployProjectRequest is used to trigger deployment of an existing project (application).
@@ -74,6 +100,7 @@ type UpdateDeploymentRequest struct {
 	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
 	BasePath             string                   `json:"base_path,omitempty"`
 	Domains              []string                 `json:"domains,omitempty"`
+	ComposeDomains       []ComposeDomain          `json:"compose_domains,omitempty"`
 }
 
 type DeleteDeploymentRequest struct {

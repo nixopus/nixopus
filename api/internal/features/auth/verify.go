@@ -104,7 +104,8 @@ func extractOriginFromReferer(referer string) string {
 }
 
 // forwardHeaders forwards relevant headers from the original request to Better Auth request.
-// Better Auth validates origins against trustedOrigins.
+// Better Auth validates origins against trustedOrigins and uses X-Forwarded-Proto to
+// determine secure context for cookie name resolution (__Secure- prefix vs plain).
 func forwardHeaders(originalReq *http.Request, targetReq *http.Request) {
 	if authHeader := originalReq.Header.Get("Authorization"); authHeader != "" {
 		targetReq.Header.Set("Authorization", authHeader)
@@ -121,6 +122,20 @@ func forwardHeaders(originalReq *http.Request, targetReq *http.Request) {
 		}
 	} else {
 		targetReq.Header.Set("Origin", origin)
+	}
+
+	// Forward proxy/protocol headers so Better Auth resolves the correct cookie names.
+	// Internal calls go over HTTP but the original client request came through TLS/Caddy.
+	// Without this, Better Auth looks for "better-auth.session_token" (HTTP) while the
+	// browser sent "__Secure-better-auth.session_token" (HTTPS), causing session lookup to fail.
+	if proto := originalReq.Header.Get("X-Forwarded-Proto"); proto != "" {
+		targetReq.Header.Set("X-Forwarded-Proto", proto)
+	} else if originalReq.TLS != nil || strings.HasPrefix(origin, "https://") {
+		targetReq.Header.Set("X-Forwarded-Proto", "https")
+	}
+
+	if host := originalReq.Header.Get("X-Forwarded-Host"); host != "" {
+		targetReq.Header.Set("X-Forwarded-Host", host)
 	}
 
 	targetReq.Header.Set("Content-Type", "application/json")

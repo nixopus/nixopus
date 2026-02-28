@@ -1,6 +1,7 @@
 package service
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -17,7 +18,17 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 
 	now := time.Now()
 
+	// For compose apps, extract domain names from ComposeDomains if Domains is empty.
+	// Service linkage is deferred until compose services are discovered during deploy.
 	domains := req.Domains
+	if len(domains) == 0 && len(req.ComposeDomains) > 0 {
+		for _, cd := range req.ComposeDomains {
+			d := strings.TrimSpace(cd.Domain)
+			if d != "" {
+				domains = append(domains, d)
+			}
+		}
+	}
 
 	// Set BasePath default to "/" if empty (for CLI init, always root)
 	basePath := req.BasePath
@@ -104,24 +115,70 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 		return shared_types.Application{}, err
 	}
 
-	// Load domains into application for response (after successful commit)
-	if len(domains) > 0 {
-		domainsList, err := s.storage.GetApplicationDomains(application.ID)
-		if err != nil {
-			s.logger.Log(logger.Error, "failed to load domains after creation", err.Error())
-			return shared_types.Application{}, err
+	if len(req.ComposeServices) > 0 {
+		if err := s.persistComposeServicesAndLinkDomains(application.ID, req.ComposeServices, req.ComposeDomains); err != nil {
+			s.logger.Log(logger.Error, "failed to persist compose services", err.Error())
 		}
-		// Convert []ApplicationDomain to []*ApplicationDomain
-		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
-		for i := range domainsList {
-			domainPtrs[i] = &domainsList[i]
-		}
-		application.Domains = domainPtrs
 	}
 
-	// Attach the status to the application for the response
+	domainsList, err := s.storage.GetApplicationDomains(application.ID)
+	if err != nil {
+		s.logger.Log(logger.Error, "failed to load domains after creation", err.Error())
+		return shared_types.Application{}, err
+	}
+	domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
+	for i := range domainsList {
+		domainPtrs[i] = &domainsList[i]
+	}
+	application.Domains = domainPtrs
 	application.Status = &appStatus
 
 	s.logger.Log(logger.Info, "project created successfully", "id: "+application.ID.String())
 	return application, nil
+}
+
+func (s *DeployService) persistComposeServicesAndLinkDomains(appID uuid.UUID, previewServices []types.PreviewComposeService, composeDomains []types.ComposeDomain) error {
+	var services []shared_types.ComposeService
+	for _, ps := range previewServices {
+		services = append(services, shared_types.ComposeService{
+			ServiceName: ps.ServiceName,
+			Port:        ps.Port,
+		})
+	}
+	if err := s.storage.UpsertComposeServices(appID, services); err != nil {
+		return err
+	}
+
+	if len(composeDomains) == 0 {
+		return nil
+	}
+
+	persisted, err := s.storage.GetComposeServices(appID)
+	if err != nil {
+		return err
+	}
+	serviceByName := make(map[string]*shared_types.ComposeService, len(persisted))
+	for i := range persisted {
+		serviceByName[persisted[i].ServiceName] = &persisted[i]
+	}
+
+	for _, cd := range composeDomains {
+		domain := strings.TrimSpace(cd.Domain)
+		if domain == "" || cd.ServiceName == "" {
+			continue
+		}
+		svc, ok := serviceByName[cd.ServiceName]
+		if !ok {
+			continue
+		}
+		port := cd.Port
+		if port == 0 {
+			port = svc.Port
+		}
+		if err := s.storage.UpdateApplicationDomainService(appID, domain, &svc.ID, &port); err != nil {
+			s.logger.Log(logger.Warning, "failed to link domain "+domain+" to service "+cd.ServiceName, err.Error())
+		}
+	}
+
+	return nil
 }

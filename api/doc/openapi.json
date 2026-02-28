@@ -6,6 +6,14 @@
 				"properties": {
 					"domain": {
 						"type": "string"
+					},
+					"port": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"service_name": {
+						"nullable": true,
+						"type": "string"
 					}
 				},
 				"type": "object"
@@ -116,6 +124,80 @@
 					"build_variables": {
 						"type": "string"
 					},
+					"compose_services": {
+						"items": {
+							"nullable": true,
+							"properties": {
+								"application": {
+									"$ref": "#/components/schemas/Application"
+								},
+								"application_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"domains": {
+									"items": {
+										"nullable": true,
+										"properties": {
+											"application": {
+												"$ref": "#/components/schemas/Application"
+											},
+											"application_id": {
+												"format": "uuid",
+												"type": "string"
+											},
+											"compose_service": {
+												"$ref": "#/components/schemas/ComposeService"
+											},
+											"compose_service_id": {
+												"format": "uuid",
+												"type": "string"
+											},
+											"created_at": {
+												"format": "date-time",
+												"type": "string"
+											},
+											"domain": {
+												"type": "string"
+											},
+											"id": {
+												"format": "uuid",
+												"type": "string"
+											},
+											"port": {
+												"nullable": true,
+												"type": "integer"
+											}
+										},
+										"type": "object"
+									},
+									"nullable": true,
+									"type": "array"
+								},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"port": {
+									"type": "integer"
+								},
+								"service_name": {
+									"type": "string"
+								},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"nullable": true,
+						"type": "array"
+					},
 					"created_at": {
 						"format": "date-time",
 						"type": "string"
@@ -141,6 +223,47 @@
 									"format": "uuid",
 									"type": "string"
 								},
+								"compose_service": {
+									"nullable": true,
+									"properties": {
+										"application": {
+											"$ref": "#/components/schemas/Application"
+										},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"domains": {
+											"items": {
+												"$ref": "#/components/schemas/ApplicationDomain"
+											},
+											"type": "array"
+										},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"port": {
+											"type": "integer"
+										},
+										"service_name": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"compose_service_id": {
+									"format": "uuid",
+									"type": "string"
+								},
 								"created_at": {
 									"format": "date-time",
 									"type": "string"
@@ -151,6 +274,10 @@
 								"id": {
 									"format": "uuid",
 									"type": "string"
+								},
+								"port": {
+									"nullable": true,
+									"type": "integer"
 								}
 							},
 							"type": "object"
@@ -476,6 +603,80 @@
 							"build_variables": {
 								"type": "string"
 							},
+							"compose_services": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"application": {
+											"$ref": "#/components/schemas/Application"
+										},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"domains": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"compose_service": {
+														"$ref": "#/components/schemas/ComposeService"
+													},
+													"compose_service_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"port": {
+														"nullable": true,
+														"type": "integer"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"port": {
+											"type": "integer"
+										},
+										"service_name": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"nullable": true,
+								"type": "array"
+							},
 							"created_at": {
 								"format": "date-time",
 								"type": "string"
@@ -501,6 +702,47 @@
 											"format": "uuid",
 											"type": "string"
 										},
+										"compose_service": {
+											"nullable": true,
+											"properties": {
+												"application": {
+													"$ref": "#/components/schemas/Application"
+												},
+												"application_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"domains": {
+													"items": {
+														"$ref": "#/components/schemas/ApplicationDomain"
+													},
+													"type": "array"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"port": {
+													"type": "integer"
+												},
+												"service_name": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"compose_service_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
@@ -511,6 +753,10 @@
 										"id": {
 											"format": "uuid",
 											"type": "string"
+										},
+										"port": {
+											"nullable": true,
+											"type": "integer"
 										}
 									},
 									"type": "object"
@@ -872,6 +1118,80 @@
 										"build_variables": {
 											"type": "string"
 										},
+										"compose_services": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"domains": {
+														"items": {
+															"nullable": true,
+															"properties": {
+																"application": {
+																	"$ref": "#/components/schemas/Application"
+																},
+																"application_id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"compose_service": {
+																	"$ref": "#/components/schemas/ComposeService"
+																},
+																"compose_service_id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"created_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"domain": {
+																	"type": "string"
+																},
+																"id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"port": {
+																	"nullable": true,
+																	"type": "integer"
+																}
+															},
+															"type": "object"
+														},
+														"nullable": true,
+														"type": "array"
+													},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"port": {
+														"type": "integer"
+													},
+													"service_name": {
+														"type": "string"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
@@ -897,6 +1217,47 @@
 														"format": "uuid",
 														"type": "string"
 													},
+													"compose_service": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"domains": {
+																"items": {
+																	"$ref": "#/components/schemas/ApplicationDomain"
+																},
+																"type": "array"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"port": {
+																"type": "integer"
+															},
+															"service_name": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"compose_service_id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"created_at": {
 														"format": "date-time",
 														"type": "string"
@@ -907,6 +1268,10 @@
 													"id": {
 														"format": "uuid",
 														"type": "string"
+													},
+													"port": {
+														"nullable": true,
+														"type": "integer"
 													}
 												},
 												"type": "object"
@@ -1249,6 +1614,41 @@
 				},
 				"type": "object"
 			},
+			"ApplicationDomain": {
+				"nullable": true,
+				"properties": {
+					"application": {
+						"$ref": "#/components/schemas/Application"
+					},
+					"application_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"compose_service": {
+						"$ref": "#/components/schemas/ComposeService"
+					},
+					"compose_service_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"created_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"domain": {
+						"type": "string"
+					},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"port": {
+						"nullable": true,
+						"type": "integer"
+					}
+				},
+				"type": "object"
+			},
 			"ApplicationLogs": {
 				"nullable": true,
 				"properties": {
@@ -1300,6 +1700,80 @@
 							},
 							"build_variables": {
 								"type": "string"
+							},
+							"compose_services": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"application": {
+											"$ref": "#/components/schemas/Application"
+										},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"domains": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"compose_service": {
+														"$ref": "#/components/schemas/ComposeService"
+													},
+													"compose_service_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"port": {
+														"nullable": true,
+														"type": "integer"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"port": {
+											"type": "integer"
+										},
+										"service_name": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"nullable": true,
+								"type": "array"
 							},
 							"created_at": {
 								"format": "date-time",
@@ -1437,6 +1911,47 @@
 											"format": "uuid",
 											"type": "string"
 										},
+										"compose_service": {
+											"nullable": true,
+											"properties": {
+												"application": {
+													"$ref": "#/components/schemas/Application"
+												},
+												"application_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"domains": {
+													"items": {
+														"$ref": "#/components/schemas/ApplicationDomain"
+													},
+													"type": "array"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"port": {
+													"type": "integer"
+												},
+												"service_name": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"compose_service_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
@@ -1447,6 +1962,10 @@
 										"id": {
 											"format": "uuid",
 											"type": "string"
+										},
+										"port": {
+											"nullable": true,
+											"type": "integer"
 										}
 									},
 									"type": "object"
@@ -1976,6 +2495,43 @@
 				},
 				"type": "object"
 			},
+			"ComposeService": {
+				"nullable": true,
+				"properties": {
+					"application": {
+						"$ref": "#/components/schemas/Application"
+					},
+					"application_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"created_at": {
+						"format": "date-time",
+						"type": "string"
+					},
+					"domains": {
+						"items": {
+							"$ref": "#/components/schemas/ApplicationDomain"
+						},
+						"type": "array"
+					},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"port": {
+						"type": "integer"
+					},
+					"service_name": {
+						"type": "string"
+					},
+					"updated_at": {
+						"format": "date-time",
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"ContainerActionResponse": {
 				"description": "ContainerActionResponse schema",
 				"properties": {
@@ -2068,6 +2624,27 @@
 							"type": "string"
 						},
 						"type": "object"
+					},
+					"compose_domains": {
+						"items": {
+							"nullable": true,
+							"properties": {
+								"domain": {
+									"type": "string"
+								},
+								"port": {
+									"nullable": true,
+									"type": "integer"
+								},
+								"service_name": {
+									"nullable": true,
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"nullable": true,
+						"type": "array"
 					},
 					"dockerfile_path": {
 						"nullable": true,
@@ -2255,6 +2832,43 @@
 						"nullable": true,
 						"type": "object"
 					},
+					"compose_domains": {
+						"items": {
+							"nullable": true,
+							"properties": {
+								"domain": {
+									"type": "string"
+								},
+								"port": {
+									"nullable": true,
+									"type": "integer"
+								},
+								"service_name": {
+									"nullable": true,
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"nullable": true,
+						"type": "array"
+					},
+					"compose_services": {
+						"items": {
+							"nullable": true,
+							"properties": {
+								"port": {
+									"type": "integer"
+								},
+								"service_name": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"nullable": true,
+						"type": "array"
+					},
 					"dockerfile_path": {
 						"nullable": true,
 						"type": "string"
@@ -2435,6 +3049,80 @@
 									"build_variables": {
 										"type": "string"
 									},
+									"compose_services": {
+										"items": {
+											"nullable": true,
+											"properties": {
+												"application": {
+													"$ref": "#/components/schemas/Application"
+												},
+												"application_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"domains": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"compose_service": {
+																"$ref": "#/components/schemas/ComposeService"
+															},
+															"compose_service_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"domain": {
+																"type": "string"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"port": {
+																"nullable": true,
+																"type": "integer"
+															}
+														},
+														"type": "object"
+													},
+													"nullable": true,
+													"type": "array"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"port": {
+													"type": "integer"
+												},
+												"service_name": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"nullable": true,
+										"type": "array"
+									},
 									"created_at": {
 										"format": "date-time",
 										"type": "string"
@@ -2460,6 +3148,47 @@
 													"format": "uuid",
 													"type": "string"
 												},
+												"compose_service": {
+													"nullable": true,
+													"properties": {
+														"application": {
+															"$ref": "#/components/schemas/Application"
+														},
+														"application_id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"domains": {
+															"items": {
+																"$ref": "#/components/schemas/ApplicationDomain"
+															},
+															"type": "array"
+														},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"port": {
+															"type": "integer"
+														},
+														"service_name": {
+															"type": "string"
+														},
+														"updated_at": {
+															"format": "date-time",
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"compose_service_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"created_at": {
 													"format": "date-time",
 													"type": "string"
@@ -2470,6 +3199,10 @@
 												"id": {
 													"format": "uuid",
 													"type": "string"
+												},
+												"port": {
+													"nullable": true,
+													"type": "integer"
 												}
 											},
 											"type": "object"
@@ -2831,6 +3564,80 @@
 												"build_variables": {
 													"type": "string"
 												},
+												"compose_services": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"domains": {
+																"items": {
+																	"nullable": true,
+																	"properties": {
+																		"application": {
+																			"$ref": "#/components/schemas/Application"
+																		},
+																		"application_id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"compose_service": {
+																			"$ref": "#/components/schemas/ComposeService"
+																		},
+																		"compose_service_id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"created_at": {
+																			"format": "date-time",
+																			"type": "string"
+																		},
+																		"domain": {
+																			"type": "string"
+																		},
+																		"id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"port": {
+																			"nullable": true,
+																			"type": "integer"
+																		}
+																	},
+																	"type": "object"
+																},
+																"nullable": true,
+																"type": "array"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"port": {
+																"type": "integer"
+															},
+															"service_name": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"nullable": true,
+													"type": "array"
+												},
 												"created_at": {
 													"format": "date-time",
 													"type": "string"
@@ -2856,6 +3663,47 @@
 																"format": "uuid",
 																"type": "string"
 															},
+															"compose_service": {
+																"nullable": true,
+																"properties": {
+																	"application": {
+																		"$ref": "#/components/schemas/Application"
+																	},
+																	"application_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"domains": {
+																		"items": {
+																			"$ref": "#/components/schemas/ApplicationDomain"
+																		},
+																		"type": "array"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"port": {
+																		"type": "integer"
+																	},
+																	"service_name": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"compose_service_id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"created_at": {
 																"format": "date-time",
 																"type": "string"
@@ -2866,6 +3714,10 @@
 															"id": {
 																"format": "uuid",
 																"type": "string"
+															},
+															"port": {
+																"nullable": true,
+																"type": "integer"
 															}
 														},
 														"type": "object"
@@ -4422,6 +5274,80 @@
 										"build_variables": {
 											"type": "string"
 										},
+										"compose_services": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"domains": {
+														"items": {
+															"nullable": true,
+															"properties": {
+																"application": {
+																	"$ref": "#/components/schemas/Application"
+																},
+																"application_id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"compose_service": {
+																	"$ref": "#/components/schemas/ComposeService"
+																},
+																"compose_service_id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"created_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"domain": {
+																	"type": "string"
+																},
+																"id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"port": {
+																	"nullable": true,
+																	"type": "integer"
+																}
+															},
+															"type": "object"
+														},
+														"nullable": true,
+														"type": "array"
+													},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"port": {
+														"type": "integer"
+													},
+													"service_name": {
+														"type": "string"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
 										"created_at": {
 											"format": "date-time",
 											"type": "string"
@@ -4558,6 +5484,47 @@
 														"format": "uuid",
 														"type": "string"
 													},
+													"compose_service": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"domains": {
+																"items": {
+																	"$ref": "#/components/schemas/ApplicationDomain"
+																},
+																"type": "array"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"port": {
+																"type": "integer"
+															},
+															"service_name": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"compose_service_id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"created_at": {
 														"format": "date-time",
 														"type": "string"
@@ -4568,6 +5535,10 @@
 													"id": {
 														"format": "uuid",
 														"type": "string"
+													},
+													"port": {
+														"nullable": true,
+														"type": "integer"
 													}
 												},
 												"type": "object"
@@ -5518,6 +6489,80 @@
 												"build_variables": {
 													"type": "string"
 												},
+												"compose_services": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"domains": {
+																"items": {
+																	"nullable": true,
+																	"properties": {
+																		"application": {
+																			"$ref": "#/components/schemas/Application"
+																		},
+																		"application_id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"compose_service": {
+																			"$ref": "#/components/schemas/ComposeService"
+																		},
+																		"compose_service_id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"created_at": {
+																			"format": "date-time",
+																			"type": "string"
+																		},
+																		"domain": {
+																			"type": "string"
+																		},
+																		"id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"port": {
+																			"nullable": true,
+																			"type": "integer"
+																		}
+																	},
+																	"type": "object"
+																},
+																"nullable": true,
+																"type": "array"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"port": {
+																"type": "integer"
+															},
+															"service_name": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"nullable": true,
+													"type": "array"
+												},
 												"created_at": {
 													"format": "date-time",
 													"type": "string"
@@ -5543,6 +6588,47 @@
 																"format": "uuid",
 																"type": "string"
 															},
+															"compose_service": {
+																"nullable": true,
+																"properties": {
+																	"application": {
+																		"$ref": "#/components/schemas/Application"
+																	},
+																	"application_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"domains": {
+																		"items": {
+																			"$ref": "#/components/schemas/ApplicationDomain"
+																		},
+																		"type": "array"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"port": {
+																		"type": "integer"
+																	},
+																	"service_name": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"compose_service_id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"created_at": {
 																"format": "date-time",
 																"type": "string"
@@ -5553,6 +6639,10 @@
 															"id": {
 																"format": "uuid",
 																"type": "string"
+															},
+															"port": {
+																"nullable": true,
+																"type": "integer"
 															}
 														},
 														"type": "object"
@@ -5914,6 +7004,80 @@
 															"build_variables": {
 																"type": "string"
 															},
+															"compose_services": {
+																"items": {
+																	"nullable": true,
+																	"properties": {
+																		"application": {
+																			"$ref": "#/components/schemas/Application"
+																		},
+																		"application_id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"created_at": {
+																			"format": "date-time",
+																			"type": "string"
+																		},
+																		"domains": {
+																			"items": {
+																				"nullable": true,
+																				"properties": {
+																					"application": {
+																						"$ref": "#/components/schemas/Application"
+																					},
+																					"application_id": {
+																						"format": "uuid",
+																						"type": "string"
+																					},
+																					"compose_service": {
+																						"$ref": "#/components/schemas/ComposeService"
+																					},
+																					"compose_service_id": {
+																						"format": "uuid",
+																						"type": "string"
+																					},
+																					"created_at": {
+																						"format": "date-time",
+																						"type": "string"
+																					},
+																					"domain": {
+																						"type": "string"
+																					},
+																					"id": {
+																						"format": "uuid",
+																						"type": "string"
+																					},
+																					"port": {
+																						"nullable": true,
+																						"type": "integer"
+																					}
+																				},
+																				"type": "object"
+																			},
+																			"nullable": true,
+																			"type": "array"
+																		},
+																		"id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"port": {
+																			"type": "integer"
+																		},
+																		"service_name": {
+																			"type": "string"
+																		},
+																		"updated_at": {
+																			"format": "date-time",
+																			"type": "string"
+																		}
+																	},
+																	"type": "object"
+																},
+																"nullable": true,
+																"type": "array"
+															},
 															"created_at": {
 																"format": "date-time",
 																"type": "string"
@@ -5939,6 +7103,47 @@
 																			"format": "uuid",
 																			"type": "string"
 																		},
+																		"compose_service": {
+																			"nullable": true,
+																			"properties": {
+																				"application": {
+																					"$ref": "#/components/schemas/Application"
+																				},
+																				"application_id": {
+																					"format": "uuid",
+																					"type": "string"
+																				},
+																				"created_at": {
+																					"format": "date-time",
+																					"type": "string"
+																				},
+																				"domains": {
+																					"items": {
+																						"$ref": "#/components/schemas/ApplicationDomain"
+																					},
+																					"type": "array"
+																				},
+																				"id": {
+																					"format": "uuid",
+																					"type": "string"
+																				},
+																				"port": {
+																					"type": "integer"
+																				},
+																				"service_name": {
+																					"type": "string"
+																				},
+																				"updated_at": {
+																					"format": "date-time",
+																					"type": "string"
+																				}
+																			},
+																			"type": "object"
+																		},
+																		"compose_service_id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
 																		"created_at": {
 																			"format": "date-time",
 																			"type": "string"
@@ -5949,6 +7154,10 @@
 																		"id": {
 																			"format": "uuid",
 																			"type": "string"
+																		},
+																		"port": {
+																			"nullable": true,
+																			"type": "integer"
 																		}
 																	},
 																	"type": "object"
@@ -7912,6 +9121,80 @@
 												"build_variables": {
 													"type": "string"
 												},
+												"compose_services": {
+													"items": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"domains": {
+																"items": {
+																	"nullable": true,
+																	"properties": {
+																		"application": {
+																			"$ref": "#/components/schemas/Application"
+																		},
+																		"application_id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"compose_service": {
+																			"$ref": "#/components/schemas/ComposeService"
+																		},
+																		"compose_service_id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"created_at": {
+																			"format": "date-time",
+																			"type": "string"
+																		},
+																		"domain": {
+																			"type": "string"
+																		},
+																		"id": {
+																			"format": "uuid",
+																			"type": "string"
+																		},
+																		"port": {
+																			"nullable": true,
+																			"type": "integer"
+																		}
+																	},
+																	"type": "object"
+																},
+																"nullable": true,
+																"type": "array"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"port": {
+																"type": "integer"
+															},
+															"service_name": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"nullable": true,
+													"type": "array"
+												},
 												"created_at": {
 													"format": "date-time",
 													"type": "string"
@@ -8016,6 +9299,47 @@
 																"format": "uuid",
 																"type": "string"
 															},
+															"compose_service": {
+																"nullable": true,
+																"properties": {
+																	"application": {
+																		"$ref": "#/components/schemas/Application"
+																	},
+																	"application_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"domains": {
+																		"items": {
+																			"$ref": "#/components/schemas/ApplicationDomain"
+																		},
+																		"type": "array"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"port": {
+																		"type": "integer"
+																	},
+																	"service_name": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"compose_service_id": {
+																"format": "uuid",
+																"type": "string"
+															},
 															"created_at": {
 																"format": "date-time",
 																"type": "string"
@@ -8026,6 +9350,10 @@
 															"id": {
 																"format": "uuid",
 																"type": "string"
+															},
+															"port": {
+																"nullable": true,
+																"type": "integer"
 															}
 														},
 														"type": "object"
@@ -8320,6 +9648,80 @@
 														"build_variables": {
 															"type": "string"
 														},
+														"compose_services": {
+															"items": {
+																"nullable": true,
+																"properties": {
+																	"application": {
+																		"$ref": "#/components/schemas/Application"
+																	},
+																	"application_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"created_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	},
+																	"domains": {
+																		"items": {
+																			"nullable": true,
+																			"properties": {
+																				"application": {
+																					"$ref": "#/components/schemas/Application"
+																				},
+																				"application_id": {
+																					"format": "uuid",
+																					"type": "string"
+																				},
+																				"compose_service": {
+																					"$ref": "#/components/schemas/ComposeService"
+																				},
+																				"compose_service_id": {
+																					"format": "uuid",
+																					"type": "string"
+																				},
+																				"created_at": {
+																					"format": "date-time",
+																					"type": "string"
+																				},
+																				"domain": {
+																					"type": "string"
+																				},
+																				"id": {
+																					"format": "uuid",
+																					"type": "string"
+																				},
+																				"port": {
+																					"nullable": true,
+																					"type": "integer"
+																				}
+																			},
+																			"type": "object"
+																		},
+																		"nullable": true,
+																		"type": "array"
+																	},
+																	"id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
+																	"port": {
+																		"type": "integer"
+																	},
+																	"service_name": {
+																		"type": "string"
+																	},
+																	"updated_at": {
+																		"format": "date-time",
+																		"type": "string"
+																	}
+																},
+																"type": "object"
+															},
+															"nullable": true,
+															"type": "array"
+														},
 														"created_at": {
 															"format": "date-time",
 															"type": "string"
@@ -8345,6 +9747,47 @@
 																		"format": "uuid",
 																		"type": "string"
 																	},
+																	"compose_service": {
+																		"nullable": true,
+																		"properties": {
+																			"application": {
+																				"$ref": "#/components/schemas/Application"
+																			},
+																			"application_id": {
+																				"format": "uuid",
+																				"type": "string"
+																			},
+																			"created_at": {
+																				"format": "date-time",
+																				"type": "string"
+																			},
+																			"domains": {
+																				"items": {
+																					"$ref": "#/components/schemas/ApplicationDomain"
+																				},
+																				"type": "array"
+																			},
+																			"id": {
+																				"format": "uuid",
+																				"type": "string"
+																			},
+																			"port": {
+																				"type": "integer"
+																			},
+																			"service_name": {
+																				"type": "string"
+																			},
+																			"updated_at": {
+																				"format": "date-time",
+																				"type": "string"
+																			}
+																		},
+																		"type": "object"
+																	},
+																	"compose_service_id": {
+																		"format": "uuid",
+																		"type": "string"
+																	},
 																	"created_at": {
 																		"format": "date-time",
 																		"type": "string"
@@ -8355,6 +9798,10 @@
 																	"id": {
 																		"format": "uuid",
 																		"type": "string"
+																	},
+																	"port": {
+																		"nullable": true,
+																		"type": "integer"
 																	}
 																},
 																"type": "object"
@@ -8897,6 +10344,46 @@
 				},
 				"type": "object"
 			},
+			"PreviewComposeRequest": {
+				"description": "PreviewComposeRequest schema",
+				"properties": {
+					"base_path": {
+						"nullable": true,
+						"type": "string"
+					},
+					"branch": {
+						"type": "string"
+					},
+					"dockerfile_path": {
+						"nullable": true,
+						"type": "string"
+					},
+					"repository": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"PreviewComposeResponse": {
+				"description": "PreviewComposeResponse schema",
+				"properties": {
+					"services": {
+						"items": {
+							"properties": {
+								"port": {
+									"type": "integer"
+								},
+								"service_name": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					}
+				},
+				"type": "object"
+			},
 			"ProjectFamilyResponse": {
 				"description": "ProjectFamilyResponse schema",
 				"properties": {
@@ -8916,6 +10403,80 @@
 										},
 										"build_variables": {
 											"type": "string"
+										},
+										"compose_services": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"domains": {
+														"items": {
+															"nullable": true,
+															"properties": {
+																"application": {
+																	"$ref": "#/components/schemas/Application"
+																},
+																"application_id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"compose_service": {
+																	"$ref": "#/components/schemas/ComposeService"
+																},
+																"compose_service_id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"created_at": {
+																	"format": "date-time",
+																	"type": "string"
+																},
+																"domain": {
+																	"type": "string"
+																},
+																"id": {
+																	"format": "uuid",
+																	"type": "string"
+																},
+																"port": {
+																	"nullable": true,
+																	"type": "integer"
+																}
+															},
+															"type": "object"
+														},
+														"nullable": true,
+														"type": "array"
+													},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"port": {
+														"type": "integer"
+													},
+													"service_name": {
+														"type": "string"
+													},
+													"updated_at": {
+														"format": "date-time",
+														"type": "string"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
 										},
 										"created_at": {
 											"format": "date-time",
@@ -9053,6 +10614,47 @@
 														"format": "uuid",
 														"type": "string"
 													},
+													"compose_service": {
+														"nullable": true,
+														"properties": {
+															"application": {
+																"$ref": "#/components/schemas/Application"
+															},
+															"application_id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"created_at": {
+																"format": "date-time",
+																"type": "string"
+															},
+															"domains": {
+																"items": {
+																	"$ref": "#/components/schemas/ApplicationDomain"
+																},
+																"type": "array"
+															},
+															"id": {
+																"format": "uuid",
+																"type": "string"
+															},
+															"port": {
+																"type": "integer"
+															},
+															"service_name": {
+																"type": "string"
+															},
+															"updated_at": {
+																"format": "date-time",
+																"type": "string"
+															}
+														},
+														"type": "object"
+													},
+													"compose_service_id": {
+														"format": "uuid",
+														"type": "string"
+													},
 													"created_at": {
 														"format": "date-time",
 														"type": "string"
@@ -9063,6 +10665,10 @@
 													"id": {
 														"format": "uuid",
 														"type": "string"
+													},
+													"port": {
+														"nullable": true,
+														"type": "integer"
 													}
 												},
 												"type": "object"
@@ -9931,6 +11537,27 @@
 						},
 						"nullable": true,
 						"type": "object"
+					},
+					"compose_domains": {
+						"items": {
+							"nullable": true,
+							"properties": {
+								"domain": {
+									"type": "string"
+								},
+								"port": {
+									"nullable": true,
+									"type": "integer"
+								},
+								"service_name": {
+									"nullable": true,
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"nullable": true,
+						"type": "array"
 					},
 					"dockerfile_path": {
 						"nullable": true,
@@ -12584,6 +14211,76 @@
 				]
 			}
 		},
+		"/api/v1/deploy/application/compose-services": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetComposeServices`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "GET_/api/v1/deploy/application/compose-services",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "get compose services",
+				"tags": [
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
 		"/api/v1/deploy/application/deployments": {
 			"get": {
 				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).GetApplicationDeployments`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
@@ -13204,6 +14901,87 @@
 					}
 				},
 				"summary": "get logs",
+				"tags": [
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
+		"/api/v1/deploy/application/preview-compose": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).PreviewComposeServices`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/deploy/application/preview-compose",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/PreviewComposeRequest"
+							}
+						}
+					},
+					"description": "Request body for types.PreviewComposeRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PreviewComposeResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/PreviewComposeResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "preview compose services",
 				"tags": [
 					"api/v1/deploy",
 					"application"

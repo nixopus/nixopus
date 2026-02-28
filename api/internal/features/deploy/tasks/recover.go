@@ -164,29 +164,56 @@ func (s *TaskService) recoverSingleApp(ctx context.Context, app *shared_types.Ap
 
 	taskCtx.AddLog("Service created with container id " + containerResult.ContainerID)
 
-	domains, _ := s.Storage.GetApplicationDomains(app.ID)
-	if len(domains) > 0 {
-		port, _ := strconv.Atoi(containerResult.AvailablePort)
-		upstreamHost, hostErr := GetSSHHostForOrganization(ctx, app.OrganizationID)
-		if hostErr != nil {
-			taskCtx.AddLog("Warning: Failed to get SSH host for domain setup: " + hostErr.Error())
-		} else {
-			var routes []caddy.DomainRoute
-			for _, d := range domains {
-				if d.Domain == "" {
-					continue
-				}
-				routes = append(routes, caddy.DomainRoute{
-					Domain:       d.Domain,
-					UpstreamDial: caddy.FormatDial(upstreamHost, port),
-				})
-			}
-			if err := caddy.AddDomainsWithRetry(ctx, nil, &s.Logger, routes); err != nil {
-				taskCtx.AddLog("Warning: Failed to configure proxy: " + err.Error())
-			}
-		}
-	}
+	swarmPort, _ := strconv.Atoi(containerResult.AvailablePort)
+	s.configureRecoveryDomains(ctx, app, swarmPort, taskCtx)
 
 	taskCtx.LogAndUpdateStatus("Recovery completed successfully", shared_types.Deployed)
 	return nil
+}
+
+func (s *TaskService) configureRecoveryDomains(ctx context.Context, app *shared_types.Application, swarmPort int, taskCtx *TaskContext) {
+	domains, err := s.Storage.GetApplicationDomains(app.ID)
+	if err != nil {
+		taskCtx.AddLog("Warning: failed to load domains for proxy setup: " + err.Error())
+		return
+	}
+	if len(domains) == 0 {
+		return
+	}
+
+	upstreamHost, err := GetSSHHostForOrganization(ctx, app.OrganizationID)
+	if err != nil {
+		taskCtx.AddLog("Warning: failed to get SSH host for domain setup: " + err.Error())
+		return
+	}
+
+	isCompose := app.BuildPack == shared_types.DockerCompose
+	var routes []caddy.DomainRoute
+	for i := range domains {
+		d := &domains[i]
+		if d.Domain == "" {
+			continue
+		}
+
+		port := swarmPort
+		if isCompose {
+			port = d.ResolvePort()
+			if port == 0 {
+				taskCtx.AddLog(fmt.Sprintf("Skipping orphaned compose domain %s during recovery", d.Domain))
+				continue
+			}
+		}
+
+		routes = append(routes, caddy.DomainRoute{
+			Domain:       d.Domain,
+			UpstreamDial: caddy.FormatDial(upstreamHost, port),
+		})
+	}
+	if len(routes) == 0 {
+		return
+	}
+
+	if err := caddy.AddDomainsWithRetry(ctx, nil, &s.Logger, routes); err != nil {
+		taskCtx.AddLog("Warning: failed to configure proxy: " + err.Error())
+	}
 }

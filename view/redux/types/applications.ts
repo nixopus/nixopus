@@ -1,11 +1,23 @@
 import { User } from './user';
 import { HealthCheck } from './healthcheck';
 
+export type ComposeService = {
+  id: string;
+  application_id: string;
+  service_name: string;
+  port: number;
+  created_at: string;
+  updated_at: string;
+};
+
 export type ApplicationDomain = {
   id: string;
   application_id: string;
   domain: string;
+  compose_service_id?: string;
+  port?: number;
   created_at: string;
+  compose_service?: ComposeService;
 };
 
 export type Application = {
@@ -25,6 +37,7 @@ export type Application = {
   created_at: Date;
   updated_at: Date;
   domains?: ApplicationDomain[];
+  compose_services?: ComposeService[];
   user?: User;
   status?: ApplicationStatus;
   logs?: ApplicationLogs[];
@@ -101,12 +114,24 @@ export type Environment = string;
 
 export type BuildPack = 'dockerfile' | 'docker-compose' | 'static';
 
+export type ComposeDomain = {
+  domain: string;
+  service_name?: string;
+  port?: number;
+};
+
+export type PreviewComposeService = {
+  service_name: string;
+  port: number;
+};
+
 export interface CreateApplicationRequest {
   name: string;
   environment: Environment;
   branch: string;
   port: number;
   domains?: string[];
+  compose_domains?: ComposeDomain[];
   repository: string;
   build_pack: BuildPack;
   environment_variables: Record<string, string>;
@@ -130,6 +155,7 @@ export interface UpdateDeploymentRequest {
   dockerfile_path?: string;
   base_path?: string;
   domains?: string[];
+  compose_domains?: ComposeDomain[];
 }
 
 export interface ReDeployApplicationRequest {
@@ -143,6 +169,8 @@ export interface ReDeployApplicationRequest {
 export interface CreateProjectRequest {
   name: string;
   domains?: string[];
+  compose_domains?: ComposeDomain[];
+  compose_services?: PreviewComposeService[];
   repository: string;
   environment?: Environment;
   build_pack?: BuildPack;

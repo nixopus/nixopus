@@ -124,6 +124,13 @@ function useApplicationDetails() {
           <DeployConfigureForm
             application_name={application?.name}
             domains={application?.domains?.map((d) => d.domain)}
+            compose_domains={application?.domains
+              ?.filter((d) => d.domain)
+              .map((d) => ({
+                domain: d.domain,
+                service_name: d.compose_service?.service_name || '',
+                port: d.port || d.compose_service?.port || 0
+              }))}
             environment={application?.environment}
             env_variables={envVariables}
             build_variables={buildVariables}
