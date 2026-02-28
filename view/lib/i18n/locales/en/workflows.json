@@ -1,0 +1,61 @@
+{
+  "workflows": {
+    "title": "Workflows",
+    "description": "Create and manage AI-powered deployment workflows",
+    "createButton": "New Workflow",
+    "delete": "Delete",
+    "deleteConfirm": {
+      "title": "Delete workflow",
+      "description": "Are you sure you want to delete this workflow? This action cannot be undone."
+    },
+    "emptyState": {
+      "title": "No workflows yet",
+      "description": "Create your first workflow or let AI recommend one based on your repository."
+    },
+    "search": {
+      "placeholder": "Search workflows..."
+    },
+    "status": {
+      "idle": "Idle",
+      "running": "Running",
+      "success": "Completed",
+      "failed": "Failed",
+      "suspended": "Waiting for approval",
+      "cancelled": "Cancelled"
+    },
+    "editor": {
+      "title": "Workflow Editor",
+      "save": "Save",
+      "run": "Run",
+      "cancel": "Cancel",
+      "aiRecommend": "AI Recommend",
+      "nodePalette": "Node Palette",
+      "nodeConfig": "Configuration",
+      "runHistory": "Run History"
+    },
+    "nodes": {
+      "trigger": "Trigger",
+      "agent": "Agent",
+      "tool": "Tool",
+      "condition": "Condition",
+      "approval": "Approval",
+      "notification": "Notification"
+    },
+    "categories": {
+      "triggers": "Triggers",
+      "agents": "Agents",
+      "tools": "Tools",
+      "logic": "Logic",
+      "notifications": "Notifications"
+    },
+    "execution": {
+      "play": "Run workflow",
+      "pause": "Pause",
+      "resume": "Resume",
+      "cancel": "Cancel run",
+      "timeTravel": "Time travel to this step",
+      "approve": "Approve",
+      "reject": "Reject"
+    }
+  }
+}
