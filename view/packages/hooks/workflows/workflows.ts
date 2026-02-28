@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAppSelector } from '@/redux/hooks';
-import { isAgentConfigured } from '@/packages/lib/agent-client';
+import { useAgentConfigured } from '@/packages/hooks/shared/use-config';
 import {
   listDynamicWorkflows,
   deleteDynamicWorkflow,
@@ -31,9 +31,10 @@ export function useWorkflows({ applicationId }: UseWorkflowsOptions) {
 
   const token = useAppSelector((state) => state.auth.token);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
+  const isAgentEnabled = useAgentConfigured() === true;
 
   const fetchWorkflows = useCallback(async () => {
-    if (!isAgentConfigured()) {
+    if (!isAgentEnabled) {
       setIsLoading(false);
       return;
     }
@@ -61,7 +62,7 @@ export function useWorkflows({ applicationId }: UseWorkflowsOptions) {
     } finally {
       setIsLoading(false);
     }
-  }, [applicationId, token, activeOrg?.id]);
+  }, [applicationId, token, activeOrg?.id, isAgentEnabled]);
 
   useEffect(() => {
     fetchWorkflows();
@@ -90,7 +91,7 @@ export function useWorkflows({ applicationId }: UseWorkflowsOptions) {
     error,
     refetch: fetchWorkflows,
     deleteWorkflow,
-    isConfigured: isAgentConfigured()
+    isConfigured: isAgentEnabled
   };
 }
 
@@ -153,9 +154,10 @@ export function useWorkflowDetail({ workflowId, applicationId }: UseWorkflowDeta
 
   const token = useAppSelector((state) => state.auth.token);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
+  const isAgentEnabled = useAgentConfigured() === true;
 
   const fetchDetail = useCallback(async () => {
-    if (!isAgentConfigured() || workflowId === 'new') {
+    if (!isAgentEnabled || workflowId === 'new') {
       setIsLoading(false);
       return;
     }
@@ -179,7 +181,7 @@ export function useWorkflowDetail({ workflowId, applicationId }: UseWorkflowDeta
     } finally {
       setIsLoading(false);
     }
-  }, [workflowId, applicationId, token, activeOrg?.id]);
+  }, [workflowId, applicationId, token, activeOrg?.id, isAgentEnabled]);
 
   useEffect(() => {
     fetchDetail();

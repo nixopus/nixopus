@@ -3,7 +3,8 @@
 import { useState, useCallback } from 'react';
 import { useAppSelector } from '@/redux/hooks';
 import { authClient } from '@/packages/lib/auth-client';
-import { createAgentClient, AGENT_ID, isAgentConfigured } from '@/packages/lib/agent-client';
+import { createAgentClient, AGENT_ID } from '@/packages/lib/agent-client';
+import { useAgentConfigured } from '@/packages/hooks/shared/use-config';
 
 export interface MemorySearchResult {
   id: string;
@@ -41,11 +42,12 @@ export function useMemorySearch(resourceId: string | undefined) {
   const token = useAppSelector((state) => state.auth.token);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const organizationId = activeOrg?.id;
+  const isAgentEnabled = useAgentConfigured() === true;
 
   const search = useCallback(
     async (searchQuery: string) => {
       const q = searchQuery.trim();
-      if (!q || !resourceId || !isAgentConfigured()) {
+      if (!q || !resourceId || !isAgentEnabled) {
         setResults([]);
         setQuery('');
         return;
@@ -71,7 +73,7 @@ export function useMemorySearch(resourceId: string | undefined) {
         setIsSearching(false);
       }
     },
-    [resourceId, token, organizationId]
+    [resourceId, token, organizationId, isAgentEnabled]
   );
 
   const clear = useCallback(() => {

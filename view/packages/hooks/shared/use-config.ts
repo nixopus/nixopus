@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getPasswordLoginEnabled } from '@/redux/conf';
+import { getPasswordLoginEnabled, getAgentConfigured } from '@/redux/conf';
 
 export function usePasswordLoginEnabled() {
   const [passwordLoginEnabled, setPasswordLoginEnabled] = useState<boolean | null>(null);
@@ -9,4 +9,14 @@ export function usePasswordLoginEnabled() {
   }, []);
 
   return passwordLoginEnabled;
+}
+
+export function useAgentConfigured() {
+  const [isConfigured, setIsConfigured] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    getAgentConfigured().then(setIsConfigured);
+  }, []);
+
+  return isConfigured;
 }

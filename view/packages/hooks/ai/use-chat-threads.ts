@@ -3,7 +3,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppSelector } from '@/redux/hooks';
 import { authClient } from '@/packages/lib/auth-client';
-import { createAgentClient, AGENT_ID, isAgentConfigured } from '@/packages/lib/agent-client';
+import { createAgentClient, AGENT_ID } from '@/packages/lib/agent-client';
+import { useAgentConfigured } from '@/packages/hooks/shared/use-config';
 
 export interface ChatThread {
   id: string;
@@ -57,6 +58,7 @@ export function useChatThreads() {
   const organizationId = activeOrg?.id;
   const authUser = useAppSelector((state) => state.auth.user);
   const resourceId = authUser?.id || 'default';
+  const isAgentEnabled = useAgentConfigured() === true;
 
   const headersRef = useRef<Record<string, string>>({});
 
@@ -67,7 +69,7 @@ export function useChatThreads() {
   }, [token, organizationId]);
 
   useEffect(() => {
-    if (!isAgentConfigured()) {
+    if (!isAgentEnabled) {
       setIsInitialized(true);
       return;
     }
@@ -120,7 +122,7 @@ export function useChatThreads() {
     return () => {
       cancelled = true;
     };
-  }, [token, organizationId, resourceId]);
+  }, [token, organizationId, resourceId, isAgentEnabled]);
 
   const setActiveThreadId = useCallback((id: string | null) => {
     setActiveThreadIdState(id);
@@ -141,7 +143,7 @@ export function useChatThreads() {
       setThreads((prev) => [thread, ...prev]);
       setActiveThreadId(thread.id);
 
-      if (isAgentConfigured()) {
+      if (isAgentEnabled) {
         (async () => {
           try {
             const client = createAgentClient(headersRef.current);
@@ -159,7 +161,7 @@ export function useChatThreads() {
 
       return thread;
     },
-    [resourceId, setActiveThreadId]
+    [resourceId, setActiveThreadId, isAgentEnabled]
   );
 
   const deleteThread = useCallback(
@@ -174,7 +176,7 @@ export function useChatThreads() {
         });
       }
 
-      if (isAgentConfigured()) {
+      if (isAgentEnabled) {
         (async () => {
           try {
             const client = createAgentClient(headersRef.current);
@@ -186,26 +188,29 @@ export function useChatThreads() {
         })();
       }
     },
-    [activeThreadId, setActiveThreadId]
+    [activeThreadId, setActiveThreadId, isAgentEnabled]
   );
 
-  const updateThreadTitle = useCallback((id: string, title: string) => {
-    setThreads((prev) =>
-      prev.map((t) => (t.id === id ? { ...t, title, updatedAt: new Date() } : t))
-    );
+  const updateThreadTitle = useCallback(
+    (id: string, title: string) => {
+      setThreads((prev) =>
+        prev.map((t) => (t.id === id ? { ...t, title, updatedAt: new Date() } : t))
+      );
 
-    if (isAgentConfigured()) {
-      (async () => {
-        try {
-          const client = createAgentClient(headersRef.current);
-          const thread = client.getMemoryThread({ threadId: id, agentId: AGENT_ID });
-          await thread.update({ title, metadata: {}, resourceId });
-        } catch {
-          // ignore
-        }
-      })();
-    }
-  }, []);
+      if (isAgentEnabled) {
+        (async () => {
+          try {
+            const client = createAgentClient(headersRef.current);
+            const thread = client.getMemoryThread({ threadId: id, agentId: AGENT_ID });
+            await thread.update({ title, metadata: {}, resourceId });
+          } catch {
+            // ignore
+          }
+        })();
+      }
+    },
+    [isAgentEnabled, resourceId]
+  );
 
   const touchThread = useCallback((id: string) => {
     setThreads((prev) => prev.map((t) => (t.id === id ? { ...t, updatedAt: new Date() } : t)));
