@@ -185,41 +185,8 @@
 					},
 					"logs": {
 						"items": {
-							"nullable": true,
-							"properties": {
-								"application": {
-									"$ref": "#/components/schemas/Application"
-								},
-								"application_deployment": {
-									"$ref": "#/components/schemas/ApplicationDeployment"
-								},
-								"application_deployment_id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"application_id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"created_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"log": {
-									"type": "string"
-								},
-								"updated_at": {
-									"format": "date-time",
-									"type": "string"
-								}
-							},
-							"type": "object"
+							"$ref": "#/components/schemas/ApplicationLogs"
 						},
-						"nullable": true,
 						"type": "array"
 					},
 					"name": {
@@ -4322,6 +4289,19 @@
 			"HealthCheckResponse": {
 				"description": "HealthCheckResponse schema",
 				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"IndexCodebaseResponse": {
+				"description": "IndexCodebaseResponse schema",
+				"properties": {
+					"data": {},
 					"message": {
 						"type": "string"
 					},
@@ -9923,6 +9903,14 @@
 						"nullable": true,
 						"type": "string"
 					},
+					"domains": {
+						"items": {
+							"nullable": true,
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "array"
+					},
 					"environment": {
 						"nullable": true,
 						"type": "string"
@@ -12954,6 +12942,76 @@
 					}
 				},
 				"summary": "add application domain",
+				"tags": [
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
+		"/api/v1/deploy/application/index": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/deploy/controller.(*DeployController).IndexCodebase`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/deploy/application/index",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/IndexCodebaseResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/IndexCodebaseResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "index codebase",
 				"tags": [
 					"api/v1/deploy",
 					"application"

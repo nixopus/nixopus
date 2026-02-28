@@ -1,4 +1,4 @@
-import { BuildPack, Environment } from '@/redux/types/deploy-form';
+import { BuildPack } from '@/redux/types/deploy-form';
 import { z } from 'zod';
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -12,7 +12,7 @@ import { defaultValidator } from './use_multiple_domains';
 
 interface DeploymentFormValues {
   application_name: string;
-  environment: Environment;
+  environment: string;
   branch: string;
   port: string;
   domains?: string[];
@@ -28,7 +28,7 @@ interface DeploymentFormValues {
 
 function useCreateDeployment({
   application_name = '',
-  environment = Environment.Production,
+  environment = 'production',
   branch = '',
   port = '3000',
   domains = [],
@@ -54,8 +54,9 @@ function useCreateDeployment({
         message: t('selfHost.deployForm.validation.applicationName.invalidFormat')
       }),
     environment: z
-      .enum([Environment.Production, Environment.Staging, Environment.Development])
-      .refine((value) => value === 'production' || value === 'staging' || value === 'development', {
+      .string()
+      .min(1, { message: t('selfHost.deployForm.validation.environment.invalidValue') })
+      .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, {
         message: t('selfHost.deployForm.validation.environment.invalidValue')
       }),
     branch: z.string().min(3, { message: t('selfHost.deployForm.validation.branch.minLength') }),

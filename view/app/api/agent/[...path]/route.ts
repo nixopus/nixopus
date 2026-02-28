@@ -23,9 +23,11 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
   const authorization = req.headers.get('authorization');
   const contentType = req.headers.get('content-type');
   const orgId = req.headers.get('x-organization-id');
+  const appId = req.headers.get('x-application-id');
   if (authorization) headers.set('Authorization', authorization);
   if (contentType) headers.set('Content-Type', contentType);
   if (orgId) headers.set('X-Organization-Id', orgId);
+  if (appId) headers.set('X-Application-Id', appId);
 
   const init: RequestInit = {
     method: req.method,

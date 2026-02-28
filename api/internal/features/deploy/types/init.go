@@ -73,6 +73,7 @@ type UpdateDeploymentRequest struct {
 	Force                bool                     `json:"force,omitempty"`
 	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
 	BasePath             string                   `json:"base_path,omitempty"`
+	Domains              []string                 `json:"domains,omitempty"`
 }
 
 type DeleteDeploymentRequest struct {

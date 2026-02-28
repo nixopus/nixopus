@@ -58,7 +58,7 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 	}
 
 	// Generate auto name based on source name and new environment
-	newName := generateDuplicateName(sourceProject.Name, string(req.Environment))
+	newName := generateDuplicateName(sourceProject.Name, string(sourceProject.Environment), string(req.Environment))
 
 	// Use provided branch if available, otherwise use source branch
 	branch := sourceProject.Branch
@@ -213,7 +213,7 @@ func (s *DeployService) AddApplicationToFamily(req *types.AddApplicationToFamily
 	// Set defaults
 	environment := req.Environment
 	if environment == "" {
-		environment = shared_types.Development
+		environment = "development"
 	}
 
 	buildPack := req.BuildPack
@@ -309,29 +309,15 @@ func (s *DeployService) AddApplicationToFamily(req *types.AddApplicationToFamily
 }
 
 // generateDuplicateName creates a name for the duplicate project.
-// It extracts the base name (removing any existing environment suffix) and appends the new environment.
-func generateDuplicateName(sourceName string, newEnvironment string) string {
-	// List of known environment suffixes to remove
-	envSuffixes := []string{"-development", "-staging", "-production", "-dev", "-stage", "-prod"}
-
+// It strips the source environment suffix (if present) from the name and appends the new environment.
+func generateDuplicateName(sourceName string, sourceEnvironment string, newEnvironment string) string {
 	baseName := sourceName
-	for _, suffix := range envSuffixes {
-		if strings.HasSuffix(strings.ToLower(baseName), suffix) {
-			baseName = baseName[:len(baseName)-len(suffix)]
-			break
-		}
+	lowerName := strings.ToLower(baseName)
+
+	suffix := "-" + sourceEnvironment
+	if strings.HasSuffix(lowerName, suffix) {
+		baseName = baseName[:len(baseName)-len(suffix)]
 	}
 
-	// Shorten environment name for the suffix
-	envSuffix := newEnvironment
-	switch newEnvironment {
-	case "development":
-		envSuffix = "dev"
-	case "staging":
-		envSuffix = "staging"
-	case "production":
-		envSuffix = "prod"
-	}
-
-	return fmt.Sprintf("%s-%s", baseName, envSuffix)
+	return fmt.Sprintf("%s-%s", baseName, newEnvironment)
 }

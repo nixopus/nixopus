@@ -754,7 +754,10 @@ func (s *DeployStorage) GetApplicationDomains(applicationID uuid.UUID) ([]shared
 	return domains, err
 }
 
-// GetDeployedApplications returns all applications with status "deployed" for an organization.
+// GetDeployedApplications returns all applications that have at least one
+// domain configured for an organization. The caller (reconciler, recovery)
+// handles unreachable services gracefully, so filtering by status is not
+// needed here — any app with domains should be eligible for proxy management.
 func (s *DeployStorage) GetDeployedApplications(organizationID uuid.UUID) ([]shared_types.Application, error) {
 	var applications []shared_types.Application
 
@@ -763,7 +766,7 @@ func (s *DeployStorage) GetDeployedApplications(organizationID uuid.UUID) ([]sha
 		Relation("Status").
 		Relation("Domains").
 		Where("a.organization_id = ?", organizationID).
-		Where("EXISTS (SELECT 1 FROM application_status ast WHERE ast.application_id = a.id AND ast.status = ?)", shared_types.Deployed).
+		Where("EXISTS (SELECT 1 FROM application_domains ad WHERE ad.application_id = a.id AND ad.domain != '')").
 		Scan(s.Ctx)
 
 	if err != nil {

@@ -669,6 +669,7 @@ export function useWorkflowRunner({
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
     if (activeOrg?.id) headers['X-Organization-Id'] = activeOrg.id;
+    if (applicationId) headers['X-Application-Id'] = applicationId;
     return headers;
   }, [token, activeOrg?.id]);
 
@@ -1332,7 +1333,14 @@ export function useWorkflowEditor({
 
   saveRef.current = handleSave;
 
-  const handleRun = useCallback(() => runner.startRun({}), [runner]);
+  const handleRun = useCallback(
+    () =>
+      runner.startRun({
+        applicationId,
+        contextPrompt: `You are working with application ID: ${applicationId}. Use this app for all operations (e.g. listing containers, deployments, logs).`
+      }),
+    [runner, applicationId]
+  );
 
   const handleReset = useCallback(() => {
     runner.reset();
@@ -1350,8 +1358,9 @@ export function useWorkflowEditor({
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
     if (activeOrg?.id) headers['X-Organization-Id'] = activeOrg.id;
+    if (applicationId) headers['X-Application-Id'] = applicationId;
     return headers;
-  }, [token, activeOrg?.id]);
+  }, [token, activeOrg?.id, applicationId]);
 
   return {
     planner,

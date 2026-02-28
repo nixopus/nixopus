@@ -1,7 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import 'tailwindcss';
+@import 'streamdown/styles.css';
 @source "../node_modules/@nixopus/ui/dist/**/*.{js,jsx}";
+@source "../node_modules/streamdown/dist/*.js";
 
 /* Scan nixopus-ui npm package source files for Tailwind classes */
 /* Tailwind resolves @source paths from the project root (billing-view/) */

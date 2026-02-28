@@ -42,7 +42,6 @@ import {
   Play,
   Square,
   RotateCcw,
-  Save,
   X,
   Loader2,
   Check,
@@ -542,13 +541,6 @@ export const WorkflowCanvas = forwardRef<
         />
         {toolbar && (
           <FlowPanel position="top-right" className="m-3 flex items-center gap-1">
-            <CanvasToolbarButton
-              tooltip="Save"
-              onClick={toolbar.onSave}
-              disabled={toolbar.runStatus === 'running' || toolbar.isSaving}
-            >
-              <Save className="h-3.5 w-3.5" />
-            </CanvasToolbarButton>
             {toolbar.runStatus === 'running' ? (
               <CanvasToolbarButton tooltip="Cancel" onClick={toolbar.onCancel}>
                 <Square className="h-3.5 w-3.5 text-destructive" />
@@ -752,6 +744,20 @@ const ExecutionMessageBubble = memo(function ExecutionMessageBubble({
   message: ExecutionMessage;
 }) {
   if (message.kind === 'step-reasoning') return <ReasoningBubble message={message} />;
+  if (message.kind === 'step-progress' && message.text) {
+    return (
+      <div className="flex gap-2">
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-muted/80 flex items-center justify-center mt-0.5">
+          <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
+        </div>
+        <div className="flex-1 min-w-0 rounded-lg bg-muted/30 px-3 py-2">
+          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-0.5 prose-headings:my-1 text-xs leading-relaxed">
+            <Streamdown isAnimating={false}>{message.text}</Streamdown>
+          </div>
+        </div>
+      </div>
+    );
+  }
   const display = getExecutionMessageDisplay(message);
   const readableText = message.output ? extractReadableText(message.output) : null;
   const remainingData = message.output ? getRemainingOutputData(message.output) : null;
@@ -779,9 +785,6 @@ const ExecutionMessageBubble = memo(function ExecutionMessageBubble({
               </Badge>
             )}
           </div>
-          {message.text && message.kind === 'step-progress' && (
-            <p className="mt-1 text-[11px] text-muted-foreground">{message.text}</p>
-          )}
           {message.error && (
             <p className="mt-1 text-[11px] text-destructive font-mono">
               {typeof message.error === 'string' ? message.error : JSON.stringify(message.error)}
@@ -794,9 +797,9 @@ const ExecutionMessageBubble = memo(function ExecutionMessageBubble({
           )}
         </div>
         {readableText && (
-          <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap pl-0.5">
-            {readableText}
-          </p>
+          <div className="text-xs text-foreground/80 leading-relaxed pl-0.5 prose prose-sm dark:prose-invert max-w-none prose-p:my-0.5 prose-headings:my-1 prose-table:text-xs">
+            <Streamdown isAnimating={false}>{readableText}</Streamdown>
+          </div>
         )}
       </div>
     </div>
@@ -1275,9 +1278,6 @@ export function WorkflowToolbar({
           <Sparkles className="h-3.5 w-3.5" />
         </ToolbarButton>
       )}
-      <ToolbarButton tooltip="Save" onClick={onSave} disabled={isRunning || isSaving}>
-        <Save className="h-3.5 w-3.5" />
-      </ToolbarButton>
       {isRunning ? (
         <ToolbarButton tooltip="Cancel" onClick={onCancel}>
           <Square className="h-3.5 w-3.5 text-destructive" />

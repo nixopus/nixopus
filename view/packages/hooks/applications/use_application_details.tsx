@@ -12,7 +12,7 @@ import {
   ApplicationDeployment,
   ApplicationDeploymentStatus
 } from '@/redux/types/applications';
-import { BuildPack, Environment } from '@/redux/types/deploy-form';
+import { BuildPack } from '@/redux/types/deploy-form';
 import type { TabItem } from '@nixopus/ui';
 import { Activity, Settings, Layers, ScrollText, Box, Workflow } from 'lucide-react';
 import DeploymentsList, {
@@ -124,7 +124,7 @@ function useApplicationDetails() {
           <DeployConfigureForm
             application_name={application?.name}
             domains={application?.domains?.map((d) => d.domain)}
-            environment={application?.environment as Environment | undefined}
+            environment={application?.environment}
             env_variables={envVariables}
             build_variables={buildVariables}
             build_pack={application?.build_pack as BuildPack}
