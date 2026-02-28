@@ -16,7 +16,7 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, ChartColumnDecreasing } from 'lucide-react';
+import { Layers, ChartColumnDecreasing, MessageSquare } from 'lucide-react';
 import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 
 const data = {
@@ -32,6 +32,12 @@ const data = {
       url: '/charts',
       icon: ChartColumnDecreasing,
       resource: 'dashboard'
+    },
+    {
+      title: 'navigation.chats',
+      url: '/chats',
+      icon: MessageSquare,
+      resource: 'ai'
     }
   ]
 };
@@ -50,7 +56,7 @@ export function useAppSidebar() {
   const { closeSettings } = useSettingsModal();
 
   const hasAnyPermission = useMemo(() => {
-    const allowedResources = ['dashboard', 'settings', 'extensions'];
+    const allowedResources = ['dashboard', 'settings', 'extensions', 'ai'];
 
     return (resource: string) => {
       if (!user || !activeOrg) return false;
