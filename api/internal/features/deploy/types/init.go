@@ -242,6 +242,12 @@ type RecoverResponse struct {
 	Data    RecoverResult `json:"data"`
 }
 
+type IndexCodebaseResponse struct {
+	Status  string      `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
 var (
 	ErrS3NotConfigured                  = errors.New("S3 image storage is not configured")
 	ErrMissingID                        = errors.New("id is required")
