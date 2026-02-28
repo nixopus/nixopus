@@ -99,7 +99,7 @@ export type Status =
 
 export type Environment = string;
 
-export type BuildPack = 'dockerfile' | 'dockerCompose' | 'static';
+export type BuildPack = 'dockerfile' | 'docker-compose' | 'static';
 
 export interface CreateApplicationRequest {
   name: string;

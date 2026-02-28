@@ -76,6 +76,11 @@
           "label": "Chemin du Dockerfile",
           "description": "Chemin du dockerfile relatif au chemin de base"
         },
+        "dockerComposePath": {
+          "label": "Chemin du Docker Compose",
+          "description": "Chemin de votre fichier docker-compose.yml relatif au chemin de base. Par défaut, c'est 'docker-compose.yml' dans le répertoire du chemin de base.",
+          "placeholder": "docker-compose.yml"
+        },
         "environmentVariables": {
           "label": "Variables d'Environnement",
           "description": "Tapez CLÉ=VALEUR et appuyez sur Entrée pour ajouter",
@@ -244,6 +249,11 @@
           "label": "Chemin du Dockerfile",
           "description": "Chemin du dockerfile relatif au chemin de base",
           "placeholder": "Dockerfile"
+        },
+        "dockerComposePath": {
+          "label": "Chemin du Docker Compose",
+          "description": "Chemin de votre fichier docker-compose.yml relatif au chemin de base. Par défaut, c'est 'docker-compose.yml' dans le répertoire du chemin de base.",
+          "placeholder": "docker-compose.yml"
         },
         "branch": {
           "label": "Branche",

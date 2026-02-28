@@ -10,7 +10,8 @@ export interface SystemInfoData {
 }
 
 export function useSystemInfoData(systemStats: SystemStatsType): SystemInfoData {
-  const { load, os_type, cpu_info, cpu_cores, hostname, architecture, kernel_version } = systemStats;
+  const { load, os_type, cpu_info, cpu_cores, hostname, architecture, kernel_version } =
+    systemStats;
 
   // Shorten CPU info - take first part before @ or full if short
   const shortCpu = cpu_info?.split('@')[0]?.trim() || cpu_info || 'N/A';

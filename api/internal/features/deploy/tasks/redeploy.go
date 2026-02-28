@@ -4,12 +4,29 @@ import (
 	"context"
 	"strconv"
 
+	"fmt"
+
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-// HandleReDeploy clones source, builds image using redeploy flags, and atomically updates the container
+// HandleReDeploy routes redeployment based on the application's BuildPack type
 func (s *TaskService) HandleReDeploy(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	switch TaskPayload.Application.BuildPack {
+	case shared_types.DockerFile:
+		return s.HandleReDeployDockerfileDeployment(ctx, TaskPayload)
+	case shared_types.DockerCompose:
+		return s.HandleReDeployDockerComposeDeployment(ctx, TaskPayload)
+	case shared_types.Static:
+		return s.HandleReDeployStaticDeployment(ctx, TaskPayload)
+	default:
+		return types.ErrInvalidBuildPack
+	}
+}
+
+// HandleReDeployDockerfileDeployment handles redeployment of a Dockerfile-based application
+func (s *TaskService) HandleReDeployDockerfileDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	taskCtx := s.NewTaskContext(TaskPayload)
 
 	taskCtx.LogAndUpdateStatus("Starting redeploy process", shared_types.Cloning)
@@ -94,4 +111,15 @@ func (s *TaskService) HandleReDeploy(ctx context.Context, TaskPayload shared_typ
 	}
 
 	return nil
+}
+
+// HandleReDeployDockerComposeDeployment handles redeployment of a Docker Compose application
+func (s *TaskService) HandleReDeployDockerComposeDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	return s.deployDockerCompose(ctx, TaskPayload, string(shared_types.DeploymentTypeReDeploy))
+}
+
+// HandleReDeployStaticDeployment handles redeployment of a static application
+func (s *TaskService) HandleReDeployStaticDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	// TODO: Implement static redeployment
+	return fmt.Errorf("static redeployment not yet implemented")
 }

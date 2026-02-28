@@ -73,7 +73,22 @@ func (s *TaskService) UpdateDeploymentWithTrigger(deployment *types.UpdateDeploy
 	return application, nil
 }
 
+// HandleUpdateDeployment routes update deployment based on the application's BuildPack type
 func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	switch TaskPayload.Application.BuildPack {
+	case shared_types.DockerFile:
+		return s.HandleUpdateDockerfileDeployment(ctx, TaskPayload)
+	case shared_types.DockerCompose:
+		return s.HandleUpdateDockerComposeDeployment(ctx, TaskPayload)
+	case shared_types.Static:
+		return s.HandleUpdateStaticDeployment(ctx, TaskPayload)
+	default:
+		return types.ErrInvalidBuildPack
+	}
+}
+
+// HandleUpdateDockerfileDeployment handles update deployment of a Dockerfile-based application
+func (s *TaskService) HandleUpdateDockerfileDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	taskCtx := s.NewTaskContext(TaskPayload)
 
 	taskCtx.LogAndUpdateStatus("Starting deployment process", shared_types.Cloning)
@@ -157,4 +172,15 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 	}
 
 	return nil
+}
+
+// HandleUpdateDockerComposeDeployment handles update deployment of a Docker Compose application
+func (s *TaskService) HandleUpdateDockerComposeDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	return s.deployDockerCompose(ctx, TaskPayload, string(shared_types.DeploymentTypeUpdate))
+}
+
+// HandleUpdateStaticDeployment handles update deployment of a static application
+func (s *TaskService) HandleUpdateStaticDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	// TODO: Implement static update deployment
+	return fmt.Errorf("static update deployment not yet implemented")
 }

@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -84,8 +85,11 @@ type DockerRepository interface {
 	RestartContainer(containerID string, opts container.StopOptions) error
 	UpdateContainerResources(containerID string, resources container.UpdateConfig) (container.ContainerUpdateOKBody, error)
 
-	ComposeUp(composeFilePath string, envVars map[string]string) error
+	ComposeUp(composeFilePath string, envVars map[string]string) (string, error)
+	ComposeUpWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string)) (string, error)
 	ComposeDown(composeFilePath string) error
+	ComposeDownWithCallback(composeFilePath string, outputCallback func(string)) error
+	ComposeRestart(composeFilePath string, envVars map[string]string, outputCallback func(string)) error
 	ComposeBuild(composeFilePath string, envVars map[string]string) error
 	RemoveImage(imageName string, opts image.RemoveOptions) error
 	PruneBuildCache(opts types.BuildCachePruneOptions) error
@@ -129,9 +133,10 @@ func NewDockerServiceWithServer(db *bun.DB, ctx context.Context, organizationID 
 		return nil
 	}
 
+	orgCtx := context.WithValue(context.Background(), shared_types.OrganizationIDKey, organizationID.String())
 	svc := &DockerService{
 		Cli:       cli,
-		Ctx:       context.Background(),
+		Ctx:       orgCtx,
 		logger:    lgr,
 		sshTunnel: tunnel,
 	}
@@ -509,35 +514,110 @@ func (s *DockerService) ContainerLogs(Ctx context.Context, containerID string, o
 }
 
 // ComposeUp starts the Docker Compose services defined in the specified compose file
-func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]string) error {
-	manager, err := ssh.GetSSHManagerFromContext(s.Ctx)
+func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]string) (string, error) {
+	return s.ComposeUpWithCallback(composeFilePath, envVars, nil)
+}
+
+// ComposeUpWithCallback starts Docker Compose services and streams output in real-time via callback
+func (s *DockerService) ComposeUpWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string)) (string, error) {
+	command, err := s.buildComposeCommand("up -d --remove-orphans", composeFilePath, envVars)
 	if err != nil {
-		return fmt.Errorf("failed to get SSH manager: %w", err)
+		return "", err
 	}
-	envVarsStr, err := buildSafeEnvExports(envVars)
-	if err != nil {
-		return fmt.Errorf("invalid environment variables: %w", err)
-	}
-	command := fmt.Sprintf("%sdocker compose -f %s up -d --force-recreate --remove-orphans 2>&1", envVarsStr, utils.ShellQuote(composeFilePath))
-	output, err := manager.RunCommand(command)
-	if err != nil {
-		return fmt.Errorf("failed to start docker compose services: %v, output: %s", err, output)
-	}
-	return nil
+	return s.executeSSHCommandWithOutput(command, outputCallback, "failed to start docker compose services")
 }
 
 // ComposeDown stops and removes the Docker Compose services
 func (s *DockerService) ComposeDown(composeFilePath string) error {
+	return s.ComposeDownWithCallback(composeFilePath, nil)
+}
+
+// ComposeDownWithCallback stops and removes Docker Compose services with streaming output
+func (s *DockerService) ComposeDownWithCallback(composeFilePath string, outputCallback func(string)) error {
+	command, err := s.buildComposeCommand("down", composeFilePath, nil)
+	if err != nil {
+		return err
+	}
+	_, err = s.executeSSHCommandWithOutput(command, outputCallback, "failed to stop docker compose services")
+	return err
+}
+
+// ComposeRestart restarts Docker Compose services with streaming output
+func (s *DockerService) ComposeRestart(composeFilePath string, envVars map[string]string, outputCallback func(string)) error {
+	command, err := s.buildComposeCommand("restart", composeFilePath, envVars)
+	if err != nil {
+		return err
+	}
+	_, err = s.executeSSHCommandWithOutput(command, outputCallback, "failed to restart docker compose services")
+	return err
+}
+
+// buildComposeCommand builds a docker compose command with safe environment variables
+func (s *DockerService) buildComposeCommand(composeAction string, composeFilePath string, envVars map[string]string) (string, error) {
+	envVarsStr, err := buildSafeEnvExports(envVars)
+	if err != nil {
+		return "", fmt.Errorf("invalid environment variables: %w", err)
+	}
+	return fmt.Sprintf("%sdocker compose -f %s %s 2>&1", envVarsStr, utils.ShellQuote(composeFilePath), composeAction), nil
+}
+
+func (s *DockerService) executeSSHCommandWithOutput(command string, outputCallback func(string), errorMsgPrefix string) (string, error) {
 	manager, err := ssh.GetSSHManagerFromContext(s.Ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get SSH manager: %w", err)
+		return "", fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	command := fmt.Sprintf("docker compose -f %s down", utils.ShellQuote(composeFilePath))
-	output, err := manager.RunCommand(command)
+
+	session, err := manager.NewSessionWithRetry("")
 	if err != nil {
-		return fmt.Errorf("failed to stop docker compose services: %v, output: %s", err, output)
+		return "", fmt.Errorf("failed to create SSH session: %w", err)
 	}
-	return nil
+	defer session.Close()
+
+	stdout, err := session.StdoutPipe()
+	if err != nil {
+		return "", fmt.Errorf("failed to get stdout pipe: %w", err)
+	}
+
+	stderr, err := session.StderrPipe()
+	if err != nil {
+		return "", fmt.Errorf("failed to get stderr pipe: %w", err)
+	}
+
+	var outputBuilder strings.Builder
+	done := make(chan bool, 2)
+
+	go s.streamOutput(stdout, &outputBuilder, outputCallback, done)
+	go s.streamOutput(stderr, &outputBuilder, outputCallback, done)
+
+	if err := session.Start(command); err != nil {
+		return "", fmt.Errorf("failed to start command: %w", err)
+	}
+
+	<-done
+	<-done
+
+	err = session.Wait()
+	output := outputBuilder.String()
+
+	if err != nil {
+		return output, fmt.Errorf("%s: %v, output: %s", errorMsgPrefix, err, output)
+	}
+
+	return output, nil
+}
+
+func (s *DockerService) streamOutput(reader io.Reader, outputBuilder *strings.Builder, outputCallback func(string), done chan bool) {
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if outputBuilder != nil {
+			outputBuilder.WriteString(line + "\n")
+		}
+		if outputCallback != nil {
+			outputCallback(line)
+		}
+	}
+	done <- true
 }
 
 // ComposeBuild builds the Docker Compose services

@@ -20,6 +20,8 @@ export function useDeploymentConfiguration({
 }: UseDeploymentConfigurationProps) {
   const { t } = useTranslation();
 
+  const isDockerCompose = build_pack === BuildPack.DockerCompose;
+
   const dockerConfigFields = [
     {
       label: t('selfHost.configuration.fields.basePath.label'),
@@ -28,10 +30,14 @@ export function useDeploymentConfiguration({
       descriptionText: t('selfHost.configuration.fields.basePath.description')
     },
     {
-      label: t('selfHost.configuration.fields.dockerfilePath.label'),
+      label: isDockerCompose
+        ? t('selfHost.configuration.fields.dockerComposePath.label')
+        : t('selfHost.configuration.fields.dockerfilePath.label'),
       name: 'DockerfilePath',
-      placeholder: 'Dockerfile',
-      descriptionText: t('selfHost.configuration.fields.dockerfilePath.description')
+      placeholder: isDockerCompose ? 'docker-compose.yml' : 'Dockerfile',
+      descriptionText: isDockerCompose
+        ? t('selfHost.configuration.fields.dockerComposePath.description')
+        : t('selfHost.configuration.fields.dockerfilePath.description')
     }
   ];
 

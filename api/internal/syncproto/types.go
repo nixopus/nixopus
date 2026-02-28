@@ -79,7 +79,7 @@ type EnvVarsPayload struct {
 type ManifestPayload struct {
 	Paths    map[string]string `json:"paths"`
 	RootHash string            `json:"root_hash,omitempty"` // Merkle root of server's file tree
-	Version  int               `json:"version,omitempty"`    // For future protocol compatibility
+	Version  int               `json:"version,omitempty"`   // For future protocol compatibility
 }
 
 // SyncMessage is the envelope for all WebSocket messages

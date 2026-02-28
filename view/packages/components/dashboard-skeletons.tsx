@@ -290,7 +290,10 @@ export function SystemInfoCardSkeleton() {
       <CardContent className="flex-1">
         <div className="grid grid-cols-2 gap-4">
           {[...Array(4)].map((_, index) => (
-            <div key={index} className={`flex items-start gap-2.5 ${index === 3 ? 'col-span-2' : ''}`}>
+            <div
+              key={index}
+              className={`flex items-start gap-2.5 ${index === 3 ? 'col-span-2' : ''}`}
+            >
               <Skeleton className="h-6 w-6 rounded-md" />
               <div className="flex-1 space-y-1">
                 <Skeleton className="h-2 w-16" />

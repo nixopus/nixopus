@@ -46,6 +46,20 @@ func (t *TaskService) RollbackDeployment(request *types.RollbackDeploymentReques
 // HandleRollback performs rollback via S3 image restore when available,
 // falling back to Docker Swarm's native rollback otherwise.
 func (s *TaskService) HandleRollback(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	switch TaskPayload.Application.BuildPack {
+	case shared_types.DockerFile:
+		return s.HandleRollbackDockerfileDeployment(ctx, TaskPayload)
+	case shared_types.DockerCompose:
+		return s.HandleRollbackDockerComposeDeployment(ctx, TaskPayload)
+	case shared_types.Static:
+		return s.HandleRollbackStaticDeployment(ctx, TaskPayload)
+	default:
+		return types.ErrInvalidBuildPack
+	}
+}
+
+// HandleRollbackDockerfileDeployment uses Docker Swarm's native rollback capability for instant rollback
+func (s *TaskService) HandleRollbackDockerfileDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	taskCtx := s.NewTaskContext(TaskPayload)
 
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
@@ -168,4 +182,15 @@ func (s *TaskService) handleSwarmRollback(ctx context.Context, TaskPayload share
 	taskCtx.LogAndUpdateStatus("Rollback completed successfully", shared_types.Deployed)
 
 	return nil
+}
+
+// HandleRollbackDockerComposeDeployment handles rollback of a Docker Compose application
+func (s *TaskService) HandleRollbackDockerComposeDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	return s.deployDockerCompose(ctx, TaskPayload, string(shared_types.DeploymentTypeRollback))
+}
+
+// HandleRollbackStaticDeployment handles rollback of a static application
+func (s *TaskService) HandleRollbackStaticDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	// TODO: Implement static rollback
+	return fmt.Errorf("static rollback not yet implemented")
 }

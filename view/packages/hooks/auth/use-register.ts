@@ -74,7 +74,7 @@ function useRegister() {
     try {
       // Extract name from email (part before @) or use a default
       const name = data.email.split('@')[0] || 'User';
-      
+
       const result = await authClient.signUp.email({
         email: data.email,
         password: data.password,

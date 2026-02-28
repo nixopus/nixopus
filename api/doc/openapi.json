@@ -185,8 +185,41 @@
 					},
 					"logs": {
 						"items": {
-							"$ref": "#/components/schemas/ApplicationLogs"
+							"nullable": true,
+							"properties": {
+								"application": {
+									"$ref": "#/components/schemas/Application"
+								},
+								"application_deployment": {
+									"$ref": "#/components/schemas/ApplicationDeployment"
+								},
+								"application_deployment_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"application_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"log": {
+									"type": "string"
+								},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								}
+							},
+							"type": "object"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"name": {
