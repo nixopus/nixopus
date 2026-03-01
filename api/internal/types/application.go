@@ -36,6 +36,7 @@ type Application struct {
 	Organization         *Organization            `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	Labels               []string                 `json:"labels,omitempty" bun:"labels,array"`
 	Domains              []*ApplicationDomain     `json:"domains,omitempty" bun:"rel:has-many,join:id=application_id"`
+	ComposeServices      []*ComposeService        `json:"compose_services,omitempty" bun:"rel:has-many,join:id=application_id"`
 	IsLiveDeployment     bool                     `json:"is_live_deployment" bun:"is_live_deployment,notnull,default:false"`
 }
 
@@ -92,14 +93,43 @@ type ApplicationLogs struct {
 	Application           *Application           `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
 }
 
-type ApplicationDomain struct {
-	bun.BaseModel `bun:"table:application_domains,alias:ad" swaggerignore:"true"`
+type ComposeService struct {
+	bun.BaseModel `bun:"table:compose_services,alias:cs" swaggerignore:"true"`
 	ID            uuid.UUID `json:"id" bun:"id,pk,type:uuid"`
 	ApplicationID uuid.UUID `json:"application_id" bun:"application_id,notnull,type:uuid"`
-	Domain        string    `json:"domain" bun:"domain,notnull"`
+	ServiceName   string    `json:"service_name" bun:"service_name,notnull"`
+	Port          int       `json:"port" bun:"port,notnull"`
 	CreatedAt     time.Time `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt     time.Time `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 
-	Application *Application `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+	Application *Application         `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+	Domains     []*ApplicationDomain `json:"domains,omitempty" bun:"rel:has-many,join:id=compose_service_id"`
+}
+
+type ApplicationDomain struct {
+	bun.BaseModel    `bun:"table:application_domains,alias:ad" swaggerignore:"true"`
+	ID               uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
+	ApplicationID    uuid.UUID  `json:"application_id" bun:"application_id,notnull,type:uuid"`
+	Domain           string     `json:"domain" bun:"domain,notnull"`
+	ComposeServiceID *uuid.UUID `json:"compose_service_id,omitempty" bun:"compose_service_id,type:uuid"`
+	Port             *int       `json:"port,omitempty" bun:"port"`
+	CreatedAt        time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+
+	Application    *Application    `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+	ComposeService *ComposeService `json:"compose_service,omitempty" bun:"rel:belongs-to,join:compose_service_id=id"`
+}
+
+// ResolvePort returns the upstream port for this domain based on its linked
+// ComposeService or explicit port override. Returns 0 when the domain is
+// orphaned (service removed, no manual override) and should not be routed.
+func (d *ApplicationDomain) ResolvePort() int {
+	if d.ComposeService != nil && d.ComposeService.Port > 0 {
+		return d.ComposeService.Port
+	}
+	if d.Port != nil && *d.Port > 0 {
+		return *d.Port
+	}
+	return 0
 }
 
 type Status string
