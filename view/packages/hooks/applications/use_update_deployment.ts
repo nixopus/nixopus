@@ -12,6 +12,12 @@ import { parsePort, SHARED_DOMAIN_REGEX } from '@/packages/utils/util';
 import { useAppSelector } from '@/redux/hooks';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
+interface ComposeDomainEntry {
+  domain: string;
+  service_name: string;
+  port: number;
+}
+
 interface UseUpdateDeploymentProps {
   name?: string;
   environment?: string;
@@ -25,6 +31,7 @@ interface UseUpdateDeploymentProps {
   DockerfilePath?: string;
   base_path?: string;
   domains?: string[];
+  compose_domains?: ComposeDomainEntry[];
 }
 
 function useUpdateDeployment({
@@ -39,7 +46,8 @@ function useUpdateDeployment({
   force = false,
   DockerfilePath = '/Dockerfile',
   base_path = '/',
-  domains = []
+  domains = [],
+  compose_domains = []
 }: UseUpdateDeploymentProps = {}) {
   const { t } = useTranslation();
   const { isReady, message, sendJsonMessage } = useWebSocket();
@@ -96,6 +104,40 @@ function useUpdateDeployment({
           return nonEmpty.every((d) => !d.trim() || SHARED_DOMAIN_REGEX.test(d.trim()));
         },
         { message: t('selfHost.deployForm.validation.domain.invalidFormat') }
+      ),
+    compose_domains: z
+      .array(
+        z.object({
+          domain: z.string(),
+          service_name: z.string().optional().default(''),
+          port: z.number().optional().default(0)
+        })
+      )
+      .optional()
+      .default([])
+      .refine(
+        (arr) => {
+          const nonEmpty = arr?.filter((d) => d.domain && d.domain.trim() !== '') ?? [];
+          return nonEmpty.length <= 5;
+        },
+        { message: t('selfHost.deployForm.validation.domain.maxDomains') }
+      )
+      .refine(
+        (arr) => {
+          const nonEmpty = arr?.filter((d) => d.domain && d.domain.trim() !== '') ?? [];
+          const unique = new Set(nonEmpty.map((d) => d.domain.trim().toLowerCase()));
+          return unique.size === nonEmpty.length;
+        },
+        { message: t('selfHost.deployForm.validation.domain.duplicate') }
+      )
+      .refine(
+        (arr) => {
+          const nonEmpty = arr?.filter((d) => d.domain && d.domain.trim() !== '') ?? [];
+          return nonEmpty.every(
+            (d) => !d.domain.trim() || SHARED_DOMAIN_REGEX.test(d.domain.trim())
+          );
+        },
+        { message: t('selfHost.deployForm.validation.domain.invalidFormat') }
       )
   });
 
@@ -113,7 +155,9 @@ function useUpdateDeployment({
       force,
       DockerfilePath,
       base_path,
-      domains: domains.length > 0 ? domains : ['']
+      domains: domains.length > 0 ? domains : [''],
+      compose_domains:
+        compose_domains.length > 0 ? compose_domains : [{ domain: '', service_name: '', port: 0 }]
     }
   });
 
@@ -136,6 +180,12 @@ function useUpdateDeployment({
     // Initialize form with server values
     form.setValue('name', name);
     form.setValue('domains', domains && domains.length > 0 ? domains : ['']);
+    form.setValue(
+      'compose_domains',
+      compose_domains && compose_domains.length > 0
+        ? compose_domains
+        : [{ domain: '', service_name: '', port: 0 }]
+    );
     if (environment) form.setValue('environment', environment);
     if (pre_run_command) form.setValue('pre_run_command', pre_run_command);
     if (post_run_command) form.setValue('post_run_command', post_run_command);
@@ -150,11 +200,15 @@ function useUpdateDeployment({
     form.setValue('force', force);
 
     initializedForIdRef.current = id;
-  }, [id, name, domains]);
+  }, [id, name, domains, compose_domains]);
 
   async function onSubmit(values: z.infer<typeof deploymentFormSchema>) {
     try {
       const filteredDomains = values.domains?.filter((d) => d && d.trim() !== '') ?? [];
+      const filteredComposeDomains =
+        values.compose_domains?.filter((d) => d.domain && d.domain.trim() !== '') ?? [];
+
+      const hasComposeDomains = filteredComposeDomains.length > 0;
 
       const updateData: UpdateDeploymentRequest = {
         name: values.name,
@@ -168,7 +222,8 @@ function useUpdateDeployment({
         force: values.force,
         dockerfile_path: values.DockerfilePath,
         base_path: values.base_path,
-        domains: filteredDomains
+        domains: hasComposeDomains ? undefined : filteredDomains,
+        compose_domains: hasComposeDomains ? filteredComposeDomains : undefined
       };
 
       const data = await updateDeployment(updateData).unwrap();
