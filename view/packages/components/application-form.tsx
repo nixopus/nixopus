@@ -5,6 +5,7 @@ import { Form } from '@nixopus/ui';
 import { FormInputField } from '@nixopus/ui';
 import FormSelectField from '@/components/ui/form-select-field';
 import { MultipleDomainInput } from '@/packages/components/multi-domains';
+import { ComposeDomainInput } from '@/packages/components/compose-domain-input';
 import { EnvVariablesEditor } from '@/components/ui/env-variables-editor';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@nixopus/ui';
 import { BuildPack } from '@/redux/types/deploy-form';
@@ -27,6 +28,13 @@ import {
 import { useQuickDeployForm } from '@/packages/hooks/applications/use_quick_deploy_form';
 import { CardWrapper } from '@nixopus/ui';
 import { Plus } from 'lucide-react';
+import { useGetComposeServicesQuery } from '@/redux/services/deploy/applicationsApi';
+
+interface ComposeDomainEntry {
+  domain: string;
+  service_name: string;
+  port: number;
+}
 
 interface DeployConfigureProps {
   application_name?: string;
@@ -34,6 +42,7 @@ interface DeployConfigureProps {
   branch?: string;
   port?: string;
   domains?: string[];
+  compose_domains?: ComposeDomainEntry[];
   repository?: string;
   build_pack?: BuildPack;
   env_variables?: Record<string, string>;
@@ -107,6 +116,7 @@ export const DeployConfigureForm = ({
   branch = '',
   port = '3000',
   domains: applicationDomains = [],
+  compose_domains: initialComposeDomains = [],
   repository = '',
   build_pack = BuildPack.Dockerfile,
   env_variables = {},
@@ -134,7 +144,8 @@ export const DeployConfigureForm = ({
     id: application_id,
     DockerfilePath: resolvedDockerFilePath,
     base_path,
-    domains: applicationDomains
+    domains: applicationDomains,
+    compose_domains: initialComposeDomains
   });
 
   const { dockerConfigFields, envVariableEditors, commandFields, readOnlyFields } =
@@ -148,6 +159,22 @@ export const DeployConfigureForm = ({
     });
 
   const isDockerCompose = build_pack === BuildPack.DockerCompose;
+
+  const { data: composeServices = [] } = useGetComposeServicesQuery(
+    { id: application_id },
+    { skip: !isDockerCompose || !application_id }
+  );
+
+  const isComposeMode = isDockerCompose && composeServices.length > 0;
+
+  const handleFormSubmit = (values: any) => {
+    if (isComposeMode) {
+      values.domains = [];
+    } else {
+      values.compose_domains = [];
+    }
+    return onSubmit(values);
+  };
 
   const renderReadOnlyField = (
     label: string,
@@ -226,7 +253,7 @@ export const DeployConfigureForm = ({
     <ResourceGuard resource="deploy" action="read" loadingFallback={<Skeleton className="h-96" />}>
       <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
             <CollapsibleSection
               title={t('selfHost.configuration.sections.basicConfiguration')}
               icon={SettingsIcon}
@@ -256,14 +283,26 @@ export const DeployConfigureForm = ({
                 )}
               </div>
               <div className="mt-4">
-                <MultipleDomainInput
-                  form={form}
-                  label={t('selfHost.configuration.fields.domain.label')}
-                  name="domains"
-                  placeholder="example.com"
-                  required={false}
-                  maxDomains={5}
-                />
+                {isDockerCompose && composeServices.length > 0 ? (
+                  <ComposeDomainInput
+                    form={form}
+                    label={t('selfHost.configuration.fields.domain.label')}
+                    name="compose_domains"
+                    composeServices={composeServices}
+                    placeholder="example.com"
+                    required={false}
+                    maxDomains={5}
+                  />
+                ) : (
+                  <MultipleDomainInput
+                    form={form}
+                    label={t('selfHost.configuration.fields.domain.label')}
+                    name="domains"
+                    placeholder="example.com"
+                    required={false}
+                    maxDomains={5}
+                  />
+                )}
               </div>
             </CollapsibleSection>
 
@@ -386,12 +425,21 @@ export const QuickDeployForm = ({
   repository_full_name,
   application_name = ''
 }: QuickDeployFormProps) => {
-  const { form, formFields, headerContent, handleCreate, buttonLabel, isCreatingProject } =
-    useQuickDeployForm({
-      repository,
-      repository_full_name,
-      application_name
-    });
+  const {
+    form,
+    formFields,
+    headerContent,
+    handleCreate,
+    buttonLabel,
+    isCreatingProject,
+    composeServices,
+    isPreviewingCompose,
+    previewError
+  } = useQuickDeployForm({
+    repository,
+    repository_full_name,
+    application_name
+  });
 
   return (
     <ResourceGuard
@@ -434,17 +482,42 @@ export const QuickDeployForm = ({
                   );
                 }
 
+                if (field.type === 'compose-domains') {
+                  return (
+                    <div key={field.key} className="sm:col-span-2">
+                      <ComposeDomainInput
+                        form={form}
+                        label={field.label}
+                        name={field.name}
+                        composeServices={composeServices}
+                        placeholder={field.placeholder}
+                        required={field.required}
+                        maxDomains={5}
+                      />
+                      {isPreviewingCompose && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Discovering compose services...
+                        </p>
+                      )}
+                      {previewError && (
+                        <p className="text-xs text-amber-500 mt-1">{previewError}</p>
+                      )}
+                    </div>
+                  );
+                }
+
                 if (field.type === 'multi-domains') {
                   return (
-                    <MultipleDomainInput
-                      key={field.key}
-                      form={form}
-                      label={field.label}
-                      name={field.name}
-                      placeholder={field.placeholder}
-                      required={field.required}
-                      maxDomains={5}
-                    />
+                    <div key={field.key} className="sm:col-span-2">
+                      <MultipleDomainInput
+                        form={form}
+                        label={field.label}
+                        name={field.name}
+                        placeholder={field.placeholder}
+                        required={field.required}
+                        maxDomains={5}
+                      />
+                    </div>
                   );
                 }
 
@@ -464,7 +537,7 @@ export const QuickDeployForm = ({
             <Button
               type="button"
               onClick={handleCreate}
-              disabled={isCreatingProject}
+              disabled={isCreatingProject || isPreviewingCompose}
               className="w-full gap-2"
             >
               <Plus className="h-4 w-4" />
