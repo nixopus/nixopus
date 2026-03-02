@@ -112,6 +112,24 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 
 	newProject.Status = &appStatus
 
+	// Copy compose services from source project so the duplicate has service
+	// metadata available for domain-to-service assignment in the UI.
+	sourceServices, err := s.storage.GetComposeServices(sourceProject.ID)
+	if err != nil {
+		s.logger.Log(logger.Warning, "failed to load source compose services", err.Error())
+	} else if len(sourceServices) > 0 {
+		var newServices []shared_types.ComposeService
+		for _, svc := range sourceServices {
+			newServices = append(newServices, shared_types.ComposeService{
+				ServiceName: svc.ServiceName,
+				Port:        svc.Port,
+			})
+		}
+		if err := s.storage.UpsertComposeServices(newProject.ID, newServices); err != nil {
+			s.logger.Log(logger.Warning, "failed to copy compose services to duplicate", err.Error())
+		}
+	}
+
 	// Handle domains: require explicit domains when duplicating across environments
 	domains := req.Domains
 	if len(domains) == 0 {
