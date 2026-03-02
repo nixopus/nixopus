@@ -82,17 +82,35 @@ function useApplicationDetails() {
   }, [applicationData, deploymentsData]);
 
   const parseEnvVariables = (variablesString: string | undefined): Record<string, string> => {
-    if (!variablesString) return {};
+    if (!variablesString || typeof variablesString !== 'string') return {};
+
+    const trimmed = variablesString.trim();
+    if (!trimmed) return {};
 
     try {
-      return variablesString
+      // API returns JSON object string: "{\"KEY\":\"value\",...}"
+      if (trimmed.startsWith('{')) {
+        const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          return Object.fromEntries(
+            Object.entries(parsed)
+              .filter(([key]) => key != null && key !== '')
+              .map(([key, value]) => [key, value == null ? '' : String(value)])
+          ) as Record<string, string>;
+        }
+      }
+
+      // Fallback: space-separated KEY=value pairs
+      return trimmed
         .split(/\s+/)
         .filter((pair) => pair.includes('='))
         .reduce<Record<string, string>>((acc, curr) => {
-          const [key, value] = curr.split('=');
-          return key && value ? { ...acc, [key]: value } : acc;
+          const eqIndex = curr.indexOf('=');
+          const key = curr.slice(0, eqIndex).trim();
+          const value = curr.slice(eqIndex + 1).trim();
+          return key ? { ...acc, [key]: value } : acc;
         }, {});
-    } catch (error) {
+    } catch {
       return {};
     }
   };
