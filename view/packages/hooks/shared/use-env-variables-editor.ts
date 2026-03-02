@@ -52,14 +52,15 @@ export function useEnvVariablesEditor({
   const [pastePreviewItems, setPastePreviewItems] = useState<PastePreviewItem[]>([]);
 
   useEffect(() => {
-    if (defaultValues && Object.keys(defaultValues).length > 0) {
-      const vars = Object.entries(defaultValues).map(([key, value]) => ({
-        key,
-        value,
-        isSecret: false
-      }));
-      setVariables(vars);
-    }
+    const vars =
+      defaultValues && Object.keys(defaultValues).length > 0
+        ? Object.entries(defaultValues).map(([key, value]) => ({
+            key,
+            value,
+            isSecret: false
+          }))
+        : [];
+    setVariables(vars);
   }, [defaultValues]);
 
   useEffect(() => {
