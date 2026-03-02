@@ -60,6 +60,11 @@ type DeployRepository interface {
 	GetLatestDeployments(organizationID uuid.UUID, limit int) ([]shared_types.ApplicationDeployment, error)
 	GetDeployedApplications(organizationID uuid.UUID) ([]shared_types.Application, error)
 	GetLatestS3Deployment(applicationID uuid.UUID) (*shared_types.ApplicationDeployment, error)
+	UpsertComposeServices(applicationID uuid.UUID, services []shared_types.ComposeService) error
+	GetComposeServices(applicationID uuid.UUID) ([]shared_types.ComposeService, error)
+	GetComposeServiceByName(applicationID uuid.UUID, serviceName string) (*shared_types.ComposeService, error)
+	AddApplicationDomainWithService(applicationID uuid.UUID, domain string, composeServiceID *uuid.UUID, port *int) error
+	UpdateApplicationDomainService(applicationID uuid.UUID, domain string, composeServiceID *uuid.UUID, port *int) error
 }
 
 func (s *DeployStorage) RunInTransaction(fn func(tx bun.Tx) error) error {
@@ -253,7 +258,7 @@ func (s *DeployStorage) GetApplications(page, pageSize int, sortBy string, sortD
 		Model(&applications).
 		Relation("Status").
 		Relation("Deployments.Status").
-		Relation("Domains").
+		Relation("Domains.ComposeService").
 		Limit(pageSize).
 		Offset(offset).
 		Where("organization_id = ?", organizationID)
@@ -321,7 +326,7 @@ func (s *DeployStorage) GetApplicationById(id string, organizationID uuid.UUID) 
 	err := s.DB.NewSelect().
 		Model(&application).
 		Relation("Status").
-		Relation("Domains").
+		Relation("Domains.ComposeService").
 		Where("a.id = ? AND a.organization_id = ?", id, organizationID).
 		Scan(s.Ctx)
 
@@ -399,6 +404,14 @@ func (s *DeployStorage) DeleteDeployment(deployment *types.DeleteDeploymentReque
 			Exec(s.Ctx)
 		if err != nil {
 			return fmt.Errorf("failed to delete application domains: %w", err)
+		}
+
+		_, err = tx.NewDelete().
+			Table("compose_services").
+			Where("application_id = ?", deployment.ID).
+			Exec(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to delete compose services: %w", err)
 		}
 
 		_, err = tx.NewDelete().
@@ -743,13 +756,14 @@ func (s *DeployStorage) RemoveApplicationDomain(applicationID uuid.UUID, domain 
 	return err
 }
 
-// GetApplicationDomains retrieves all domains for an application.
+// GetApplicationDomains retrieves all domains for an application, including linked compose services.
 func (s *DeployStorage) GetApplicationDomains(applicationID uuid.UUID) ([]shared_types.ApplicationDomain, error) {
 	var domains []shared_types.ApplicationDomain
 	err := s.DB.NewSelect().
 		Model(&domains).
-		Where("application_id = ?", applicationID).
-		Order("created_at ASC").
+		Relation("ComposeService").
+		Where("ad.application_id = ?", applicationID).
+		Order("ad.created_at ASC").
 		Scan(s.Ctx)
 	return domains, err
 }
@@ -764,7 +778,8 @@ func (s *DeployStorage) GetDeployedApplications(organizationID uuid.UUID) ([]sha
 	err := s.DB.NewSelect().
 		Model(&applications).
 		Relation("Status").
-		Relation("Domains").
+		Relation("Domains.ComposeService").
+		Relation("ComposeServices").
 		Where("a.organization_id = ?", organizationID).
 		Where("EXISTS (SELECT 1 FROM application_domains ad WHERE ad.application_id = a.id AND ad.domain != '')").
 		Scan(s.Ctx)
@@ -797,4 +812,146 @@ func (s *DeployStorage) GetLatestS3Deployment(applicationID uuid.UUID) (*shared_
 	}
 
 	return &deployment, nil
+}
+
+// UpsertComposeServices synchronizes the compose_services table for an application.
+// It inserts new services, updates changed ports, and removes services no longer in the compose file.
+func (s *DeployStorage) UpsertComposeServices(applicationID uuid.UUID, services []shared_types.ComposeService) error {
+	return s.RunInTransaction(func(tx bun.Tx) error {
+		var existing []shared_types.ComposeService
+		err := tx.NewSelect().
+			Model(&existing).
+			Where("application_id = ?", applicationID).
+			Scan(s.Ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get existing compose services: %w", err)
+		}
+
+		existingMap := make(map[string]*shared_types.ComposeService)
+		for i := range existing {
+			existingMap[existing[i].ServiceName] = &existing[i]
+		}
+
+		desiredMap := make(map[string]bool)
+		for _, svc := range services {
+			desiredMap[svc.ServiceName] = true
+
+			if ex, ok := existingMap[svc.ServiceName]; ok {
+				if ex.Port != svc.Port {
+					_, err := tx.NewUpdate().
+						Model((*shared_types.ComposeService)(nil)).
+						Set("port = ?", svc.Port).
+						Set("updated_at = CURRENT_TIMESTAMP").
+						Where("id = ?", ex.ID).
+						Exec(s.Ctx)
+					if err != nil {
+						return fmt.Errorf("failed to update compose service %s: %w", svc.ServiceName, err)
+					}
+				}
+			} else {
+				newSvc := &shared_types.ComposeService{
+					ID:            uuid.New(),
+					ApplicationID: applicationID,
+					ServiceName:   svc.ServiceName,
+					Port:          svc.Port,
+					CreatedAt:     time.Now(),
+					UpdatedAt:     time.Now(),
+				}
+				_, err := tx.NewInsert().Model(newSvc).Exec(s.Ctx)
+				if err != nil {
+					return fmt.Errorf("failed to insert compose service %s: %w", svc.ServiceName, err)
+				}
+			}
+		}
+
+		for name, ex := range existingMap {
+			if !desiredMap[name] {
+				// Nullify FK references before deleting
+				_, err := tx.NewUpdate().
+					Model((*shared_types.ApplicationDomain)(nil)).
+					Set("compose_service_id = NULL").
+					Where("compose_service_id = ?", ex.ID).
+					Exec(s.Ctx)
+				if err != nil {
+					return fmt.Errorf("failed to clear domain FK for service %s: %w", name, err)
+				}
+
+				_, err = tx.NewDelete().
+					Model((*shared_types.ComposeService)(nil)).
+					Where("id = ?", ex.ID).
+					Exec(s.Ctx)
+				if err != nil {
+					return fmt.Errorf("failed to delete compose service %s: %w", name, err)
+				}
+			}
+		}
+
+		return nil
+	})
+}
+
+func (s *DeployStorage) GetComposeServices(applicationID uuid.UUID) ([]shared_types.ComposeService, error) {
+	var services []shared_types.ComposeService
+	err := s.DB.NewSelect().
+		Model(&services).
+		Where("application_id = ?", applicationID).
+		Order("service_name ASC").
+		Scan(s.Ctx)
+	return services, err
+}
+
+func (s *DeployStorage) GetComposeServiceByName(applicationID uuid.UUID, serviceName string) (*shared_types.ComposeService, error) {
+	var svc shared_types.ComposeService
+	err := s.DB.NewSelect().
+		Model(&svc).
+		Where("application_id = ? AND service_name = ?", applicationID, serviceName).
+		Scan(s.Ctx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &svc, nil
+}
+
+// UpdateApplicationDomainService updates the compose service linkage and port override on an existing domain.
+func (s *DeployStorage) UpdateApplicationDomainService(applicationID uuid.UUID, domain string, composeServiceID *uuid.UUID, port *int) error {
+	_, err := s.DB.NewUpdate().
+		Model((*shared_types.ApplicationDomain)(nil)).
+		Set("compose_service_id = ?", composeServiceID).
+		Set("port = ?", port).
+		Where("application_id = ? AND LOWER(domain) = LOWER(?)", applicationID, domain).
+		Exec(s.Ctx)
+	return err
+}
+
+// AddApplicationDomainWithService adds a domain with optional compose service linkage and port override.
+func (s *DeployStorage) AddApplicationDomainWithService(applicationID uuid.UUID, domain string, composeServiceID *uuid.UUID, port *int) error {
+	if domain == "" {
+		return nil
+	}
+
+	exists, err := s.IsDomainAlreadyTaken(domain)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("domain %s is already taken", domain)
+	}
+
+	appDomain := &shared_types.ApplicationDomain{
+		ID:               uuid.New(),
+		ApplicationID:    applicationID,
+		Domain:           domain,
+		ComposeServiceID: composeServiceID,
+		Port:             port,
+		CreatedAt:        time.Now(),
+	}
+	_, err = s.DB.NewInsert().Model(appDomain).Exec(s.Ctx)
+	if err != nil {
+		return fmt.Errorf("failed to add domain %s: %w", domain, err)
+	}
+
+	return nil
 }

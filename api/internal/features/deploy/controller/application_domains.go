@@ -16,7 +16,9 @@ import (
 
 // AddApplicationDomainRequest represents a request to add a domain to an application
 type AddApplicationDomainRequest struct {
-	Domain string `json:"domain"`
+	Domain      string `json:"domain"`
+	ServiceName string `json:"service_name,omitempty"`
+	Port        *int   `json:"port,omitempty"`
 }
 
 // RemoveApplicationDomainRequest represents a request to remove a domain from an application
@@ -109,8 +111,22 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 		}
 	}
 
-	// Add domain
-	err = c.storage.AddApplicationDomains(appID, []string{data.Domain})
+	// Resolve compose service if service_name is provided
+	var composeServiceID *uuid.UUID
+	if data.ServiceName != "" {
+		svc, svcErr := c.storage.GetComposeServiceByName(appID, data.ServiceName)
+		if svcErr != nil {
+			return nil, fuego.HTTPError{
+				Err:    svcErr,
+				Status: http.StatusInternalServerError,
+			}
+		}
+		if svc != nil {
+			composeServiceID = &svc.ID
+		}
+	}
+
+	err = c.storage.AddApplicationDomainWithService(appID, data.Domain, composeServiceID, data.Port)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to add domain", err.Error())
 		return nil, fuego.HTTPError{
@@ -285,4 +301,130 @@ func (c *DeployController) syncApplicationDomains(appID uuid.UUID, organizationI
 	}
 
 	return nil
+}
+
+// syncComposeApplicationDomains syncs compose-specific domains, including service linkage and port overrides.
+func (c *DeployController) syncComposeApplicationDomains(appID uuid.UUID, organizationID uuid.UUID, composeDomains []types.ComposeDomain) error {
+	desiredSet := make(map[string]types.ComposeDomain)
+	for _, cd := range composeDomains {
+		trimmed := strings.TrimSpace(cd.Domain)
+		if trimmed != "" {
+			desiredSet[strings.ToLower(trimmed)] = cd
+		}
+	}
+
+	existingDomains, err := c.storage.GetApplicationDomains(appID)
+	if err != nil {
+		return err
+	}
+
+	existingSet := make(map[string]string) // lowercase -> actual domain
+	for _, d := range existingDomains {
+		existingSet[strings.ToLower(d.Domain)] = d.Domain
+	}
+
+	for existingLower, actualDomain := range existingSet {
+		if _, wanted := desiredSet[existingLower]; !wanted {
+			if err := c.storage.RemoveApplicationDomain(appID, actualDomain); err != nil {
+				return err
+			}
+			orgCtx := context.WithValue(c.ctx, shared_types.OrganizationIDKey, organizationID.String())
+			if err := caddy.RemoveDomainsWithRetry(orgCtx, nil, &c.logger, []string{actualDomain}); err != nil {
+				c.logger.Log(logger.Warning, "failed to remove domain from proxy, enqueueing for retry", err.Error())
+				if enqErr := caddy.EnqueuePendingRemoval(organizationID, actualDomain); enqErr != nil {
+					c.logger.Log(logger.Error, "failed to enqueue pending removal", enqErr.Error())
+				}
+			}
+		}
+	}
+
+	for desiredLower, cd := range desiredSet {
+		var composeServiceID *uuid.UUID
+		var port *int
+
+		if cd.ServiceName != "" {
+			svc, svcErr := c.storage.GetComposeServiceByName(appID, cd.ServiceName)
+			if svcErr != nil {
+				return svcErr
+			}
+			if svc != nil {
+				composeServiceID = &svc.ID
+			}
+		}
+		if cd.Port > 0 {
+			p := cd.Port
+			port = &p
+		}
+
+		if _, exists := existingSet[desiredLower]; exists {
+			if err := c.storage.UpdateApplicationDomainService(appID, cd.Domain, composeServiceID, port); err != nil {
+				return err
+			}
+		} else {
+			if err := c.storage.AddApplicationDomainWithService(appID, strings.TrimSpace(cd.Domain), composeServiceID, port); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// GetComposeServices returns the discovered compose services for an application.
+func (c *DeployController) GetComposeServices(f fuego.ContextNoBody) (*shared_types.Response, error) {
+	applicationID := f.QueryParam("id")
+	if applicationID == "" {
+		return nil, fuego.HTTPError{
+			Err:    types.ErrMissingID,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	user := utils.GetUser(f.Response(), f.Request())
+	if user == nil {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	organizationID := utils.GetOrganizationID(f.Request())
+	if organizationID == uuid.Nil {
+		return nil, fuego.HTTPError{
+			Err:    nil,
+			Status: http.StatusUnauthorized,
+		}
+	}
+
+	appID, err := uuid.Parse(applicationID)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusBadRequest,
+		}
+	}
+
+	// Verify application exists and user has access
+	_, err = c.service.GetApplicationById(applicationID, organizationID)
+	if err != nil {
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusNotFound,
+		}
+	}
+
+	services, err := c.storage.GetComposeServices(appID)
+	if err != nil {
+		c.logger.Log(logger.Error, "failed to get compose services", err.Error())
+		return nil, fuego.HTTPError{
+			Err:    err,
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	return &shared_types.Response{
+		Status:  "success",
+		Message: "Compose services fetched successfully",
+		Data:    services,
+	}, nil
 }
