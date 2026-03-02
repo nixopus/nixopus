@@ -32,6 +32,7 @@ type SSH struct {
 	PrivateKey          string `json:"private_key"`
 	PublicKey           string `json:"public_key"`
 	Host                string `json:"host"`
+	ProxyHost           string `json:"proxy_host"`
 	User                string `json:"user"`
 	Port                uint   `json:"port"`
 	Password            string `json:"password"`
@@ -723,6 +724,22 @@ func (m *SSHManager) GetSSHHost() (string, error) {
 	return sshClient.Host, nil
 }
 
+// GetUpstreamHost returns the proxy host for the organization if configured,
+// otherwise falls back to the SSH host.
+func (m *SSHManager) GetUpstreamHost() (string, error) {
+	sshClient, err := m.GetOrganizationSSH()
+	if err != nil {
+		return "", fmt.Errorf("failed to get organization SSH client: %w", err)
+	}
+	if sshClient.ProxyHost != "" {
+		return sshClient.ProxyHost, nil
+	}
+	if sshClient.Host == "" {
+		return "", fmt.Errorf("neither proxy host nor SSH host is configured for organization")
+	}
+	return sshClient.Host, nil
+}
+
 // GetSSHUser returns the SSH user for the organization's SSH client
 func (m *SSHManager) GetSSHUser() (string, error) {
 	sshClient, err := m.GetOrganizationSSH()
@@ -757,6 +774,7 @@ func NewSSHFromConfig(sshConfig *types.SSHConfig) *SSH {
 	return &SSH{
 		PrivateKey:          sshConfig.PrivateKey,
 		Host:                sshConfig.Host,
+		ProxyHost:           sshConfig.ProxyHost,
 		User:                sshConfig.User,
 		Port:                sshConfig.Port,
 		Password:            sshConfig.Password,

@@ -47,11 +47,13 @@ func (s *SSHKeyService) GetSSHConfigForOrganization(orgID uuid.UUID) (*types.SSH
 	privateKey := getStringValue(sshKey.PrivateKeyEncrypted)
 	password := getStringValue(sshKey.PasswordEncrypted)
 	host := getStringValue(sshKey.Host)
+	proxyHost := getStringValue(sshKey.ProxyHost)
 	user := getStringValue(sshKey.User)
 	port := getUintFromInt(sshKey.Port, 22)
 
 	config := &types.SSHConfig{
 		Host:                host,
+		ProxyHost:           proxyHost,
 		User:                user,
 		Port:                port,
 		PrivateKey:          privateKey,

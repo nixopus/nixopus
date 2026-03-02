@@ -80,6 +80,7 @@ type RedisConfig struct {
 
 type SSHConfig struct {
 	Host                string `mapstructure:"host" validate:"required"`
+	ProxyHost           string `mapstructure:"proxy_host"`
 	Port                uint   `mapstructure:"port"`
 	User                string `mapstructure:"user" validate:"required"`
 	Password            string `mapstructure:"password"`
