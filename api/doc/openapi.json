@@ -89,6 +89,15 @@
 				},
 				"type": "object"
 			},
+			"AddCustomDomainRequest": {
+				"description": "AddCustomDomainRequest schema",
+				"properties": {
+					"name": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"AdminRegisteredResponse": {
 				"description": "AdminRegisteredResponse schema",
 				"properties": {
@@ -312,41 +321,8 @@
 					},
 					"logs": {
 						"items": {
-							"nullable": true,
-							"properties": {
-								"application": {
-									"$ref": "#/components/schemas/Application"
-								},
-								"application_deployment": {
-									"$ref": "#/components/schemas/ApplicationDeployment"
-								},
-								"application_deployment_id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"application_id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"created_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"log": {
-									"type": "string"
-								},
-								"updated_at": {
-									"format": "date-time",
-									"type": "string"
-								}
-							},
-							"type": "object"
+							"$ref": "#/components/schemas/ApplicationLogs"
 						},
-						"nullable": true,
 						"type": "array"
 					},
 					"name": {
@@ -397,6 +373,9 @@
 						"type": "string"
 					},
 					"repository": {
+						"type": "string"
+					},
+					"source": {
 						"type": "string"
 					},
 					"status": {
@@ -876,6 +855,9 @@
 								"type": "string"
 							},
 							"repository": {
+								"type": "string"
+							},
+							"source": {
 								"type": "string"
 							},
 							"status": {
@@ -1360,6 +1342,9 @@
 										"repository": {
 											"type": "string"
 										},
+										"source": {
+											"type": "string"
+										},
 										"status": {
 											"nullable": true,
 											"properties": {
@@ -1625,7 +1610,41 @@
 						"type": "string"
 					},
 					"compose_service": {
-						"$ref": "#/components/schemas/ComposeService"
+						"nullable": true,
+						"properties": {
+							"application": {
+								"$ref": "#/components/schemas/Application"
+							},
+							"application_id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"domains": {
+								"items": {
+									"$ref": "#/components/schemas/ApplicationDomain"
+								},
+								"type": "array"
+							},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"port": {
+								"type": "integer"
+							},
+							"service_name": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							}
+						},
+						"type": "object"
 					},
 					"compose_service_id": {
 						"format": "uuid",
@@ -1653,7 +1672,451 @@
 				"nullable": true,
 				"properties": {
 					"application": {
-						"$ref": "#/components/schemas/Application"
+						"nullable": true,
+						"properties": {
+							"base_path": {
+								"type": "string"
+							},
+							"branch": {
+								"type": "string"
+							},
+							"build_pack": {
+								"type": "string"
+							},
+							"build_variables": {
+								"type": "string"
+							},
+							"compose_services": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"application": {
+											"$ref": "#/components/schemas/Application"
+										},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"domains": {
+											"items": {
+												"nullable": true,
+												"properties": {
+													"application": {
+														"$ref": "#/components/schemas/Application"
+													},
+													"application_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"compose_service": {
+														"$ref": "#/components/schemas/ComposeService"
+													},
+													"compose_service_id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"created_at": {
+														"format": "date-time",
+														"type": "string"
+													},
+													"domain": {
+														"type": "string"
+													},
+													"id": {
+														"format": "uuid",
+														"type": "string"
+													},
+													"port": {
+														"nullable": true,
+														"type": "integer"
+													}
+												},
+												"type": "object"
+											},
+											"nullable": true,
+											"type": "array"
+										},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"port": {
+											"type": "integer"
+										},
+										"service_name": {
+											"type": "string"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"nullable": true,
+								"type": "array"
+							},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deployments": {
+								"items": {
+									"$ref": "#/components/schemas/ApplicationDeployment"
+								},
+								"nullable": true,
+								"type": "array"
+							},
+							"dockerfile_path": {
+								"type": "string"
+							},
+							"domains": {
+								"items": {
+									"nullable": true,
+									"properties": {
+										"application": {
+											"$ref": "#/components/schemas/Application"
+										},
+										"application_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"compose_service": {
+											"nullable": true,
+											"properties": {
+												"application": {
+													"$ref": "#/components/schemas/Application"
+												},
+												"application_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"domains": {
+													"items": {
+														"$ref": "#/components/schemas/ApplicationDomain"
+													},
+													"type": "array"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"port": {
+													"type": "integer"
+												},
+												"service_name": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"compose_service_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"domain": {
+											"type": "string"
+										},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"port": {
+											"nullable": true,
+											"type": "integer"
+										}
+									},
+									"type": "object"
+								},
+								"nullable": true,
+								"type": "array"
+							},
+							"environment": {
+								"type": "string"
+							},
+							"environment_variables": {
+								"type": "string"
+							},
+							"family_id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"is_live_deployment": {
+								"type": "boolean"
+							},
+							"labels": {
+								"items": {
+									"nullable": true,
+									"type": "string"
+								},
+								"nullable": true,
+								"type": "array"
+							},
+							"logs": {
+								"items": {
+									"$ref": "#/components/schemas/ApplicationLogs"
+								},
+								"type": "array"
+							},
+							"name": {
+								"type": "string"
+							},
+							"organization": {
+								"nullable": true,
+								"properties": {
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
+									"logo": {
+										"nullable": true,
+										"type": "string"
+									},
+									"metadata": {
+										"nullable": true,
+										"type": "string"
+									},
+									"name": {
+										"type": "string"
+									},
+									"slug": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"organization_id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"port": {
+								"type": "integer"
+							},
+							"post_run_command": {
+								"type": "string"
+							},
+							"pre_run_command": {
+								"type": "string"
+							},
+							"proxy_server": {
+								"type": "string"
+							},
+							"repository": {
+								"type": "string"
+							},
+							"source": {
+								"type": "string"
+							},
+							"status": {
+								"nullable": true,
+								"properties": {
+									"application": {
+										"$ref": "#/components/schemas/Application"
+									},
+									"application_id": {
+										"format": "uuid",
+										"type": "string"
+									},
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
+									"status": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"user": {
+								"nullable": true,
+								"properties": {
+									"avatar": {
+										"type": "string"
+									},
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"email": {
+										"type": "string"
+									},
+									"email_verified": {
+										"type": "boolean"
+									},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
+									"image": {
+										"nullable": true,
+										"type": "string"
+									},
+									"is_onboarded": {
+										"type": "boolean"
+									},
+									"is_verified": {
+										"type": "boolean"
+									},
+									"name": {
+										"type": "string"
+									},
+									"organization_users": {
+										"items": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"deleted_at": {
+													"format": "date-time",
+													"nullable": true,
+													"type": "string"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"organization": {
+													"nullable": true,
+													"properties": {
+														"created_at": {
+															"format": "date-time",
+															"type": "string"
+														},
+														"id": {
+															"format": "uuid",
+															"type": "string"
+														},
+														"logo": {
+															"nullable": true,
+															"type": "string"
+														},
+														"metadata": {
+															"nullable": true,
+															"type": "string"
+														},
+														"name": {
+															"type": "string"
+														},
+														"slug": {
+															"type": "string"
+														}
+													},
+													"type": "object"
+												},
+												"organization_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"user": {
+													"$ref": "#/components/schemas/User"
+												},
+												"user_id": {
+													"format": "uuid",
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"nullable": true,
+										"type": "array"
+									},
+									"organizations": {
+										"items": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"logo": {
+													"nullable": true,
+													"type": "string"
+												},
+												"metadata": {
+													"nullable": true,
+													"type": "string"
+												},
+												"name": {
+													"type": "string"
+												},
+												"slug": {
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"nullable": true,
+										"type": "array"
+									},
+									"provision_status": {
+										"nullable": true,
+										"type": "string"
+									},
+									"supertokens_user_id": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"username": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"user_id": {
+								"format": "uuid",
+								"type": "string"
+							}
+						},
+						"type": "object"
 					},
 					"application_deployment": {
 						"$ref": "#/components/schemas/ApplicationDeployment"
@@ -2163,6 +2626,9 @@
 								"type": "string"
 							},
 							"repository": {
+								"type": "string"
+							},
+							"source": {
 								"type": "string"
 							},
 							"status": {
@@ -2681,6 +3147,10 @@
 					},
 					"repository": {
 						"type": "string"
+					},
+					"source": {
+						"nullable": true,
+						"type": "string"
 					}
 				},
 				"type": "object"
@@ -2689,39 +3159,6 @@
 				"description": "CreateDirectoryRequest schema",
 				"properties": {
 					"path": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"CreateDomainRequest": {
-				"description": "CreateDomainRequest schema",
-				"properties": {
-					"name": {
-						"type": "string"
-					},
-					"organization_id": {
-						"format": "uuid",
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"CreateDomainResponseWrapper": {
-				"description": "CreateDomainResponseWrapper schema",
-				"properties": {
-					"data": {
-						"properties": {
-							"id": {
-								"type": "string"
-							}
-						},
-						"type": "object"
-					},
-					"message": {
-						"type": "string"
-					},
-					"status": {
 						"type": "string"
 					}
 				},
@@ -2910,6 +3347,10 @@
 					},
 					"repository": {
 						"type": "string"
+					},
+					"source": {
+						"nullable": true,
+						"type": "string"
 					}
 				},
 				"type": "object"
@@ -2957,6 +3398,175 @@
 				],
 				"type": "object"
 			},
+			"CustomDomainResponse": {
+				"description": "CustomDomainResponse schema",
+				"properties": {
+					"data": {
+						"nullable": true,
+						"properties": {
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deleted_at": {
+								"format": "date-time",
+								"nullable": true,
+								"type": "string"
+							},
+							"dns_provider": {
+								"nullable": true,
+								"type": "string"
+							},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							},
+							"organization_id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"status": {
+								"type": "string"
+							},
+							"target_subdomain": {
+								"nullable": true,
+								"type": "string"
+							},
+							"type": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"user_id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"verification_token": {
+								"nullable": true,
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"DNSCheckResponse": {
+				"description": "DNSCheckResponse schema",
+				"properties": {
+					"dns_status": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					},
+					"verified": {
+						"type": "boolean"
+					}
+				},
+				"type": "object"
+			},
+			"DNSSetupResponse": {
+				"description": "DNSSetupResponse schema",
+				"properties": {
+					"data": {
+						"nullable": true,
+						"properties": {
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"deleted_at": {
+								"format": "date-time",
+								"nullable": true,
+								"type": "string"
+							},
+							"dns_provider": {
+								"nullable": true,
+								"type": "string"
+							},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"name": {
+								"type": "string"
+							},
+							"organization_id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"status": {
+								"type": "string"
+							},
+							"target_subdomain": {
+								"nullable": true,
+								"type": "string"
+							},
+							"type": {
+								"type": "string"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"user_id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"verification_token": {
+								"nullable": true,
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"dns_provider": {
+						"type": "string"
+					},
+					"instructions": {
+						"items": {
+							"properties": {
+								"description": {
+									"type": "string"
+								},
+								"name": {
+									"type": "string"
+								},
+								"record_type": {
+									"type": "string"
+								},
+								"value": {
+									"type": "string"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"DeleteDeploymentRequest": {
 				"description": "DeleteDeploymentRequest schema",
 				"properties": {
@@ -2971,15 +3581,6 @@
 				"description": "DeleteDirectoryRequest schema",
 				"properties": {
 					"path": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"DeleteDomainRequest": {
-				"description": "DeleteDomainRequest schema",
-				"properties": {
-					"id": {
 						"type": "string"
 					}
 				},
@@ -3322,6 +3923,9 @@
 										"type": "string"
 									},
 									"repository": {
+										"type": "string"
+									},
+									"source": {
 										"type": "string"
 									},
 									"status": {
@@ -3806,6 +4410,9 @@
 												"repository": {
 													"type": "string"
 												},
+												"source": {
+													"type": "string"
+												},
 												"status": {
 													"nullable": true,
 													"properties": {
@@ -4055,52 +4662,6 @@
 							},
 							"updated_at": {
 								"format": "date-time",
-								"type": "string"
-							}
-						},
-						"type": "object"
-					},
-					"message": {
-						"type": "string"
-					},
-					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"DomainResponse": {
-				"description": "DomainResponse schema",
-				"properties": {
-					"data": {
-						"nullable": true,
-						"properties": {
-							"created_at": {
-								"format": "date-time",
-								"type": "string"
-							},
-							"deleted_at": {
-								"format": "date-time",
-								"nullable": true,
-								"type": "string"
-							},
-							"id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"name": {
-								"type": "string"
-							},
-							"organization_id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"updated_at": {
-								"format": "date-time",
-								"type": "string"
-							},
-							"user_id": {
-								"format": "uuid",
 								"type": "string"
 							}
 						},
@@ -5738,6 +6299,9 @@
 										"repository": {
 											"type": "string"
 										},
+										"source": {
+											"type": "string"
+										},
 										"status": {
 											"nullable": true,
 											"properties": {
@@ -6764,6 +7328,9 @@
 												"repository": {
 													"type": "string"
 												},
+												"source": {
+													"type": "string"
+												},
 												"status": {
 													"nullable": true,
 													"properties": {
@@ -7246,6 +7813,9 @@
 															"repository": {
 																"type": "string"
 															},
+															"source": {
+																"type": "string"
+															},
 															"status": {
 																"nullable": true,
 																"properties": {
@@ -7538,6 +8108,10 @@
 									"nullable": true,
 									"type": "string"
 								},
+								"dns_provider": {
+									"nullable": true,
+									"type": "string"
+								},
 								"id": {
 									"format": "uuid",
 									"type": "string"
@@ -7549,12 +8123,26 @@
 									"format": "uuid",
 									"type": "string"
 								},
+								"status": {
+									"type": "string"
+								},
+								"target_subdomain": {
+									"nullable": true,
+									"type": "string"
+								},
+								"type": {
+									"type": "string"
+								},
 								"updated_at": {
 									"format": "date-time",
 									"type": "string"
 								},
 								"user_id": {
 									"format": "uuid",
+									"type": "string"
+								},
+								"verification_token": {
+									"nullable": true,
 									"type": "string"
 								}
 							},
@@ -8871,6 +9459,10 @@
 															"nullable": true,
 															"type": "integer"
 														},
+														"proxy_host": {
+															"nullable": true,
+															"type": "string"
+														},
 														"public_key": {
 															"nullable": true,
 															"type": "string"
@@ -9056,6 +9648,10 @@
 												}
 											},
 											"type": "object"
+										},
+										"proxy_host": {
+											"nullable": true,
+											"type": "string"
 										},
 										"public_key": {
 											"nullable": true,
@@ -9441,6 +10037,9 @@
 													"type": "string"
 												},
 												"repository": {
+													"type": "string"
+												},
+												"source": {
 													"type": "string"
 												},
 												"status": {
@@ -9889,6 +10488,9 @@
 															"type": "string"
 														},
 														"repository": {
+															"type": "string"
+														},
+														"source": {
 															"type": "string"
 														},
 														"status": {
@@ -10868,6 +11470,9 @@
 										"repository": {
 											"type": "string"
 										},
+										"source": {
+											"type": "string"
+										},
 										"status": {
 											"nullable": true,
 											"properties": {
@@ -11280,6 +11885,15 @@
 				},
 				"type": "object"
 			},
+			"RemoveCustomDomainRequest": {
+				"description": "RemoveCustomDomainRequest schema",
+				"properties": {
+					"id": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"Response": {
 				"description": "Response schema",
 				"properties": {
@@ -11400,6 +12014,66 @@
 					},
 					"is_configured": {
 						"type": "boolean"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"SendNotificationRequest": {
+				"description": "SendNotificationRequest schema",
+				"properties": {
+					"channel": {
+						"type": "string"
+					},
+					"message": {
+						"type": "string"
+					},
+					"metadata": {
+						"additionalProperties": {
+							"nullable": true,
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "object"
+					},
+					"subject": {
+						"nullable": true,
+						"type": "string"
+					},
+					"to": {
+						"nullable": true,
+						"type": "string"
+					}
+				},
+				"required": [
+					"channel",
+					"message"
+				],
+				"type": "object"
+			},
+			"SendNotificationResponse": {
+				"description": "SendNotificationResponse schema",
+				"properties": {
+					"data": {
+						"nullable": true,
+						"properties": {
+							"channel": {
+								"type": "string"
+							},
+							"error": {
+								"nullable": true,
+								"type": "string"
+							},
+							"success": {
+								"type": "boolean"
+							}
+						},
+						"type": "object"
 					},
 					"message": {
 						"type": "string"
@@ -11605,18 +12279,6 @@
 					},
 					"pre_run_command": {
 						"nullable": true,
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"UpdateDomainRequest": {
-				"description": "UpdateDomainRequest schema",
-				"properties": {
-					"id": {
-						"type": "string"
-					},
-					"name": {
 						"type": "string"
 					}
 				},
@@ -12677,6 +13339,15 @@
 						"type": "string"
 					},
 					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"VerifyCustomDomainRequest": {
+				"description": "VerifyCustomDomainRequest schema",
+				"properties": {
+					"id": {
 						"type": "string"
 					}
 				},
@@ -15857,9 +16528,78 @@
 			}
 		},
 		"/api/v1/domain": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).GetDomains`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "GET_/api/v1/domain",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ListDomainsResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/ListDomainsResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "get domains",
+				"tags": [
+					"api/v1/domain"
+				]
+			}
+		},
+		"/api/v1/domain/custom": {
 			"delete": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).DeleteDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
-				"operationId": "DELETE_/api/v1/domain",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).HandleRemoveCustomDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "DELETE_/api/v1/domain/custom",
 				"parameters": [
 					{
 						"in": "header",
@@ -15873,11 +16613,11 @@
 					"content": {
 						"*/*": {
 							"schema": {
-								"$ref": "#/components/schemas/DeleteDomainRequest"
+								"$ref": "#/components/schemas/RemoveCustomDomainRequest"
 							}
 						}
 					},
-					"description": "Request body for types.DeleteDomainRequest",
+					"description": "Request body for types.RemoveCustomDomainRequest",
 					"required": true
 				},
 				"responses": {
@@ -15930,14 +16670,14 @@
 						"description": ""
 					}
 				},
-				"summary": "delete domain",
+				"summary": "handle remove custom domain",
 				"tags": [
 					"api/v1/domain"
 				]
 			},
 			"post": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).CreateDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
-				"operationId": "POST_/api/v1/domain",
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).HandleAddCustomDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/domain/custom",
 				"parameters": [
 					{
 						"in": "header",
@@ -15951,11 +16691,11 @@
 					"content": {
 						"*/*": {
 							"schema": {
-								"$ref": "#/components/schemas/CreateDomainRequest"
+								"$ref": "#/components/schemas/AddCustomDomainRequest"
 							}
 						}
 					},
-					"description": "Request body for types.CreateDomainRequest",
+					"description": "Request body for types.AddCustomDomainRequest",
 					"required": true
 				},
 				"responses": {
@@ -15963,12 +16703,12 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/CreateDomainResponseWrapper"
+									"$ref": "#/components/schemas/DNSSetupResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/CreateDomainResponseWrapper"
+									"$ref": "#/components/schemas/DNSSetupResponse"
 								}
 							}
 						},
@@ -16008,14 +16748,16 @@
 						"description": ""
 					}
 				},
-				"summary": "create domain",
+				"summary": "handle add custom domain",
 				"tags": [
 					"api/v1/domain"
 				]
-			},
-			"put": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).UpdateDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
-				"operationId": "PUT_/api/v1/domain",
+			}
+		},
+		"/api/v1/domain/dns-check": {
+			"get": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).HandleCheckDNSStatus`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "GET_/api/v1/domain/dns-check",
 				"parameters": [
 					{
 						"in": "header",
@@ -16025,28 +16767,17 @@
 						}
 					}
 				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"schema": {
-								"$ref": "#/components/schemas/UpdateDomainRequest"
-							}
-						}
-					},
-					"description": "Request body for types.UpdateDomainRequest",
-					"required": true
-				},
 				"responses": {
 					"200": {
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/DomainResponse"
+									"$ref": "#/components/schemas/DNSCheckResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/DomainResponse"
+									"$ref": "#/components/schemas/DNSCheckResponse"
 								}
 							}
 						},
@@ -16086,7 +16817,7 @@
 						"description": ""
 					}
 				},
-				"summary": "update domain",
+				"summary": "handle check d n s status",
 				"tags": [
 					"api/v1/domain"
 				]
@@ -16161,10 +16892,10 @@
 				]
 			}
 		},
-		"/api/v1/domains": {
-			"get": {
-				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).GetDomains`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
-				"operationId": "GET_/api/v1/domains",
+		"/api/v1/domain/verify": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/domain/controller.(*DomainsController).HandleVerifyCustomDomain`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/domain/verify",
 				"parameters": [
 					{
 						"in": "header",
@@ -16174,17 +16905,28 @@
 						}
 					}
 				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/VerifyCustomDomainRequest"
+							}
+						}
+					},
+					"description": "Request body for types.VerifyCustomDomainRequest",
+					"required": true
+				},
 				"responses": {
 					"200": {
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/ListDomainsResponse"
+									"$ref": "#/components/schemas/CustomDomainResponse"
 								}
 							},
 							"application/xml": {
 								"schema": {
-									"$ref": "#/components/schemas/ListDomainsResponse"
+									"$ref": "#/components/schemas/CustomDomainResponse"
 								}
 							}
 						},
@@ -16224,9 +16966,9 @@
 						"description": ""
 					}
 				},
-				"summary": "get domains",
+				"summary": "handle verify custom domain",
 				"tags": [
-					"api/v1/domains"
+					"api/v1/domain"
 				]
 			}
 		},
@@ -19028,6 +19770,86 @@
 				]
 			}
 		},
+		"/api/v1/notification/send": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).SendNotification`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
+				"operationId": "POST_/api/v1/notification/send",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/SendNotificationRequest"
+							}
+						}
+					},
+					"description": "Request body for notification.SendNotificationRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/SendNotificationResponse"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/SendNotificationResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "send notification",
+				"tags": [
+					"api/v1/notification"
+				]
+			}
+		},
 		"/api/v1/notification/smtp": {
 			"delete": {
 				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/notification/controller.(*NotificationController).DeleteSmtp`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).SetupRoutes.(*Router).setupAuthentication.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func1`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func2`\n- `github.com/raghavyuva/nixopus-api/internal/routes.(*Router).applyMiddleware.func3`\n\n---\n\n",
@@ -21228,9 +22050,6 @@
 		},
 		{
 			"name": "api/v1/domain"
-		},
-		{
-			"name": "api/v1/domains"
 		},
 		{
 			"name": "api/v1/extensions"

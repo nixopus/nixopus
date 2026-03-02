@@ -8,6 +8,7 @@ import { Skeleton } from '@nixopus/ui';
 import { Alert, AlertDescription } from '@nixopus/ui';
 import { DialogWrapper, type DialogAction } from '@nixopus/ui';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
+import { useSudoMode } from '@/packages/hooks/security/use-sudo-mode';
 import {
   Github,
   Settings,
@@ -412,6 +413,7 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
 }) => {
   const { t } = useTranslation();
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
+  const { requireSudo } = useSudoMode();
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -419,8 +421,10 @@ const ConnectorItem: React.FC<ConnectorItemProps> = ({
   };
 
   const confirmDelete = () => {
-    onDelete(connector.id);
-    setShowDeleteDialog(false);
+    requireSudo(() => {
+      onDelete(connector.id);
+      setShowDeleteDialog(false);
+    });
   };
 
   const handleCardClick = () => {

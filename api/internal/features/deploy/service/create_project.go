@@ -40,6 +40,11 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 	// This allows grouping multiple apps (monorepo) or environments (duplicates)
 	familyID := uuid.New()
 
+	source := req.Source
+	if source == "" {
+		source = shared_types.SourceGithub
+	}
+
 	application := shared_types.Application{
 		ID:                   uuid.New(),
 		Name:                 req.Name,
@@ -59,6 +64,7 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 		BasePath:             basePath,
 		OrganizationID:       organizationID,
 		FamilyID:             &familyID,
+		Source:               source,
 	}
 
 	// Begin transaction for atomicity

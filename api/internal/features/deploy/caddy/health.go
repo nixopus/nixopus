@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/melbahja/goph"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
@@ -185,7 +186,7 @@ func (h *HealthMonitor) checkServer(ctx context.Context, orgID uuid.UUID) {
 		health := h.GetServerHealth(orgID)
 		if health != nil && health.FailCount >= 3 && h.shouldAttemptRestart(orgID) {
 			h.logger.Log(logger.Warning,
-				fmt.Sprintf("caddy on %s unreachable for %d consecutive checks, attempting container restart", host, health.FailCount),
+				fmt.Sprintf("caddy on %s unreachable for %d consecutive checks, attempting recovery", host, health.FailCount),
 				orgID.String())
 			h.attemptCaddyRestart(orgCtx, orgID, host)
 		}
@@ -279,34 +280,111 @@ func (h *HealthMonitor) attemptCaddyRestart(ctx context.Context, orgID uuid.UUID
 	}
 	defer conn.Close()
 
+	// Strategy 1: Try Docker container restart.
+	dockerRestarted, containerMissing := h.tryDockerRestart(conn, orgID, host)
+	if dockerRestarted {
+		h.recordRestartAttempt(orgID, false)
+		h.logger.Log(logger.Info, fmt.Sprintf("caddy container restarted on %s", host), orgID.String())
+		InvalidateTunnel(host)
+		return
+	}
+
+	if !containerMissing {
+		// Docker restart failed for a reason other than missing container.
+		h.recordRestartAttempt(orgID, false)
+		return
+	}
+
+	// Strategy 2: No Docker container — Caddy may run as a systemd service.
+	// Check if the admin API is already reachable (the health-check failure
+	// may have been caused by a stale SSH tunnel, not a dead Caddy).
+	if h.isCaddyAPIReachable(conn, host) {
+		h.logger.Log(logger.Info,
+			fmt.Sprintf("caddy on %s runs as a system service, admin API is reachable — refreshing tunnel", host),
+			orgID.String())
+		h.recordRestartAttempt(orgID, false)
+		InvalidateTunnel(host)
+		return
+	}
+
+	// Strategy 3: Admin API not reachable — try systemd restart.
+	if h.trySystemdRestart(conn, orgID, host) {
+		h.recordRestartAttempt(orgID, false)
+		h.logger.Log(logger.Info, fmt.Sprintf("caddy systemd service restarted on %s", host), orgID.String())
+		InvalidateTunnel(host)
+		return
+	}
+
+	h.recordRestartAttempt(orgID, true)
+	h.logger.Log(logger.Warning,
+		fmt.Sprintf("caddy on %s: no Docker container and systemd restart failed, will retry with backoff", host),
+		orgID.String())
+}
+
+// tryDockerRestart attempts to restart the Caddy Docker container.
+// Returns (true, false) on success, (false, true) when the container doesn't
+// exist, and (false, false) on other failures.
+func (h *HealthMonitor) tryDockerRestart(conn *goph.Client, orgID uuid.UUID, host string) (restarted, containerMissing bool) {
 	session, err := conn.NewSession()
 	if err != nil {
-		h.logger.Log(logger.Error, "failed to create SSH session for caddy restart", err.Error())
-		return
+		h.logger.Log(logger.Error, "failed to create SSH session for docker restart", err.Error())
+		return false, false
 	}
 	defer session.Close()
 
 	output, err := session.CombinedOutput("docker restart nixopus-caddy")
 	if err != nil {
 		missing := strings.Contains(string(output), "No such container")
-		h.recordRestartAttempt(orgID, missing)
-
-		if missing {
-			h.logger.Log(logger.Warning,
-				fmt.Sprintf("caddy container does not exist on %s, will retry with backoff", host),
-				orgID.String())
-		} else {
+		if !missing {
 			h.logger.Log(logger.Error,
 				fmt.Sprintf("caddy container restart failed on %s", host),
 				fmt.Sprintf("error: %v, output: %s", err, string(output)))
 		}
-		return
+		return false, missing
+	}
+	return true, false
+}
+
+// isCaddyAPIReachable checks whether the Caddy admin API responds on the
+// remote host via a direct SSH command, bypassing the cached tunnel.
+func (h *HealthMonitor) isCaddyAPIReachable(conn *goph.Client, host string) bool {
+	session, err := conn.NewSession()
+	if err != nil {
+		return false
+	}
+	defer session.Close()
+
+	port, err := parseCaddyEndpointPort()
+	if err != nil {
+		port = defaultCaddyPort
 	}
 
-	h.recordRestartAttempt(orgID, false)
-	h.logger.Log(logger.Info, fmt.Sprintf("caddy container restarted on %s", host), orgID.String())
+	cmd := fmt.Sprintf(
+		"curl -sf --max-time 5 http://127.0.0.1:%s/config/ || wget -qO- --timeout=5 http://127.0.0.1:%s/config/",
+		port, port,
+	)
+	output, err := session.CombinedOutput(cmd)
+	return err == nil && len(output) > 0
+}
 
-	InvalidateTunnel(host)
+// trySystemdRestart attempts to restart Caddy via systemd, trying common
+// service names (caddy-api, caddy).
+func (h *HealthMonitor) trySystemdRestart(conn *goph.Client, orgID uuid.UUID, host string) bool {
+	session, err := conn.NewSession()
+	if err != nil {
+		h.logger.Log(logger.Error, "failed to create SSH session for systemd restart", err.Error())
+		return false
+	}
+	defer session.Close()
+
+	output, err := session.CombinedOutput("systemctl restart caddy-api 2>/dev/null || systemctl restart caddy 2>/dev/null")
+	if err != nil {
+		h.logger.Log(logger.Warning,
+			fmt.Sprintf("caddy systemd restart failed on %s", host),
+			fmt.Sprintf("error: %v, output: %s", err, string(output)))
+		return false
+	}
+	return true
 }
 
 // triggerReconciliation enqueues a reconcile job via Redis instead of running

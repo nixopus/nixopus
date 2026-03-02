@@ -88,6 +88,7 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 		FamilyID:             &familyID,
 		ProxyServer:          sourceProject.ProxyServer,
 		Labels:               sourceProject.Labels,
+		Source:               sourceProject.Source,
 	}
 
 	// Save the new project

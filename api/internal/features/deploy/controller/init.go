@@ -5,10 +5,8 @@ import (
 	"context"
 	"io"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
@@ -24,17 +22,15 @@ import (
 )
 
 type DeployController struct {
-	store            *shared_storage.Store
-	validator        *validation.Validator
-	service          *service.DeployService
-	storage          *storage.DeployStorage
-	ctx              context.Context
-	logger           logger.Logger
-	notification     *notification.NotificationManager
-	taskService      *tasks.TaskService
-	reconcilerDaemon *caddy.ReconcilerDaemon
-	healthMonitor    *caddy.HealthMonitor
-	githubService    *github_service.GithubConnectorService
+	store         *shared_storage.Store
+	validator     *validation.Validator
+	service       *service.DeployService
+	storage       *storage.DeployStorage
+	ctx           context.Context
+	logger        logger.Logger
+	notification  *notification.NotificationManager
+	taskService   *tasks.TaskService
+	githubService *github_service.GithubConnectorService
 }
 
 func NewDeployController(
@@ -48,31 +44,28 @@ func NewDeployController(
 	taskService := tasks.NewTaskService(&deployStorage, l, github_service, store)
 	taskService.SetupCreateDeploymentQueue()
 
-	orgFetcher := newOrgFetcher(store)
-
-	reconcilerDaemon := caddy.NewReconcilerDaemon(&deployStorage, l, 5*time.Minute, orgFetcher)
-	reconcilerDaemon.SetupQueues()
-
-	healthMonitor := caddy.NewHealthMonitor(l, reconcilerDaemon.Reconciler(), 30*time.Second, orgFetcher)
-	healthMonitor.SetupQueue()
+	// TODO: Re-enable reconciler and health monitor once systemd-based Caddy
+	// support is fully validated on trail VMs.
+	// orgFetcher := newOrgFetcher(store)
+	// reconcilerDaemon := caddy.NewReconcilerDaemon(&deployStorage, l, 5*time.Minute, orgFetcher)
+	// reconcilerDaemon.SetupQueues()
+	// healthMonitor := caddy.NewHealthMonitor(l, reconcilerDaemon.Reconciler(), 30*time.Second, orgFetcher)
+	// healthMonitor.SetupQueue()
+	// reconcilerDaemon.Start(ctx)
+	// healthMonitor.Start(ctx)
 
 	taskService.StartConsumers(ctx)
 
-	reconcilerDaemon.Start(ctx)
-	healthMonitor.Start(ctx)
-
 	return &DeployController{
-		store:            store,
-		validator:        validation.NewValidator(),
-		service:          service.NewDeployService(store, ctx, l, &deployStorage),
-		storage:          &deployStorage,
-		ctx:              ctx,
-		logger:           l,
-		notification:     notificationManager,
-		taskService:      taskService,
-		reconcilerDaemon: reconcilerDaemon,
-		healthMonitor:    healthMonitor,
-		githubService:    github_service,
+		store:         store,
+		validator:     validation.NewValidator(),
+		service:       service.NewDeployService(store, ctx, l, &deployStorage),
+		storage:       &deployStorage,
+		ctx:           ctx,
+		logger:        l,
+		notification:  notificationManager,
+		taskService:   taskService,
+		githubService: github_service,
 	}, nil
 }
 

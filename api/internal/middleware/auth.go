@@ -23,12 +23,32 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		// Verify Better Auth session
 		sessionResp, err := betterauth.VerifySession(r)
 		if err != nil {
-			log.Printf("ERROR AuthMiddleware: Session auth failed for path %s: %v", r.URL.Path, err)
-			utils.SendErrorResponse(w, "Unauthorized: "+err.Error(), http.StatusUnauthorized)
-			return
+			apiKeyHeader := r.Header.Get("x-api-key")
+			if apiKeyHeader == "" {
+				log.Printf("ERROR AuthMiddleware: Session auth failed for path %s: %v", r.URL.Path, err)
+				utils.SendErrorResponse(w, "Unauthorized: "+err.Error(), http.StatusUnauthorized)
+				return
+			}
+			apiKeyReq, reqErr := http.NewRequest("GET", "", nil)
+			if reqErr != nil {
+				utils.SendErrorResponse(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+			apiKeyReq.Header.Set("x-api-key", apiKeyHeader)
+			if origin := r.Header.Get("Origin"); origin != "" {
+				apiKeyReq.Header.Set("Origin", origin)
+			}
+			if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" {
+				apiKeyReq.Header.Set("X-Forwarded-Proto", proto)
+			}
+			sessionResp, err = betterauth.VerifySession(apiKeyReq)
+			if err != nil {
+				log.Printf("ERROR AuthMiddleware: API key auth failed for path %s: %v", r.URL.Path, err)
+				utils.SendErrorResponse(w, "Unauthorized: invalid API key", http.StatusUnauthorized)
+				return
+			}
 		}
 
 		betterAuthUserID := sessionResp.User.ID

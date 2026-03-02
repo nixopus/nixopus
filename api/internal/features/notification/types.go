@@ -275,3 +275,17 @@ type DeleteWebhookConfigRequest struct {
 type GetWebhookConfigRequest struct {
 	Type string `json:"type" validate:"required,oneof=slack discord"`
 }
+
+type SendNotificationRequest struct {
+	Channel  string            `json:"channel" validate:"required,oneof=slack discord email"`
+	Message  string            `json:"message" validate:"required"`
+	Subject  string            `json:"subject,omitempty"`
+	To       string            `json:"to,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
+}
+
+type SendNotificationResponse struct {
+	Channel string `json:"channel"`
+	Success bool   `json:"success"`
+	Error   string `json:"error,omitempty"`
+}

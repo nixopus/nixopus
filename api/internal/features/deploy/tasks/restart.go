@@ -59,6 +59,8 @@ func (s *TaskService) HandleRestartDockerfileDeployment(ctx context.Context, Tas
 
 	taskCtx.LogAndUpdateStatus("Restarting application service", shared_types.Deploying)
 
+	ctx = context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
+
 	dockerService, err := s.getDockerService(ctx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to get docker service: "+err.Error(), shared_types.Failed)

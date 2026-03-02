@@ -103,6 +103,7 @@ import {
   getExecutionMessageDisplay
 } from '@/packages/lib/workflow-utils';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
+import { useSudoMode } from '@/packages/hooks/security/use-sudo-mode';
 
 function StatusIndicator({ status }: { status: NodeExecutionStatus }) {
   switch (status) {
@@ -1092,6 +1093,7 @@ export function WorkflowsList({ applicationId }: { applicationId: string }) {
     applicationId
   });
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name?: string } | null>(null);
+  const { requireSudo } = useSudoMode();
   if (!isConfigured) {
     return (
       <div className="flex h-full w-full items-center justify-center py-16">
@@ -1151,10 +1153,12 @@ export function WorkflowsList({ applicationId }: { applicationId: string }) {
       </div>
     );
   }
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (!deleteTarget) return;
-    await deleteWorkflow(deleteTarget.id);
-    setDeleteTarget(null);
+    requireSudo(async () => {
+      await deleteWorkflow(deleteTarget.id);
+      setDeleteTarget(null);
+    });
   };
   return (
     <div className="space-y-4">

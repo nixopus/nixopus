@@ -25,6 +25,7 @@ import { DataTable } from '@nixopus/ui';
 import { ExternalLink, Check, GitFork, Trash2, ChevronDown } from 'lucide-react';
 import { CardDescription } from '@nixopus/ui';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
+import { useSudoMode } from '@/packages/hooks/security/use-sudo-mode';
 import {
   CategoryBadgesProps,
   ExtensionsGridProps,
@@ -446,6 +447,7 @@ export function ExtensionCard({
   t,
   confirmOpen
 }: ExtensionCardProps) {
+  const { requireSudo } = useSudoMode();
   const cardActions = (
     <div className="flex items-center gap-1 shrink-0">
       {!extension.parent_extension_id && (
@@ -536,8 +538,10 @@ export function ExtensionCard({
         confirmText={t('common.delete') || 'Delete'}
         cancelText={t('common.cancel') || 'Cancel'}
         variant="destructive"
-        onConfirm={async () => {
-          await onRemove?.(extension);
+        onConfirm={() => {
+          requireSudo(async () => {
+            await onRemove?.(extension);
+          });
         }}
       />
     </>

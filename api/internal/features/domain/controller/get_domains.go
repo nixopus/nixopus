@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -33,6 +34,8 @@ func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*types.ListDomain
 			Status: http.StatusUnauthorized,
 		}
 	}
+
+	domainType := f.QueryParam("type")
 
 	c.logger.Log(logger.Info, "fetching domains", fmt.Sprintf("organization_id: %s", organization_id))
 
@@ -58,6 +61,16 @@ func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*types.ListDomain
 			Err:    err,
 			Status: http.StatusInternalServerError,
 		}
+	}
+
+	if domainType != "" {
+		filtered := make([]shared_types.Domain, 0)
+		for _, d := range domains {
+			if d.Type == domainType {
+				filtered = append(filtered, d)
+			}
+		}
+		domains = filtered
 	}
 
 	return &types.ListDomainsResponse{

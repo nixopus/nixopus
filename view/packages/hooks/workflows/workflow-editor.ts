@@ -1267,7 +1267,7 @@ export function useWorkflowEditor({
     const nodes = canvasRef.current?.getNodes() ?? [];
     const edges = canvasRef.current?.getEdges() ?? [];
 
-    if (nodes.length === 0) return;
+    if (nodes.length === 0 && planner.messages.length === 0) return;
 
     setIsSaving(true);
     try {

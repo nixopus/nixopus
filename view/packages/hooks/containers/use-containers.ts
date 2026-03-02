@@ -15,6 +15,7 @@ import {
 import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 import { usePruneBuildCacheMutation } from '@/redux/services/container/imagesApi';
 import { usePruneImagesMutation } from '@/redux/services/container/imagesApi';
+import { useSudoMode } from '@/packages/hooks/security/use-sudo-mode';
 import { SelectOption } from '@nixopus/ui';
 
 export function useContainers() {
@@ -54,6 +55,7 @@ export function useContainers() {
 
   const [pruneImages] = usePruneImagesMutation();
   const [pruneBuildCache] = usePruneBuildCacheMutation();
+  const { requireSudo } = useSudoMode();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -172,37 +174,43 @@ export function useContainers() {
     }
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteConfirm = () => {
     if (!containerToDelete) return;
-    try {
-      await removeContainer(containerToDelete).unwrap();
-      toast.success(t('containers.remove_success'));
-      setContainerToDelete(null);
-    } catch (error) {
-      toast.error(t('containers.remove_error'));
-    }
+    requireSudo(async () => {
+      try {
+        await removeContainer(containerToDelete).unwrap();
+        toast.success(t('containers.remove_success'));
+        setContainerToDelete(null);
+      } catch (error) {
+        toast.error(t('containers.remove_error'));
+      }
+    });
   };
 
-  const handlePruneImages = async () => {
-    try {
-      await pruneImages({
-        dangling: true
-      }).unwrap();
-      toast.success(t('containers.prune_images_success'));
-    } catch (error) {
-      toast.error(t('containers.prune_images_error'));
-    }
+  const handlePruneImages = () => {
+    requireSudo(async () => {
+      try {
+        await pruneImages({
+          dangling: true
+        }).unwrap();
+        toast.success(t('containers.prune_images_success'));
+      } catch (error) {
+        toast.error(t('containers.prune_images_error'));
+      }
+    });
   };
 
-  const handlePruneBuildCache = async () => {
-    try {
-      await pruneBuildCache({
-        all: true
-      }).unwrap();
-      toast.success(t('containers.prune_build_cache_success'));
-    } catch (error) {
-      toast.error(t('containers.prune_build_cache_error'));
-    }
+  const handlePruneBuildCache = () => {
+    requireSudo(async () => {
+      try {
+        await pruneBuildCache({
+          all: true
+        }).unwrap();
+        toast.success(t('containers.prune_build_cache_success'));
+      } catch (error) {
+        toast.error(t('containers.prune_build_cache_error'));
+      }
+    });
   };
 
   return {

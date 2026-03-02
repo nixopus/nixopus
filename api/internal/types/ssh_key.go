@@ -16,6 +16,7 @@ type SSHKey struct {
 	Name                string     `json:"name" bun:"name,notnull"`
 	Description         *string    `json:"description,omitempty" bun:"description"`
 	Host                *string    `json:"host,omitempty" bun:"host"`
+	ProxyHost           *string    `json:"proxy_host,omitempty" bun:"proxy_host"`
 	User                *string    `json:"user,omitempty" bun:"user"`
 	Port                *int       `json:"port,omitempty" bun:"port,default:22"`
 	PublicKey           *string    `json:"public_key,omitempty" bun:"public_key"`

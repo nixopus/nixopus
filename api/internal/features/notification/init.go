@@ -200,3 +200,57 @@ func (m *NotificationManager) GetWebhookURL(userID string, webhookType string) (
 
 	return config.WebhookURL, nil
 }
+
+func (m *NotificationManager) GetWebhookURLByOrg(organizationID string, webhookType string) (string, error) {
+	var config shared_types.WebhookConfig
+
+	err := m.db.NewSelect().
+		Model(&config).
+		Where("type = ?", webhookType).
+		Where("organization_id = ?", organizationID).
+		Where("is_active = ?", true).
+		Scan(m.ctx)
+
+	if err != nil {
+		return "", err
+	}
+
+	return config.WebhookURL, nil
+}
+
+func (m *NotificationManager) SendDirectNotification(req SendNotificationRequest, userID string, organizationID string) SendNotificationResponse {
+	switch req.Channel {
+	case "slack":
+		webhookURL, err := m.GetWebhookURLByOrg(organizationID, "slack")
+		if err != nil {
+			return SendNotificationResponse{Channel: "slack", Success: false, Error: fmt.Sprintf("no active slack webhook configured: %s", err)}
+		}
+		if err := m.slackManager.SendNotification(req.Message, webhookURL); err != nil {
+			return SendNotificationResponse{Channel: "slack", Success: false, Error: err.Error()}
+		}
+		return SendNotificationResponse{Channel: "slack", Success: true}
+
+	case "discord":
+		webhookURL, err := m.GetWebhookURLByOrg(organizationID, "discord")
+		if err != nil {
+			return SendNotificationResponse{Channel: "discord", Success: false, Error: fmt.Sprintf("no active discord webhook configured: %s", err)}
+		}
+		if err := m.discordManager.SendNotification(req.Message, webhookURL); err != nil {
+			return SendNotificationResponse{Channel: "discord", Success: false, Error: err.Error()}
+		}
+		return SendNotificationResponse{Channel: "discord", Success: true}
+
+	case "email":
+		subject := req.Subject
+		if subject == "" {
+			subject = "Notification from Nixopus"
+		}
+		if err := m.emailManager.SendPlainEmail(userID, req.To, subject, req.Message); err != nil {
+			return SendNotificationResponse{Channel: "email", Success: false, Error: err.Error()}
+		}
+		return SendNotificationResponse{Channel: "email", Success: true}
+
+	default:
+		return SendNotificationResponse{Channel: req.Channel, Success: false, Error: fmt.Sprintf("unsupported channel: %s", req.Channel)}
+	}
+}

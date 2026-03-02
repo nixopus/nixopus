@@ -31,3 +31,10 @@ type PreferencesResponse struct {
 	Message string                               `json:"message"`
 	Data    *notification.GetPreferencesResponse `json:"data"`
 }
+
+// SendNotificationResponse is the typed response for send notification
+type SendNotificationResponse struct {
+	Status  string                                 `json:"status"`
+	Message string                                 `json:"message"`
+	Data    *notification.SendNotificationResponse `json:"data"`
+}

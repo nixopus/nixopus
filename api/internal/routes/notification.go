@@ -22,4 +22,6 @@ func (router *Router) RegisterNotificationRoutes(notificationGroup *fuego.Server
 	fuego.Get(webhookGroup, "/{type}", notificationController.GetWebhookConfig)
 	fuego.Put(webhookGroup, "", notificationController.UpdateWebhookConfig)
 	fuego.Delete(webhookGroup, "", notificationController.DeleteWebhookConfig)
+
+	fuego.Post(notificationGroup, "/send", notificationController.SendNotification)
 }

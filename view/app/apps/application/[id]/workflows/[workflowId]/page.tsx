@@ -8,13 +8,14 @@ import { ResourceGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
 import { Skeleton } from '@nixopus/ui';
 import { AlertCircle, Sparkles } from 'lucide-react';
-import { isAgentConfigured } from '@/packages/lib/agent-client';
+import { useAgentConfigured } from '@/packages/hooks/shared/use-config';
 
 export default function WorkflowEditorPage() {
   const params = useParams();
   const applicationId = params.id as string;
   const workflowId = params.workflowId as string;
   const isNew = workflowId === 'new';
+  const agentConfigured = useAgentConfigured() === true;
   const { dynamicWorkflow, isLoading, error } = useWorkflowDetail({ workflowId, applicationId });
 
   const { nodes, edges, name, planningMessages, executionMessages, chatThreadId } = useMemo(() => {
@@ -44,7 +45,7 @@ export default function WorkflowEditorPage() {
     };
   }, [dynamicWorkflow]);
 
-  if (!isAgentConfigured()) {
+  if (!agentConfigured) {
     return (
       <ResourceGuard
         resource="deploy"

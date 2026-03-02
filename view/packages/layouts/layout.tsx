@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { Blocks, Settings, ChevronRight, TerminalIcon } from 'lucide-react';
+import { Blocks, Settings, ChevronRight } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -213,23 +213,26 @@ function BreadCrumbs({ breadcrumbs }: BreadCrumbsProps) {
   return (
     <Breadcrumb>
       <BreadcrumbList>
-        {' '}
         {breadcrumbs?.length > 0 &&
           breadcrumbs?.map((breadcrumb, idx) => (
             <React.Fragment key={idx}>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink
-                  onClick={() => router.push(breadcrumb.href)}
-                  className="cursor-pointer"
-                >
-                  {breadcrumb.label}{' '}
-                </BreadcrumbLink>
+                {breadcrumb.external ? (
+                  <BreadcrumbLink asChild>
+                    <a href={breadcrumb.href}>{breadcrumb.label}</a>
+                  </BreadcrumbLink>
+                ) : (
+                  <BreadcrumbLink
+                    onClick={() => router.push(breadcrumb.href)}
+                    className="cursor-pointer"
+                  >
+                    {breadcrumb.label}
+                  </BreadcrumbLink>
+                )}
               </BreadcrumbItem>
-              {idx < breadcrumbs.length - 1 && (
-                <BreadcrumbSeparator className="hidden md:block" />
-              )}{' '}
+              {idx < breadcrumbs.length - 1 && <BreadcrumbSeparator className="hidden md:block" />}
             </React.Fragment>
-          ))}{' '}
+          ))}
       </BreadcrumbList>
     </Breadcrumb>
   );
@@ -253,7 +256,6 @@ function AppTopBar({
           {breadcrumbs?.length > 0 && <BreadCrumbs breadcrumbs={breadcrumbs} />}{' '}
         </div>
         <div className="flex items-center gap-4">
-          {/* <TopbarWidgets /> */}
           <AnyPermissionGuard
             permissions={['terminal:create', 'terminal:read', 'terminal:update']}
             loadingFallback={null}
@@ -308,13 +310,19 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              onClick={() => router.push('/apps')}
-              className="cursor-pointer"
+              onClick={() => {
+                if (process.env.__NEXT_ROUTER_BASEPATH) {
+                  window.location.href = '/';
+                } else {
+                  router.push('/apps');
+                }
+              }}
+              className="cursor-pointer group-data-[collapsible=icon]:justify-center"
             >
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg">
-                <Image src={logoSrc} alt="Nixopus" width={32} height={32} />
+              <div className="flex aspect-square size-4 shrink-0 items-center justify-center">
+                <Image src={logoSrc} alt="Nixopus" width={16} height={16} />
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">Nixopus</span>
               </div>
             </SidebarMenuButton>

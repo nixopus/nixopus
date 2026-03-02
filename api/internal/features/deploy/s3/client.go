@@ -124,3 +124,38 @@ func (s *ImageStore) DeleteImage(ctx context.Context, key string) error {
 	}
 	return nil
 }
+
+func (s *ImageStore) ListObjects(ctx context.Context, prefix string) ([]string, error) {
+	var keys []string
+	paginator := s3.NewListObjectsV2Paginator(s.client, &s3.ListObjectsV2Input{
+		Bucket: aws.String(s.bucket),
+		Prefix: aws.String(prefix),
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list S3 objects: %w", err)
+		}
+		for _, obj := range page.Contents {
+			if obj.Key != nil {
+				keys = append(keys, *obj.Key)
+			}
+		}
+	}
+	return keys, nil
+}
+
+func (s *ImageStore) GetObject(ctx context.Context, key string) (io.ReadCloser, error) {
+	output, err := s.client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get S3 object %s: %w", key, err)
+	}
+	return output.Body, nil
+}
+
+func WorkspaceS3Prefix(appID uuid.UUID) string {
+	return fmt.Sprintf("workspaces/%s/", appID.String())
+}

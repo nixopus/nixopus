@@ -1,3 +1,130 @@
+# [0.1.0-alpha.146](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.145...v0.1.0-alpha.146) (2026-03-05)
+
+
+### Bug Fixes
+
+* redirect urls of github in multizone deployment ([8e4a90e](https://github.com/raghavyuva/nixopus/commit/8e4a90e355ce3cecad05caad678ea0678ddfd4cc))
+
+
+
+# [0.1.0-alpha.145](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.144...v0.1.0-alpha.145) (2026-03-05)
+
+
+### Features
+
+* add support for machine name in multi zone ([c7fbb6b](https://github.com/raghavyuva/nixopus/commit/c7fbb6bb583f1e3ee46df2ea81e138b7df10c297))
+
+
+
+# [0.1.0-alpha.144](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.143...v0.1.0-alpha.144) (2026-03-04)
+
+
+### Bug Fixes
+
+* agent configured check with runtime checks ([1ed1f61](https://github.com/raghavyuva/nixopus/commit/1ed1f61e7feac7ddc091398e97da8b156a99b09b))
+* restart container no orgID in context issue ([d3ef7d2](https://github.com/raghavyuva/nixopus/commit/d3ef7d2ed1c2fa3f92f49ce9cdce49dfd7330d92))
+* swapped booleans for force rebuild cache ([fc39ef5](https://github.com/raghavyuva/nixopus/commit/fc39ef5f79f5f2caabae25eae1cfabd5a8840f1a))
+
+
+
+# [0.1.0-alpha.143](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.142...v0.1.0-alpha.143) (2026-03-04)
+
+
+### Bug Fixes
+
+* add images unoptimized for view ([a964d31](https://github.com/raghavyuva/nixopus/commit/a964d31b78a5a713058b49693a92e8fe598fa963))
+
+
+
+# [0.1.0-alpha.142](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.141...v0.1.0-alpha.142) (2026-03-03)
+
+
+### Bug Fixes
+
+* revert base path resolution on server side ([3ce7eec](https://github.com/raghavyuva/nixopus/commit/3ce7eeca4f40b9394b8c10218518c55ed41931e9))
+
+
+
+# [0.1.0-alpha.141](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.140...v0.1.0-alpha.141) (2026-03-03)
+
+
+### Bug Fixes
+
+* base path with view app origin url ([d1c1d91](https://github.com/raghavyuva/nixopus/commit/d1c1d91d62548b55cfd2df6df090d564b9363b09))
+
+
+
+# [0.1.0-alpha.140](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.139...v0.1.0-alpha.140) (2026-03-03)
+
+
+### Bug Fixes
+
+* base path for multizone server side config api ([b5618ac](https://github.com/raghavyuva/nixopus/commit/b5618ac7f36761049599f2b3f8da963f8147803c))
+
+
+
+# [0.1.0-alpha.139](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.138...v0.1.0-alpha.139) (2026-03-03)
+
+
+### Bug Fixes
+
+* add arg for multizones in dockerfile ([3520ee0](https://github.com/raghavyuva/nixopus/commit/3520ee0987d69e4d09e1a51f30a75d40bbca22ae))
+
+
+
+# [0.1.0-alpha.138](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.137...v0.1.0-alpha.138) (2026-03-03)
+
+
+### Bug Fixes
+
+* build container to have multizone ([4d8f467](https://github.com/raghavyuva/nixopus/commit/4d8f467a9070ca811ae4155ecf32aa652584338c))
+
+
+
+# [0.1.0-alpha.137](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.136...v0.1.0-alpha.137) (2026-03-03)
+
+
+### Features
+
+* add multi zone support ([df79769](https://github.com/raghavyuva/nixopus/commit/df79769759be12412da6871e450c2f2a58470db3))
+
+
+
+# [0.1.0-alpha.136](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.135...v0.1.0-alpha.136) (2026-03-02)
+
+
+### Bug Fixes
+
+* make use of proxy_host instead of ssh host for proxy host ([ef0ec9c](https://github.com/raghavyuva/nixopus/commit/ef0ec9c17e2dd9c0701fd18746387e5a304cabc8))
+
+
+
+# [0.1.0-alpha.135](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.134...v0.1.0-alpha.135) (2026-03-02)
+
+
+### Bug Fixes
+
+* health reconciler off ([3c0c9b7](https://github.com/raghavyuva/nixopus/commit/3c0c9b712c05c14eec822a2ea8dff9681721c45a))
+
+
+
+# [0.1.0-alpha.134](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.133...v0.1.0-alpha.134) (2026-03-02)
+
+
+### Bug Fixes
+
+* populate build and env variables on refresh ([#1097](https://github.com/raghavyuva/nixopus/issues/1097)) ([9725e8f](https://github.com/raghavyuva/nixopus/commit/9725e8f37e83d2eeddf0fce16101ab2ca082edc3))
+
+
+### Features
+
+* add compose domain input UI and deployment hooks ([0132564](https://github.com/raghavyuva/nixopus/commit/01325641e54cca81129c6440686cafe6458ee345))
+* add compose domain management and deployment pipeline ([61d06de](https://github.com/raghavyuva/nixopus/commit/61d06de7c5226a8be02ccf649ccf7758cb973644))
+* add compose file parser and deployment types ([9b82088](https://github.com/raghavyuva/nixopus/commit/9b82088803c8836af829580d054e29c59826a862))
+* add x forwarded proto header for cookie forwarding to auth service ([28bebfb](https://github.com/raghavyuva/nixopus/commit/28bebfbcc8037e6c94b0a4997ddca1fa4b934478))
+
+
+
 # [0.1.0-alpha.133](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.132...v0.1.0-alpha.133) (2026-02-28)
 
 

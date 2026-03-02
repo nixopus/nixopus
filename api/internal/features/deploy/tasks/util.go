@@ -319,9 +319,9 @@ func GetSSHHostForOrganization(ctx context.Context, organizationID uuid.UUID) (s
 	if err != nil {
 		return "", fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	upstreamHost, err := manager.GetSSHHost()
+	upstreamHost, err := manager.GetUpstreamHost()
 	if err != nil {
-		return "", fmt.Errorf("failed to get SSH host: %w", err)
+		return "", fmt.Errorf("failed to get upstream host: %w", err)
 	}
 	return upstreamHost, nil
 }

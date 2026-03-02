@@ -245,6 +245,50 @@ func (m *EmailManager) SendRemoveUserFromOrganizationEmail(userID string, data R
 	return nil
 }
 
+func (m *EmailManager) SendPlainEmail(userID string, to string, subject string, body string) error {
+	uuidUserID, err := uuid.Parse(userID)
+	if err != nil {
+		return fmt.Errorf("invalid user ID: %w", err)
+	}
+
+	smtpConfig, err := m.GetSmtp(userID)
+	if err != nil {
+		return fmt.Errorf("smtp error: %w", err)
+	}
+
+	recipient := to
+	if recipient == "" {
+		var user shared_types.User
+		err = m.db.NewSelect().
+			Model(&user).
+			Where("id = ?", uuidUserID).
+			Where("deleted_at IS NULL").
+			Scan(m.ctx)
+		if err != nil {
+			return fmt.Errorf("failed to fetch user: %w", err)
+		}
+		recipient = user.Email
+	}
+
+	from := smtpConfig.Username
+	msg := []byte(fmt.Sprintf("Subject: %s\r\n"+
+		"From: %s <%s>\r\n"+
+		"To: %s\r\n"+
+		"MIME-Version: 1.0\r\n"+
+		"Content-Type: text/plain; charset=UTF-8\r\n"+
+		"\r\n"+
+		"%s", subject, smtpConfig.FromName, from, recipient, body))
+
+	auth := smtp.PlainAuth("", smtpConfig.Username, smtpConfig.Password, smtpConfig.Host)
+	addr := fmt.Sprintf("%s:%d", smtpConfig.Host, smtpConfig.Port)
+
+	if err := smtp.SendMail(addr, auth, from, []string{recipient}, msg); err != nil {
+		return fmt.Errorf("failed to send email: %w", err)
+	}
+
+	return nil
+}
+
 func (m *EmailManager) GetSmtp(ID string) (*shared_types.SMTPConfigs, error) {
 	config := &shared_types.SMTPConfigs{}
 	err := m.db.NewSelect().Model(config).Where("user_id = ?", ID).Scan(m.ctx)

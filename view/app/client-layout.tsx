@@ -16,6 +16,7 @@ import { authClient } from '@/packages/lib/auth-client';
 import { SettingsModalProvider } from '@/packages/hooks/shared/use-settings-modal';
 import AppLayout from '@/packages/layouts/layout';
 import { SettingsModal } from '@/packages/components/settings';
+import { SudoModeProvider } from '@/packages/hooks/security/use-sudo-mode';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 
@@ -151,7 +152,9 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
                   <>{children}</>
                 ) : (
                   <SystemStatsProvider>
-                    <AppLayout>{children}</AppLayout>
+                    <SudoModeProvider>
+                      <AppLayout>{children}</AppLayout>
+                    </SudoModeProvider>
                   </SystemStatsProvider>
                 )}
               </FeatureFlagsProvider>

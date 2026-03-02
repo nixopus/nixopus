@@ -231,11 +231,8 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	// Domain routes
 	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
 	domainGroup := fuego.Group(server, apiV1.Path+"/domain")
-	domainsAllGroup := fuego.Group(server, apiV1.Path+"/domains")
-	domainMiddleware := MiddlewareConfig{RBAC: true, FeatureFlag: "domain", Audit: true, ResourceName: "domain"}
-	router.applyMiddleware(domainGroup, domainMiddleware)
-	router.applyMiddleware(domainsAllGroup, domainMiddleware)
-	router.RegisterDomainRoutes(domainGroup, domainsAllGroup, domainController)
+	router.applyMiddleware(domainGroup, MiddlewareConfig{RBAC: true, FeatureFlag: "domain", Audit: true, ResourceName: "domain"})
+	router.RegisterDomainRoutes(domainGroup, domainController)
 
 	// GitHub connector routes
 	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, router.logger, notificationManager)

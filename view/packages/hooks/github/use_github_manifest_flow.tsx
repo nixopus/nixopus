@@ -93,6 +93,7 @@ export function useGithubManifestFlow({
 
   const createManifestForm = useCallback((): void => {
     const state = generateState();
+    const currentUrl = `${window.location.origin}${window.location.pathname}`;
     const manifest: GitHubAppManifest = {
       name: appName,
       url: appUrl || window.location.origin,
@@ -100,8 +101,8 @@ export function useGithubManifestFlow({
         url: webhookUrl || `${window.location.origin}/github/webhook`,
         active: true
       },
-      redirect_url: redirectUrl || `${window.location.origin}/apps`,
-      callback_urls: [redirectUrl || `${window.location.origin}/apps`],
+      redirect_url: redirectUrl || currentUrl,
+      callback_urls: [redirectUrl || currentUrl],
       public: true,
       default_permissions: {
         contents: 'read',
@@ -110,7 +111,7 @@ export function useGithubManifestFlow({
         pull_requests: 'write'
       },
       default_events: ['issues', 'issue_comment', 'pull_request', 'push'],
-      setup_url: `${window.location.origin}/apps`,
+      setup_url: currentUrl,
       setup_on_update: true
     };
 

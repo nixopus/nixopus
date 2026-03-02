@@ -253,6 +253,49 @@ jobs:
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.API_IMAGE }}:${{ steps.meta-api.outputs.version }}
 
+  # Build View ( multi-zone variant) — amd64 only
+  build-view-multizone:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Create .env file
+        run: cp .env.sample view/.env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push View (multi-zone)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./view
+          platforms: linux/amd64
+          build-args: |
+            NEXT_PUBLIC_PORT=${{ env.NEXT_PUBLIC_PORT }}
+            BASE_PATH=/view
+            ASSET_PREFIX=/view-static
+          cache-from: type=gha,scope=view-multizone
+          cache-to: type=gha,mode=max,scope=view-multizone
+          provenance: false
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}:multizone
+
   # Merge View digests into multi-platform manifest
   merge-view:
     runs-on: ubuntu-latest
