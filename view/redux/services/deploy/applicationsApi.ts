@@ -4,11 +4,13 @@ import { DEPLOY } from '@/redux/api-conf';
 import {
   Application,
   ApplicationLogsResponse,
+  ComposeService,
   CreateApplicationRequest,
   CreateProjectRequest,
   DeployProjectRequest,
   DuplicateProjectRequest,
   Environment,
+  PreviewComposeService,
   ProjectFamilyResponse,
   ReDeployApplicationRequest,
   UpdateDeploymentRequest,
@@ -254,11 +256,14 @@ export const deployApi = createApi({
         return response.data;
       }
     }),
-    addApplicationDomain: builder.mutation<Application, { id: string; domain: string }>({
-      query: ({ id, domain }) => ({
+    addApplicationDomain: builder.mutation<
+      Application,
+      { id: string; domain: string; service_name?: string; port?: number }
+    >({
+      query: ({ id, domain, service_name, port }) => ({
         url: `${DEPLOY.ADD_APPLICATION_DOMAIN}?id=${id}`,
         method: 'POST',
-        body: { domain }
+        body: { domain, service_name, port }
       }),
       invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
       transformResponse: (response: { data: Application }) => {
@@ -275,6 +280,28 @@ export const deployApi = createApi({
       transformResponse: (response: { data: Application }) => {
         return response.data;
       }
+    }),
+    getComposeServices: builder.query<ComposeService[], { id: string }>({
+      query: ({ id }) => ({
+        url: `${DEPLOY.GET_COMPOSE_SERVICES}?id=${id}`,
+        method: 'GET'
+      }),
+      providesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { data: ComposeService[] }) => {
+        return response.data ?? [];
+      }
+    }),
+    previewComposeServices: builder.mutation<
+      PreviewComposeService[],
+      { repository: string; branch: string; base_path?: string; dockerfile_path?: string }
+    >({
+      query: (data) => ({
+        url: DEPLOY.PREVIEW_COMPOSE_SERVICES,
+        method: 'POST',
+        body: data
+      }),
+      transformResponse: (response: { services: PreviewComposeService[] }) =>
+        response.services ?? []
     })
   })
 });
@@ -297,5 +324,7 @@ export const {
   useGetApplicationLogsQuery,
   useGetDeploymentLogsQuery,
   useGetApplicationDeploymentsQuery,
-  useUpdateApplicationLabelsMutation
+  useUpdateApplicationLabelsMutation,
+  useGetComposeServicesQuery,
+  usePreviewComposeServicesMutation
 } = deployApi;

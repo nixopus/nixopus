@@ -42,6 +42,7 @@ func (s *Store) DropTable(ctx context.Context, model interface{}) error {
 
 func (s *Store) Init(ctx context.Context) error {
 	s.DB.RegisterModel((*types.OrganizationUsers)(nil))
+	s.DB.RegisterModel((*types.ComposeService)(nil))
 	s.DB.RegisterModel((*types.Extension)(nil))
 	s.DB.RegisterModel((*types.ExtensionVariable)(nil))
 	s.DB.RegisterModel((*types.ExtensionExecution)(nil))
@@ -63,6 +64,8 @@ func (s *Store) DropAllTables(ctx context.Context) error {
 		(*types.ApplicationLogs)(nil),
 		(*types.ApplicationDeploymentStatus)(nil),
 		(*types.ApplicationDeployment)(nil),
+		(*types.ApplicationDomain)(nil),
+		(*types.ComposeService)(nil),
 		(*types.ApplicationStatus)(nil),
 		(*types.Application)(nil),
 		(*types.GithubConnector)(nil),
