@@ -22,6 +22,11 @@ func (t *TaskService) deployDockerCompose(ctx context.Context, TaskPayload share
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
 
 	composeFilePath := t.buildComposeFilePath(TaskPayload, repoPath, taskCtx)
+
+	if err := t.discoverAndPersistComposeServices(orgCtx, composeFilePath, TaskPayload, taskCtx); err != nil {
+		taskCtx.AddLog("Warning: failed to discover compose services: " + err.Error())
+	}
+
 	envVars := GetMapFromString(TaskPayload.Application.EnvironmentVariables)
 	outputCallback := t.createOutputCallback(taskCtx)
 
@@ -190,12 +195,105 @@ func (t *TaskService) composeRestart(ctx context.Context, composeFilePath string
 	return nil
 }
 
+func (t *TaskService) discoverAndPersistComposeServices(ctx context.Context, composeFilePath string, TaskPayload shared_types.TaskPayload, taskCtx *TaskContext) error {
+	parsed, err := ParseComposeFile(composeFilePath)
+	if err != nil {
+		return err
+	}
+
+	appID := TaskPayload.Application.ID
+
+	oldServices, err := t.Storage.GetComposeServices(appID)
+	if err != nil {
+		taskCtx.AddLog("Warning: failed to load existing compose services: " + err.Error())
+	}
+	oldDomains, err := t.Storage.GetApplicationDomains(appID)
+	if err != nil {
+		taskCtx.AddLog("Warning: failed to load existing domains: " + err.Error())
+	}
+
+	services := buildRoutableServices(parsed, taskCtx)
+	if err := t.Storage.UpsertComposeServices(appID, services); err != nil {
+		return fmt.Errorf("failed to persist compose services: %w", err)
+	}
+
+	if len(services) == 0 {
+		taskCtx.AddLog("No routable services found in compose file (none expose host ports)")
+	}
+	for _, svc := range services {
+		taskCtx.AddLog(fmt.Sprintf("Discovered compose service: %s (port %d)", svc.ServiceName, svc.Port))
+	}
+
+	newServiceNames := make(map[string]bool, len(services))
+	for _, svc := range services {
+		newServiceNames[svc.ServiceName] = true
+	}
+	t.cleanupRemovedServices(ctx, oldServices, newServiceNames, oldDomains, taskCtx)
+
+	return nil
+}
+
+func buildRoutableServices(parsed []ParsedComposeService, taskCtx *TaskContext) []shared_types.ComposeService {
+	var services []shared_types.ComposeService
+	for _, p := range parsed {
+		port := 0
+		if len(p.Ports) > 0 {
+			port = p.Ports[0]
+		}
+		if port == 0 {
+			taskCtx.AddLog(fmt.Sprintf("Skipping compose service %q: no host port exposed", p.ServiceName))
+			continue
+		}
+		services = append(services, shared_types.ComposeService{
+			ServiceName: p.ServiceName,
+			Port:        port,
+		})
+	}
+	return services
+}
+
+func collectOrphanedDomains(svc shared_types.ComposeService, domains []shared_types.ApplicationDomain) []string {
+	var orphaned []string
+	for _, d := range domains {
+		if d.ComposeServiceID != nil && *d.ComposeServiceID == svc.ID && d.Domain != "" {
+			orphaned = append(orphaned, d.Domain)
+		}
+	}
+	return orphaned
+}
+
+func (t *TaskService) cleanupRemovedServices(ctx context.Context, oldServices []shared_types.ComposeService, newServiceNames map[string]bool, oldDomains []shared_types.ApplicationDomain, taskCtx *TaskContext) {
+	for _, oldSvc := range oldServices {
+		if newServiceNames[oldSvc.ServiceName] {
+			continue
+		}
+
+		orphanedDomains := collectOrphanedDomains(oldSvc, oldDomains)
+		if len(orphanedDomains) == 0 {
+			taskCtx.AddLog(fmt.Sprintf("Compose service %q removed (no domains were linked)", oldSvc.ServiceName))
+			continue
+		}
+
+		taskCtx.AddLog(fmt.Sprintf(
+			"Warning: compose service %q was removed. Unlinking %d domain(s) from Caddy: %s",
+			oldSvc.ServiceName, len(orphanedDomains), strings.Join(orphanedDomains, ", ")))
+
+		if err := caddy.RemoveDomainsWithRetry(ctx, nil, &t.Logger, orphanedDomains); err != nil {
+			taskCtx.AddLog("Warning: failed to remove orphaned domains from proxy: " + err.Error())
+		}
+	}
+}
+
 func (t *TaskService) addDomainsForCompose(ctx context.Context, TaskPayload shared_types.TaskPayload, taskCtx *TaskContext) error {
-	if len(TaskPayload.Application.Domains) == 0 {
+	domains, err := t.Storage.GetApplicationDomains(TaskPayload.Application.ID)
+	if err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to load domains: "+err.Error(), shared_types.Failed)
+		return err
+	}
+	if len(domains) == 0 {
 		return nil
 	}
 
-	port := TaskPayload.Application.Port
 	upstreamHost, err := GetSSHHostForOrganization(ctx, TaskPayload.Application.OrganizationID)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to get SSH host: "+err.Error(), shared_types.Failed)
@@ -203,16 +301,21 @@ func (t *TaskService) addDomainsForCompose(ctx context.Context, TaskPayload shar
 	}
 
 	var routes []caddy.DomainRoute
-	for _, appDomain := range TaskPayload.Application.Domains {
-		if appDomain.Domain == "" {
+	for i := range domains {
+		d := &domains[i]
+		if d.Domain == "" {
+			continue
+		}
+		port := d.ResolvePort()
+		if port == 0 {
+			taskCtx.AddLog(fmt.Sprintf("Skipping domain %s: no service linked and no port override", d.Domain))
 			continue
 		}
 		routes = append(routes, caddy.DomainRoute{
-			Domain:       appDomain.Domain,
+			Domain:       d.Domain,
 			UpstreamDial: caddy.FormatDial(upstreamHost, port),
 		})
 	}
-
 	if len(routes) == 0 {
 		return nil
 	}
@@ -221,9 +324,8 @@ func (t *TaskService) addDomainsForCompose(ctx context.Context, TaskPayload shar
 		taskCtx.LogAndUpdateStatus("Failed to configure proxy: "+err.Error(), shared_types.Failed)
 		return err
 	}
-
 	for _, r := range routes {
-		taskCtx.AddLog("Domain " + r.Domain + " added successfully with TLS")
+		taskCtx.AddLog("Domain " + r.Domain + " -> " + r.UpstreamDial + " added successfully with TLS")
 	}
 	return nil
 }

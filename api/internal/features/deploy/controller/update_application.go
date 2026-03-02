@@ -60,8 +60,16 @@ func (c *DeployController) UpdateApplication(f fuego.ContextWithBody[types.Updat
 
 	c.logger.Log(logger.Info, "attempting to update application", "id: "+data.ID.String()+", user_id: "+user.ID.String())
 
-	// Sync domains if provided
-	if data.Domains != nil {
+	// Sync compose-specific domains if provided, otherwise sync plain domains
+	if len(data.ComposeDomains) > 0 {
+		if err := c.syncComposeApplicationDomains(data.ID, organizationID, data.ComposeDomains); err != nil {
+			c.logger.Log(logger.Error, "failed to sync compose application domains", err.Error())
+			return nil, fuego.HTTPError{
+				Err:    err,
+				Status: http.StatusBadRequest,
+			}
+		}
+	} else if data.Domains != nil {
 		if err := c.syncApplicationDomains(data.ID, organizationID, data.Domains); err != nil {
 			c.logger.Log(logger.Error, "failed to sync application domains", err.Error())
 			return nil, fuego.HTTPError{
