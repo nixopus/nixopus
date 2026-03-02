@@ -1,3 +1,12 @@
+# [0.1.0-alpha.135](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.134...v0.1.0-alpha.135) (2026-03-02)
+
+
+### Bug Fixes
+
+* health reconciler off ([3c0c9b7](https://github.com/raghavyuva/nixopus/commit/3c0c9b712c05c14eec822a2ea8dff9681721c45a))
+
+
+
 # [0.1.0-alpha.134](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.133...v0.1.0-alpha.134) (2026-03-02)
 
 
