@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { Blocks, Settings, ChevronRight, TerminalIcon } from 'lucide-react';
+import { Blocks, Settings, ChevronRight, LayoutDashboard } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -254,6 +254,14 @@ function AppTopBar({
         </div>
         <div className="flex items-center gap-4">
           {/* <TopbarWidgets /> */}
+          {process.env.__NEXT_ROUTER_BASEPATH && (
+            <Button variant="outline" asChild>
+              <a href="/">
+                <LayoutDashboard className="h-4 w-4" />
+                Dashboard
+              </a>
+            </Button>
+          )}
           <AnyPermissionGuard
             permissions={['terminal:create', 'terminal:read', 'terminal:update']}
             loadingFallback={null}
