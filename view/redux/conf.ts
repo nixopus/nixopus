@@ -38,3 +38,8 @@ export async function getPasswordLoginEnabled() {
   const { passwordLoginEnabled } = await fetchConfig();
   return passwordLoginEnabled;
 }
+
+export async function getAgentConfigured() {
+  const { agentConfigured } = await fetchConfig();
+  return agentConfigured;
+}

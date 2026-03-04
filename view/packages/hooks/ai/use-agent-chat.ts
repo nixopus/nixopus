@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAppSelector } from '@/redux/hooks';
 import { authClient } from '@/packages/lib/auth-client';
-import { createAgentClient, AGENT_ID, isAgentConfigured } from '@/packages/lib/agent-client';
+import { createAgentClient, AGENT_ID } from '@/packages/lib/agent-client';
+import { useAgentConfigured } from '@/packages/hooks/shared/use-config';
 import { type ChatContext, formatContextsForAgent } from './chat-context';
 
 export interface ChatMessage {
@@ -92,7 +93,7 @@ export function useAgentChat({
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const organizationId = activeOrg?.id;
 
-  const isAgentEnabled = isAgentConfigured();
+  const isAgentEnabled = useAgentConfigured() === true;
 
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
