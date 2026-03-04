@@ -1,3 +1,12 @@
+# [0.1.0-alpha.143](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.142...v0.1.0-alpha.143) (2026-03-04)
+
+
+### Bug Fixes
+
+* add images unoptimized for view ([a964d31](https://github.com/raghavyuva/nixopus/commit/a964d31b78a5a713058b49693a92e8fe598fa963))
+
+
+
 # [0.1.0-alpha.142](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.141...v0.1.0-alpha.142) (2026-03-03)
 
 
