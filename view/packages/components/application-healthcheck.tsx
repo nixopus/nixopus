@@ -188,7 +188,7 @@ export function HealthCheckCard({ application }: HealthCheckCardProps) {
 
   if (isLoadingCheck) {
     return (
-      <CardWrapper title={t('selfHost.monitoring.healthCheck.title' as any)}>
+      <CardWrapper title={t('selfHost.monitoring.healthCheck.title' as any)} className="h-full">
         <div className="text-muted-foreground">Loading...</div>
       </CardWrapper>
     );
@@ -197,7 +197,7 @@ export function HealthCheckCard({ application }: HealthCheckCardProps) {
   if (!healthCheck) {
     return (
       <>
-        <CardWrapper title={t('selfHost.monitoring.healthCheck.title' as any)}>
+        <CardWrapper title={t('selfHost.monitoring.healthCheck.title' as any)} className="h-full">
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
               {t('selfHost.monitoring.healthCheck.notConfigured' as any)}
