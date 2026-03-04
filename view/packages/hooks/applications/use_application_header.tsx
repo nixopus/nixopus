@@ -306,7 +306,7 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
             variant="default"
             size="sm"
             disabled={isRedeploying}
-            onClick={() => handleRedeploy(true)}
+            onClick={() => handleRedeploy(false)}
             className="gap-2"
           >
             <Rocket className="h-4 w-4" />
@@ -331,7 +331,7 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
       <>
         <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
           <DropdownMenuItem
-            onClick={() => handleRedeploy(false)}
+            onClick={() => handleRedeploy(true)}
             disabled={isRedeploying}
             className="gap-2"
           >
