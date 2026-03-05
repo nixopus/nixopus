@@ -48,6 +48,7 @@ export interface BreadCrumbsProps {
 interface BreadCrumbType {
   label: string;
   href: string;
+  external?: boolean;
 }
 
 // Sidebar

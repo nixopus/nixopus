@@ -39,6 +39,11 @@ export function formatContextsForAgent(contexts: ChatContext[]): string {
   return parts.join('\n') + '\n\n';
 }
 
+/** Strip context prefix from message text so only user-visible content is shown. */
+export function stripContextFromMessageText(text: string): string {
+  return text.replace(/^(\[Context:[^\]]+\]\s*\n?)*\s*/i, '').trimStart();
+}
+
 function useAppsContextProvider(): ContextProviderData {
   const { data, isLoading } = useGetApplicationsQuery({ page: 1, limit: 100 });
 

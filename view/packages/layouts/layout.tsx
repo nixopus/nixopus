@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { Blocks, Settings, ChevronRight, LayoutDashboard } from 'lucide-react';
+import { Blocks, Settings, ChevronRight } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -213,23 +213,26 @@ function BreadCrumbs({ breadcrumbs }: BreadCrumbsProps) {
   return (
     <Breadcrumb>
       <BreadcrumbList>
-        {' '}
         {breadcrumbs?.length > 0 &&
           breadcrumbs?.map((breadcrumb, idx) => (
             <React.Fragment key={idx}>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink
-                  onClick={() => router.push(breadcrumb.href)}
-                  className="cursor-pointer"
-                >
-                  {breadcrumb.label}{' '}
-                </BreadcrumbLink>
+                {breadcrumb.external ? (
+                  <BreadcrumbLink asChild>
+                    <a href={breadcrumb.href}>{breadcrumb.label}</a>
+                  </BreadcrumbLink>
+                ) : (
+                  <BreadcrumbLink
+                    onClick={() => router.push(breadcrumb.href)}
+                    className="cursor-pointer"
+                  >
+                    {breadcrumb.label}
+                  </BreadcrumbLink>
+                )}
               </BreadcrumbItem>
-              {idx < breadcrumbs.length - 1 && (
-                <BreadcrumbSeparator className="hidden md:block" />
-              )}{' '}
+              {idx < breadcrumbs.length - 1 && <BreadcrumbSeparator className="hidden md:block" />}
             </React.Fragment>
-          ))}{' '}
+          ))}
       </BreadcrumbList>
     </Breadcrumb>
   );
@@ -253,15 +256,6 @@ function AppTopBar({
           {breadcrumbs?.length > 0 && <BreadCrumbs breadcrumbs={breadcrumbs} />}{' '}
         </div>
         <div className="flex items-center gap-4">
-          {/* <TopbarWidgets /> */}
-          {process.env.__NEXT_ROUTER_BASEPATH && (
-            <Button variant="outline" asChild>
-              <a href="/">
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
-              </a>
-            </Button>
-          )}
           <AnyPermissionGuard
             permissions={['terminal:create', 'terminal:read', 'terminal:update']}
             loadingFallback={null}
@@ -316,7 +310,13 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              onClick={() => router.push('/apps')}
+              onClick={() => {
+                if (process.env.__NEXT_ROUTER_BASEPATH) {
+                  window.location.href = '/';
+                } else {
+                  router.push('/apps');
+                }
+              }}
               className="cursor-pointer"
             >
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg">

@@ -53,7 +53,8 @@ import { useChatThreads, type ChatThread } from '@/packages/hooks/ai/use-chat-th
 import {
   type ChatContext,
   type ContextProviderData,
-  useChatContextProviders
+  useChatContextProviders,
+  stripContextFromMessageText
 } from '@/packages/hooks/ai/chat-context';
 import { useMemorySearch } from '@/packages/hooks/ai/use-memory-search';
 
@@ -593,7 +594,9 @@ function MessageBubble({ message }: MessageBubbleProps) {
           )}
         >
           {isUser ? (
-            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+            <p className="text-sm whitespace-pre-wrap">
+              {stripContextFromMessageText(message.content)}
+            </p>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2">
               <Streamdown isAnimating={false}>{message.content}</Streamdown>

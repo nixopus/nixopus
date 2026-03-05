@@ -3,10 +3,12 @@ import { usePathname } from 'next/navigation';
 interface BreadcrumbItem {
   href: string;
   label: string;
+  external?: boolean;
 }
 
 function useBreadCrumbs() {
   const pathname = usePathname();
+  const hasBasePath = !!process.env.__NEXT_ROUTER_BASEPATH;
 
   const getBreadcrumbs = (): BreadcrumbItem[] => {
     const asPathNestedRoutes = pathname.split('/').filter((v) => v.length > 0);
@@ -15,6 +17,14 @@ function useBreadCrumbs() {
       const href = '/' + asPathNestedRoutes.slice(0, idx + 1).join('/');
       return { href, label: subpath.charAt(0).toUpperCase() + subpath.slice(1) };
     });
+
+    const dashboardCrumb: BreadcrumbItem = { href: '/', label: 'Machine', external: true };
+
+    if (hasBasePath) {
+      return pathname.startsWith('/apps')
+        ? [dashboardCrumb, ...crumblist]
+        : [dashboardCrumb, { href: '/apps', label: 'Apps' }, ...crumblist];
+    }
 
     return pathname.startsWith('/apps')
       ? [...crumblist]
