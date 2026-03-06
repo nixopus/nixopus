@@ -1,3 +1,12 @@
+# [0.1.0-alpha.146](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.145...v0.1.0-alpha.146) (2026-03-05)
+
+
+### Bug Fixes
+
+* redirect urls of github in multizone deployment ([8e4a90e](https://github.com/raghavyuva/nixopus/commit/8e4a90e355ce3cecad05caad678ea0678ddfd4cc))
+
+
+
 # [0.1.0-alpha.145](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.144...v0.1.0-alpha.145) (2026-03-05)
 
 
