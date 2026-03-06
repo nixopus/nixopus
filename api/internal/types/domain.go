@@ -10,14 +10,19 @@ import (
 )
 
 type Domain struct {
-	bun.BaseModel  `bun:"table:domains,alias:do" swaggerignore:"true"`
-	ID             uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
-	UserID         uuid.UUID  `json:"user_id" bun:"user_id,notnull,type:uuid"`
-	CreatedAt      time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
-	UpdatedAt      time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
-	DeletedAt      *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
-	Name           string     `json:"name" bun:"name,notnull"`
-	OrganizationID uuid.UUID  `json:"organization_id" bun:"organization_id,notnull"`
+	bun.BaseModel     `bun:"table:domains,alias:do" swaggerignore:"true"`
+	ID                uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
+	UserID            uuid.UUID  `json:"user_id" bun:"user_id,notnull,type:uuid"`
+	CreatedAt         time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt         time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
+	DeletedAt         *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
+	Name              string     `json:"name" bun:"name,notnull"`
+	OrganizationID    uuid.UUID  `json:"organization_id" bun:"organization_id,notnull"`
+	Type              string     `json:"type" bun:"type,notnull,default:'system'"`
+	Status            string     `json:"status" bun:"status,notnull,default:'active'"`
+	VerificationToken *string    `json:"verification_token,omitempty" bun:"verification_token"`
+	DNSProvider       *string    `json:"dns_provider,omitempty" bun:"dns_provider"`
+	TargetSubdomain   *string    `json:"target_subdomain,omitempty" bun:"target_subdomain"`
 }
 
 type Server struct {
