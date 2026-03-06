@@ -5,11 +5,12 @@ import (
 	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
 )
 
-// RegisterDomainRoutes registers domain-related routes
-func (router *Router) RegisterDomainRoutes(domainGroup *fuego.Server, domainsGroup *fuego.Server, domainController *domain.DomainsController) {
-	fuego.Post(domainGroup, "", domainController.CreateDomain)
-	fuego.Put(domainGroup, "", domainController.UpdateDomain)
-	fuego.Delete(domainGroup, "", domainController.DeleteDomain)
+func (router *Router) RegisterDomainRoutes(domainGroup *fuego.Server, domainController *domain.DomainsController) {
+	fuego.Get(domainGroup, "", domainController.GetDomains)
 	fuego.Get(domainGroup, "/generate", domainController.GenerateRandomSubDomain)
-	fuego.Get(domainsGroup, "", domainController.GetDomains)
+
+	fuego.Post(domainGroup, "/custom", domainController.HandleAddCustomDomain)
+	fuego.Delete(domainGroup, "/custom", domainController.HandleRemoveCustomDomain)
+	fuego.Post(domainGroup, "/verify", domainController.HandleVerifyCustomDomain)
+	fuego.Get(domainGroup, "/dns-check", domainController.HandleCheckDNSStatus)
 }
