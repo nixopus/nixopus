@@ -45,6 +45,11 @@ func (c *ContextTask) GetApplicationData(
 		timeValue = *createdAt
 	}
 
+	source := deployment.Source
+	if source == "" {
+		source = shared_types.SourceGithub
+	}
+
 	application := shared_types.Application{
 		ID:                   uuid.New(),
 		Name:                 deployment.Name,
@@ -63,6 +68,7 @@ func (c *ContextTask) GetApplicationData(
 		DockerfilePath:       deployment.DockerfilePath,
 		BasePath:             deployment.BasePath,
 		OrganizationID:       c.OrganizationId,
+		Source:               source,
 	}
 
 	return application
