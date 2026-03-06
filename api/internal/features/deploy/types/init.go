@@ -45,6 +45,7 @@ type CreateDeploymentRequest struct {
 	Port                 int                      `json:"port"`
 	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
 	BasePath             string                   `json:"base_path,omitempty"`
+	Source               shared_types.Source      `json:"source,omitempty"`
 }
 
 // CreateProjectRequest is used to create a project (application) without triggering deployment.
@@ -64,6 +65,7 @@ type CreateProjectRequest struct {
 	Port                 int                      `json:"port,omitempty"`
 	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
 	BasePath             string                   `json:"base_path,omitempty"`
+	Source               shared_types.Source      `json:"source,omitempty"`
 }
 
 type PreviewComposeRequest struct {

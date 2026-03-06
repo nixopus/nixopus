@@ -38,6 +38,7 @@ type Application struct {
 	Domains              []*ApplicationDomain     `json:"domains,omitempty" bun:"rel:has-many,join:id=application_id"`
 	ComposeServices      []*ComposeService        `json:"compose_services,omitempty" bun:"rel:has-many,join:id=application_id"`
 	IsLiveDeployment     bool                     `json:"is_live_deployment" bun:"is_live_deployment,notnull,default:false"`
+	Source               Source                   `json:"source" bun:"source,notnull,default:'github'"`
 }
 
 type ApplicationDeployment struct {
@@ -167,6 +168,15 @@ const (
 	DockerFile    BuildPack = "dockerfile"
 	DockerCompose BuildPack = "docker-compose"
 	Static        BuildPack = "static"
+)
+
+type Source string
+
+const (
+	SourceGithub  Source = "github"
+	SourceS3      Source = "s3"
+	SourceZip     Source = "zip"
+	SourceStaging Source = "staging"
 )
 
 type DeploymentRequestConfig struct {

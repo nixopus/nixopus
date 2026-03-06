@@ -93,17 +93,18 @@ func (s *TaskService) HandleUpdateDockerfileDeployment(ctx context.Context, Task
 
 	taskCtx.LogAndUpdateStatus("Starting deployment process", shared_types.Cloning)
 
-	repoPath, err := s.Clone(ctx, CloneConfig{
+	resolver := s.GetSourceResolver(TaskPayload.Application.Source)
+	repoPath, err := resolver.Resolve(ctx, SourceResolveConfig{
 		TaskPayload:    TaskPayload,
 		DeploymentType: string(shared_types.DeploymentTypeUpdate),
 		TaskContext:    taskCtx,
 	})
 	if err != nil {
-		taskCtx.LogAndUpdateStatus("Failed to clone repository: "+err.Error(), shared_types.Failed)
+		taskCtx.LogAndUpdateStatus("Failed to resolve source: "+err.Error(), shared_types.Failed)
 		return err
 	}
 
-	taskCtx.LogAndUpdateStatus("Repository cloned successfully", shared_types.Building)
+	taskCtx.LogAndUpdateStatus("Source resolved successfully", shared_types.Building)
 
 	// Add organization ID to context for docker service
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
