@@ -65,8 +65,8 @@ func main() {
 	taskq.SetLogger(log.New(io.Discard, "", 0))
 	queue.Init(redisClient)
 
-	// Initialize trail provision queue
 	queue.SetupProvisionQueue()
+	queue.SetupCustomDomainQueue()
 
 	router := routes.NewRouter(app)
 

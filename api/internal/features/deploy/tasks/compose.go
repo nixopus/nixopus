@@ -46,18 +46,19 @@ func (t *TaskService) deployDockerCompose(ctx context.Context, TaskPayload share
 func (t *TaskService) cloneRepositoryForCompose(ctx context.Context, TaskPayload shared_types.TaskPayload, deploymentType string, taskCtx *TaskContext) (string, error) {
 	taskCtx.LogAndUpdateStatus("Starting deployment process", shared_types.Cloning)
 
-	repoPath, err := t.Clone(ctx, CloneConfig{
+	resolver := t.GetSourceResolver(TaskPayload.Application.Source)
+	repoPath, err := resolver.Resolve(ctx, SourceResolveConfig{
 		TaskPayload:    TaskPayload,
 		DeploymentType: deploymentType,
 		TaskContext:    taskCtx,
 	})
 	if err != nil {
-		taskCtx.LogAndUpdateStatus("Failed to clone repository: "+err.Error(), shared_types.Failed)
+		taskCtx.LogAndUpdateStatus("Failed to resolve source: "+err.Error(), shared_types.Failed)
 		return "", err
 	}
 
-	taskCtx.LogAndUpdateStatus("Repository cloned successfully", shared_types.Deploying)
-	taskCtx.AddLog("Repository cloned to: " + repoPath)
+	taskCtx.LogAndUpdateStatus("Source resolved successfully", shared_types.Deploying)
+	taskCtx.AddLog("Source resolved to: " + repoPath)
 	return repoPath, nil
 }
 

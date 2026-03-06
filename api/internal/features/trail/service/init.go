@@ -98,7 +98,7 @@ func (s *TrailService) GenerateContainerName(displayName string) string {
 	}
 
 	randomSuffix, _ := generateRandomString(6)
-	return fmt.Sprintf("trail-%s-%s", name, randomSuffix)
+	return fmt.Sprintf("%s-%s", name, randomSuffix)
 }
 
 // EnqueueProvisionTask enqueues a provision task to the Redis queue.
