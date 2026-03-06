@@ -10,6 +10,7 @@ import { UserTypes } from '@/redux/types/orgs';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
+import { useSudoMode } from '@/packages/hooks/security/use-sudo-mode';
 
 function useTeamSettings() {
   const { t } = useTranslation();
@@ -33,6 +34,7 @@ function useTeamSettings() {
   });
   const [updateOrganizationDetails, { isLoading: isUpdating, error: updateError }] =
     useUpdateOrganizationDetailsMutation();
+  const { requireSudo } = useSudoMode();
 
   useEffect(() => {
     if (apiUsers) {
@@ -91,17 +93,19 @@ function useTeamSettings() {
     }
   };
 
-  const handleRemoveUser = async (userId: string) => {
-    try {
-      await removeUserFromOrganization({
-        user_id: userId,
-        organization_id: activeOrganization?.id || ''
-      });
-      await refetchUsers();
-      toast.success(t('settings.teams.messages.userRemoved'));
-    } catch (error) {
-      toast.error(t('settings.teams.messages.userRemoveFailed'));
-    }
+  const handleRemoveUser = (userId: string) => {
+    requireSudo(async () => {
+      try {
+        await removeUserFromOrganization({
+          user_id: userId,
+          organization_id: activeOrganization?.id || ''
+        });
+        await refetchUsers();
+        toast.success(t('settings.teams.messages.userRemoved'));
+      } catch (error) {
+        toast.error(t('settings.teams.messages.userRemoveFailed'));
+      }
+    });
   };
 
   const handleUpdateUser = async (userId: string, role: UserTypes) => {

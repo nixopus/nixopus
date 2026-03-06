@@ -30,6 +30,7 @@ import {
 import { DomainDropdown } from '@/packages/components/multi-domains';
 import { AnyPermissionGuard } from '@/packages/components/rbac';
 import { useTranslation } from '../shared/use-translation';
+import { useSudoMode } from '@/packages/hooks/security/use-sudo-mode';
 
 interface UseApplicationHeaderProps {
   application?: Application;
@@ -110,6 +111,7 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const labelInputRef = useRef<HTMLInputElement>(null);
+  const { requireSudo } = useSudoMode();
 
   useEffect(() => {
     if (isAddingLabel && labelInputRef.current) {
@@ -133,16 +135,18 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      await deleteApplication({
-        id: application?.id || ''
-      }).unwrap();
-      toast.success(t('selfHost.applicationDetails.header.actions.delete.success'));
-      router.push('/apps');
-    } catch (error) {
-      toast.error(t('selfHost.applicationDetails.header.actions.delete.error'));
-    }
+  const handleDelete = () => {
+    requireSudo(async () => {
+      try {
+        await deleteApplication({
+          id: application?.id || ''
+        }).unwrap();
+        toast.success(t('selfHost.applicationDetails.header.actions.delete.success'));
+        router.push('/apps');
+      } catch (error) {
+        toast.error(t('selfHost.applicationDetails.header.actions.delete.error'));
+      }
+    });
   };
 
   const handleRestart = async () => {

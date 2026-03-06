@@ -124,6 +124,10 @@ func forwardHeaders(originalReq *http.Request, targetReq *http.Request) {
 		targetReq.Header.Set("Origin", origin)
 	}
 
+	if apiKey := originalReq.Header.Get("x-api-key"); apiKey != "" {
+		targetReq.Header.Set("x-api-key", apiKey)
+	}
+
 	// Forward proxy/protocol headers so Better Auth resolves the correct cookie names.
 	// Internal calls go over HTTP but the original client request came through TLS/Caddy.
 	// Without this, Better Auth looks for "better-auth.session_token" (HTTP) while the

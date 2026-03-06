@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sidebar';
 import { DeleteDialog } from './delete-dialog';
 import useTeamSwitcher from '@/packages/hooks/shared/use-team-switcher';
+import { useSudoMode } from '@/packages/hooks/security/use-sudo-mode';
 import { useAppSelector } from '@/redux/hooks';
 import { UserOrganization } from '@/redux/types/orgs';
 
@@ -42,6 +43,7 @@ export function TeamSwitcher({
     setIsDeleteDialogOpen,
     displayTeam
   } = useTeamSwitcher();
+  const { requireSudo } = useSudoMode();
 
   const canCreateOrg = () => {
     if (user && user.type === 'admin') {
@@ -62,7 +64,7 @@ export function TeamSwitcher({
       <DeleteDialog
         title="Delete Organization"
         description={`Are you sure you want to delete the organization "${'organization' in displayTeam ? displayTeam.organization.name : displayTeam.name}"? This action cannot be undone.`}
-        onConfirm={handleDeleteOrganization}
+        onConfirm={() => requireSudo(handleDeleteOrganization)}
         variant="destructive"
         icon={Trash2}
         open={isDeleteDialogOpen}
