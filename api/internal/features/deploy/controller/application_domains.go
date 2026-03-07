@@ -2,14 +2,17 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
+	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
@@ -113,6 +116,7 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 
 	// Resolve compose service if service_name is provided
 	var composeServiceID *uuid.UUID
+	var composeServicePort int
 	if data.ServiceName != "" {
 		svc, svcErr := c.storage.GetComposeServiceByName(appID, data.ServiceName)
 		if svcErr != nil {
@@ -123,6 +127,7 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 		}
 		if svc != nil {
 			composeServiceID = &svc.ID
+			composeServicePort = svc.Port
 		}
 	}
 
@@ -134,6 +139,9 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 			Status: http.StatusInternalServerError,
 		}
 	}
+
+	routes := c.buildProxyRoutes(organizationID, application, data.Domain, composeServicePort, data.Port)
+	c.tryAddRoutesToProxy(organizationID, routes)
 
 	// Reload application with domains
 	application, err = c.service.GetApplicationById(applicationID, organizationID)
@@ -297,7 +305,25 @@ func (c *DeployController) syncApplicationDomains(appID uuid.UUID, organizationI
 	}
 
 	if len(toAdd) > 0 {
-		return c.storage.AddApplicationDomains(appID, toAdd)
+		if err := c.storage.AddApplicationDomains(appID, toAdd); err != nil {
+			return err
+		}
+		app, appErr := c.service.GetApplicationById(appID.String(), organizationID)
+		if appErr == nil && app.BuildPack != shared_types.DockerCompose {
+			orgCtx := context.WithValue(c.ctx, shared_types.OrganizationIDKey, organizationID.String())
+			upstreamHost, hostErr := resolveSSHUpstreamHost(orgCtx)
+			port, portErr := resolveDockerPublishedPort(orgCtx, app.Name)
+			if hostErr == nil && portErr == nil {
+				var routes []caddy.DomainRoute
+				for _, d := range toAdd {
+					routes = append(routes, caddy.DomainRoute{
+						Domain:       d,
+						UpstreamDial: caddy.FormatDial(upstreamHost, port),
+					})
+				}
+				c.tryAddRoutesToProxy(organizationID, routes)
+			}
+		}
 	}
 
 	return nil
@@ -338,8 +364,13 @@ func (c *DeployController) syncComposeApplicationDomains(appID uuid.UUID, organi
 		}
 	}
 
+	orgCtx := context.WithValue(c.ctx, shared_types.OrganizationIDKey, organizationID.String())
+	upstreamHost, hostErr := resolveSSHUpstreamHost(orgCtx)
+	var newRoutes []caddy.DomainRoute
+
 	for desiredLower, cd := range desiredSet {
 		var composeServiceID *uuid.UUID
+		var composeServicePort int
 		var port *int
 
 		if cd.ServiceName != "" {
@@ -349,6 +380,7 @@ func (c *DeployController) syncComposeApplicationDomains(appID uuid.UUID, organi
 			}
 			if svc != nil {
 				composeServiceID = &svc.ID
+				composeServicePort = svc.Port
 			}
 		}
 		if cd.Port > 0 {
@@ -356,6 +388,7 @@ func (c *DeployController) syncComposeApplicationDomains(appID uuid.UUID, organi
 			port = &p
 		}
 
+		isNew := false
 		if _, exists := existingSet[desiredLower]; exists {
 			if err := c.storage.UpdateApplicationDomainService(appID, cd.Domain, composeServiceID, port); err != nil {
 				return err
@@ -364,10 +397,103 @@ func (c *DeployController) syncComposeApplicationDomains(appID uuid.UUID, organi
 			if err := c.storage.AddApplicationDomainWithService(appID, strings.TrimSpace(cd.Domain), composeServiceID, port); err != nil {
 				return err
 			}
+			isNew = true
+		}
+
+		if isNew && hostErr == nil {
+			resolvedPort := composeServicePort
+			if port != nil && *port > 0 {
+				resolvedPort = *port
+			}
+			if resolvedPort > 0 {
+				newRoutes = append(newRoutes, caddy.DomainRoute{
+					Domain:       strings.TrimSpace(cd.Domain),
+					UpstreamDial: caddy.FormatDial(upstreamHost, resolvedPort),
+				})
+			}
 		}
 	}
 
+	c.tryAddRoutesToProxy(organizationID, newRoutes)
+
 	return nil
+}
+
+func (c *DeployController) tryAddRoutesToProxy(orgID uuid.UUID, routes []caddy.DomainRoute) {
+	if len(routes) == 0 {
+		return
+	}
+	orgCtx := context.WithValue(c.ctx, shared_types.OrganizationIDKey, orgID.String())
+	if err := caddy.AddDomainsWithRetry(orgCtx, nil, &c.logger, routes); err != nil {
+		c.logger.Log(logger.Warning, "failed to add domains to proxy, will be synced on next deploy", err.Error())
+	}
+}
+
+func (c *DeployController) buildProxyRoutes(orgID uuid.UUID, app shared_types.Application, domain string, composePort int, portOverride *int) []caddy.DomainRoute {
+	orgCtx := context.WithValue(c.ctx, shared_types.OrganizationIDKey, orgID.String())
+
+	upstreamHost, err := resolveSSHUpstreamHost(orgCtx)
+	if err != nil {
+		c.logger.Log(logger.Warning, "skipping proxy update: cannot resolve upstream host", err.Error())
+		return nil
+	}
+
+	var port int
+	if app.BuildPack == shared_types.DockerCompose {
+		if portOverride != nil && *portOverride > 0 {
+			port = *portOverride
+		} else if composePort > 0 {
+			port = composePort
+		} else {
+			return nil
+		}
+	} else {
+		port, err = resolveDockerPublishedPort(orgCtx, app.Name)
+		if err != nil {
+			c.logger.Log(logger.Warning, "skipping proxy update: cannot resolve published port", err.Error())
+			return nil
+		}
+	}
+
+	return []caddy.DomainRoute{{
+		Domain:       domain,
+		UpstreamDial: caddy.FormatDial(upstreamHost, port),
+	}}
+}
+
+func resolveSSHUpstreamHost(ctx context.Context) (string, error) {
+	manager, err := ssh.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+	return manager.GetUpstreamHost()
+}
+
+func resolveDockerPublishedPort(ctx context.Context, serviceName string) (int, error) {
+	dockerSvc, err := docker.GetDockerServiceFromContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+	svc, err := dockerSvc.GetServiceByName(serviceName)
+	if err != nil {
+		return 0, err
+	}
+	if svc == nil {
+		return 0, fmt.Errorf("service %s not found", serviceName)
+	}
+	for _, p := range svc.Endpoint.Ports {
+		if p.PublishedPort > 0 {
+			return int(p.PublishedPort), nil
+		}
+	}
+	if svc.Spec.EndpointSpec != nil {
+		for _, p := range svc.Spec.EndpointSpec.Ports {
+			if p.PublishedPort > 0 {
+				return int(p.PublishedPort), nil
+			}
+		}
+	}
+	return 0, fmt.Errorf("no published port found for service %s", serviceName)
 }
 
 // GetComposeServices returns the discovered compose services for an application.

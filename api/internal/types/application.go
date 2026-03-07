@@ -170,6 +170,14 @@ const (
 	Static        BuildPack = "static"
 )
 
+func IsValidBuildPack(bp string) bool {
+	switch BuildPack(bp) {
+	case DockerFile, DockerCompose, Static:
+		return true
+	}
+	return false
+}
+
 type Source string
 
 const (

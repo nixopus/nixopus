@@ -23,6 +23,12 @@ function getMaxRetries(): number {
 
 let currentBaseUrl: string | undefined;
 
+export async function preloadBaseUrl() {
+  if (!currentBaseUrl) {
+    currentBaseUrl = await getBaseUrl();
+  }
+}
+
 const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
   api,

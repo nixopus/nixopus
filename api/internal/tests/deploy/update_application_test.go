@@ -9,6 +9,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	"github.com/raghavyuva/nixopus-api/internal/tests"
 	"github.com/raghavyuva/nixopus-api/internal/testutils"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 func TestUpdateApplication(t *testing.T) {
@@ -115,6 +116,28 @@ func TestUpdateApplication(t *testing.T) {
 			},
 			expectedStatus: http.StatusBadRequest,
 			description:    "Should return 400 when port is invalid",
+		},
+		{
+			name:           "Update application with invalid build pack",
+			cookies:        cookies,
+			organizationID: orgID,
+			request: types.UpdateDeploymentRequest{
+				ID:        testApplicationID,
+				BuildPack: "invalid-buildpack",
+			},
+			expectedStatus: http.StatusBadRequest,
+			description:    "Should return 400 when build pack is invalid",
+		},
+		{
+			name:           "Update application with valid build pack",
+			cookies:        cookies,
+			organizationID: orgID,
+			request: types.UpdateDeploymentRequest{
+				ID:        testApplicationID,
+				BuildPack: shared_types.DockerCompose,
+			},
+			expectedStatus: http.StatusInternalServerError,
+			description:    "Should return 500 when trying to update non-existent application with valid build pack",
 		},
 	}
 

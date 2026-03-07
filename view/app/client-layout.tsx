@@ -7,6 +7,7 @@ import { Toaster } from '@nixopus/ui';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
 import { useEffect, useState, useMemo } from 'react';
 import { initializeAuth } from '@/redux/features/users/authSlice';
+import { preloadBaseUrl } from '@/redux/base-query';
 import { usePathname, useRouter } from 'next/navigation';
 import { WebSocketProvider } from '@/packages/hooks/shared/socket-provider';
 import { FeatureFlagsProvider } from '@/packages/hooks/shared/features_provider';
@@ -19,6 +20,7 @@ import { SettingsModal } from '@/packages/components/settings';
 import { SudoModeProvider } from '@/packages/hooks/security/use-sudo-mode';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
+import { Skeleton } from '@nixopus/ui';
 
 const AppLoadingScreen = () => {
   const { resolvedTheme } = useTheme();
@@ -53,6 +55,43 @@ const AppLoadingScreen = () => {
   );
 };
 
+const AppShellSkeleton = () => (
+  <div className="flex h-screen w-screen bg-background">
+    <div className="flex w-12 shrink-0 flex-col border-r border-border bg-sidebar">
+      <div className="flex h-12 items-center justify-center border-b border-border">
+        <Skeleton className="h-4 w-4 rounded" />
+      </div>
+      <div className="flex flex-1 flex-col gap-2 p-2">
+        <Skeleton className="h-8 w-8 rounded-md" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+        <Skeleton className="h-8 w-8 rounded-md" />
+      </div>
+    </div>
+    <div className="flex flex-1 flex-col">
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-4">
+        <Skeleton className="h-4 w-24" />
+        <div className="ml-auto flex gap-2">
+          <Skeleton className="h-8 w-8 rounded-md" />
+          <Skeleton className="h-8 w-20 rounded-md" />
+        </div>
+      </header>
+      <main className="flex-1 overflow-auto p-6">
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-9 w-32 rounded-md" />
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-32 rounded-lg" />
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+);
+
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
@@ -67,9 +106,9 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
   const pathname = usePathname();
   const router = useRouter();
+  const authState = useAppSelector((state) => state.auth);
+  const { isAuthenticated, isInitialized, user } = authState;
   const [isLoading, setIsLoading] = useState(true);
-  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
-  const isInitialized = useAppSelector((state) => state.auth.isInitialized);
 
   const PUBLIC_ROUTES = [
     '/login',
@@ -84,13 +123,31 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
     [pathname]
   );
 
+  const hasPersistedAuth = isAuthenticated && !!user;
+
   useEffect(() => {
     const initAuth = async () => {
-      await dispatch(initializeAuth() as any);
-      setIsLoading(false);
+      try {
+        await preloadBaseUrl();
+        await dispatch(initializeAuth() as any);
+      } finally {
+        setIsLoading(false);
+      }
     };
     initAuth();
   }, [dispatch]);
+
+  useEffect(() => {
+    if (hasPersistedAuth && !isPublicRoute) {
+      setIsLoading(false);
+    }
+  }, [hasPersistedAuth, isPublicRoute]);
+
+  useEffect(() => {
+    if ((hasPersistedAuth || isAuthenticated) && (pathname === '/' || pathname === '/auth')) {
+      router.prefetch('/apps');
+    }
+  }, [hasPersistedAuth, isAuthenticated, pathname, router]);
 
   // Re-check session only on auth/login routes to catch post-login state before Redux updates
   const isAuthCheckRoute =
@@ -143,7 +200,11 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
         themes={palette}
       >
         {isLoading ? (
-          <AppLoadingScreen />
+          isPublicRoute ? (
+            <AppLoadingScreen />
+          ) : (
+            <AppShellSkeleton />
+          )
         ) : (
           <SettingsModalProvider>
             <WebSocketProvider>

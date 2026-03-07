@@ -92,6 +92,7 @@ type DeployProjectRequest struct {
 type UpdateDeploymentRequest struct {
 	Name                 string                   `json:"name,omitempty"`
 	Environment          shared_types.Environment `json:"environment,omitempty"`
+	BuildPack            shared_types.BuildPack   `json:"build_pack,omitempty"`
 	PreRunCommand        string                   `json:"pre_run_command,omitempty"`
 	PostRunCommand       string                   `json:"post_run_command,omitempty"`
 	BuildVariables       map[string]string        `json:"build_variables,omitempty"`

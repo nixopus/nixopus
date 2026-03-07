@@ -95,6 +95,9 @@ func validateUpdateDeploymentRequest(req *types.UpdateDeploymentRequest) error {
 	if req.Environment != "" && !shared_types.IsValidEnvironment(string(req.Environment)) {
 		return types.ErrInvalidEnvironment
 	}
+	if req.BuildPack != "" && !shared_types.IsValidBuildPack(string(req.BuildPack)) {
+		return types.ErrInvalidBuildPack
+	}
 	if req.Port != 0 {
 		if req.Port < 1 || req.Port > 65535 {
 			return errors.New("port must be between 1 and 65535")

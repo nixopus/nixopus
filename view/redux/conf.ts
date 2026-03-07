@@ -1,14 +1,61 @@
+const CONFIG_CACHE_KEY = 'nixopus_config';
+const CONFIG_CACHE_TTL_MS = 5 * 60 * 1000;
+
 let config: any = null;
 let configPromise: Promise<any> | null = null;
 
+function isValidConfig(c: unknown): c is { baseUrl: string } {
+  return !!c && typeof c === 'object' && typeof (c as any).baseUrl === 'string';
+}
+
+function getCachedConfig(): any {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(CONFIG_CACHE_KEY);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > CONFIG_CACHE_TTL_MS) return null;
+    if (!isValidConfig(data)) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedConfig(data: any) {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(CONFIG_CACHE_KEY, JSON.stringify({ data, ts: Date.now() }));
+  } catch {}
+}
+
 async function fetchConfig() {
   if (config) return config;
+  const cached = getCachedConfig();
+  if (cached && isValidConfig(cached)) {
+    config = cached;
+    fetch('/api/config')
+      .then((r) => r.json())
+      .then((c) => {
+        if (isValidConfig(c)) {
+          config = c;
+          setCachedConfig(c);
+        }
+      })
+      .catch(() => {});
+    return config;
+  }
   if (!configPromise) {
     configPromise = fetch('/api/config')
       .then((r) => r.json())
       .then((c) => {
-        config = c;
-        return c;
+        if (isValidConfig(c)) {
+          config = c;
+          setCachedConfig(c);
+          return c;
+        }
+        configPromise = null;
+        throw new Error('Invalid config: missing baseUrl');
       });
   }
   return configPromise;

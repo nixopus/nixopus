@@ -37,12 +37,20 @@ const storage = typeof window !== 'undefined' ? createWebStorage('local') : crea
 
 const persistConfig = {
   key: 'root',
-  version: 1,
+  version: 2,
   storage,
-  whitelist: ['auth', 'user'],
+  whitelist: ['auth', 'user', 'FeatureFlagsApi'],
   migrate: (state: any) => {
     if (!state) return Promise.resolve(undefined);
-    return Promise.resolve(state);
+    const next =
+      state._persist?.version === 1
+        ? { ...state, _persist: { ...state._persist, version: 2 } }
+        : { ...state };
+    const ff = next.FeatureFlagsApi;
+    if (ff && (!ff.queries || typeof ff.queries !== 'object')) {
+      delete next.FeatureFlagsApi;
+    }
+    return Promise.resolve(next);
   }
 };
 

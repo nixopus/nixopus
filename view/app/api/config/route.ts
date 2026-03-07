@@ -4,7 +4,7 @@ export async function GET() {
   // Priority: VIEW_DOMAIN (if provided) > localhost fallback
   const websiteDomain = process.env.VIEW_DOMAIN || 'http://localhost:3000';
 
-  return NextResponse.json({
+  const response = NextResponse.json({
     baseUrl: process.env.API_URL || 'http://localhost:8080/api',
     websocketUrl: process.env.WEBSOCKET_URL || 'ws://localhost:8080/ws',
     webhookUrl: process.env.WEBHOOK_URL || 'http://localhost:8080/webhook',
@@ -13,4 +13,6 @@ export async function GET() {
     passwordLoginEnabled: process.env.PASSWORD_LOGIN_ENABLED !== 'false',
     agentConfigured: Boolean(process.env.AGENT_URL || process.env.NEXT_PUBLIC_AGENT_URL)
   });
+  response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
+  return response;
 }

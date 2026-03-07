@@ -1,5 +1,6 @@
 import { authApi } from '@/redux/services/users/authApi';
 import { userApi } from '@/redux/services/users/userApi';
+import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { User } from '@/redux/types/user';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
@@ -50,6 +51,8 @@ export const initializeAuth = createAsyncThunk<AuthPayload | null, void, { rejec
           const firstOrg = organizationsResult[0];
           dispatch(setActiveOrganization(firstOrg.organization));
         }
+
+        dispatch(FeatureFlagsApi.endpoints.getAllFeatureFlags.initiate(undefined));
 
         return {
           user: userResult,
@@ -167,6 +170,11 @@ export const authSlice = createSlice({
           state.isAuthenticated = true;
           state.twoFactor.isRequired = false;
           state.twoFactor.tempToken = undefined;
+        } else {
+          state.user = null;
+          state.token = undefined;
+          state.refreshToken = undefined;
+          state.isAuthenticated = false;
         }
         state.isInitialized = true;
         state.isLoading = false;

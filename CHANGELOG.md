@@ -1,3 +1,24 @@
+# [0.1.0-alpha.147](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.146...v0.1.0-alpha.147) (2026-03-06)
+
+
+### Features
+
+* add notification send routes ([2d2d154](https://github.com/raghavyuva/nixopus/commit/2d2d1549d11904acdd0ec6cad2f1647d0365acaa))
+* add sudo verification dialouges ([bc35df0](https://github.com/raghavyuva/nixopus/commit/bc35df05f6c5e5d8bb3df8072fbd7038fae72571))
+* add support for multi source deployment ([cff36c2](https://github.com/raghavyuva/nixopus/commit/cff36c2d94f6d31008fccd54352aba1bcb9b397c))
+* custom domain verification with dns checks and remove legacy api ([f4a479f](https://github.com/raghavyuva/nixopus/commit/f4a479f0372c45c636b5850cbd89a192ff30fc3f))
+
+
+
+# [0.1.0-alpha.146](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.145...v0.1.0-alpha.146) (2026-03-05)
+
+
+### Bug Fixes
+
+* redirect urls of github in multizone deployment ([8e4a90e](https://github.com/raghavyuva/nixopus/commit/8e4a90e355ce3cecad05caad678ea0678ddfd4cc))
+
+
+
 # [0.1.0-alpha.145](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.144...v0.1.0-alpha.145) (2026-03-05)
 
 

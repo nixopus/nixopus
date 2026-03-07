@@ -310,13 +310,7 @@ export function AppSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton
               size="lg"
-              onClick={() => {
-                if (process.env.__NEXT_ROUTER_BASEPATH) {
-                  window.location.href = '/';
-                } else {
-                  router.push('/apps');
-                }
-              }}
+              onClick={() => router.push('/apps')}
               className="cursor-pointer group-data-[collapsible=icon]:justify-center"
             >
               <div className="flex aspect-square size-4 shrink-0 items-center justify-center">
