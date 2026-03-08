@@ -1,0 +1,5 @@
+:9090 {
+    respond /health `{"status":"ok","service":"auth"}` 200
+    respond /api/auth/* `{"mock":"nixopus-auth"}` 200
+    respond * `{"mock":"nixopus-auth"}` 200
+}

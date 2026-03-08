@@ -1,0 +1,17 @@
+{$SITE_ADDRESS} {
+    handle /api/v1/* {
+        reverse_proxy nixopus-api:8443
+    }
+
+    handle /ws {
+        reverse_proxy nixopus-api:8443
+    }
+
+    handle /ws/* {
+        reverse_proxy nixopus-api:8443
+    }
+
+    handle {
+        reverse_proxy nixopus-view:7443
+    }
+}

@@ -16,7 +16,7 @@ services:
       SSH_PASSWORD: ${SSH_PASSWORD:-}
       DOCKER_HOST: ${DOCKER_HOST:-unix:///var/run/docker.sock}
       REDIS_URL: ${REDIS_URL:-redis://default:changeme@nixopus-redis:6379}
-      CADDY_ENDPOINT: ${CADDY_ENDPOINT:-http://nixopus-caddy:2019}
+      CADDY_PORT: ${CADDY_PORT:-2019}
       ALLOWED_ORIGIN: ${ALLOWED_ORIGIN:-http://localhost:3000}
       ENV: ${ENV:-production}
       LOGS_PATH: ${LOGS_PATH:-./logs}
@@ -26,19 +26,13 @@ services:
       API_CONTAINER_NAME: ${API_CONTAINER_NAME:-nixopus-api}
       DOCKER_PORT: ${DOCKER_PORT:-2376}
       APP_VERSION: ${APP_VERSION:-0.1.0-alpha.11}
-      SUPERTOKENS_API_KEY: ${SUPERTOKENS_API_KEY:-NixopusSuperTokensAPIKey}
-      SUPERTOKENS_API_DOMAIN: ${SUPERTOKENS_API_DOMAIN:-http://localhost:3567}
-      SUPERTOKENS_WEBSITE_DOMAIN: ${SUPERTOKENS_WEBSITE_DOMAIN:-http://localhost:3000}
-      SUPERTOKENS_CONNECTION_URI: ${SUPERTOKENS_CONNECTION_URI:-http://localhost:3567}
-      SUPERTOKENS_API_PORT: ${SUPERTOKENS_API_PORT:-3567}
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://nixopus-auth:9090}
+      AUTH_SERVICE_SECRET: ${AUTH_SERVICE_SECRET:-changeme}
 
   view:
     env:
       PORT: ${VIEW_PORT:-7443}
-      WEBSOCKET_URL: ${WEBSOCKET_URL:-}
       API_URL: ${API_URL:-}
-      VIEW_DOMAIN: ${VIEW_DOMAIN:-}
-      WEBHOOK_URL: ${WEBHOOK_URL:-}
       NEXT_PUBLIC_PORT: ${NEXT_PUBLIC_PORT:-7443}
       LOGS_PATH: ${LOGS_PATH:-./logs}
       VIEW_ENV_FILE: ${VIEW_ENV_FILE:-/etc/nixopus/source/view/.env}
@@ -147,7 +141,7 @@ clone:
   branch: "master"
   source-path: source
 
-ports: [2019, 80, 443, 7443, 8443, 6379, 5432, 3567]
+ports: [2019, 80, 443, 7443, 8443, 6379, 5432, 9090]
 ssh_key_size: 4096
 ssh_key_type: rsa
 ssh_passphrase:

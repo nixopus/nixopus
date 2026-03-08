@@ -1,0 +1,4 @@
+:8443 {
+    respond /api/v1/health `{"status":"success","message":"Server is up and running"}` 200
+    respond * `{"mock":"nixopus-api"}` 200
+}

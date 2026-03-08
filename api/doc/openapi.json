@@ -1672,451 +1672,7 @@
 				"nullable": true,
 				"properties": {
 					"application": {
-						"nullable": true,
-						"properties": {
-							"base_path": {
-								"type": "string"
-							},
-							"branch": {
-								"type": "string"
-							},
-							"build_pack": {
-								"type": "string"
-							},
-							"build_variables": {
-								"type": "string"
-							},
-							"compose_services": {
-								"items": {
-									"nullable": true,
-									"properties": {
-										"application": {
-											"$ref": "#/components/schemas/Application"
-										},
-										"application_id": {
-											"format": "uuid",
-											"type": "string"
-										},
-										"created_at": {
-											"format": "date-time",
-											"type": "string"
-										},
-										"domains": {
-											"items": {
-												"nullable": true,
-												"properties": {
-													"application": {
-														"$ref": "#/components/schemas/Application"
-													},
-													"application_id": {
-														"format": "uuid",
-														"type": "string"
-													},
-													"compose_service": {
-														"$ref": "#/components/schemas/ComposeService"
-													},
-													"compose_service_id": {
-														"format": "uuid",
-														"type": "string"
-													},
-													"created_at": {
-														"format": "date-time",
-														"type": "string"
-													},
-													"domain": {
-														"type": "string"
-													},
-													"id": {
-														"format": "uuid",
-														"type": "string"
-													},
-													"port": {
-														"nullable": true,
-														"type": "integer"
-													}
-												},
-												"type": "object"
-											},
-											"nullable": true,
-											"type": "array"
-										},
-										"id": {
-											"format": "uuid",
-											"type": "string"
-										},
-										"port": {
-											"type": "integer"
-										},
-										"service_name": {
-											"type": "string"
-										},
-										"updated_at": {
-											"format": "date-time",
-											"type": "string"
-										}
-									},
-									"type": "object"
-								},
-								"nullable": true,
-								"type": "array"
-							},
-							"created_at": {
-								"format": "date-time",
-								"type": "string"
-							},
-							"deployments": {
-								"items": {
-									"$ref": "#/components/schemas/ApplicationDeployment"
-								},
-								"nullable": true,
-								"type": "array"
-							},
-							"dockerfile_path": {
-								"type": "string"
-							},
-							"domains": {
-								"items": {
-									"nullable": true,
-									"properties": {
-										"application": {
-											"$ref": "#/components/schemas/Application"
-										},
-										"application_id": {
-											"format": "uuid",
-											"type": "string"
-										},
-										"compose_service": {
-											"nullable": true,
-											"properties": {
-												"application": {
-													"$ref": "#/components/schemas/Application"
-												},
-												"application_id": {
-													"format": "uuid",
-													"type": "string"
-												},
-												"created_at": {
-													"format": "date-time",
-													"type": "string"
-												},
-												"domains": {
-													"items": {
-														"$ref": "#/components/schemas/ApplicationDomain"
-													},
-													"type": "array"
-												},
-												"id": {
-													"format": "uuid",
-													"type": "string"
-												},
-												"port": {
-													"type": "integer"
-												},
-												"service_name": {
-													"type": "string"
-												},
-												"updated_at": {
-													"format": "date-time",
-													"type": "string"
-												}
-											},
-											"type": "object"
-										},
-										"compose_service_id": {
-											"format": "uuid",
-											"type": "string"
-										},
-										"created_at": {
-											"format": "date-time",
-											"type": "string"
-										},
-										"domain": {
-											"type": "string"
-										},
-										"id": {
-											"format": "uuid",
-											"type": "string"
-										},
-										"port": {
-											"nullable": true,
-											"type": "integer"
-										}
-									},
-									"type": "object"
-								},
-								"nullable": true,
-								"type": "array"
-							},
-							"environment": {
-								"type": "string"
-							},
-							"environment_variables": {
-								"type": "string"
-							},
-							"family_id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"is_live_deployment": {
-								"type": "boolean"
-							},
-							"labels": {
-								"items": {
-									"nullable": true,
-									"type": "string"
-								},
-								"nullable": true,
-								"type": "array"
-							},
-							"logs": {
-								"items": {
-									"$ref": "#/components/schemas/ApplicationLogs"
-								},
-								"type": "array"
-							},
-							"name": {
-								"type": "string"
-							},
-							"organization": {
-								"nullable": true,
-								"properties": {
-									"created_at": {
-										"format": "date-time",
-										"type": "string"
-									},
-									"id": {
-										"format": "uuid",
-										"type": "string"
-									},
-									"logo": {
-										"nullable": true,
-										"type": "string"
-									},
-									"metadata": {
-										"nullable": true,
-										"type": "string"
-									},
-									"name": {
-										"type": "string"
-									},
-									"slug": {
-										"type": "string"
-									}
-								},
-								"type": "object"
-							},
-							"organization_id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"port": {
-								"type": "integer"
-							},
-							"post_run_command": {
-								"type": "string"
-							},
-							"pre_run_command": {
-								"type": "string"
-							},
-							"proxy_server": {
-								"type": "string"
-							},
-							"repository": {
-								"type": "string"
-							},
-							"source": {
-								"type": "string"
-							},
-							"status": {
-								"nullable": true,
-								"properties": {
-									"application": {
-										"$ref": "#/components/schemas/Application"
-									},
-									"application_id": {
-										"format": "uuid",
-										"type": "string"
-									},
-									"created_at": {
-										"format": "date-time",
-										"type": "string"
-									},
-									"id": {
-										"format": "uuid",
-										"type": "string"
-									},
-									"status": {
-										"type": "string"
-									},
-									"updated_at": {
-										"format": "date-time",
-										"type": "string"
-									}
-								},
-								"type": "object"
-							},
-							"updated_at": {
-								"format": "date-time",
-								"type": "string"
-							},
-							"user": {
-								"nullable": true,
-								"properties": {
-									"avatar": {
-										"type": "string"
-									},
-									"created_at": {
-										"format": "date-time",
-										"type": "string"
-									},
-									"email": {
-										"type": "string"
-									},
-									"email_verified": {
-										"type": "boolean"
-									},
-									"id": {
-										"format": "uuid",
-										"type": "string"
-									},
-									"image": {
-										"nullable": true,
-										"type": "string"
-									},
-									"is_onboarded": {
-										"type": "boolean"
-									},
-									"is_verified": {
-										"type": "boolean"
-									},
-									"name": {
-										"type": "string"
-									},
-									"organization_users": {
-										"items": {
-											"nullable": true,
-											"properties": {
-												"created_at": {
-													"format": "date-time",
-													"type": "string"
-												},
-												"deleted_at": {
-													"format": "date-time",
-													"nullable": true,
-													"type": "string"
-												},
-												"id": {
-													"format": "uuid",
-													"type": "string"
-												},
-												"organization": {
-													"nullable": true,
-													"properties": {
-														"created_at": {
-															"format": "date-time",
-															"type": "string"
-														},
-														"id": {
-															"format": "uuid",
-															"type": "string"
-														},
-														"logo": {
-															"nullable": true,
-															"type": "string"
-														},
-														"metadata": {
-															"nullable": true,
-															"type": "string"
-														},
-														"name": {
-															"type": "string"
-														},
-														"slug": {
-															"type": "string"
-														}
-													},
-													"type": "object"
-												},
-												"organization_id": {
-													"format": "uuid",
-													"type": "string"
-												},
-												"updated_at": {
-													"format": "date-time",
-													"type": "string"
-												},
-												"user": {
-													"$ref": "#/components/schemas/User"
-												},
-												"user_id": {
-													"format": "uuid",
-													"type": "string"
-												}
-											},
-											"type": "object"
-										},
-										"nullable": true,
-										"type": "array"
-									},
-									"organizations": {
-										"items": {
-											"nullable": true,
-											"properties": {
-												"created_at": {
-													"format": "date-time",
-													"type": "string"
-												},
-												"id": {
-													"format": "uuid",
-													"type": "string"
-												},
-												"logo": {
-													"nullable": true,
-													"type": "string"
-												},
-												"metadata": {
-													"nullable": true,
-													"type": "string"
-												},
-												"name": {
-													"type": "string"
-												},
-												"slug": {
-													"type": "string"
-												}
-											},
-											"type": "object"
-										},
-										"nullable": true,
-										"type": "array"
-									},
-									"provision_status": {
-										"nullable": true,
-										"type": "string"
-									},
-									"supertokens_user_id": {
-										"type": "string"
-									},
-									"updated_at": {
-										"format": "date-time",
-										"type": "string"
-									},
-									"username": {
-										"type": "string"
-									}
-								},
-								"type": "object"
-							},
-							"user_id": {
-								"format": "uuid",
-								"type": "string"
-							}
-						},
-						"type": "object"
+						"$ref": "#/components/schemas/Application"
 					},
 					"application_deployment": {
 						"$ref": "#/components/schemas/ApplicationDeployment"
@@ -2977,8 +2533,41 @@
 					},
 					"domains": {
 						"items": {
-							"$ref": "#/components/schemas/ApplicationDomain"
+							"nullable": true,
+							"properties": {
+								"application": {
+									"$ref": "#/components/schemas/Application"
+								},
+								"application_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"compose_service": {
+									"$ref": "#/components/schemas/ComposeService"
+								},
+								"compose_service_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"domain": {
+									"type": "string"
+								},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"port": {
+									"nullable": true,
+									"type": "integer"
+								}
+							},
+							"type": "object"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"id": {
@@ -12204,6 +11793,10 @@
 						"nullable": true,
 						"type": "string"
 					},
+					"build_pack": {
+						"nullable": true,
+						"type": "string"
+					},
 					"build_variables": {
 						"additionalProperties": {
 							"nullable": true,
@@ -12543,6 +12136,24 @@
 				"required": [
 					"type"
 				],
+				"type": "object"
+			},
+			"UpgradeResourcesRequest": {
+				"description": "UpgradeResourcesRequest schema",
+				"properties": {
+					"memory_mb": {
+						"type": "integer"
+					},
+					"org_id": {
+						"type": "string"
+					},
+					"user_id": {
+						"type": "string"
+					},
+					"vcpu_count": {
+						"type": "integer"
+					}
+				},
 				"type": "object"
 			},
 			"User": {
@@ -20764,6 +20375,86 @@
 					}
 				},
 				"summary": "get status",
+				"tags": [
+					"api/v1/trail"
+				]
+			}
+		},
+		"/api/v1/trail/upgrade-resources": {
+			"post": {
+				"description": "#### Controller: \n\n`github.com/raghavyuva/nixopus-api/internal/features/trail/controller.(*TrailController).UpgradeResources`\n\n#### Middlewares:\n\n- `github.com/go-fuego/fuego.defaultLogger.middleware`\n\n---\n\n",
+				"operationId": "POST_/api/v1/trail/upgrade-resources",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"schema": {
+								"$ref": "#/components/schemas/UpgradeResourcesRequest"
+							}
+						}
+					},
+					"description": "Request body for types.UpgradeResourcesRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/HTTPError"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "upgrade resources",
 				"tags": [
 					"api/v1/trail"
 				]

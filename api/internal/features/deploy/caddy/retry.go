@@ -48,7 +48,7 @@ func WithRetry(op func() error, maxRetries int, lgr logger.Logger, onFailure fun
 // InvalidateTunnel removes a cached Caddy tunnel entry for the given host
 // so the next GetCaddyClient call creates a fresh connection.
 func InvalidateTunnel(host string) {
-	port, err := parseCaddyEndpointPort()
+	port, err := getCaddyPort()
 	if err != nil {
 		return
 	}

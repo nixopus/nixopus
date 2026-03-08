@@ -15,7 +15,6 @@ type Config struct {
 	GitHub     GitHubConfig     `mapstructure:"github"`
 	BetterAuth BetterAuthConfig `mapstructure:"betterauth"`
 	Stripe     StripeConfig     `mapstructure:"stripe"`
-	Agent      AgentConfig      `mapstructure:"agent"`
 	Trail      TrailConfig      `mapstructure:"trail"`
 	Live       LiveConfig       `mapstructure:"live"`
 	S3         S3Config         `mapstructure:"s3"`
@@ -48,10 +47,6 @@ type S3Config struct {
 	UseSSL    bool   `mapstructure:"use_ssl"`
 }
 
-type AgentConfig struct {
-	Endpoint string `mapstructure:"endpoint"`
-}
-
 type BetterAuthConfig struct {
 	URL    string `mapstructure:"url" validate:"required"`
 	Secret string `mapstructure:"secret" validate:"required"`
@@ -63,11 +58,12 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	Host        string `mapstructure:"host" validate:"required"`
-	Port        string `mapstructure:"port" validate:"required"`
-	Username    string `mapstructure:"username" validate:"required"`
-	Password    string `mapstructure:"password" validate:"required"`
-	Name        string `mapstructure:"name" validate:"required"`
+	URL         string `mapstructure:"url"`
+	Host        string `mapstructure:"host"`
+	Port        string `mapstructure:"port"`
+	Username    string `mapstructure:"username"`
+	Password    string `mapstructure:"password"`
+	Name        string `mapstructure:"name"`
 	SSLMode     string `mapstructure:"ssl_mode"`
 	MaxOpenConn int    `mapstructure:"max_open_conn"`
 	MaxIdleConn int    `mapstructure:"max_idle_conn"`
@@ -89,7 +85,7 @@ type SSHConfig struct {
 }
 
 type ProxyConfig struct {
-	CaddyEndpoint string `mapstructure:"caddy_endpoint"` // Caddy admin API (tunneled via SSH). Defaults to http://localhost:2019
+	CaddyPort string `mapstructure:"caddy_port"`
 }
 
 type CORSConfig struct {

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,6 +78,12 @@ func Init() *storage.Store {
 	AppConfig = types.Config{}
 	if err := viper.Unmarshal(&AppConfig); err != nil {
 		log.Fatalf("Failed to unmarshal config: %v", err)
+	}
+
+	if AppConfig.Database.URL != "" {
+		if err := parseDatabaseURL(&AppConfig.Database); err != nil {
+			log.Fatalf("Failed to parse DATABASE_URL: %v", err)
+		}
 	}
 
 	log.Printf("Configuration loaded successfully for environment: %s", AppConfig.App.Environment)
@@ -192,6 +199,7 @@ func setupEnvVarMappings() {
 	viper.BindEnv("server.port", "PORT")
 
 	// Database
+	viper.BindEnv("database.url", "DATABASE_URL")
 	viper.BindEnv("database.host", "HOST_NAME")
 	viper.BindEnv("database.port", "DB_PORT")
 	viper.BindEnv("database.username", "USERNAME")
@@ -209,9 +217,8 @@ func setupEnvVarMappings() {
 	viper.BindEnv("redis.url", "REDIS_URL")
 
 	// Proxy
-	viper.BindEnv("proxy.caddy_endpoint", "CADDY_ENDPOINT")
-
-	viper.BindEnv("agent.endpoint", "AGENT_ENDPOINT")
+	viper.BindEnv("proxy.caddy_port", "CADDY_PORT")
+	viper.SetDefault("proxy.caddy_port", "2019")
 
 	// CORS
 	viper.BindEnv("cors.allowed_origin", "ALLOWED_ORIGIN")
@@ -230,8 +237,8 @@ func setupEnvVarMappings() {
 	viper.BindEnv("github.client_secret", "GITHUB_APP_CLIENT_SECRET")
 	viper.BindEnv("github.webhook_secret", "GITHUB_APP_WEBHOOK_SECRET")
 	// Better Auth
-	viper.BindEnv("betterauth.url", "BETTER_AUTH_URL")
-	viper.BindEnv("betterauth.secret", "BETTER_AUTH_SECRET")
+	viper.BindEnv("betterauth.url", "AUTH_SERVICE_URL")
+	viper.BindEnv("betterauth.secret", "AUTH_SERVICE_SECRET")
 
 	// S3 (optional, for image storage)
 	viper.BindEnv("s3.endpoint", "S3_ENDPOINT")
@@ -290,6 +297,39 @@ func setupEnvVarMappings() {
 	viper.SetDefault("live.check_origin", false)
 }
 
+func parseDatabaseURL(db *types.DatabaseConfig) error {
+	u, err := url.Parse(db.URL)
+	if err != nil {
+		return fmt.Errorf("invalid DATABASE_URL: %w", err)
+	}
+
+	if db.Host == "" {
+		db.Host = u.Hostname()
+	}
+	if db.Port == "" {
+		db.Port = u.Port()
+		if db.Port == "" {
+			db.Port = "5432"
+		}
+	}
+	if db.Username == "" && u.User != nil {
+		db.Username = u.User.Username()
+	}
+	if db.Password == "" && u.User != nil {
+		db.Password, _ = u.User.Password()
+	}
+	if db.Name == "" {
+		db.Name = strings.TrimPrefix(u.Path, "/")
+	}
+	if db.SSLMode == "" {
+		if sslMode := u.Query().Get("sslmode"); sslMode != "" {
+			db.SSLMode = sslMode
+		}
+	}
+
+	return nil
+}
+
 func validateConfig(config types.Config) error {
 	var errors []string
 
@@ -298,19 +338,19 @@ func validateConfig(config types.Config) error {
 	}
 
 	if config.Database.Host == "" {
-		errors = append(errors, "database host is required")
+		errors = append(errors, "database host is required (set DATABASE_URL or HOST_NAME)")
 	}
 	if config.Database.Port == "" {
-		errors = append(errors, "database port is required")
+		errors = append(errors, "database port is required (set DATABASE_URL or DB_PORT)")
 	}
 	if config.Database.Username == "" {
-		errors = append(errors, "database username is required")
+		errors = append(errors, "database username is required (set DATABASE_URL or USERNAME)")
 	}
 	if config.Database.Password == "" {
-		errors = append(errors, "database password is required")
+		errors = append(errors, "database password is required (set DATABASE_URL or PASSWORD)")
 	}
 	if config.Database.Name == "" {
-		errors = append(errors, "database name is required")
+		errors = append(errors, "database name is required (set DATABASE_URL or DB_NAME)")
 	}
 
 	if config.Redis.URL == "" {

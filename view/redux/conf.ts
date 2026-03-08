@@ -76,11 +76,6 @@ export async function getWebhookUrl() {
   return webhookUrl;
 }
 
-export async function getWebsiteDomain() {
-  const { websiteDomain } = await fetchConfig();
-  return websiteDomain;
-}
-
 export async function getPasswordLoginEnabled() {
   const { passwordLoginEnabled } = await fetchConfig();
   return passwordLoginEnabled;

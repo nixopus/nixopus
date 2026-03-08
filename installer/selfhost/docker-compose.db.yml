@@ -1,0 +1,40 @@
+services:
+  nixopus-db:
+    image: postgres:14-alpine
+    container_name: nixopus-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nixopus
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: nixopus
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256"
+    command:
+      - postgres
+      - -c
+      - password_encryption=scram-sha-256
+      - -c
+      - max_connections=100
+      - -c
+      - shared_buffers=256MB
+    volumes:
+      - nixopus-db-data:/var/lib/postgresql/data
+    networks:
+      - nixopus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nixopus -d nixopus"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  nixopus-auth:
+    depends_on:
+      nixopus-db:
+        condition: service_healthy
+
+  nixopus-api:
+    depends_on:
+      nixopus-db:
+        condition: service_healthy
+
+volumes:
+  nixopus-db-data:

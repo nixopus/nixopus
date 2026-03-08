@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 
 export const runtime = 'edge';
 
-const AGENT_URL = process.env.NEXT_PUBLIC_AGENT_URL || process.env.AGENT_URL || '';
+const AGENT_URL = process.env.AGENT_URL || '';
 
 async function proxy(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
   if (!AGENT_URL) {

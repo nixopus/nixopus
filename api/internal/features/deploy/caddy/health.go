@@ -354,7 +354,7 @@ func (h *HealthMonitor) isCaddyAPIReachable(conn *goph.Client, host string) bool
 	}
 	defer session.Close()
 
-	port, err := parseCaddyEndpointPort()
+	port, err := getCaddyPort()
 	if err != nil {
 		port = defaultCaddyPort
 	}

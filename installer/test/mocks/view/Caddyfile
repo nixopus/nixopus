@@ -1,0 +1,4 @@
+:7443 {
+    respond /api/config `{"baseUrl":"http://127.0.0.1/api","websocketUrl":"ws://127.0.0.1/ws","port":"7443","passwordLoginEnabled":true}` 200
+    respond * `<!DOCTYPE html><html><body><h1>Nixopus Mock</h1></body></html>` 200
+}

@@ -170,7 +170,7 @@ type BetterAuthMember struct {
 
 // getBetterAuthOrganizationMember fetches organization membership from Better Auth API
 func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Request, userID, organizationID string) (*BetterAuthMember, error) {
-	betterAuthURL := os.Getenv("BETTER_AUTH_URL")
+	betterAuthURL := os.Getenv("AUTH_SERVICE_URL")
 	if betterAuthURL == "" {
 		betterAuthURL = "http://localhost:9090"
 	}

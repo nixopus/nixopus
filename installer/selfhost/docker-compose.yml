@@ -1,0 +1,123 @@
+services:
+  nixopus-auth:
+    image: ${NIXOPUS_AUTH_IMAGE:-ghcr.io/nixopus/auth:latest}
+    container_name: nixopus-auth
+    restart: unless-stopped
+    environment:
+      PORT: "9090"
+      HOST: "0.0.0.0"
+      NODE_ENV: production
+      DATABASE_URL: "${DATABASE_URL}"
+      AUTH_SERVICE_URL: "${AUTH_PUBLIC_URL}"
+      AUTH_SERVICE_SECRET: "${AUTH_SERVICE_SECRET}"
+      ALLOWED_ORIGIN: "${ALLOWED_ORIGIN}"
+      AUTH_COOKIE_DOMAIN: "${AUTH_COOKIE_DOMAIN:-}"
+      AUTH_SECURE_COOKIES: "${AUTH_SECURE_COOKIES:-false}"
+      SELF_HOSTED: "true"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-}"
+      NIXOPUS_API_URL: "http://nixopus-api:8443"
+      SECRET_MANAGER_ENABLED: "false"
+      PASSWORD_LOGIN_ENABLED: "true"
+    networks:
+      - nixopus-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  nixopus-api:
+    image: ${NIXOPUS_API_IMAGE:-ghcr.io/raghavyuva/nixopus-api:latest}
+    container_name: nixopus-api
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      PORT: "8443"
+      ENV: production
+      DATABASE_URL: "${DATABASE_URL}"
+      REDIS_URL: "${REDIS_URL}"
+      AUTH_SERVICE_URL: "http://nixopus-auth:9090"
+      AUTH_SERVICE_SECRET: "${AUTH_SERVICE_SECRET}"
+      JWT_SECRET: "${JWT_SECRET}"
+      ALLOWED_ORIGIN: "${ALLOWED_ORIGIN}"
+      CADDY_PORT: "2019"
+      CADDY_ENDPOINT: "http://nixopus-caddy:2019"
+      SSH_HOST: host.docker.internal
+      SSH_PORT: "${SSH_PORT:-22}"
+      SSH_USER: "${SSH_USER:-root}"
+      SSH_PRIVATE_KEY: /etc/nixopus/ssh/id_rsa
+      DOCKER_HOST: "unix:///var/run/docker.sock"
+      MOUNT_PATH: /etc/nixopus/configs
+      DEPLOY_DOMAIN: "${DOMAIN:-${HOST_IP}}"
+      APP_VERSION: "${NIXOPUS_VERSION:-latest}"
+      SECRET_MANAGER_ENABLED: "false"
+    volumes:
+      - ${NIXOPUS_HOME:-/opt/nixopus}:/etc/nixopus
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - nixopus-network
+    depends_on:
+      nixopus-auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8443/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  nixopus-view:
+    image: ${NIXOPUS_VIEW_IMAGE:-ghcr.io/raghavyuva/nixopus-view:latest}
+    container_name: nixopus-view
+    restart: unless-stopped
+    environment:
+      HOSTNAME: "0.0.0.0"
+      PORT: "7443"
+      API_URL: "${API_URL}"
+      AUTH_SERVICE_URL: "http://nixopus-auth:9090"
+      NEXT_PUBLIC_PORT: "7443"
+      PASSWORD_LOGIN_ENABLED: "true"
+    networks:
+      - nixopus-network
+    depends_on:
+      nixopus-auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:7443"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  nixopus-caddy:
+    image: caddy:latest
+    container_name: nixopus-caddy
+    restart: unless-stopped
+    ports:
+      - "0.0.0.0:${CADDY_HTTP_PORT:-80}:80"
+      - "0.0.0.0:${CADDY_HTTPS_PORT:-443}:443"
+      - "127.0.0.1:2019:2019"
+    environment:
+      SITE_ADDRESS: "${SITE_ADDRESS:-:80}"
+    volumes:
+      - ${NIXOPUS_HOME:-/opt/nixopus}/Caddyfile:/etc/caddy/Caddyfile
+      - nixopus-caddy-data:/data
+      - nixopus-caddy-config:/config
+    networks:
+      - nixopus-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:2019/config/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+networks:
+  nixopus-network:
+    driver: bridge
+
+volumes:
+  nixopus-caddy-data:
+  nixopus-caddy-config:

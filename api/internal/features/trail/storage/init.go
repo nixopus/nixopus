@@ -24,6 +24,7 @@ type TrailRepository interface {
 	UpdateUserProvisionDetailsStep(sessionID string, step types.ProvisionStep) error
 	GetUserByID(userID string) (*shared_types.User, error)
 	IsSubdomainTaken(subdomain string) (bool, error)
+	GetCompletedProvisionByUserID(userID string) (*types.UserProvisionDetails, error)
 }
 
 // TrailStorage implements TrailRepository using Bun ORM.
@@ -262,6 +263,27 @@ func (s *TrailStorage) GetUserByID(userID string) (*shared_types.User, error) {
 	}
 
 	return &user, nil
+}
+
+func (s *TrailStorage) GetCompletedProvisionByUserID(userID string) (*types.UserProvisionDetails, error) {
+	var provision types.UserProvisionDetails
+
+	err := s.DB.NewSelect().
+		Model(&provision).
+		Where("upd.user_id = ?", userID).
+		Where("upd.step = ?", types.ProvisionStepCompleted).
+		Order("upd.created_at DESC").
+		Limit(1).
+		Scan(s.Ctx)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get completed provision: %w", err)
+	}
+
+	return &provision, nil
 }
 
 // IsSubdomainTaken checks if a subdomain is already in use.

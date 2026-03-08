@@ -31,7 +31,7 @@ func TestConfigLoading(t *testing.T) {
 				"SSH_HOST":       "test-ssh-host",
 				"SSH_PORT":       "2222",
 				"SSH_USER":       "sshuser",
-				"CADDY_ENDPOINT": "http://test-caddy:2019",
+				"CADDY_PORT":     "2019",
 				"ALLOWED_ORIGIN": "http://test-frontend:3000",
 				"ENV":            "test",
 				"APP_VERSION":    "1.0.0-test",
@@ -53,7 +53,7 @@ func TestConfigLoading(t *testing.T) {
 					URL: "redis://test-redis:6379",
 				},
 				Proxy: types.ProxyConfig{
-					CaddyEndpoint: "http://test-caddy:2019",
+					CaddyPort: "2019",
 				},
 				CORS: types.CORSConfig{
 					AllowedOrigin: "http://test-frontend:3000",
@@ -80,6 +80,9 @@ func TestConfigLoading(t *testing.T) {
 				Database: types.DatabaseConfig{
 					Host: "localhost",
 					Port: "5432",
+				},
+				Proxy: types.ProxyConfig{
+					CaddyPort: "2019",
 				},
 			},
 			description: "Should load partial configuration from environment variables",
@@ -109,7 +112,7 @@ func TestConfigLoading(t *testing.T) {
 			assert.Equal(t, tt.expectedConfig.Database.Name, config.Database.Name, "Database name mismatch")
 			assert.Equal(t, tt.expectedConfig.Database.SSLMode, config.Database.SSLMode, "Database SSL mode mismatch")
 			assert.Equal(t, tt.expectedConfig.Redis.URL, config.Redis.URL, "Redis URL mismatch")
-			assert.Equal(t, tt.expectedConfig.Proxy.CaddyEndpoint, config.Proxy.CaddyEndpoint, "Caddy endpoint mismatch")
+			assert.Equal(t, tt.expectedConfig.Proxy.CaddyPort, config.Proxy.CaddyPort, "Caddy port mismatch")
 			assert.Equal(t, tt.expectedConfig.CORS.AllowedOrigin, config.CORS.AllowedOrigin, "Allowed origin mismatch")
 			assert.Equal(t, tt.expectedConfig.App.Environment, config.App.Environment, "Environment mismatch")
 			assert.Equal(t, tt.expectedConfig.App.Version, config.App.Version, "Version mismatch")
@@ -155,7 +158,7 @@ func TestConfigValidation(t *testing.T) {
 		os.Setenv("REDIS_URL", "redis://localhost:6379")
 		os.Setenv("SSH_HOST", "localhost")
 		os.Setenv("SSH_USER", "root")
-		os.Setenv("CADDY_ENDPOINT", "http://localhost:2019")
+		os.Setenv("CADDY_PORT", "2019")
 		os.Setenv("ALLOWED_ORIGIN", "http://localhost:3000")
 
 		defer func() {
@@ -168,7 +171,7 @@ func TestConfigValidation(t *testing.T) {
 			os.Unsetenv("REDIS_URL")
 			os.Unsetenv("SSH_HOST")
 			os.Unsetenv("SSH_USER")
-			os.Unsetenv("CADDY_ENDPOINT")
+			os.Unsetenv("CADDY_PORT")
 			os.Unsetenv("ALLOWED_ORIGIN")
 		}()
 
@@ -187,7 +190,7 @@ func TestConfigValidation(t *testing.T) {
 		assert.NotEmpty(t, config.Database.Password, "Database password should not be empty")
 		assert.NotEmpty(t, config.Database.Name, "Database name should not be empty")
 		assert.NotEmpty(t, config.Redis.URL, "Redis URL should not be empty")
-		assert.NotEmpty(t, config.Proxy.CaddyEndpoint, "Caddy endpoint should not be empty")
+		assert.NotEmpty(t, config.Proxy.CaddyPort, "Caddy port should not be empty")
 		assert.NotEmpty(t, config.CORS.AllowedOrigin, "Allowed origin should not be empty")
 	})
 }
@@ -207,7 +210,7 @@ func TestProductionEnvironmentSimulation(t *testing.T) {
 			"SSH_PORT":        "22",
 			"SSH_USER":        "root",
 			"SSH_PRIVATE_KEY": "/etc/nixopus/ssh/id_rsa",
-			"CADDY_ENDPOINT":  "http://nixopus-caddy:2019",
+			"CADDY_PORT":      "2019",
 			"ALLOWED_ORIGIN":  "https://app.nixopus.com",
 			"ENV":             "production",
 			"APP_VERSION":     "1.0.0",
@@ -349,7 +352,7 @@ func TestConfigurationValidation(t *testing.T) {
 				URL: "redis://localhost:6379",
 			},
 			Proxy: types.ProxyConfig{
-				CaddyEndpoint: "http://localhost:2019",
+				CaddyPort: "2019",
 			},
 			CORS: types.CORSConfig{
 				AllowedOrigin: "http://localhost:3000",
@@ -376,7 +379,7 @@ func TestConfigurationValidation(t *testing.T) {
 				URL: "", // Missing Redis URL
 			},
 			Proxy: types.ProxyConfig{
-				CaddyEndpoint: "http://localhost:2019",
+				CaddyPort: "2019",
 			},
 			CORS: types.CORSConfig{
 				AllowedOrigin: "http://localhost:3000",
@@ -390,7 +393,68 @@ func TestConfigurationValidation(t *testing.T) {
 		assert.Contains(t, errorMsg, "server port is required")
 		assert.Contains(t, errorMsg, "database username is required")
 		assert.Contains(t, errorMsg, "redis URL is required")
-		assert.Contains(t, errorMsg, "SSH user is required")
+	})
+}
+
+func TestParseDatabaseURL(t *testing.T) {
+	t.Run("Parse full DATABASE_URL", func(t *testing.T) {
+		db := &types.DatabaseConfig{
+			URL: "postgresql://myuser:mypass@dbhost:5433/mydb?sslmode=require",
+		}
+		err := parseDatabaseURL(db)
+		require.NoError(t, err)
+		assert.Equal(t, "dbhost", db.Host)
+		assert.Equal(t, "5433", db.Port)
+		assert.Equal(t, "myuser", db.Username)
+		assert.Equal(t, "mypass", db.Password)
+		assert.Equal(t, "mydb", db.Name)
+		assert.Equal(t, "require", db.SSLMode)
+	})
+
+	t.Run("Default port when omitted", func(t *testing.T) {
+		db := &types.DatabaseConfig{
+			URL: "postgresql://user:pass@host/db",
+		}
+		err := parseDatabaseURL(db)
+		require.NoError(t, err)
+		assert.Equal(t, "5432", db.Port)
+	})
+
+	t.Run("Split vars take precedence over DATABASE_URL", func(t *testing.T) {
+		db := &types.DatabaseConfig{
+			URL:      "postgresql://urluser:urlpass@urlhost:5433/urldb?sslmode=require",
+			Host:     "override-host",
+			Username: "override-user",
+		}
+		err := parseDatabaseURL(db)
+		require.NoError(t, err)
+		assert.Equal(t, "override-host", db.Host)
+		assert.Equal(t, "override-user", db.Username)
+		assert.Equal(t, "urlpass", db.Password)
+		assert.Equal(t, "5433", db.Port)
+		assert.Equal(t, "urldb", db.Name)
+	})
+
+	t.Run("Load config from DATABASE_URL env var", func(t *testing.T) {
+		os.Setenv("DATABASE_URL", "postgresql://envuser:envpass@envhost:5434/envdb?sslmode=verify-full")
+		defer os.Unsetenv("DATABASE_URL")
+
+		viper.Reset()
+		initViper()
+
+		var cfg types.Config
+		err := viper.Unmarshal(&cfg)
+		require.NoError(t, err)
+
+		err = parseDatabaseURL(&cfg.Database)
+		require.NoError(t, err)
+
+		assert.Equal(t, "envhost", cfg.Database.Host)
+		assert.Equal(t, "5434", cfg.Database.Port)
+		assert.Equal(t, "envuser", cfg.Database.Username)
+		assert.Equal(t, "envpass", cfg.Database.Password)
+		assert.Equal(t, "envdb", cfg.Database.Name)
+		assert.Equal(t, "verify-full", cfg.Database.SSLMode)
 	})
 }
 

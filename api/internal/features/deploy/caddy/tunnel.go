@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/url"
 	"strconv"
 	"sync"
 	"time"
@@ -34,7 +33,7 @@ type CaddyTunnel struct {
 }
 
 // CreateCaddyTunnel creates a local TCP listener and forwards all connections
-// through SSH to the remote Caddy admin API. The port is parsed from CADDY_ENDPOINT.
+// through SSH to the remote Caddy admin API.
 // Returns a CaddyTunnel with an endpoint suitable for caddygo.Client.
 // orgID is used for debug logging when the tunnel fails (pass uuid.Nil if unknown).
 func CreateCaddyTunnel(sshClient *ssh.SSH, remotePort string, orgID uuid.UUID, lgr logger.Logger) (*CaddyTunnel, error) {
@@ -230,23 +229,13 @@ func evictIdleTunnels() {
 
 const defaultCaddyPort = "2019"
 
-// parseCaddyEndpointPort extracts the port from CADDY_ENDPOINT (e.g. http://host:2019 -> "2019").
-// Falls back to 2019 when not set or when port is omitted.
-func parseCaddyEndpointPort() (string, error) {
-	endpoint := config.AppConfig.Proxy.CaddyEndpoint
-	if endpoint == "" {
-		return defaultCaddyPort, nil
-	}
-	u, err := url.Parse(endpoint)
-	if err != nil {
-		return "", fmt.Errorf("invalid CADDY_ENDPOINT: %w", err)
-	}
-	port := u.Port()
+func getCaddyPort() (string, error) {
+	port := config.AppConfig.Proxy.CaddyPort
 	if port == "" {
 		return defaultCaddyPort, nil
 	}
 	if _, err := strconv.Atoi(port); err != nil {
-		return "", fmt.Errorf("invalid port in CADDY_ENDPOINT: %s", port)
+		return "", fmt.Errorf("invalid CADDY_PORT: %s", port)
 	}
 	return port, nil
 }
@@ -274,9 +263,9 @@ func orgIDFromContext(ctx context.Context) uuid.UUID {
 
 // GetCaddyClient returns a caddygo client that uses an SSH tunnel to reach
 // the Caddy admin API on the given host. Uses existing SSH config (ctx org or sshClient).
-// Port is parsed from CADDY_ENDPOINT. Caches tunnel per host+port for reuse.
+// Caches tunnel per host+port for reuse.
 func GetCaddyClient(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Logger) (*caddygo.Client, error) {
-	remotePort, err := parseCaddyEndpointPort()
+	remotePort, err := getCaddyPort()
 	if err != nil {
 		return nil, err
 	}

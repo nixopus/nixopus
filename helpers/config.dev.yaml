@@ -23,17 +23,13 @@ services:
       API_VOLUME: ${API_VOLUME:-./configs}
       DOCKER_PORT: ${DOCKER_PORT:-2376}
       APP_VERSION: ${APP_VERSION:-0.1.0-alpha.11}
-      SUPERTOKENS_API_KEY: ${SUPERTOKENS_API_KEY:-NixopusSuperTokensAPIKey}
-      SUPERTOKENS_API_DOMAIN: ${SUPERTOKENS_API_DOMAIN:-http://localhost:3567}
-      SUPERTOKENS_WEBSITE_DOMAIN: ${SUPERTOKENS_WEBSITE_DOMAIN:-http://localhost:3000}
-      SUPERTOKENS_CONNECTION_URI: ${SUPERTOKENS_CONNECTION_URI:-http://localhost:3567}
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://localhost:9090}
+      AUTH_SERVICE_SECRET: ${AUTH_SERVICE_SECRET:-changeme}
 
   view:
     env:
       PORT: ${VIEW_PORT:-3000}
-      WEBSOCKET_URL: ${WEBSOCKET_URL:-}
       API_URL: ${API_URL:-}
-      WEBHOOK_URL: ${WEBHOOK_URL:-}
       VIEW_ENV_FILE: ${VIEW_ENV_FILE:-./view/.env.local}
       NEXT_PUBLIC_PORT: ${NEXT_PUBLIC_PORT:-3000}
       LOGS_PATH: ${LOGS_PATH:-./logs}
@@ -164,7 +160,7 @@ clone:
   branch: "master"
   source-path: .
 
-ports: [8080, 3000, 6379, 5432, 2019, 80, 443, 3567]
+ports: [8080, 3000, 6379, 5432, 2019, 80, 443, 9090]
 ssh_key_size: 4096
 ssh_key_type: rsa
 ssh_passphrase:

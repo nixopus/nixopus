@@ -90,6 +90,8 @@ services:
       - HOSTNAME=0.0.0.0
       - PORT=7443
       - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://nixopus-auth:9090}
+      - API_URL=${API_URL:-http://nixopus-api:8443/api}
+      - WEBSOCKET_URL=${WEBSOCKET_URL:-ws://nixopus-api:8443/ws}
     env_file:
       - ${NIXOPUS_HOME:-/etc/nixopus}/source/view/.env
     volumes:

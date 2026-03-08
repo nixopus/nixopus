@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const getBackendUrl = () => {
-  // Use AUTH_SERVICE_URL for server-side (Docker), fallback to NEXT_PUBLIC_AUTH_URL for client-side
-  return (
-    process.env.AUTH_SERVICE_URL || process.env.NEXT_PUBLIC_AUTH_URL || 'http://localhost:9090'
-  );
+  return process.env.AUTH_SERVICE_URL || 'http://localhost:9090';
 };
 
 export async function GET(

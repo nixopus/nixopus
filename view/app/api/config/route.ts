@@ -1,17 +1,25 @@
 import { NextResponse } from 'next/server';
 
+function deriveUrls(apiUrl: string) {
+  const base = apiUrl.replace(/\/api\/?$/, '');
+  const wsScheme = base.startsWith('https') ? 'wss' : 'ws';
+  return {
+    websocketUrl: `${base.replace(/^https?/, wsScheme)}/ws`,
+    webhookUrl: `${base}/api/v1/webhook`
+  };
+}
+
 export async function GET() {
-  // Priority: VIEW_DOMAIN (if provided) > localhost fallback
-  const websiteDomain = process.env.VIEW_DOMAIN || 'http://localhost:3000';
+  const apiUrl = process.env.API_URL || 'http://localhost:8080/api';
+  const derived = deriveUrls(apiUrl);
 
   const response = NextResponse.json({
-    baseUrl: process.env.API_URL || 'http://localhost:8080/api',
-    websocketUrl: process.env.WEBSOCKET_URL || 'ws://localhost:8080/ws',
-    webhookUrl: process.env.WEBHOOK_URL || 'http://localhost:8080/webhook',
+    baseUrl: apiUrl,
+    websocketUrl: process.env.WEBSOCKET_URL || derived.websocketUrl,
+    webhookUrl: process.env.WEBHOOK_URL || derived.webhookUrl,
     port: process.env.NEXT_PUBLIC_PORT || '7443',
-    websiteDomain,
     passwordLoginEnabled: process.env.PASSWORD_LOGIN_ENABLED !== 'false',
-    agentConfigured: Boolean(process.env.AGENT_URL || process.env.NEXT_PUBLIC_AGENT_URL)
+    agentConfigured: Boolean(process.env.AGENT_URL)
   });
   response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
   return response;

@@ -1,3 +1,39 @@
+# [0.1.0-alpha.149](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.148...v0.1.0-alpha.149) (2026-03-08)
+
+
+### Bug Fixes
+
+* adding domain not updating the proxy routes ([a03574a](https://github.com/raghavyuva/nixopus/commit/a03574ae2e5e71e7768e0297b99d4a950d5772f6))
+
+
+### Features
+
+* allow updating build pack after app creation ([452c74f](https://github.com/raghavyuva/nixopus/commit/452c74f0a21fd007d1c547c558855a997aee95f2))
+
+
+### Performance Improvements
+
+* client side rendering speed optimizations ([0a3925b](https://github.com/raghavyuva/nixopus/commit/0a3925b21d227227aa4a9d8fada8e8db7acb9e41))
+
+
+
+# [0.1.0-alpha.148](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.147...v0.1.0-alpha.148) (2026-03-07)
+
+
+### Features
+
+* add notification send routes ([6e98de1](https://github.com/raghavyuva/nixopus/commit/6e98de1ead3fc7b9ba281a5ba2fcb72550c9ab6c))
+* add sudo verification dialouges ([6b5119a](https://github.com/raghavyuva/nixopus/commit/6b5119a315beb8d5a0890b53681d1d9be5bbfbfb))
+* add support for multi source deployment ([3b006ed](https://github.com/raghavyuva/nixopus/commit/3b006ed1e46cbc833c1e620ec253e3ffb7f2efa2))
+* custom domain verification with dns checks and remove legacy api ([22bc525](https://github.com/raghavyuva/nixopus/commit/22bc52581c0295e4af5206c11ad86a63caafdb5d))
+
+
+### Performance Improvements
+
+* parallelize source resolving from s3 ([37226f9](https://github.com/raghavyuva/nixopus/commit/37226f9bba88f63403b877a0fdcf265976ec534a))
+
+
+
 # [0.1.0-alpha.147](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.146...v0.1.0-alpha.147) (2026-03-06)
 
 

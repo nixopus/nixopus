@@ -31,6 +31,13 @@ type StatusResponse struct {
 	TrailURL  string `json:"trail_url,omitempty"`
 }
 
+type UpgradeResourcesRequest struct {
+	UserID    string `json:"user_id"`
+	OrgID     string `json:"org_id"`
+	VcpuCount int    `json:"vcpu_count"`
+	MemoryMB  int    `json:"memory_mb"`
+}
+
 // ProvisionPayload represents the payload sent to the Redis queue for async processing.
 type ProvisionPayload struct {
 	SessionID          string `json:"session_id"`

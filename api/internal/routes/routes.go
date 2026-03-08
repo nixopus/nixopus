@@ -208,6 +208,11 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 
 	router.RegisterLiveDeployRoutes(server, apiV1)
 
+	// Internal service-to-service routes (validated via X-Internal-Secret header)
+	trailInternalController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
+	trailInternalGroup := fuego.Group(server, apiV1.Path+"/trail")
+	router.RegisterTrailInternalRoutes(trailInternalGroup, trailInternalController)
+
 	// Public auth routes
 	authController := router.createAuthController(notificationManager)
 	authGroup := fuego.Group(server, apiV1.Path+"/auth")
