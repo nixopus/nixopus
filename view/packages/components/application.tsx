@@ -20,7 +20,7 @@ function AppItem(application: Application) {
 
   return (
     <Card
-      className="relative w-full max-w-xs cursor-pointer overflow-hidden border border-white/[0.06] transition-colors duration-200 hover:bg-muted/50"
+      className="relative w-full max-w-xs cursor-pointer overflow-hidden border border-border/45 shadow-sm transition-colors duration-200 hover:bg-muted/50"
       onClick={handleClick}
     >
       <CardContent className="px-6 pb-6">

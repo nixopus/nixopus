@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/file-manager/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/file-manager/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 type CreateDirectoryRequest struct {
@@ -16,9 +16,9 @@ func (c *FileManagerController) CreateDirectory(f fuego.ContextWithBody[CreateDi
 	request, err := f.Body()
 
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -27,6 +27,7 @@ func (c *FileManagerController) CreateDirectory(f fuego.ContextWithBody[CreateDi
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

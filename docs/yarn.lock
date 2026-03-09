@@ -2136,15 +2136,10 @@ posthog-js@^1.0.0:
     preact "^10.19.3"
     web-vitals "^4.2.4"
 
-preact@^10.0.0:
-  version "10.24.2"
-  resolved "https://registry.npmjs.org/preact/-/preact-10.24.2.tgz"
-  integrity sha512-1cSoF0aCC8uaARATfrlz4VCBqE8LwZwRfLgkxJOQwAlQt6ayTmi0D9OF7nXid1POI5SZidFuG9CnlXbDfLqY/Q==
-
-preact@^10.19.3:
-  version "10.28.1"
-  resolved "https://registry.yarnpkg.com/preact/-/preact-10.28.1.tgz#83325f0141bc8c97977c64d532429d667a26b411"
-  integrity sha512-u1/ixq/lVQI0CakKNvLDEcW5zfCjUQfZdK9qqWuIJtsezuyG6pk9TWj75GMuI/EzRSZB/VAE43sNWWZfiy8psw==
+preact@^10.0.0, preact@^10.19.3, preact@^10.28.2:
+  version "10.29.0"
+  resolved "https://registry.yarnpkg.com/preact/-/preact-10.29.0.tgz#a6e5858670b659c4d471c6fea232233e03b403e8"
+  integrity sha512-wSAGyk2bYR1c7t3SZ3jHcM6xy0lcBcDel6lODcs9ME6Th++Dx2KU+6D3HD8wMMKGA8Wpw7OMd3/4RGzYRpzwRg==
 
 property-information@^6.0.0:
   version "6.5.0"

@@ -1,6 +1,6 @@
 package controller
 
-import "github.com/raghavyuva/nixopus-api/internal/features/domain/types"
+import "github.com/nixopus/nixopus/api/internal/features/domain/types"
 
 func isInvalidDomainError(err error) bool {
 	switch err {

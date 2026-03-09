@@ -6,29 +6,28 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/healthcheck/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
-func (c *HealthCheckController) GetHealthCheckResults(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *HealthCheckController) GetHealthCheckResults(f fuego.ContextNoBody) (*types.HealthCheckResultsResponse, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{Status: http.StatusUnauthorized}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
 	if orgID == (uuid.UUID{}) {
-		return nil, fuego.HTTPError{Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	q := r.URL.Query()
 	applicationID := q.Get("application_id")
 	if applicationID == "" {
-		return nil, fuego.HTTPError{Status: http.StatusBadRequest, Err: types.ErrInvalidApplicationID}
+		return nil, fuego.BadRequestError{Detail: types.ErrInvalidApplicationID.Error(), Err: types.ErrInvalidApplicationID}
 	}
 
 	limit := 100
@@ -44,10 +43,10 @@ func (c *HealthCheckController) GetHealthCheckResults(f fuego.ContextNoBody) (*s
 	results, err := c.service.GetHealthCheckResults(applicationID, orgID, limit, startTime, endTime)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
+		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 
-	return &shared_types.Response{
+	return &types.HealthCheckResultsResponse{
 		Status:  "success",
 		Message: "Health check results fetched successfully",
 		Data:    results,

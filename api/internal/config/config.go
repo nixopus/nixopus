@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal/secrets"
-	"github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/secrets"
+	"github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/spf13/viper"
 )
 
@@ -228,6 +228,7 @@ func setupEnvVarMappings() {
 	viper.BindEnv("app.version", "APP_VERSION")
 	viper.BindEnv("app.logs_path", "LOGS_PATH")
 	viper.BindEnv("app.deploy_domain", "DEPLOY_DOMAIN")
+	viper.BindEnv("app.self_hosted", "SELF_HOSTED")
 
 	// GitHub App (shared credentials)
 	viper.BindEnv("github.app_id", "GITHUB_APP_ID")
@@ -239,6 +240,11 @@ func setupEnvVarMappings() {
 	// Better Auth
 	viper.BindEnv("betterauth.url", "AUTH_SERVICE_URL")
 	viper.BindEnv("betterauth.secret", "AUTH_SERVICE_SECRET")
+
+	// Agent channel (M2M webhook)
+	viper.BindEnv("agent_channel.url", "AGENT_URL")
+	viper.BindEnv("agent_channel.client_id", "OAUTH_CLIENT_ID")
+	viper.BindEnv("agent_channel.client_secret", "OAUTH_CLIENT_SECRET")
 
 	// S3 (optional, for image storage)
 	viper.BindEnv("s3.endpoint", "S3_ENDPOINT")

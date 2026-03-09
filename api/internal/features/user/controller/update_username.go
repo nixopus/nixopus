@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/user/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (u *UserController) UpdateUserName(s fuego.ContextWithBody[types.UpdateUserNameRequest]) (*types.UpdateUsernameResponse, error) {
@@ -14,26 +14,24 @@ func (u *UserController) UpdateUserName(s fuego.ContextWithBody[types.UpdateUser
 
 	req, err := s.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	w, r := s.Response(), s.Request()
 
 	if !u.parseAndValidate(w, r, &req) {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
+		return nil, fuego.BadRequestError{
+			Detail: "validation failed",
 		}
 	}
 
 	user := utils.GetUser(w, r)
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
@@ -43,6 +41,7 @@ func (u *UserController) UpdateUserName(s fuego.ContextWithBody[types.UpdateUser
 		u.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

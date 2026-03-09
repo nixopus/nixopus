@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/extension/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (c *ExtensionsController) GetExtensions(ctx fuego.ContextNoBody) (*types.ListExtensionsResponse, error) {
@@ -58,6 +58,7 @@ func (c *ExtensionsController) GetExtensions(ctx fuego.ContextNoBody) (*types.Li
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -73,7 +74,7 @@ func (c *ExtensionsController) GetCategories(ctx fuego.ContextNoBody) (*types.Ca
 	cats, err := c.service.ListCategories()
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
+		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 	return &types.CategoriesResponse{
 		Status:  "success",
@@ -85,23 +86,23 @@ func (c *ExtensionsController) GetCategories(ctx fuego.ContextNoBody) (*types.Ca
 func (c *ExtensionsController) GetExtension(ctx fuego.ContextNoBody) (*types.ExtensionResponse, error) {
 	id := ctx.PathParam("id")
 	if id == "" {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
+		return nil, fuego.BadRequestError{
+			Detail: "extension ID is required",
 		}
 	}
 
 	extension, err := c.service.GetExtension(id)
 	if err != nil {
 		if err.Error() == "extension not found" {
-			return nil, fuego.HTTPError{
+			return nil, fuego.NotFoundError{
+				Detail: err.Error(),
 				Err:    err,
-				Status: http.StatusNotFound,
 			}
 		}
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -116,23 +117,23 @@ func (c *ExtensionsController) GetExtension(ctx fuego.ContextNoBody) (*types.Ext
 func (c *ExtensionsController) GetExtensionByExtensionID(ctx fuego.ContextNoBody) (*types.ExtensionResponse, error) {
 	extensionID := ctx.PathParam("extension_id")
 	if extensionID == "" {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
+		return nil, fuego.BadRequestError{
+			Detail: "extension ID is required",
 		}
 	}
 
 	extension, err := c.service.GetExtensionByID(extensionID)
 	if err != nil {
 		if err.Error() == "extension not found" {
-			return nil, fuego.HTTPError{
+			return nil, fuego.NotFoundError{
+				Detail: err.Error(),
 				Err:    err,
-				Status: http.StatusNotFound,
 			}
 		}
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -147,9 +148,8 @@ func (c *ExtensionsController) GetExtensionByExtensionID(ctx fuego.ContextNoBody
 func (c *ExtensionsController) GetExecution(ctx fuego.ContextNoBody) (*types.ExecutionResponse, error) {
 	id := ctx.PathParam("execution_id")
 	if id == "" {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
+		return nil, fuego.BadRequestError{
+			Detail: "execution ID is required",
 		}
 	}
 
@@ -158,6 +158,7 @@ func (c *ExtensionsController) GetExecution(ctx fuego.ContextNoBody) (*types.Exe
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -171,9 +172,8 @@ func (c *ExtensionsController) GetExecution(ctx fuego.ContextNoBody) (*types.Exe
 func (c *ExtensionsController) ListExecutionsByExtensionID(ctx fuego.ContextNoBody) (*types.ListExecutionsResponse, error) {
 	extensionID := ctx.PathParam("extension_id")
 	if extensionID == "" {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
+		return nil, fuego.BadRequestError{
+			Detail: "extension ID is required",
 		}
 	}
 	execs, err := c.service.ListExecutionsByExtensionID(extensionID)
@@ -181,6 +181,7 @@ func (c *ExtensionsController) ListExecutionsByExtensionID(ctx fuego.ContextNoBo
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

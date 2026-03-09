@@ -4,8 +4,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/types"
+	"github.com/nixopus/nixopus/api/internal/features/healthcheck/storage"
+	"github.com/nixopus/nixopus/api/internal/features/healthcheck/types"
 )
 
 type Validator struct {

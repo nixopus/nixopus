@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/notification/controller/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *NotificationController) GetPreferences(f fuego.ContextNoBody) (*types.PreferencesResponse, error) {
@@ -14,9 +14,8 @@ func (c *NotificationController) GetPreferences(f fuego.ContextNoBody) (*types.P
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
@@ -26,6 +25,7 @@ func (c *NotificationController) GetPreferences(f fuego.ContextNoBody) (*types.P
 		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

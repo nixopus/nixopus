@@ -15,7 +15,7 @@ export interface StatBlockProps {
   value: string | number;
   label: string;
   sublabel?: string;
-  color?: 'emerald' | 'red' | 'amber' | 'blue' | 'purple';
+  color?: 'emerald' | 'red' | 'amber' | 'blue' | 'purple' | 'orange';
   pulse?: boolean;
 }
 
@@ -47,7 +47,7 @@ export interface DeploymentOverviewProps {
   totalDeployments: number;
   successfulDeployments: number;
   failedDeployments: number;
-  currentStatus?: string;
+  currentStatus?: Status;
 }
 
 export interface MonitorProps {

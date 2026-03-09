@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/validation"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/domain/types"
+	"github.com/nixopus/nixopus/api/internal/features/domain/validation"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/queue"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (s *DomainsService) AddCustomDomain(ctx context.Context, userID, orgID uuid.UUID, name string) (*shared_types.Domain, []types.DNSInstruction, string, error) {
@@ -101,11 +101,28 @@ func (s *DomainsService) VerifyCustomDomain(ctx context.Context, domainID, orgID
 		return nil, err
 	}
 
-	err = queue.EnqueueRegisterCustomDomain(ctx, queue.CustomDomainPayload{
+	// Look up the provision to get server_id for queue routing and guest_ip for Caddy registration.
+	payload := queue.CustomDomainPayload{
 		DomainID:  domainID.String(),
 		Domain:    domain.Name,
 		Subdomain: targetSubdomain,
-	})
+	}
+
+	var provisionDetails shared_types.UserProvisionDetails
+	if dbErr := s.store.DB.NewSelect().
+		Model(&provisionDetails).
+		Where("subdomain = ?", targetSubdomain).
+		Limit(1).
+		Scan(ctx); dbErr == nil {
+		if provisionDetails.ServerID != nil {
+			payload.ServerID = provisionDetails.ServerID.String()
+		}
+		if provisionDetails.GuestIP != nil {
+			payload.GuestIP = *provisionDetails.GuestIP
+		}
+	}
+
+	err = queue.EnqueueRegisterCustomDomain(ctx, payload)
 	if err != nil {
 		s.logger.Log(logger.Error, "failed to enqueue domain registration", err.Error())
 	}
@@ -126,10 +143,24 @@ func (s *DomainsService) RemoveCustomDomain(ctx context.Context, domainID, orgID
 		return err
 	}
 
-	err = queue.EnqueueRemoveCustomDomain(ctx, queue.RemoveCustomDomainPayload{
+	removePayload := queue.RemoveCustomDomainPayload{
 		DomainID: domainID.String(),
 		Domain:   domain.Name,
-	})
+	}
+
+	// Look up server_id for per-server queue routing.
+	if domain.TargetSubdomain != nil && *domain.TargetSubdomain != "" {
+		var provisionDetails shared_types.UserProvisionDetails
+		if dbErr := s.store.DB.NewSelect().
+			Model(&provisionDetails).
+			Where("subdomain = ?", *domain.TargetSubdomain).
+			Limit(1).
+			Scan(ctx); dbErr == nil && provisionDetails.ServerID != nil {
+			removePayload.ServerID = provisionDetails.ServerID.String()
+		}
+	}
+
+	err = queue.EnqueueRemoveCustomDomain(ctx, removePayload)
 	if err != nil {
 		s.logger.Log(logger.Error, "failed to enqueue domain removal", err.Error())
 	}

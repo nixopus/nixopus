@@ -65,6 +65,12 @@ const statusConfig: Record<
     bgColor: 'bg-red-500',
     label: 'Failed',
     pulse: false
+  },
+  cancelled: {
+    color: 'text-orange-500',
+    bgColor: 'bg-orange-500',
+    label: 'Cancelled',
+    pulse: false
   }
 };
 

@@ -7,12 +7,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
-	s3store "github.com/raghavyuva/nixopus-api/internal/features/deploy/s3"
-	deploy_types "github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/caddy"
+	s3store "github.com/nixopus/nixopus/api/internal/features/deploy/s3"
+	deploy_types "github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	sshpkg "github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // RecoverApplications restores applications whose containers have been lost

@@ -156,7 +156,7 @@ deps:
 nixopus-config-dir: ./nixopus-dev
 compose-file-path: docker-compose-dev.yml
 clone:
-  repo: "https://github.com/raghavyuva/nixopus"
+  repo: "https://github.com/nixopus/nixopus"
   branch: "master"
   source-path: .
 

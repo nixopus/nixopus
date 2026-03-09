@@ -91,6 +91,7 @@ export enum DEPLOY {
   DELETE_APPLICATION = 'v1/deploy/application',
   ROLLBACK_APPLICATION = 'v1/deploy/application/rollback',
   RESTART_APPLICATION = 'v1/deploy/application/restart',
+  CANCEL_DEPLOYMENT = 'v1/deploy/application/cancel-deployment',
   GET_APPLICATION_LOGS = 'v1/deploy/application/logs/{application_id}',
   GET_DEPLOYMENT_LOGS = 'v1/deploy/application/deployments/{deployment_id}/logs',
   GET_APPLICATION_DEPLOYMENTS = 'v1/deploy/application/deployments',

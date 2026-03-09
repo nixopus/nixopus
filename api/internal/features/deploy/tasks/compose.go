@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/caddy"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (t *TaskService) deployDockerCompose(ctx context.Context, TaskPayload shared_types.TaskPayload, deploymentType string) error {

@@ -6,8 +6,8 @@ package tests
 // 	"os"
 // 	"testing"
 
-// 	"github.com/raghavyuva/nixopus-api/internal/features/file-manager/service"
-// 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+// 	"github.com/nixopus/nixopus/api/internal/features/file-manager/service"
+// 	"github.com/nixopus/nixopus/api/internal/features/logger"
 // 	"github.com/stretchr/testify/assert"
 // 	"github.com/stretchr/testify/require"
 // )

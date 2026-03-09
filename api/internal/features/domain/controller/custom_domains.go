@@ -5,26 +5,26 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/domain/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *DomainsController) HandleAddCustomDomain(f fuego.ContextWithBody[types.AddCustomDomainRequest]) (*types.DNSSetupResponse, error) {
 	req, err := f.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusUnauthorized}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(f.Request())
 	if orgID == uuid.Nil {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	domain, instructions, dnsProvider, err := c.service.AddCustomDomain(f.Context(), user.ID, orgID, req.Name)
@@ -45,18 +45,18 @@ func (c *DomainsController) HandleAddCustomDomain(f fuego.ContextWithBody[types.
 func (c *DomainsController) HandleListCustomDomains(f fuego.ContextNoBody) (*types.CustomDomainListResponse, error) {
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusUnauthorized}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(f.Request())
 	if orgID == uuid.Nil {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	domains, err := c.service.ListCustomDomains(f.Context(), orgID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
+		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 
 	return &types.CustomDomainListResponse{
@@ -69,22 +69,22 @@ func (c *DomainsController) HandleListCustomDomains(f fuego.ContextNoBody) (*typ
 func (c *DomainsController) HandleVerifyCustomDomain(f fuego.ContextWithBody[types.VerifyCustomDomainRequest]) (*types.CustomDomainResponse, error) {
 	req, err := f.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusUnauthorized}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(f.Request())
 	if orgID == uuid.Nil {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	domainID, err := uuid.Parse(req.ID)
 	if err != nil {
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	domain, err := c.service.VerifyCustomDomain(f.Context(), domainID, orgID)
@@ -103,22 +103,22 @@ func (c *DomainsController) HandleVerifyCustomDomain(f fuego.ContextWithBody[typ
 func (c *DomainsController) HandleRemoveCustomDomain(f fuego.ContextWithBody[types.RemoveCustomDomainRequest]) (*types.MessageResponse, error) {
 	req, err := f.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusUnauthorized}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(f.Request())
 	if orgID == uuid.Nil {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	domainID, err := uuid.Parse(req.ID)
 	if err != nil {
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	if err := c.service.RemoveCustomDomain(f.Context(), domainID, orgID); err != nil {
@@ -135,25 +135,25 @@ func (c *DomainsController) HandleRemoveCustomDomain(f fuego.ContextWithBody[typ
 func (c *DomainsController) HandleCheckDNSStatus(f fuego.ContextNoBody) (*types.DNSCheckResponse, error) {
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusUnauthorized}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(f.Request())
 	if orgID == uuid.Nil {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	domainIDStr := f.QueryParam("id")
 	if domainIDStr == "" {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: shared_types.ErrFailedToGetUserFromContext.Error(),
 			Err:    shared_types.ErrFailedToGetUserFromContext,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	domainID, err := uuid.Parse(domainIDStr)
 	if err != nil {
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	verified, dnsStatus, err := c.service.CheckDNSStatus(f.Context(), domainID, orgID)
@@ -175,24 +175,24 @@ func (c *DomainsController) HandleCheckDNSStatus(f fuego.ContextNoBody) (*types.
 	}, nil
 }
 
-func mapCustomDomainError(err error) fuego.HTTPError {
+func mapCustomDomainError(err error) error {
 	switch err {
 	case types.ErrDomainAlreadyExists:
-		return fuego.HTTPError{Err: err, Status: http.StatusConflict}
+		return fuego.ConflictError{Detail: err.Error(), Err: err}
 	case types.ErrCustomDomainNotFound:
-		return fuego.HTTPError{Err: err, Status: http.StatusNotFound}
+		return fuego.NotFoundError{Detail: err.Error(), Err: err}
 	case types.ErrDNSNotVerified:
-		return fuego.HTTPError{Err: err, Status: http.StatusPreconditionFailed}
+		return fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusPreconditionFailed}
 	case types.ErrSubscriptionRequired:
-		return fuego.HTTPError{Err: err, Status: http.StatusPaymentRequired}
+		return fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusPaymentRequired}
 	case types.ErrMaxCustomDomainsReached:
-		return fuego.HTTPError{Err: err, Status: http.StatusForbidden}
+		return fuego.ForbiddenError{Detail: err.Error(), Err: err}
 	case types.ErrInvalidCustomDomain:
-		return fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+		return fuego.BadRequestError{Detail: err.Error(), Err: err}
 	default:
 		if isInvalidDomainError(err) {
-			return fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+			return fuego.BadRequestError{Detail: err.Error(), Err: err}
 		}
-		return fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
+		return fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 }

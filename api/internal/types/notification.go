@@ -120,7 +120,7 @@ type SMTPConfigs struct {
 	CreatedAt      time.Time `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt      time.Time `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 	IsActive       bool      `json:"is_active" bun:"is_active,notnull,default:false"`
-	UserID         uuid.UUID `json:"user_id" bson:"user_id"`
+	UserID         uuid.UUID `json:"user_id" bun:"user_id,notnull,type:uuid"`
 	OrganizationID uuid.UUID `json:"organization_id" bun:"organization_id,notnull"`
 }
 

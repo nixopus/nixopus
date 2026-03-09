@@ -8,13 +8,13 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/caddy"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 // AddApplicationDomainRequest represents a request to add a domain to an application
@@ -33,58 +33,56 @@ type RemoveApplicationDomainRequest struct {
 func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddApplicationDomainRequest]) (*types.ApplicationResponse, error) {
 	applicationID := f.QueryParam("id")
 	if applicationID == "" {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: types.ErrMissingID.Error(),
 			Err:    types.ErrMissingID,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	data, err := f.Body()
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to read request body", err.Error())
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	if data.Domain == "" {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: types.ErrMissingDomain.Error(),
 			Err:    types.ErrMissingDomain,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "organization not found",
 		}
 	}
 
 	appID, err := uuid.Parse(applicationID)
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	// Verify application exists and user has access
 	application, err := c.service.GetApplicationById(applicationID, organizationID)
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.NotFoundError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusNotFound,
 		}
 	}
 
@@ -93,6 +91,7 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -100,17 +99,17 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 	// Check for duplicate domain
 	for _, existingDomain := range existingDomains {
 		if existingDomain.Domain == data.Domain {
-			return nil, fuego.HTTPError{
+			return nil, fuego.BadRequestError{
+				Detail: types.ErrDomainAlreadyExists.Error(),
 				Err:    types.ErrDomainAlreadyExists,
-				Status: http.StatusBadRequest,
 			}
 		}
 	}
 
 	if len(existingDomains) >= 5 {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: types.ErrDomainLimitReached.Error(),
 			Err:    types.ErrDomainLimitReached,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -122,6 +121,7 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 		if svcErr != nil {
 			return nil, fuego.HTTPError{
 				Err:    svcErr,
+				Detail: svcErr.Error(),
 				Status: http.StatusInternalServerError,
 			}
 		}
@@ -136,6 +136,7 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 		c.logger.Log(logger.Error, "failed to add domain", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -148,6 +149,7 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -163,58 +165,56 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 func (c *DeployController) RemoveApplicationDomain(f fuego.ContextWithBody[RemoveApplicationDomainRequest]) (*types.ApplicationResponse, error) {
 	applicationID := f.QueryParam("id")
 	if applicationID == "" {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: types.ErrMissingID.Error(),
 			Err:    types.ErrMissingID,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	data, err := f.Body()
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to read request body", err.Error())
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	if data.Domain == "" {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: types.ErrMissingDomain.Error(),
 			Err:    types.ErrMissingDomain,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "organization not found",
 		}
 	}
 
 	appID, err := uuid.Parse(applicationID)
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	// Verify application exists and user has access
 	_, err = c.service.GetApplicationById(applicationID, organizationID)
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.NotFoundError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusNotFound,
 		}
 	}
 
@@ -224,6 +224,7 @@ func (c *DeployController) RemoveApplicationDomain(f fuego.ContextWithBody[Remov
 		c.logger.Log(logger.Error, "failed to remove domain", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -241,6 +242,7 @@ func (c *DeployController) RemoveApplicationDomain(f fuego.ContextWithBody[Remov
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -497,45 +499,43 @@ func resolveDockerPublishedPort(ctx context.Context, serviceName string) (int, e
 }
 
 // GetComposeServices returns the discovered compose services for an application.
-func (c *DeployController) GetComposeServices(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *DeployController) GetComposeServices(f fuego.ContextNoBody) (*types.ComposeServicesResponse, error) {
 	applicationID := f.QueryParam("id")
 	if applicationID == "" {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: types.ErrMissingID.Error(),
 			Err:    types.ErrMissingID,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "organization not found",
 		}
 	}
 
 	appID, err := uuid.Parse(applicationID)
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	// Verify application exists and user has access
 	_, err = c.service.GetApplicationById(applicationID, organizationID)
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.NotFoundError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusNotFound,
 		}
 	}
 
@@ -544,11 +544,12 @@ func (c *DeployController) GetComposeServices(f fuego.ContextNoBody) (*shared_ty
 		c.logger.Log(logger.Error, "failed to get compose services", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.ComposeServicesResponse{
 		Status:  "success",
 		Message: "Compose services fetched successfully",
 		Data:    services,

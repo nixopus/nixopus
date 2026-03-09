@@ -5,9 +5,9 @@ import (
 	"io"
 	"strings"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
+	"github.com/nixopus/nixopus/api/internal/features/user/types"
 
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type Validator struct{}

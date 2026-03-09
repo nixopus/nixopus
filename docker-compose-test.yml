@@ -11,9 +11,56 @@ services:
       - POSTGRES_USER=${TEST_DB_USERNAME:-nixopus}
       - POSTGRES_PASSWORD=${TEST_DB_PASSWORD:-nixopus}
       - POSTGRES_DB=${TEST_DB_NAME:-nixopus_test}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - nixopus-network
+      - nixopus-test-network
+
+  nixopus-test-redis:
+    image: redis:7-alpine
+    container_name: nixopus-test-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nixopus-test-network
+
+  nixopus-test-auth:
+    image: ${NIXOPUS_AUTH_IMAGE:-ghcr.io/nixopus/auth:latest}
+    container_name: nixopus-test-auth
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    depends_on:
+      nixopus-test-db:
+        condition: service_healthy
+      nixopus-test-redis:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${TEST_DB_USERNAME:-nixopus}:${TEST_DB_PASSWORD:-nixopus}@nixopus-test-db:5432/${TEST_DB_NAME:-nixopus_test}
+      - REDIS_URL=redis://nixopus-test-redis:6379
+      - PORT=9090
+      - NODE_ENV=test
+      - BETTER_AUTH_SECRET=test-secret-for-ci
+      - BETTER_AUTH_URL=http://localhost:9090
+      - APP_URL=http://localhost:3000
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9090/api/auth/ok || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - nixopus-test-network
 
 networks:
-  nixopus-network:
+  nixopus-test-network:
     driver: bridge

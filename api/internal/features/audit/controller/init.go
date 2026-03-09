@@ -8,10 +8,10 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/audit/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/audit/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/audit/service"
+	"github.com/nixopus/nixopus/api/internal/features/audit/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 	"github.com/uptrace/bun"
 )
 
@@ -37,31 +37,33 @@ func NewAuditController(db *bun.DB, ctx context.Context, l logger.Logger) *Audit
 func (c *AuditController) GetRecentAuditLogs(f fuego.ContextNoBody) (*types.GetActivitiesResponse, error) {
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.UnauthorizedError{
+			Detail: ErrUnauthorized.Error(),
 			Err:    ErrUnauthorized,
-			Status: http.StatusUnauthorized,
 		}
 	}
 
 	// Get query parameters
 	page := f.QueryParam("page")
-	pageSize := f.QueryParam("pageSize")
+	pageSize := f.QueryParam("page_size")
+	if pageSize == "" {
+		// Backward compatibility for older clients.
+		pageSize = f.QueryParam("pageSize")
+	}
 	search := f.QueryParam("search")
 	resourceType := f.QueryParam("resource_type")
 
 	orgIDStr := f.Request().Header.Get("X-ORGANIZATION-ID")
 	if orgIDStr == "" {
-		return nil, fuego.HTTPError{
-			Err:    errors.New("Missing organization id"),
-			Status: http.StatusBadRequest,
+		return nil, fuego.BadRequestError{
+			Detail: "missing organization ID",
 		}
 	}
 
 	orgID, err := uuid.Parse(orgIDStr)
 	if err != nil {
-		return nil, fuego.HTTPError{
-			Err:    errors.New("Invalid organization id"),
-			Status: http.StatusBadRequest,
+		return nil, fuego.BadRequestError{
+			Detail: "invalid organization ID",
 		}
 	}
 
@@ -85,6 +87,7 @@ func (c *AuditController) GetRecentAuditLogs(f fuego.ContextNoBody) (*types.GetA
 		c.logger.Log(logger.Error, "Failed to get activities", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

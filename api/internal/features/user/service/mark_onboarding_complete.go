@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 // MarkOnboardingComplete marks a user's onboarding as complete by setting is_onboarded to true.

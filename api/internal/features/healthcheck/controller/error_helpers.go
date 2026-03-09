@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/types"
+	"github.com/nixopus/nixopus/api/internal/features/healthcheck/types"
 )
 
 // mapHealthCheckError maps domain-specific errors to appropriate HTTP status codes

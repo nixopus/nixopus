@@ -8,10 +8,10 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/domain/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*types.ListDomainsResponse, error) {
@@ -20,18 +20,18 @@ func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*types.ListDomain
 	organization_id := utils.GetOrganizationID(r)
 	if organization_id == uuid.Nil {
 		c.logger.Log(logger.Error, "invalid organization id", "")
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: types.ErrMissingID.Error(),
 			Err:    types.ErrMissingID,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	user := utils.GetUser(w, r)
 	if user == nil {
 		c.logger.Log(logger.Error, "unauthorized user", "")
-		return nil, fuego.HTTPError{
+		return nil, fuego.UnauthorizedError{
+			Detail: types.ErrAccessDenied.Error(),
 			Err:    types.ErrAccessDenied,
-			Status: http.StatusUnauthorized,
 		}
 	}
 
@@ -44,21 +44,22 @@ func (c *DomainsController) GetDomains(f fuego.ContextNoBody) (*types.ListDomain
 		c.logger.Log(logger.Error, err.Error(), "")
 
 		if isPermissionError(err) {
-			return nil, fuego.HTTPError{
+			return nil, fuego.ForbiddenError{
+				Detail: err.Error(),
 				Err:    err,
-				Status: http.StatusForbidden,
 			}
 		}
 
 		if err == types.ErrDomainNotFound {
-			return nil, fuego.HTTPError{
+			return nil, fuego.NotFoundError{
+				Detail: err.Error(),
 				Err:    err,
-				Status: http.StatusNotFound,
 			}
 		}
 
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -86,18 +87,18 @@ func (c *DomainsController) GenerateRandomSubDomain(f fuego.ContextNoBody) (*typ
 	organization_id := utils.GetOrganizationID(r)
 	if organization_id == uuid.Nil {
 		c.logger.Log(logger.Error, "invalid organization id", "")
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: types.ErrMissingID.Error(),
 			Err:    types.ErrMissingID,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	user := utils.GetUser(w, r)
 	if user == nil {
 		c.logger.Log(logger.Error, "unauthorized user", "")
-		return nil, fuego.HTTPError{
+		return nil, fuego.UnauthorizedError{
+			Detail: types.ErrAccessDenied.Error(),
 			Err:    types.ErrAccessDenied,
-			Status: http.StatusUnauthorized,
 		}
 	}
 
@@ -106,30 +107,31 @@ func (c *DomainsController) GenerateRandomSubDomain(f fuego.ContextNoBody) (*typ
 		c.logger.Log(logger.Error, err.Error(), "")
 
 		if isPermissionError(err) {
-			return nil, fuego.HTTPError{
+			return nil, fuego.ForbiddenError{
+				Detail: err.Error(),
 				Err:    err,
-				Status: http.StatusForbidden,
 			}
 		}
 
 		if err == types.ErrDomainNotFound {
-			return nil, fuego.HTTPError{
+			return nil, fuego.NotFoundError{
+				Detail: err.Error(),
 				Err:    err,
-				Status: http.StatusNotFound,
 			}
 		}
 
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
 
 	if len(domains) == 0 {
 		c.logger.Log(logger.Error, "no domains available for subdomain generation", "")
-		return nil, fuego.HTTPError{
+		return nil, fuego.NotFoundError{
+			Detail: types.ErrDomainNotFound.Error(),
 			Err:    types.ErrDomainNotFound,
-			Status: http.StatusNotFound,
 		}
 	}
 

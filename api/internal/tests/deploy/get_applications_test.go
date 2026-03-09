@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	. "github.com/Eun/go-hit"
-	"github.com/raghavyuva/nixopus-api/internal/tests"
-	"github.com/raghavyuva/nixopus-api/internal/testutils"
+	"github.com/nixopus/nixopus/api/internal/tests"
+	"github.com/nixopus/nixopus/api/internal/testutils"
 )
 
 func TestGetApplications(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -51,15 +51,15 @@ func TestGetApplications(t *testing.T) {
 			name:           "Get applications without organization header",
 			cookies:        cookies,
 			organizationID: "",
-			expectedStatus: http.StatusBadRequest,
-			description:    "Should return 400 when organization ID is not provided",
+			expectedStatus: http.StatusOK,
+			description:    "Should return 200 with empty or session-org data when X-Organization-ID is omitted",
 		},
 		{
 			name:           "Get applications with invalid organization ID",
 			cookies:        cookies,
 			organizationID: "invalid-org-id",
-			expectedStatus: http.StatusInternalServerError,
-			description:    "Should return 500 when organization ID format is invalid",
+			expectedStatus: http.StatusBadRequest,
+			description:    "Should return 400 when organization ID format is invalid",
 		},
 	}
 
@@ -95,9 +95,9 @@ func TestGetApplications(t *testing.T) {
 
 func TestGetApplicationsErrorHandling(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID

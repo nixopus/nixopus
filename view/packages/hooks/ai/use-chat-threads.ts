@@ -61,6 +61,7 @@ export function useChatThreads() {
 
   const agentConfigured = useAgentConfigured() === true;
   const headersRef = useRef<Record<string, string>>({});
+  const threadCreationPromises = useRef<Map<string, Promise<void>>>(new Map());
 
   useEffect(() => {
     (async () => {
@@ -104,14 +105,6 @@ export function useChatThreads() {
 
         mapped.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
         setThreads(mapped);
-
-        const savedActiveId = loadActiveThreadId();
-        if (savedActiveId && mapped.some((t) => t.id === savedActiveId)) {
-          setActiveThreadIdState(savedActiveId);
-        } else if (mapped.length > 0) {
-          setActiveThreadIdState(mapped[0].id);
-          saveActiveThreadId(mapped[0].id);
-        }
       } catch {
         // agent may be unreachable
       } finally {
@@ -144,7 +137,7 @@ export function useChatThreads() {
       setActiveThreadId(thread.id);
 
       if (agentConfigured) {
-        (async () => {
+        const creationPromise = (async () => {
           try {
             const client = createAgentClient(headersRef.current);
             await client.createMemoryThread({
@@ -155,8 +148,11 @@ export function useChatThreads() {
             });
           } catch {
             // will be created automatically on first message
+          } finally {
+            threadCreationPromises.current.delete(threadId);
           }
         })();
+        threadCreationPromises.current.set(threadId, creationPromise);
       }
 
       return thread;
@@ -200,6 +196,8 @@ export function useChatThreads() {
       if (agentConfigured) {
         (async () => {
           try {
+            const pending = threadCreationPromises.current.get(id);
+            if (pending) await pending;
             const client = createAgentClient(headersRef.current);
             const thread = client.getMemoryThread({ threadId: id, agentId: AGENT_ID });
             await thread.update({ title, metadata: {}, resourceId });
@@ -218,6 +216,11 @@ export function useChatThreads() {
 
   const activeThread = threads.find((t) => t.id === activeThreadId) ?? null;
 
+  const waitForThread = useCallback(async (id: string) => {
+    const pending = threadCreationPromises.current.get(id);
+    if (pending) await pending;
+  }, []);
+
   return {
     threads,
     activeThread,
@@ -228,6 +231,7 @@ export function useChatThreads() {
     createThread,
     deleteThread,
     updateThreadTitle,
-    touchThread
+    touchThread,
+    waitForThread
   };
 }

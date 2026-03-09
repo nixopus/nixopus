@@ -1,15 +1,15 @@
 package auth
 
-// Deprecated: Makes use of supertokens authentication
+// Deprecated: Needs rewrite for Better Auth
 
 // import (
 // 	"net/http"
 // 	"testing"
 
 // 	. "github.com/Eun/go-hit"
-// 	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
-// 	"github.com/raghavyuva/nixopus-api/internal/tests"
-// 	"github.com/raghavyuva/nixopus-api/internal/testutils"
+// 	"github.com/nixopus/nixopus/api/internal/features/auth/types"
+// 	"github.com/nixopus/nixopus/api/internal/tests"
+// 	"github.com/nixopus/nixopus/api/internal/testutils"
 // )
 
 // func TestRequestResetPassword(t *testing.T) {

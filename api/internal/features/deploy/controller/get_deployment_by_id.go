@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 func (c *DeployController) GetDeploymentById(f fuego.ContextNoBody) (*types.DeploymentResponse, error) {
@@ -16,6 +16,7 @@ func (c *DeployController) GetDeploymentById(f fuego.ContextNoBody) (*types.Depl
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

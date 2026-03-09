@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import GitHubAppSetup from '@/packages/components/github-connector';
+import GitHubAppSetup, { ManagedGitHubAppSetup } from '@/packages/components/github-connector';
 import { ListRepositories } from '@/packages/components/github-repositories';
 import AppItem, { AppItemSkeleton } from '../../packages/components/application';
 import useGetDeployedApplications from '../../packages/hooks/applications/use_get_deployed_applications';
@@ -10,9 +10,6 @@ import { SortSelect } from '@/components/ui/sort-selector';
 import { Application } from '@/redux/types/applications';
 import { Button } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
-import { FeatureNames } from '@/packages/types/feature-flags';
-import DisabledFeature from '@/packages/components/rbac';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
 import { TypographyH2, TypographyMuted } from '@nixopus/ui';
@@ -41,13 +38,13 @@ function page() {
     inGitHubFlow,
     showApplications,
     router,
-    labelFilter
+    labelFilter,
+    selfHosted
   } = useGetDeployedApplications();
-  const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
 
-  if (isFeatureFlagsLoading) {
+  if (selfHosted === null || isLoadingApplications || isLoading) {
     return (
-      <PageLayout maxWidth="full" padding="md" spacing="lg">
+      <PageLayout maxWidth="7xl" padding="md" spacing="lg">
         <div className="flex items-center justify-between">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-9 w-32 rounded-md" />
@@ -65,26 +62,37 @@ function page() {
     );
   }
 
-  if (!isFeatureEnabled(FeatureNames.FeatureSelfHosted)) {
-    return <DisabledFeature />;
-  }
+  const isManagedMode = !selfHosted;
 
-  const isShowingGitHubSetup =
-    inGitHubFlow || (!showApplications && !inGitHubFlow && !connectors?.length);
+  const isShowingGitHubSetup = isManagedMode
+    ? inGitHubFlow || (!showApplications && !connectors?.length)
+    : inGitHubFlow || (!showApplications && !inGitHubFlow && !connectors?.length);
   const isShowingRepositories =
     !showApplications && !inGitHubFlow && connectors?.length && connectors.length > 0;
 
   const renderContent = () => {
     return (
       <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
-        {inGitHubFlow && <GitHubAppSetup GetGithubConnectors={GetGithubConnectors} />}
-
-        {!showApplications && !inGitHubFlow && (
+        {isManagedMode ? (
           <>
-            {!connectors?.length ? (
-              <GitHubAppSetup GetGithubConnectors={GetGithubConnectors} />
-            ) : (
+            {(inGitHubFlow || (!showApplications && !connectors?.length)) && (
+              <ManagedGitHubAppSetup />
+            )}
+            {!inGitHubFlow && !showApplications && connectors?.length && connectors.length > 0 && (
               <ListRepositories />
+            )}
+          </>
+        ) : (
+          <>
+            {inGitHubFlow && <GitHubAppSetup GetGithubConnectors={GetGithubConnectors} />}
+            {!showApplications && !inGitHubFlow && (
+              <>
+                {!connectors?.length ? (
+                  <GitHubAppSetup GetGithubConnectors={GetGithubConnectors} />
+                ) : (
+                  <ListRepositories />
+                )}
+              </>
             )}
           </>
         )}
@@ -106,7 +114,7 @@ function page() {
         </div>
       }
     >
-      <PageLayout maxWidth="full" padding="md" spacing="lg">
+      <PageLayout maxWidth="7xl" padding="md" spacing="lg">
         {!isShowingGitHubSetup && (
           <MainPageHeader
             label={

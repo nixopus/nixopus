@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	. "github.com/Eun/go-hit"
-	"github.com/raghavyuva/nixopus-api/internal/tests"
-	"github.com/raghavyuva/nixopus-api/internal/testutils"
+	"github.com/nixopus/nixopus/api/internal/tests"
+	"github.com/nixopus/nixopus/api/internal/testutils"
 )
 
 func TestGetDeploymentByID(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -49,8 +49,8 @@ func TestGetDeploymentByID(t *testing.T) {
 			cookies:        cookies,
 			organizationID: "",
 			deploymentID:   testDeploymentID,
-			expectedStatus: http.StatusBadRequest,
-			description:    "Should return 400 when organization ID is not provided",
+			expectedStatus: http.StatusInternalServerError,
+			description:    "Session provides org but deployment doesn't exist",
 		},
 		{
 			name:           "Get deployment by ID with invalid deployment ID format",
@@ -109,9 +109,9 @@ func TestGetDeploymentByID(t *testing.T) {
 
 func TestGetDeploymentByIDSuccess(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID

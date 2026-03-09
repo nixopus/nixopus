@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type IsNameAlreadyTakenRequest struct {
@@ -251,6 +251,17 @@ type LabelsResponse struct {
 	Data    []string `json:"data"`
 }
 
+// ComposeServicesResponse is the typed response for compose service listing.
+type ComposeServicesResponse struct {
+	Status  string                        `json:"status"`
+	Message string                        `json:"message"`
+	Data    []shared_types.ComposeService `json:"data"`
+}
+
+type CancelDeploymentRequest struct {
+	DeploymentID uuid.UUID `json:"deployment_id"`
+}
+
 type RecoverRequest struct {
 	ApplicationID *uuid.UUID `json:"application_id,omitempty"`
 }
@@ -274,9 +285,14 @@ type RecoverResponse struct {
 }
 
 type IndexCodebaseResponse struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Status  string                    `json:"status"`
+	Message string                    `json:"message"`
+	Data    IndexCodebaseResponseData `json:"data"`
+}
+
+type IndexCodebaseResponseData struct {
+	Indexed int `json:"indexed"`
+	Skipped int `json:"skipped"`
 }
 
 var (
@@ -315,6 +331,9 @@ var (
 	ErrDomainLimitReached               = errors.New("maximum of 5 domains per application reached")
 	ErrDomainAlreadyExists              = errors.New("domain already exists for this application")
 	ErrPaymentRequired                  = errors.New("payment required: deployment limit reached, please upgrade your plan")
+	ErrDeploymentNotCancellable         = errors.New("deployment is not in a cancellable state")
+	ErrDeploymentNotRunning             = errors.New("deployment not found or not running on this instance")
+	ErrPermissionDenied                 = errors.New("permission denied")
 )
 
 const (

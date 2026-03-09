@@ -5,17 +5,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/docker/docker/pkg/jsonmessage"
-	"github.com/google/uuid"
-	"github.com/moby/term"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+
+	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/google/uuid"
+	"github.com/moby/term"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	sshpkg "github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type BuildConfig struct {
@@ -41,6 +43,7 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	sshManager, err := sshpkg.GetSSHManagerFromContext(b.Context)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Failed to get SSH manager: "+err.Error(), shared_types.Failed)
+		s.emitBuildFailed(b, err)
 		return "", fmt.Errorf("failed to get SSH manager: %w", err)
 	}
 
@@ -49,6 +52,7 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	sftpClient, err := utils.CreateSFTPClientWithRetry(sshManager)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Failed to create SFTP client: "+err.Error(), shared_types.Failed)
+		s.emitBuildFailed(b, err)
 		return "", fmt.Errorf("failed to create SFTP client: %w", err)
 	}
 	defer sftpClient.Close()
@@ -56,7 +60,9 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	info, err := sftpClient.Stat(buildContextPath)
 	if err != nil || !info.IsDir() {
 		b.TaskContext.LogAndUpdateStatus("Build context path does not exist: "+buildContextPath, shared_types.Failed)
-		return "", fmt.Errorf("build context path does not exist: %s", buildContextPath)
+		pathErr := fmt.Errorf("build context path does not exist: %s", buildContextPath)
+		s.emitBuildFailed(b, pathErr)
+		return "", pathErr
 	}
 	b.TaskContext.AddLog("Build context path verified on remote server")
 
@@ -70,7 +76,9 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	_, err = sftpClient.Stat(dockerfileFullPath)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Dockerfile not found at path: "+dockerfileFullPath, shared_types.Failed)
-		return "", fmt.Errorf("dockerfile not found at path: %s", dockerfileFullPath)
+		dfErr := fmt.Errorf("dockerfile not found at path: %s", dockerfileFullPath)
+		s.emitBuildFailed(b, dfErr)
+		return "", dfErr
 	}
 	b.TaskContext.AddLog("Dockerfile validation successful")
 
@@ -78,6 +86,7 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	buildOutput, err := s.createBuildContextArchiveFromRemote(b.Context, b, buildContextPath, dockerfile_path)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Failed to start remote build: "+err.Error(), shared_types.Failed)
+		s.emitBuildFailed(b, err)
 		return "", err
 	}
 	defer buildOutput.Close()
@@ -96,6 +105,7 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	err = s.processBuildOutput(logReader)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Failed to process build output: "+err.Error(), shared_types.Failed)
+		s.emitBuildFailed(b, err)
 		return "", err
 	}
 	b.TaskContext.AddLog("Build output processing completed")
@@ -152,12 +162,21 @@ func (s *TaskService) createBuildContextArchiveFromRemote(ctx context.Context, b
 		release()
 		return nil, fmt.Errorf("failed to start docker build: %w", err)
 	}
-	return &remoteBuildReader{
+	reader := &remoteBuildReader{
 		stdout:  stdout,
 		session: session,
 		release: release,
-	}, nil
+		ctx:     ctx,
+	}
+	go func() {
+		<-ctx.Done()
+		reader.Close()
+	}()
+	return reader, nil
 }
+
+// ErrBuildCancelled is returned when a build is cancelled by the user.
+var ErrBuildCancelled = fmt.Errorf("build cancelled by user")
 
 // remoteBuildReader streams docker build output and returns build failure as Read error when command exits non-zero.
 // Always call Close() when done (e.g. via defer) to release the pooled SSH connection borrow.
@@ -167,31 +186,39 @@ type remoteBuildReader struct {
 		Wait() error
 		Close() error
 	}
-	release func()
-	closed  bool
-	errored bool
+	release   func()
+	closeOnce sync.Once
+	errored   bool
+	ctx       context.Context
 }
 
-// Close releases the SSH session and pool borrow. Safe to call multiple times.
+// Close releases the SSH session and pool borrow. Safe to call concurrently.
 func (r *remoteBuildReader) Close() {
-	if r.closed {
-		return
-	}
-	r.closed = true
-	if r.session != nil {
-		r.session.Close()
-	}
-	if r.release != nil {
-		r.release()
-	}
+	r.closeOnce.Do(func() {
+		if r.session != nil {
+			r.session.Close()
+		}
+		if r.release != nil {
+			r.release()
+		}
+	})
 }
 
 func (r *remoteBuildReader) Read(p []byte) (n int, err error) {
-	if r.closed {
-		return 0, io.EOF
+	if r.ctx != nil {
+		select {
+		case <-r.ctx.Done():
+			r.Close()
+			return 0, ErrBuildCancelled
+		default:
+		}
 	}
 	n, err = r.stdout.Read(p)
 	if err == io.EOF {
+		if r.ctx != nil && r.ctx.Err() != nil {
+			r.Close()
+			return 0, ErrBuildCancelled
+		}
 		waitErr := r.checkWait()
 		r.Close()
 		if waitErr != nil {
@@ -200,6 +227,10 @@ func (r *remoteBuildReader) Read(p []byte) (n int, err error) {
 		return n, io.EOF
 	}
 	if err != nil {
+		if r.ctx != nil && r.ctx.Err() != nil {
+			r.Close()
+			return n, ErrBuildCancelled
+		}
 		r.Close()
 	}
 	return n, err
@@ -346,4 +377,24 @@ func (r *LogReader) processJSONMessage(jsonMsg jsonmessage.JSONMessage) {
 		r.DeployService.Logger.Log(logger.Error, "Build error: "+jsonMsg.Error.Message, r.deployment_config.ID.String())
 		r.TaskContext.AddLog("Build error: " + jsonMsg.Error.Message)
 	}
+}
+
+func (s *TaskService) emitBuildFailed(b BuildConfig, err error) {
+	if s.Notifier == nil {
+		return
+	}
+	s.Notifier.Emit(shared_types.NotificationEvent{
+		Type:           shared_types.EventBuildFailed,
+		UserID:         b.Application.UserID.String(),
+		OrganizationID: b.Application.OrganizationID.String(),
+		Data: map[string]interface{}{
+			"app_name":      b.Application.Name,
+			"app_id":        b.Application.ID.String(),
+			"error_message": err.Error(),
+			"deployment_id": b.ApplicationDeployment.ID.String(),
+			"repository":    b.Application.Repository,
+			"branch":        b.Application.Branch,
+			"commit_hash":   b.ApplicationDeployment.CommitHash,
+		},
+	})
 }

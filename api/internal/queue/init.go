@@ -16,16 +16,21 @@ import (
 var (
 	redisClient      *redis.Client
 	factory          taskq.Factory
+	producerFactory  taskq.Factory
 	onceConsumers    sync.Once
 	consumersStarted bool
 	registeredQueues []string
 	queuesMutex      sync.RWMutex
+
+	producerQueueCache   = make(map[string]taskq.Queue)
+	producerQueueCacheMu sync.RWMutex
 )
 
 // Init initializes the queue factory with a shared Redis v8 client.
 func Init(client *redis.Client) {
 	redisClient = client
 	factory = redisq.NewFactory()
+	producerFactory = redisq.NewFactory()
 	registeredQueues = make([]string, 0)
 }
 
@@ -42,13 +47,41 @@ func RegisterQueue(opts *taskq.QueueOptions) taskq.Queue {
 	}
 	queue := factory.RegisterQueue(opts)
 
-	// Track registered queue names for cleanup
 	queuesMutex.Lock()
 	registeredQueues = append(registeredQueues, opts.Name)
 	queuesMutex.Unlock()
 
 	log.Printf("Registered queue: %s (MinNumWorker: %d, MaxNumWorker: %d)", opts.Name, opts.MinNumWorker, opts.MaxNumWorker)
 	return queue
+}
+
+func registerProducerQueue(opts *taskq.QueueOptions) taskq.Queue {
+	if opts.Redis == nil {
+		opts.Redis = redisClient
+	}
+	return producerFactory.RegisterQueue(opts)
+}
+
+// getOrCreateProducerQueue returns a cached producer queue for the given name,
+// creating and registering it on first access. Used for dynamic per-server queues.
+func getOrCreateProducerQueue(name string) taskq.Queue {
+	producerQueueCacheMu.RLock()
+	q, ok := producerQueueCache[name]
+	producerQueueCacheMu.RUnlock()
+	if ok {
+		return q
+	}
+
+	producerQueueCacheMu.Lock()
+	defer producerQueueCacheMu.Unlock()
+
+	if q, ok = producerQueueCache[name]; ok {
+		return q
+	}
+
+	q = registerProducerQueue(&taskq.QueueOptions{Name: name})
+	producerQueueCache[name] = q
+	return q
 }
 
 // cleanupDeadConsumers removes dead consumers from Redis consumer groups.
@@ -152,5 +185,6 @@ func IsConsumersStarted() bool {
 func Close() error {
 	log.Println("Closing task queue consumers...")
 	consumersStarted = false
+	_ = producerFactory.Close()
 	return factory.Close()
 }

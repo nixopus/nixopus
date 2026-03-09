@@ -32,13 +32,13 @@ You are a senior backend engineer building the Nixopus API — a production-grad
 func (c *Controller) HandleRequest(f fuego.ContextNoBody) (*types.Response, error) {
     user := utils.GetUser(f.Response(), f.Request())
     if user == nil {
-        return nil, fuego.HTTPError{Status: http.StatusUnauthorized}
+        return nil, fuego.UnauthorizedError{Detail: "authentication required"}
     }
 
     data, err := c.service.GetData(user.ID.String())
     if err != nil {
         c.logger.Log(logger.Error, err.Error(), "")
-        return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
+        return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
     }
 
     return &types.Response{
@@ -56,10 +56,10 @@ func (c *Controller) HandleRequest(f fuego.ContextNoBody) (*types.Response, erro
         if err == nil {
             return &types.Response{Status: "success", Data: data}, nil
         } else {
-            return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
+            return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
         }
     }
-    return nil, fuego.HTTPError{Status: http.StatusUnauthorized}
+    return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 }
 ```
 
@@ -119,13 +119,13 @@ import (
     "context"
     "net/http"
 
-    "github.com/raghavyuva/nixopus-api/internal/features/[domain]/service"
-    "github.com/raghavyuva/nixopus-api/internal/features/[domain]/storage"
-    "github.com/raghavyuva/nixopus-api/internal/features/[domain]/validation"
-    "github.com/raghavyuva/nixopus-api/internal/features/logger"
-    "github.com/raghavyuva/nixopus-api/internal/features/notification"
-    shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-    shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+    "github.com/nixopus/nixopus/api/internal/features/[domain]/service"
+    "github.com/nixopus/nixopus/api/internal/features/[domain]/storage"
+    "github.com/nixopus/nixopus/api/internal/features/[domain]/validation"
+    "github.com/nixopus/nixopus/api/internal/features/logger"
+    "github.com/nixopus/nixopus/api/internal/features/notification"
+    shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+    shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type DomainController struct {
@@ -164,9 +164,8 @@ func (c *DomainController) GetItems(f fuego.ContextNoBody) (*shared_types.Respon
     user := utils.GetUser(w, r)
 
     if user == nil {
-        return nil, fuego.HTTPError{
-            Err:    nil,
-            Status: http.StatusUnauthorized,
+        return nil, fuego.UnauthorizedError{
+            Detail: "authentication required",
         }
     }
 
@@ -175,6 +174,7 @@ func (c *DomainController) GetItems(f fuego.ContextNoBody) (*shared_types.Respon
         c.logger.Log(logger.Error, err.Error(), "")
         return nil, fuego.HTTPError{
             Err:    err,
+            Detail: err.Error(),
             Status: http.StatusInternalServerError,
         }
     }
@@ -194,23 +194,23 @@ func (c *DomainController) CreateItem(f fuego.ContextWithBody[types.CreateItemRe
     user := utils.GetUser(w, r)
 
     if user == nil {
-        return nil, fuego.HTTPError{Status: http.StatusUnauthorized}
+        return nil, fuego.UnauthorizedError{Detail: "authentication required"}
     }
 
     body, err := f.Body()
     if err != nil {
         c.logger.Log(logger.Error, err.Error(), "")
-        return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+        return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
     }
 
     if err := c.validator.ValidateRequest(&body); err != nil {
-        return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+        return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
     }
 
     item, err := c.service.CreateItem(user.ID.String(), body)
     if err != nil {
         c.logger.Log(logger.Error, err.Error(), "")
-        return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
+        return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
     }
 
     return &shared_types.Response{
@@ -226,9 +226,8 @@ func (c *DomainController) CreateItem(f fuego.ContextWithBody[types.CreateItemRe
 func (c *DomainController) GetItem(f fuego.ContextNoBody) (*shared_types.Response, error) {
     itemID := f.PathParam("id")
     if itemID == "" {
-        return nil, fuego.HTTPError{
-            Err:    errors.New("item ID is required"),
-            Status: http.StatusBadRequest,
+        return nil, fuego.BadRequestError{
+            Detail: "item ID is required",
         }
     }
     // ...
@@ -259,9 +258,9 @@ package service
 import (
     "context"
 
-    "github.com/raghavyuva/nixopus-api/internal/features/[domain]/storage"
-    "github.com/raghavyuva/nixopus-api/internal/features/logger"
-    shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+    "github.com/nixopus/nixopus/api/internal/features/[domain]/storage"
+    "github.com/nixopus/nixopus/api/internal/features/logger"
+    shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 type DomainService struct {
@@ -313,7 +312,7 @@ package storage
 
 import (
     "context"
-    shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+    shared_types "github.com/nixopus/nixopus/api/internal/types"
     "github.com/uptrace/bun"
 )
 
@@ -390,7 +389,7 @@ func (s *DomainStorage) DeleteItem(itemID, userID string) error {
 package validation
 
 import (
-    "github.com/raghavyuva/nixopus-api/internal/features/[domain]/types"
+    "github.com/nixopus/nixopus/api/internal/features/[domain]/types"
 )
 
 // DomainRepository interface for validation dependencies
@@ -490,7 +489,7 @@ package routes
 
 import (
     "github.com/go-fuego/fuego"
-    domainController "github.com/raghavyuva/nixopus-api/internal/features/[domain]/controller"
+    domainController "github.com/nixopus/nixopus/api/internal/features/[domain]/controller"
 )
 
 func (router *Router) RegisterDomainRoutes(
@@ -526,26 +525,41 @@ router.RegisterDomainRoutes(domainGroup, domainController)
 
 ## Error Handling
 
-### HTTP Error Responses
-```go
-// Use fuego.HTTPError for API errors
-return nil, fuego.HTTPError{
-    Err:    err,
-    Status: http.StatusBadRequest,
-}
+### Typed Error Responses (Preferred)
+Fuego's `HTTPError.Err` field has `json:"-"` and is **never** sent to the client.
+Always use the `Detail` field for user-visible messages. Prefer typed errors for standard status codes:
 
-// For errors without underlying error
-return nil, fuego.HTTPError{
-    Err:    errors.New("custom error message"),
-    Status: http.StatusNotFound,
-}
+```go
+// 400 Bad Request
+return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
+
+// 401 Unauthorized
+return nil, fuego.UnauthorizedError{Detail: "authentication required"}
+
+// 403 Forbidden
+return nil, fuego.ForbiddenError{Detail: err.Error(), Err: err}
+
+// 404 Not Found
+return nil, fuego.NotFoundError{Detail: err.Error(), Err: err}
+
+// 409 Conflict
+return nil, fuego.ConflictError{Detail: err.Error(), Err: err}
+
+// 500 Internal Server Error (or non-standard codes) — use HTTPError with Detail
+return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
+```
+
+When there is no underlying error, provide a descriptive detail message:
+```go
+return nil, fuego.UnauthorizedError{Detail: "authentication required"}
+return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 ```
 
 ### Logging Errors
 ```go
 // Always log errors before returning
 c.logger.Log(logger.Error, err.Error(), additionalContext)
-return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
+return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 ```
 
 ### Success Responses
@@ -665,10 +679,10 @@ var ErrItemNotFound = errors.New("item not found")
 ### Import Aliases
 ```go
 import (
-    shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-    shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-    "github.com/raghavyuva/nixopus-api/internal/utils"
-    "github.com/raghavyuva/nixopus-api/internal/features/logger"
+    shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+    shared_types "github.com/nixopus/nixopus/api/internal/types"
+    "github.com/nixopus/nixopus/api/internal/utils"
+    "github.com/nixopus/nixopus/api/internal/features/logger"
 )
 ```
 

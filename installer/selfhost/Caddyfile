@@ -1,3 +1,7 @@
+{
+    admin 0.0.0.0:2019
+}
+
 {$SITE_ADDRESS} {
     handle /api/v1/* {
         reverse_proxy nixopus-api:8443
@@ -12,6 +16,8 @@
     }
 
     handle {
-        reverse_proxy nixopus-view:7443
+        reverse_proxy nixopus-view:7443 {
+            flush_interval -1
+        }
     }
 }

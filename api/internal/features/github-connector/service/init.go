@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 type GithubConnectorService struct {

@@ -1,6 +1,6 @@
 package service
 
-import "github.com/raghavyuva/nixopus-api/internal/features/logger"
+import "github.com/nixopus/nixopus/api/internal/features/logger"
 
 // DeleteSmtp deletes a SMTP configuration.
 //

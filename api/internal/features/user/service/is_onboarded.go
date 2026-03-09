@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 // IsOnboarded checks if a user is onboarded by reading the is_onboarded field from the database.

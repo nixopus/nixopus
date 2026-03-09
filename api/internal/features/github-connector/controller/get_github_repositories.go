@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody) (*types.ListRepositoriesResponse, error) {
@@ -16,10 +16,7 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
-		}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	q := r.URL.Query()
@@ -51,26 +48,18 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "invalid GitHub installation") || strings.Contains(errMsg, "installation not found") {
-			return nil, fuego.HTTPError{
-				Err:    err,
-				Status: http.StatusBadRequest,
-			}
+			return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 		}
 		if strings.Contains(errMsg, "no connector") || strings.Contains(errMsg, "connector not found") {
-			return nil, fuego.HTTPError{
-				Err:    err,
-				Status: http.StatusNotFound,
-			}
+			return nil, fuego.NotFoundError{Detail: err.Error(), Err: err}
 		}
 		if strings.Contains(errMsg, "authentication failed") {
-			return nil, fuego.HTTPError{
-				Err:    err,
-				Status: http.StatusUnauthorized,
-			}
+			return nil, fuego.UnauthorizedError{Detail: err.Error(), Err: err}
 		}
 
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

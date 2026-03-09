@@ -3,13 +3,16 @@ package tasks
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
-	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/storage"
+	deploy_types "github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	github_service "github.com/nixopus/nixopus/api/internal/features/github-connector/service"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // OnLiveDevDeployedFunc is called when a live dev build completes and the container is healthy.
@@ -25,16 +28,19 @@ type TaskService struct {
 	Logger            logger.Logger
 	Github_service    *github_service.GithubConnectorService
 	Store             *shared_storage.Store
+	Notifier          shared_types.Notifier
 	OnLiveDevDeployed OnLiveDevDeployedFunc
 	OnLiveDevLog      OnLiveDevLogFunc
+	cancellations     sync.Map
 }
 
-func NewTaskService(storage storage.DeployRepository, logger logger.Logger, githubService *github_service.GithubConnectorService, store *shared_storage.Store) *TaskService {
+func NewTaskService(storage storage.DeployRepository, logger logger.Logger, githubService *github_service.GithubConnectorService, store *shared_storage.Store, notifier shared_types.Notifier) *TaskService {
 	return &TaskService{
 		Storage:           storage,
 		Logger:            logger,
 		Github_service:    githubService,
 		Store:             store,
+		Notifier:          notifier,
 		OnLiveDevDeployed: nil,
 	}
 }
@@ -48,6 +54,35 @@ func (s *TaskService) SetOnLiveDevDeployed(fn OnLiveDevDeployedFunc) {
 // Streams logs directly to WebSocket client (does not rely on PostgreSQL live_dev_logs trigger).
 func (s *TaskService) SetOnLiveDevLog(fn OnLiveDevLogFunc) {
 	s.OnLiveDevLog = fn
+}
+
+func (s *TaskService) RegisterCancellation(deploymentID string, cancel context.CancelFunc) {
+	s.cancellations.Store(deploymentID, cancel)
+}
+
+func (s *TaskService) DeregisterCancellation(deploymentID string) {
+	s.cancellations.Delete(deploymentID)
+}
+
+func (s *TaskService) CancelDeployment(deploymentID string) error {
+	val, ok := s.cancellations.LoadAndDelete(deploymentID)
+	if !ok {
+		return deploy_types.ErrDeploymentNotRunning
+	}
+	cancel := val.(context.CancelFunc)
+	cancel()
+	return nil
+}
+
+// checkCancelled is a non-blocking check for context cancellation.
+// Returns ctx.Err() if cancelled, nil otherwise.
+func checkCancelled(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		return nil
+	}
 }
 
 // getDockerService retrieves docker service from context (organization-aware)
@@ -74,4 +109,24 @@ type LiveDevConfig struct {
 	DockerfilePath string
 	InternalPort   int
 	Workdir        string
+}
+
+func (s *TaskService) emitDeployFailed(payload shared_types.TaskPayload, err error) {
+	if s.Notifier == nil {
+		return
+	}
+	s.Notifier.Emit(shared_types.NotificationEvent{
+		Type:           shared_types.EventDeployFailed,
+		UserID:         payload.Application.UserID.String(),
+		OrganizationID: payload.Application.OrganizationID.String(),
+		Data: map[string]interface{}{
+			"app_name":      payload.Application.Name,
+			"app_id":        payload.Application.ID.String(),
+			"error_message": err.Error(),
+			"deployment_id": payload.ApplicationDeployment.ID.String(),
+			"repository":    payload.Application.Repository,
+			"branch":        payload.Application.Branch,
+			"commit_hash":   payload.ApplicationDeployment.CommitHash,
+		},
+	})
 }

@@ -22,14 +22,13 @@ type User struct {
 	ProvisionStatus   *string              `json:"provision_status,omitempty" bun:"provision_status,type:provision_status_user"`
 	CreatedAt         time.Time            `json:"created_at" bun:"created_at,type:timestamp,notnull"`
 	UpdatedAt         time.Time            `json:"updated_at" bun:"updated_at,type:timestamp,notnull"`
-	Organizations     []*Organization      `json:"organizations,omitempty" bun:"m2m:organization_users,join:User=Organization"`
-	OrganizationUsers []*OrganizationUsers `json:"organization_users,omitempty" bun:"m2m:organization_users,join:User=Organization"`
+	Organizations     []*Organization      `json:"organizations,omitempty" bun:"m2m:member,join:User=Organization"`
+	OrganizationUsers []*OrganizationUsers `json:"organization_users,omitempty" bun:"m2m:member,join:User=Organization"`
 
 	// Backward compatibility fields (computed, not persisted)
-	Username          string `json:"username" bun:"-"`            // Computed from Name
-	Avatar            string `json:"avatar" bun:"-"`              // Computed from Image
-	IsVerified        bool   `json:"is_verified" bun:"-"`         // Computed from EmailVerified
-	SupertokensUserID string `json:"supertokens_user_id" bun:"-"` // Computed from ID
+	Username   string `json:"username" bun:"-"`    // Computed from Name
+	Avatar     string `json:"avatar" bun:"-"`      // Computed from Image
+	IsVerified bool   `json:"is_verified" bun:"-"` // Computed from EmailVerified
 }
 
 type RefreshToken struct {
@@ -57,7 +56,6 @@ func (u *User) ComputeCompatibilityFields() {
 		u.Avatar = *u.Image
 	}
 	u.IsVerified = u.EmailVerified
-	u.SupertokensUserID = u.ID.String()
 }
 
 // NewUser returns a new User with default values set (for backward compatibility)

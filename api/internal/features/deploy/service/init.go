@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 // DeployService handles read operations and validation for deployments.

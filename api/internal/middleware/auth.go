@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/cache"
-	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
-	"github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/cache"
+	betterauth "github.com/nixopus/nixopus/api/internal/features/auth"
+	"github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 // AuthMiddleware is a middleware that checks if the request has a valid
@@ -22,6 +22,10 @@ import (
 func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
+		if handled := tryM2MJWTAuth(ctx, w, r, next); handled {
+			return
+		}
 
 		sessionResp, err := betterauth.VerifySession(r)
 		if err != nil {
@@ -53,13 +57,11 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 
 		betterAuthUserID := sessionResp.User.ID
 
-		// Optionally cache can be disabled by setting the X-Disable-Cache header to true
 		disableCache := r.Header.Get("X-Disable-Cache")
 		if disableCache == "true" {
 			cache = nil
 		}
 
-		// Get user details from Better Auth user table (matching auth_schema.ts)
 		var user types.User
 		userIDUUID, err := uuid.Parse(betterAuthUserID)
 		if err != nil {
@@ -84,14 +86,11 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 			return
 		}
 
-		// Compute backward compatibility fields
 		user.ComputeCompatibilityFields()
 
-		// Use user directly in context
 		ctx = context.WithValue(ctx, types.UserContextKey, &user)
 
 		if !isAuthEndpoint(r.URL.Path) {
-			// Resolve and verify organization membership (reuse sessionResp to avoid duplicate VerifySession call)
 			organizationID, err := resolveAndVerifyOrganization(ctx, r, cache, betterAuthUserID, sessionResp)
 			if err != nil {
 				log.Printf("ERROR AuthMiddleware: Failed to resolve organization: %v", err)
@@ -109,6 +108,29 @@ func AuthMiddleware(next http.Handler, app *storage.App, cache *cache.Cache) htt
 		r = r.WithContext(ctx)
 		next.ServeHTTP(w, r)
 	})
+}
+
+func tryM2MJWTAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, next http.Handler) bool {
+	authHeader := r.Header.Get("Authorization")
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return false
+	}
+
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+	if !isJWT(token) {
+		return false
+	}
+
+	orgID, err := validateM2MJWT(ctx, token)
+	if err != nil {
+		log.Printf("INFO AuthMiddleware: M2M JWT validation failed for path %s, falling through to session auth: %v", r.URL.Path, err)
+		return false
+	}
+
+	ctx = context.WithValue(ctx, types.OrganizationIDKey, orgID)
+	r = r.WithContext(ctx)
+	next.ServeHTTP(w, r)
+	return true
 }
 
 func isAuthEndpoint(path string) bool {

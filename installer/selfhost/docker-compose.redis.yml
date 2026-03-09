@@ -3,6 +3,11 @@ services:
     image: redis:7-alpine
     container_name: nixopus-redis
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     volumes:
       - nixopus-redis-data:/data

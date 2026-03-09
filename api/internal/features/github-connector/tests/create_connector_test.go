@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/service"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

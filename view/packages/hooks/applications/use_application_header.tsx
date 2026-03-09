@@ -7,13 +7,14 @@ import {
   useRestartApplicationMutation,
   useDeleteApplicationMutation,
   useUpdateApplicationLabelsMutation,
-  useDeployProjectMutation
+  useDeployProjectMutation,
+  useCancelDeploymentMutation
 } from '@/redux/services/deploy/applicationsApi';
 import { cn } from '@/lib/utils';
 import { Button } from '@nixopus/ui';
 import { Badge } from '@nixopus/ui';
 import { Input } from '@nixopus/ui';
-import { ExternalLink, RotateCcw, Trash2, Rocket, RefreshCw, X, Plus } from 'lucide-react';
+import { ExternalLink, RotateCcw, Trash2, Rocket, RefreshCw, X, Plus, Square } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +45,8 @@ const getStatusConfig = (status?: string) => {
       return { bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', pulse: true };
     case 'failed':
       return { bg: 'bg-red-500/10', dot: 'bg-red-500', pulse: false };
+    case 'cancelled':
+      return { bg: 'bg-orange-500/10', dot: 'bg-orange-500', pulse: false };
     case 'building':
     case 'deploying':
     case 'cloning':
@@ -107,9 +110,11 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
   const [updateLabels, { isLoading: isUpdatingLabels }] = useUpdateApplicationLabelsMutation();
   const [deployProject, { isLoading: isDeployingProject }] = useDeployProjectMutation();
   const [restartApplication, { isLoading: isRestarting }] = useRestartApplicationMutation();
+  const [cancelDeployment, { isLoading: isCancelling }] = useCancelDeploymentMutation();
 
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [newLabel, setNewLabel] = useState('');
+  const [cancelledDeploymentId, setCancelledDeploymentId] = useState<string | null>(null);
   const labelInputRef = useRef<HTMLInputElement>(null);
   const { requireSudo } = useSudoMode();
 
@@ -122,7 +127,27 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
   const latestDeployment = application?.deployments?.[0];
   const currentStatus = latestDeployment?.status?.status || application?.status?.status;
   const isDraft = currentStatus === 'draft';
+  const canCancelDeployment = Boolean(latestDeployment?.id);
+  const isCancelledLocally = cancelledDeploymentId === latestDeployment?.id;
+  const isInProgress =
+    canCancelDeployment &&
+    !isCancelledLocally &&
+    (currentStatus === 'building' ||
+      currentStatus === 'cloning' ||
+      currentStatus === 'deploying' ||
+      currentStatus === 'started');
   const statusConfig = getStatusConfig(currentStatus);
+
+  const handleCancelDeployment = async () => {
+    if (!latestDeployment?.id) return;
+    try {
+      await cancelDeployment({ deployment_id: latestDeployment.id }).unwrap();
+      setCancelledDeploymentId(latestDeployment.id);
+      toast.success(t('selfHost.applicationDetails.header.actions.cancelDeployment.success'));
+    } catch {
+      toast.error(t('selfHost.applicationDetails.header.actions.cancelDeployment.error'));
+    }
+  };
 
   const handleDeployProject = async () => {
     if (!application?.id) return;
@@ -291,6 +316,39 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
       );
     }
 
+    if (isInProgress) {
+      return (
+        <>
+          <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={isCancelling}
+              onClick={handleCancelDeployment}
+              className="gap-2"
+            >
+              <Square className="h-4 w-4" />
+              {isCancelling
+                ? t('selfHost.applicationDetails.header.actions.cancelDeployment.cancelling')
+                : t('selfHost.applicationDetails.header.actions.cancelDeployment.button')}
+            </Button>
+          </AnyPermissionGuard>
+          <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+            <Button
+              variant="default"
+              size="sm"
+              disabled={isRedeploying}
+              onClick={() => handleRedeploy(false)}
+              className="gap-2"
+            >
+              <Rocket className="h-4 w-4" />
+              {t('selfHost.applicationDetails.header.actions.redeploy.button')}
+            </Button>
+          </AnyPermissionGuard>
+        </>
+      );
+    }
+
     return (
       <>
         <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
@@ -321,11 +379,14 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
     );
   }, [
     isDraft,
+    isInProgress,
     isDeployingProject,
+    isCancelling,
     isRestarting,
     isRedeploying,
     t,
     handleDeployProject,
+    handleCancelDeployment,
     handleRestart,
     handleRedeploy
   ]);

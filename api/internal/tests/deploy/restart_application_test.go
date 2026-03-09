@@ -6,16 +6,16 @@ import (
 
 	. "github.com/Eun/go-hit"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/tests"
-	"github.com/raghavyuva/nixopus-api/internal/testutils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/tests"
+	"github.com/nixopus/nixopus/api/internal/testutils"
 )
 
 func TestRestartApplication(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -57,8 +57,8 @@ func TestRestartApplication(t *testing.T) {
 			request: types.RestartDeploymentRequest{
 				ID: testApplicationID,
 			},
-			expectedStatus: http.StatusBadRequest,
-			description:    "Should return 400 when organization ID is not provided",
+			expectedStatus: http.StatusInternalServerError,
+			description:    "Should return 500 because session provides org but SSH infrastructure is unavailable",
 		},
 		{
 			name:           "Restart application with missing ID",

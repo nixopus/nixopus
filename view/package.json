@@ -42,6 +42,8 @@
     "@reactour/tour": "^3.7.0",
     "@reduxjs/toolkit": "^2.6.0",
     "@stepperize/react": "^5.1.6",
+    "@streamdown/code": "^1.1.0",
+    "@streamdown/mermaid": "^1.0.2",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-web-links": "^0.11.0",
     "@xterm/xterm": "^5.5.0",
@@ -58,9 +60,10 @@
     "jws": "^4.0.1",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.479.0",
-    "next": "15.2.8",
+    "next": "15.5.14",
     "next-themes": "^0.4.4",
     "nookies": "^2.5.2",
+    "posthog-js": "^1.363.5",
     "qrcode.react": "^4.2.0",
     "react": "^19.0.0",
     "react-ace": "^14.0.1",
@@ -73,7 +76,7 @@
     "redux": "^5.0.1",
     "redux-persist": "^6.0.0",
     "sonner": "^2.0.1",
-    "streamdown": "^2.1.0",
+    "streamdown": "^2.4.0",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.0",
@@ -91,7 +94,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.21.0",
-    "eslint-config-next": "15.2.3",
+    "eslint-config-next": "15.5.14",
     "eslint-config-prettier": "^10.0.2",
     "eslint-plugin-prettier": "^5.2.3",
     "eslint-plugin-react": "^7.37.4",
@@ -103,6 +106,19 @@
     "typescript-eslint": "^8.25.0"
   },
   "resolutions": {
-    "jws": "^4.0.1"
+    "jws": "^4.0.1",
+    "@hono/node-server": "^1.19.10",
+    "hono": "^4.12.4",
+    "express-rate-limit": "^8.2.2",
+    "kysely": "^0.28.12",
+    "cookie": "^0.7.0"
+  },
+  "overrides": {
+    "jws": "^4.0.1",
+    "@hono/node-server": "^1.19.10",
+    "hono": "^4.12.4",
+    "express-rate-limit": "^8.2.2",
+    "kysely": "^0.28.12",
+    "cookie": "^0.7.0"
   }
 }

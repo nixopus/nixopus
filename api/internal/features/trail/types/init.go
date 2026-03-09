@@ -38,6 +38,29 @@ type UpgradeResourcesRequest struct {
 	MemoryMB  int    `json:"memory_mb"`
 }
 
+// ProvisionTrailResponse is a typed response for provisioning requests.
+type ProvisionTrailResponse struct {
+	Status  string             `json:"status"`
+	Message string             `json:"message,omitempty"`
+	Data    *ProvisionResponse `json:"data,omitempty"`
+	Error   string             `json:"error,omitempty"`
+}
+
+// TrailStatusEnvelopeResponse is a typed response for trail status retrieval.
+type TrailStatusEnvelopeResponse struct {
+	Status  string          `json:"status"`
+	Message string          `json:"message,omitempty"`
+	Data    *StatusResponse `json:"data,omitempty"`
+	Error   string          `json:"error,omitempty"`
+}
+
+// UpgradeResourcesResponse is a typed message response for resource upgrades.
+type UpgradeResourcesResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message,omitempty"`
+	Error   string `json:"error,omitempty"`
+}
+
 // ProvisionPayload represents the payload sent to the Redis queue for async processing.
 type ProvisionPayload struct {
 	SessionID          string `json:"session_id"`
@@ -47,6 +70,7 @@ type ProvisionPayload struct {
 	UserID             string `json:"user_id"`
 	OrgID              string `json:"org_id"`
 	ProvisionDetailsID string `json:"provision_details_id"`
+	ServerID           string `json:"server_id,omitempty"`
 }
 
 // ProvisionStep represents the current step in the provisioning process.
@@ -80,6 +104,7 @@ type UserProvisionDetails struct {
 	ID               uuid.UUID      `bun:"id,pk,type:uuid,default:gen_random_uuid()" json:"id"`
 	UserID           uuid.UUID      `bun:"user_id,type:uuid,notnull" json:"user_id"`
 	OrganizationID   uuid.UUID      `bun:"organization_id,type:uuid,notnull" json:"organization_id"`
+	ServerID         *uuid.UUID     `bun:"server_id,type:uuid" json:"server_id,omitempty"`
 	LXDContainerName *string        `bun:"lxd_container_name" json:"lxd_container_name,omitempty"`
 	Subdomain        *string        `bun:"subdomain" json:"subdomain,omitempty"`
 	Domain           *string        `bun:"domain" json:"domain,omitempty"`

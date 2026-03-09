@@ -1,7 +1,7 @@
 package validation
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
+	"github.com/nixopus/nixopus/api/internal/features/trail/types"
 )
 
 // Validator handles validation for trail requests.

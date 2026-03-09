@@ -110,6 +110,7 @@ verify() {
     check "AUTH_SERVICE_SECRET set"   "grep -q '^AUTH_SERVICE_SECRET=.\{32,\}' /opt/nixopus/.env"
     check "JWT_SECRET set"            "grep -q '^JWT_SECRET=.\{32,\}' /opt/nixopus/.env"
     check "SELF_HOSTED=true"          "grep -q '^SELF_HOSTED=true' /opt/nixopus/.env"
+    check "SSH_HOST set"              "grep -q '^SSH_HOST=' /opt/nixopus/.env"
     check "SSH_PORT set"              "grep -q '^SSH_PORT=' /opt/nixopus/.env"
     check "SSH_USER set"              "grep -q '^SSH_USER=' /opt/nixopus/.env"
     check "CADDY_HTTP_PORT set"       "grep -q '^CADDY_HTTP_PORT=' /opt/nixopus/.env"

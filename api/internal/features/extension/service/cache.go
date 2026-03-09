@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/raghavyuva/nixopus-api/internal/redisclient"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/redisclient"
+	"github.com/nixopus/nixopus/api/internal/types"
 )
 
 const (

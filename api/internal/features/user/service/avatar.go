@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/user/types"
 )
 
 func (s *UserService) UpdateAvatar(ctx context.Context, userID string, req *types.UpdateAvatarRequest) error {

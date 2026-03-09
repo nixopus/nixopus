@@ -29,6 +29,8 @@ type UserProvisionDetails struct {
 	ID               uuid.UUID      `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
 	UserID           uuid.UUID      `json:"user_id" bun:"user_id,notnull,type:uuid"`
 	OrganizationID   uuid.UUID      `json:"organization_id" bun:"organization_id,notnull,type:uuid"`
+	ServerID         *uuid.UUID     `json:"server_id,omitempty" bun:"server_id,type:uuid"`
+	GuestIP          *string        `json:"guest_ip,omitempty" bun:"guest_ip"`
 	LXDContainerName *string        `json:"lxd_container_name,omitempty" bun:"lxd_container_name"`
 	SSHKeyID         *uuid.UUID     `json:"ssh_key_id,omitempty" bun:"ssh_key_id,type:uuid"`
 	Subdomain        *string        `json:"subdomain,omitempty" bun:"subdomain"`

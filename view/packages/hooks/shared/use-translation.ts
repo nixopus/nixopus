@@ -16,6 +16,7 @@ import fileManager from '@/lib/i18n/locales/en/fileManager.json';
 import selfHost from '@/lib/i18n/locales/en/selfHost.json';
 import terminal from '@/lib/i18n/locales/en/terminal.json';
 import extensions from '@/lib/i18n/locales/en/extensions.json';
+import integrations from '@/lib/i18n/locales/en/integrations.json';
 import navigation from '@/lib/i18n/locales/en/navigation.json';
 import layout from '@/lib/i18n/locales/en/layout.json';
 import user from '@/lib/i18n/locales/en/user.json';
@@ -42,6 +43,7 @@ type EnTranslations = Merge<
     typeof selfHost &
     typeof terminal &
     typeof extensions &
+    typeof integrations &
     typeof navigation &
     typeof layout &
     typeof user &
@@ -74,6 +76,7 @@ const defaultTranslations: Record<string, any> = {
   ...selfHost,
   ...terminal,
   ...extensions,
+  ...integrations,
   ...navigation,
   ...layout,
   ...user,

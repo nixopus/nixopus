@@ -4,7 +4,7 @@ set -euo pipefail
 NIXOPUS_VERSION="0.2.0"
 NIXOPUS_HOME="${NIXOPUS_HOME:-/opt/nixopus}"
 TELEMETRY_URL="${NIXOPUS_TELEMETRY_URL:-https://nixopus-api.nixopus.com/api/cli/installations}"
-REPO_RAW="${NIXOPUS_REPO_RAW:-https://raw.githubusercontent.com/raghavyuva/nixopus/main/installer}"
+REPO_RAW="${NIXOPUS_REPO_RAW:-https://raw.githubusercontent.com/nixopus/nixopus/master/installer}"
 INSTALL_START=$(date +%s)
 
 RED='\033[0;31m'
@@ -140,8 +140,13 @@ format_ip_for_url() {
 detect_ip() {
     local ip=""
     for svc in "https://api64.ipify.org" "https://ifconfig.me" "https://icanhazip.com"; do
-        ip=$(curl -fsSL --connect-timeout 5 "$svc" 2>/dev/null | tr -d '[:space:]') && [ -n "$ip" ] && break
+        ip=$(curl -4 -fsSL --connect-timeout 5 "$svc" 2>/dev/null | tr -d '[:space:]') && [ -n "$ip" ] && break
     done
+    if [ -z "$ip" ]; then
+        for svc in "https://api64.ipify.org" "https://ifconfig.me" "https://icanhazip.com"; do
+            ip=$(curl -6 -fsSL --connect-timeout 5 "$svc" 2>/dev/null | tr -d '[:space:]') && [ -n "$ip" ] && break
+        done
+    fi
     if [ -z "$ip" ]; then
         ip=$(hostname -I 2>/dev/null | awk '{print $1}')
     fi
@@ -217,6 +222,51 @@ prompt_if_tty() {
     fi
 }
 
+load_existing_config() {
+    if [ -f "$NIXOPUS_HOME/.env" ]; then
+        log_info "Existing installation detected at $NIXOPUS_HOME"
+        log_info "Preserving secrets from previous install"
+        local saved_version="$NIXOPUS_VERSION"
+        local saved_home="$NIXOPUS_HOME"
+        set -a
+        # shellcheck disable=SC1091
+        . "$NIXOPUS_HOME/.env"
+        set +a
+        NIXOPUS_VERSION="$saved_version"
+        NIXOPUS_HOME="$saved_home"
+        # Re-detect network config since the server IP may have changed
+        unset HOST_IP SSH_HOST
+        return 0
+    fi
+
+    if command -v docker &>/dev/null; then
+        local orphaned_volumes=""
+        orphaned_volumes=$(docker volume ls --quiet --filter "name=nixopus" 2>/dev/null | grep "nixopus-db-data\|nixopus-redis-data" || true)
+        if [ -n "$orphaned_volumes" ]; then
+            log_warn "Found data volumes without config:"
+            echo "$orphaned_volumes" | while read -r vol; do log_warn "  $vol"; done
+            log_warn "Containers were removed without 'nixopus uninstall --purge'"
+            log_warn "New credentials will NOT match the existing database"
+            if [ -t 0 ]; then
+                echo ""
+                echo -e "  ${BOLD}Options:${NC}"
+                echo "  1) Remove old volumes and start fresh:"
+                echo "     docker volume rm \$(docker volume ls -q --filter name=nixopus)"
+                echo "  2) Provide the original DB password:"
+                echo "     DB_PASSWORD=<old_password> sudo bash get.sh"
+                echo ""
+                read -rp "  Continue with new credentials anyway? [y/N] " confirm
+                if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+                    fail "Aborted. Remove orphaned volumes or provide original credentials."
+                fi
+            else
+                log_warn "Non-interactive: proceeding, but services may fail to authenticate"
+                log_warn "Fix: remove volumes and reinstall"
+            fi
+        fi
+    fi
+}
+
 gather_config() {
     check_resources
 
@@ -286,10 +336,10 @@ gather_config() {
     fi
     prompt_if_tty ADMIN_EMAIL "Admin email" ""
 
-    SSH_PORT="${SSH_PORT:-22}"
+    SSH_HOST="${SSH_HOST:-${HOST_IP:-host.docker.internal}}"
     SSH_USER="${SSH_USER:-root}"
 
-    if [ -t 0 ] && [ -z "${SSH_PORT:-}" ]; then
+    if [ -z "${SSH_PORT:-}" ] && [ -t 0 ]; then
         local current_ssh_port
         current_ssh_port=$(grep -E "^Port " /etc/ssh/sshd_config 2>/dev/null | awk '{print $2}') || true
         if [ -n "$current_ssh_port" ] && [ "$current_ssh_port" != "22" ]; then
@@ -297,6 +347,7 @@ gather_config() {
             SSH_PORT="$current_ssh_port"
         fi
     fi
+    SSH_PORT="${SSH_PORT:-22}"
 
     DB_PASSWORD="${DB_PASSWORD:-$(gen_secret)}"
     REDIS_PASSWORD="${REDIS_PASSWORD:-$(gen_secret)}"
@@ -319,28 +370,45 @@ gather_config() {
 
 setup_directories() {
     mkdir -p "$NIXOPUS_HOME"/{ssh,configs,caddy}
-    chmod 700 "$NIXOPUS_HOME"
+    chmod 755 "$NIXOPUS_HOME"
 }
 
 setup_ssh() {
     local key_path="$NIXOPUS_HOME/ssh/id_rsa"
     if [ -f "$key_path" ]; then
+        chmod 755 "$NIXOPUS_HOME/ssh"
+        chmod 644 "$key_path"
         log_ok "SSH key exists"
-        return
+    else
+        ssh-keygen -t rsa -b 4096 -f "$key_path" -N "" -q
+        chmod 755 "$NIXOPUS_HOME/ssh"
+        chmod 644 "$key_path"
+        chmod 644 "$key_path.pub"
+        log_ok "SSH key generated"
     fi
-    ssh-keygen -t rsa -b 4096 -f "$key_path" -N "" -q
-    chmod 600 "$key_path"
-    chmod 644 "$key_path.pub"
 
     local auth_keys="${HOME}/.ssh/authorized_keys"
+    local pubkey
+    pubkey=$(cat "$key_path.pub")
+
     mkdir -p "$(dirname "$auth_keys")"
     touch "$auth_keys"
     chmod 600 "$auth_keys"
-    cat "$key_path.pub" >> "$auth_keys"
-    log_ok "SSH key generated"
+
+    if grep -qF "$pubkey" "$auth_keys" 2>/dev/null; then
+        log_ok "SSH key already in authorized_keys"
+        return
+    fi
+
+    echo "$pubkey" >> "$auth_keys"
+    log_ok "SSH public key added to authorized_keys"
 }
 
 write_env() {
+    if [ -f "$NIXOPUS_HOME/.env" ]; then
+        cp "$NIXOPUS_HOME/.env" "$NIXOPUS_HOME/.env.bak"
+        log_info "Previous .env backed up to $NIXOPUS_HOME/.env.bak"
+    fi
     cat > "$NIXOPUS_HOME/.env" << EOF
 NIXOPUS_VERSION=${NIXOPUS_VERSION}
 NIXOPUS_HOME=${NIXOPUS_HOME}
@@ -351,6 +419,7 @@ HOST_IP=${HOST_IP:-}
 CADDY_HTTP_PORT=${CADDY_HTTP_PORT}
 CADDY_HTTPS_PORT=${CADDY_HTTPS_PORT}
 
+SSH_HOST=${SSH_HOST}
 SSH_PORT=${SSH_PORT}
 SSH_USER=${SSH_USER}
 
@@ -374,12 +443,13 @@ USE_BUNDLED_REDIS=${USE_BUNDLED_REDIS}
 ADMIN_EMAIL=${ADMIN_EMAIL:-}
 SELF_HOSTED=true
 NIXOPUS_TELEMETRY=${NIXOPUS_TELEMETRY:-on}
+LOG_LEVEL=${LOG_LEVEL:-debug}
 EOF
     chmod 600 "$NIXOPUS_HOME/.env"
 }
 
 copy_compose() {
-    local src="$NIXOPUS_INSTALLER_DIR/selfhost"
+    local src="${NIXOPUS_INSTALLER_DIR:-}/selfhost"
     if [ -n "${NIXOPUS_INSTALLER_DIR:-}" ] && [ -f "$src/docker-compose.yml" ]; then
         cp "$src/docker-compose.yml" "$NIXOPUS_HOME/"
         cp "$src/docker-compose.db.yml" "$NIXOPUS_HOME/"
@@ -393,6 +463,10 @@ copy_compose() {
 
 write_caddyfile() {
     cat > "$NIXOPUS_HOME/Caddyfile" << 'CADDY'
+{
+    admin 0.0.0.0:2019
+}
+
 {$SITE_ADDRESS} {
     handle /api/v1/* {
         reverse_proxy nixopus-api:8443
@@ -407,7 +481,9 @@ write_caddyfile() {
     }
 
     handle {
-        reverse_proxy nixopus-view:7443
+        reverse_proxy nixopus-view:7443 {
+            flush_interval -1
+        }
     }
 }
 CADDY
@@ -480,6 +556,11 @@ set -euo pipefail
 
 NIXOPUS_HOME="${NIXOPUS_HOME:-/opt/nixopus}"
 
+if [ "$(id -u)" -ne 0 ]; then
+    echo "nixopus requires root. Run: sudo nixopus $*" >&2
+    exit 1
+fi
+
 if [ ! -f "$NIXOPUS_HOME/.env" ]; then
     echo "Nixopus not found at $NIXOPUS_HOME. Is it installed?" >&2
     exit 1
@@ -510,6 +591,14 @@ sedi() {
 }
 
 redact() { echo "${1:0:4}****${1: -4}"; }
+
+format_ip_for_url() {
+    if [[ "$1" == *:* ]]; then
+        echo "[$1]"
+    else
+        echo "$1"
+    fi
+}
 
 cmd_status() {
     dc ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
@@ -558,11 +647,12 @@ cmd_uninstall() {
         exit 0
     fi
 
-    dc down
     if [ "${1:-}" = "--purge" ]; then
         dc down -v
         rm -rf "$NIXOPUS_HOME"
         echo "All data removed."
+    else
+        dc down
     fi
 
     rm -f /usr/local/bin/nixopus
@@ -595,6 +685,7 @@ cmd_config() {
     echo "Access:       ${ALLOWED_ORIGIN:-unknown}"
     echo "HTTP Port:    ${CADDY_HTTP_PORT:-80}"
     echo "HTTPS Port:   ${CADDY_HTTPS_PORT:-443}"
+    echo "SSH Host:     ${SSH_HOST:-${HOST_IP:-<unknown>}}"
     echo "SSH Port:     ${SSH_PORT:-22}"
     echo "SSH User:     ${SSH_USER:-root}"
     echo ""
@@ -637,18 +728,26 @@ cmd_domain() {
     fi
 
     if [ "$action" = "remove" ]; then
-        local host_ip
+        local host_ip http_port base_url
         host_ip=$(grep "^HOST_IP=" "$NIXOPUS_HOME/.env" | cut -d= -f2)
+        http_port=$(grep "^CADDY_HTTP_PORT=" "$NIXOPUS_HOME/.env" | cut -d= -f2)
+        local ip_for_url
+        ip_for_url=$(format_ip_for_url "$host_ip")
+        if [ "${http_port:-80}" = "80" ]; then
+            base_url="http://${ip_for_url}"
+        else
+            base_url="http://${ip_for_url}:${http_port}"
+        fi
 
         sedi "s|^DOMAIN=.*|DOMAIN=|" "$NIXOPUS_HOME/.env"
         sedi "s|^SITE_ADDRESS=.*|SITE_ADDRESS=:80|" "$NIXOPUS_HOME/.env"
-        sedi "s|^ALLOWED_ORIGIN=.*|ALLOWED_ORIGIN=http://${host_ip}|" "$NIXOPUS_HOME/.env"
-        sedi "s|^API_URL=.*|API_URL=http://${host_ip}/api|" "$NIXOPUS_HOME/.env"
-        sedi "s|^AUTH_PUBLIC_URL=.*|AUTH_PUBLIC_URL=http://${host_ip}|" "$NIXOPUS_HOME/.env"
+        sedi "s|^ALLOWED_ORIGIN=.*|ALLOWED_ORIGIN=${base_url}|" "$NIXOPUS_HOME/.env"
+        sedi "s|^API_URL=.*|API_URL=${base_url}/api|" "$NIXOPUS_HOME/.env"
+        sedi "s|^AUTH_PUBLIC_URL=.*|AUTH_PUBLIC_URL=${base_url}|" "$NIXOPUS_HOME/.env"
         sedi "s|^AUTH_COOKIE_DOMAIN=.*|AUTH_COOKIE_DOMAIN=|" "$NIXOPUS_HOME/.env"
         sedi "s|^AUTH_SECURE_COOKIES=.*|AUTH_SECURE_COOKIES=false|" "$NIXOPUS_HOME/.env"
 
-        echo "Switched to IP-based mode (http://${host_ip})"
+        echo "Switched to IP-based mode (${base_url})"
         echo "Restarting services..."
         dc up -d --remove-orphans
     fi
@@ -675,6 +774,39 @@ cmd_port() {
     esac
 
     echo "Set $port_type port to $port_val"
+    echo "Restarting services..."
+    dc up -d --remove-orphans
+}
+
+cmd_ip() {
+    local action="${1:-}" new_ip="${2:-}"
+    load_env
+    if [ "$action" != "set" ] || [ -z "$new_ip" ]; then
+        echo "── IP Configuration ──"
+        echo "Host IP:  ${HOST_IP:-<unknown>}"
+        echo "Access:   ${ALLOWED_ORIGIN:-unknown}"
+        echo ""
+        echo "Usage: nixopus ip set <ip>"
+        return
+    fi
+
+    sedi "s|^HOST_IP=.*|HOST_IP=${new_ip}|" "$NIXOPUS_HOME/.env"
+    if [ -z "${DOMAIN:-}" ]; then
+        local ip_for_url
+        ip_for_url=$(format_ip_for_url "$new_ip")
+        local http_port
+        http_port=$(grep "^CADDY_HTTP_PORT=" "$NIXOPUS_HOME/.env" | cut -d= -f2)
+        local base_url
+        if [ "${http_port:-80}" = "80" ]; then
+            base_url="http://${ip_for_url}"
+        else
+            base_url="http://${ip_for_url}:${http_port}"
+        fi
+        sedi "s|^ALLOWED_ORIGIN=.*|ALLOWED_ORIGIN=${base_url}|" "$NIXOPUS_HOME/.env"
+        sedi "s|^API_URL=.*|API_URL=${base_url}/api|" "$NIXOPUS_HOME/.env"
+        sedi "s|^AUTH_PUBLIC_URL=.*|AUTH_PUBLIC_URL=${base_url}|" "$NIXOPUS_HOME/.env"
+    fi
+    echo "Set IP to $new_ip"
     echo "Restarting services..."
     dc up -d --remove-orphans
 }
@@ -721,6 +853,7 @@ cmd_help() {
     echo "  config set K=V      Update configuration value"
     echo "  domain add <domain> Switch to domain-based HTTPS"
     echo "  domain remove       Switch back to IP-based HTTP"
+    echo "  ip set <ip>         Change host IP (IP mode only)"
     echo "  port                Show port configuration"
     echo "  port set <type> <n> Change port (http, https, ssh)"
     echo "  backup              Backup database and config"
@@ -737,6 +870,7 @@ case "${1:-help}" in
     uninstall) shift; cmd_uninstall "${1:-}" ;;
     config)    shift; cmd_config "$@" ;;
     domain)    shift; cmd_domain "$@" ;;
+    ip)        shift; cmd_ip "$@" ;;
     port)      shift; cmd_port "$@" ;;
     backup)    cmd_backup ;;
     info)      cmd_info ;;
@@ -814,7 +948,9 @@ main() {
     install_docker
 
     log_step 3 "Configuring"
+    load_existing_config
     gather_config
+
 
     log_step 4 "Writing files"
     setup_directories

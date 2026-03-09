@@ -30,6 +30,11 @@ import {
 import { ReactFlowProvider } from '@xyflow/react';
 import { Streamdown } from 'streamdown';
 import {
+  STREAMDOWN_PLUGINS,
+  STREAMDOWN_CONTROLS,
+  STREAMDOWN_ANIMATED
+} from '@/packages/lib/streamdown-config';
+import {
   Button,
   Badge,
   Skeleton,
@@ -594,16 +599,20 @@ const MessageBubble = memo(function MessageBubble({
     displayContent.trim().length > 0 || before.trim().length > 0 || after.trim().length > 0;
   if (!hasContent && !message.graph && !showJsonIndicator && !hasStrippedOnly) return null;
   const showWorkflowIndicator = !!message.graph || hasStrippedOnly;
+  const isAnimatingNow = isStreaming && isLastMessage;
   const renderAssistantContent = () => {
     const parts: React.ReactNode[] = [];
     if (before.trim())
       parts.push(
-        <div
+        <Streamdown
           key="before"
-          className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2"
+          plugins={STREAMDOWN_PLUGINS}
+          controls={STREAMDOWN_CONTROLS}
+          animated={STREAMDOWN_ANIMATED}
+          isAnimating={false}
         >
-          <Streamdown isAnimating={false}>{before}</Streamdown>
-        </div>
+          {before}
+        </Streamdown>
       );
     if (showJsonIndicator)
       parts.push(
@@ -613,21 +622,28 @@ const MessageBubble = memo(function MessageBubble({
       );
     if (after.trim())
       parts.push(
-        <div
+        <Streamdown
           key="after"
-          className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2 mt-1"
+          plugins={STREAMDOWN_PLUGINS}
+          controls={STREAMDOWN_CONTROLS}
+          animated={STREAMDOWN_ANIMATED}
+          isAnimating={false}
         >
-          <Streamdown isAnimating={false}>{after}</Streamdown>
-        </div>
+          {after}
+        </Streamdown>
       );
     if (!showJsonIndicator && parts.length === 0 && displayContent.trim())
       parts.push(
-        <div
+        <Streamdown
           key="content"
-          className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2"
+          plugins={STREAMDOWN_PLUGINS}
+          controls={STREAMDOWN_CONTROLS}
+          animated={STREAMDOWN_ANIMATED}
+          isAnimating={isAnimatingNow}
+          caret={isAnimatingNow ? 'block' : undefined}
         >
-          <Streamdown isAnimating={false}>{displayContent}</Streamdown>
-        </div>
+          {displayContent}
+        </Streamdown>
       );
     return parts;
   };
@@ -707,8 +723,16 @@ const ReasoningBubble = memo(function ReasoningBubble({ message }: { message: Ex
             </span>
           </div>
         )}
-        <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-0.5 text-xs leading-relaxed">
-          <Streamdown isAnimating={true}>{message.text || ''}</Streamdown>
+        <div className="text-xs leading-relaxed">
+          <Streamdown
+            plugins={STREAMDOWN_PLUGINS}
+            controls={STREAMDOWN_CONTROLS}
+            animated={STREAMDOWN_ANIMATED}
+            isAnimating={true}
+            caret="circle"
+          >
+            {message.text || ''}
+          </Streamdown>
         </div>
       </div>
     </div>
@@ -752,8 +776,14 @@ const ExecutionMessageBubble = memo(function ExecutionMessageBubble({
           <Loader2 className="h-3 w-3 text-muted-foreground animate-spin" />
         </div>
         <div className="flex-1 min-w-0 rounded-lg bg-muted/30 px-3 py-2">
-          <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-0.5 prose-headings:my-1 text-xs leading-relaxed">
-            <Streamdown isAnimating={false}>{message.text}</Streamdown>
+          <div className="text-xs leading-relaxed">
+            <Streamdown
+              plugins={STREAMDOWN_PLUGINS}
+              controls={STREAMDOWN_CONTROLS}
+              isAnimating={false}
+            >
+              {message.text}
+            </Streamdown>
           </div>
         </div>
       </div>
@@ -798,8 +828,14 @@ const ExecutionMessageBubble = memo(function ExecutionMessageBubble({
           )}
         </div>
         {readableText && (
-          <div className="text-xs text-foreground/80 leading-relaxed pl-0.5 prose prose-sm dark:prose-invert max-w-none prose-p:my-0.5 prose-headings:my-1 prose-table:text-xs">
-            <Streamdown isAnimating={false}>{readableText}</Streamdown>
+          <div className="text-xs text-foreground/80 leading-relaxed pl-0.5">
+            <Streamdown
+              plugins={STREAMDOWN_PLUGINS}
+              controls={STREAMDOWN_CONTROLS}
+              isAnimating={false}
+            >
+              {readableText}
+            </Streamdown>
           </div>
         )}
       </div>

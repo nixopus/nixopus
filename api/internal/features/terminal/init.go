@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	sshpkg "github.com/nixopus/nixopus/api/internal/features/ssh"
 	"golang.org/x/crypto/ssh"
 )
 

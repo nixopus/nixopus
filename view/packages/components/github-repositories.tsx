@@ -12,10 +12,11 @@ import { useRouter } from 'next/navigation';
 import { Skeleton } from '@nixopus/ui';
 import { Card, CardContent } from '@nixopus/ui';
 import { Badge } from '@nixopus/ui';
-import { Github } from 'lucide-react';
+import { Github, Loader2 } from 'lucide-react';
 import { ExternalLink } from 'lucide-react';
 import { useRepositoryCard } from '@/packages/hooks/github/use_repository_card';
 import { GitHubConnectorSettingsModal } from '@/packages/components/github-connector';
+import { cn } from '@/lib/utils';
 
 export function ListRepositories() {
   const { t } = useTranslation();
@@ -33,7 +34,8 @@ export function ListRepositories() {
     currentPage,
     totalPages,
     paginatedApplications,
-    onSelectRepository
+    onSelectRepository,
+    navigatingRepoId
   } = useGithubRepoPagination();
   const { isSettingsModalOpen, openSettingsModal, closeSettingsModal } =
     useGithubConnectorSettings();
@@ -59,6 +61,7 @@ export function ListRepositories() {
                 key={repo.id}
                 {...repo}
                 setSelectedRepository={onSelectRepository}
+                isNavigating={navigatingRepoId === repo.id.toString()}
               />
             ))}
         </div>
@@ -128,9 +131,13 @@ export function ListRepositories() {
 }
 
 export const GithubRepositories = (
-  props: GithubRepository & { setSelectedRepository: (repo: string) => void }
+  props: GithubRepository & {
+    setSelectedRepository: (repo: string) => void;
+    isNavigating?: boolean;
+  }
 ) => {
   const { t } = useTranslation();
+  const { isNavigating } = props;
   const {
     displayName,
     url,
@@ -144,16 +151,20 @@ export const GithubRepositories = (
 
   return (
     <Card
-      className="relative w-full cursor-pointer overflow-hidden border border-white/[0.06] transition-colors duration-200 hover:bg-muted/50"
+      className={cn(
+        'relative w-full cursor-pointer overflow-hidden border border-white/[0.06] transition-all duration-200 hover:bg-muted/50',
+        isNavigating && 'ring-2 ring-primary/50 bg-muted/30 pointer-events-none opacity-80'
+      )}
       onClick={handleClick}
     >
       <CardContent className="p-3">
         <div className="flex flex-col gap-1">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-1.5 flex-1 min-w-0">
+              {isNavigating && <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />}
               <h3 className="font-semibold text-base tracking-tight truncate">{displayName}</h3>
             </div>
-            {url && (
+            {url && !isNavigating && (
               <Button
                 variant="ghost"
                 size="icon"

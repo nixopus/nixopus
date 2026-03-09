@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/trail/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 
@@ -25,6 +25,7 @@ type TrailRepository interface {
 	GetUserByID(userID string) (*shared_types.User, error)
 	IsSubdomainTaken(subdomain string) (bool, error)
 	GetCompletedProvisionByUserID(userID string) (*types.UserProvisionDetails, error)
+	SelectBestServer(vcpus, memMB, diskGB int) (string, error)
 }
 
 // TrailStorage implements TrailRepository using Bun ORM.

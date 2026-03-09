@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/loader"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/extension/loader"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 

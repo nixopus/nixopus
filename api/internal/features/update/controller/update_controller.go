@@ -7,12 +7,12 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/update/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/update/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/update/service"
+	"github.com/nixopus/nixopus/api/internal/features/update/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type UpdateController struct {
@@ -32,10 +32,7 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
-		}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	// If the environment is development, return current version but skip remote check
@@ -59,6 +56,7 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 		c.logger.Log(logger.Error, "failed to check for updates", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -107,18 +105,12 @@ func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateReq
 	}
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
-		}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	req, err := s.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{
-			Err:    err,
-			Status: http.StatusBadRequest,
-		}
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	updateInfo, err := c.service.CheckForUpdates()
@@ -126,6 +118,7 @@ func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateReq
 		c.logger.Log(logger.Error, "failed to check for updates", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -140,10 +133,7 @@ func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateReq
 	// Get organization ID from request context
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
-		return nil, fuego.HTTPError{
-			Err:    fmt.Errorf("organization ID not found in context"),
-			Status: http.StatusBadRequest,
-		}
+		return nil, fuego.BadRequestError{Detail: "organization ID not found in context", Err: fmt.Errorf("organization ID not found in context")}
 	}
 	orgCtx := r.Context()
 	orgCtx = context.WithValue(orgCtx, "organization_id", orgID.String())
@@ -151,6 +141,7 @@ func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateReq
 		c.logger.Log(logger.Error, "failed to perform update", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

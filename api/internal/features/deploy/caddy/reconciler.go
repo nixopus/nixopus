@@ -9,13 +9,13 @@ import (
 
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
+	"github.com/nixopus/nixopus/api/internal/queue"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/raghavyuva/caddygo"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/vmihailenco/taskq/v3"
 )
 

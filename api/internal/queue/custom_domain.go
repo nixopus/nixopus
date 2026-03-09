@@ -3,9 +3,7 @@ package queue
 import (
 	"context"
 	"fmt"
-	"log"
 	"sync"
-	"time"
 
 	"github.com/vmihailenco/taskq/v3"
 )
@@ -21,11 +19,13 @@ type CustomDomainPayload struct {
 	Domain    string `json:"domain"`
 	Subdomain string `json:"subdomain"`
 	GuestIP   string `json:"guest_ip"`
+	ServerID  string `json:"server_id,omitempty"`
 }
 
 type RemoveCustomDomainPayload struct {
 	DomainID string `json:"domain_id"`
 	Domain   string `json:"domain"`
+	ServerID string `json:"server_id,omitempty"`
 }
 
 var (
@@ -37,23 +37,14 @@ var (
 
 func SetupCustomDomainQueue() {
 	onceCustomDomainQueues.Do(func() {
-		CustomDomainQueue = RegisterQueue(&taskq.QueueOptions{
-			Name:                queueCustomDomain,
-			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        1,
-			MaxNumWorker:        1,
-			ReservationSize:     1,
-			ReservationTimeout:  15 * time.Minute,
-			WaitTimeout:         5 * time.Second,
-			BufferSize:          16,
+		CustomDomainQueue = registerProducerQueue(&taskq.QueueOptions{
+			Name: queueCustomDomain,
 		})
 
 		TaskRegisterCustomDomain = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       taskRegisterCustomDomain,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, payload CustomDomainPayload) error {
-				fmt.Printf("[%s] task enqueued: domain_id=%s, domain=%s\n",
-					taskRegisterCustomDomain, payload.DomainID, payload.Domain)
 				return nil
 			},
 		})
@@ -62,27 +53,40 @@ func SetupCustomDomainQueue() {
 			Name:       taskRemoveCustomDomain,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, payload RemoveCustomDomainPayload) error {
-				fmt.Printf("[%s] task enqueued: domain_id=%s, domain=%s\n",
-					taskRemoveCustomDomain, payload.DomainID, payload.Domain)
 				return nil
 			},
 		})
-
-		log.Printf("Custom domain queue registered: %s", queueCustomDomain)
-		ensureConsumerGroupReady(context.Background(), queueCustomDomain)
 	})
 }
 
+// EnqueueRegisterCustomDomain enqueues a custom domain registration task.
+// When payload.ServerID is set, the task is routed to a per-server queue
+// (custom-domain-{server_id}). Otherwise it falls back to the legacy
+// "custom-domain" queue for backward compatibility.
 func EnqueueRegisterCustomDomain(ctx context.Context, payload CustomDomainPayload) error {
-	if CustomDomainQueue == nil {
+	if TaskRegisterCustomDomain == nil {
 		return fmt.Errorf("custom domain queue not initialized - call SetupCustomDomainQueue first")
 	}
-	return CustomDomainQueue.Add(TaskRegisterCustomDomain.WithArgs(ctx, payload))
+
+	q := CustomDomainQueue
+	if payload.ServerID != "" {
+		q = getOrCreateProducerQueue(queueCustomDomain + "-" + payload.ServerID)
+	}
+
+	return q.Add(TaskRegisterCustomDomain.WithArgs(ctx, payload))
 }
 
+// EnqueueRemoveCustomDomain enqueues a custom domain removal task.
+// Uses the same per-server routing as EnqueueRegisterCustomDomain.
 func EnqueueRemoveCustomDomain(ctx context.Context, payload RemoveCustomDomainPayload) error {
-	if CustomDomainQueue == nil {
+	if TaskRemoveCustomDomain == nil {
 		return fmt.Errorf("custom domain queue not initialized - call SetupCustomDomainQueue first")
 	}
-	return CustomDomainQueue.Add(TaskRemoveCustomDomain.WithArgs(ctx, payload))
+
+	q := CustomDomainQueue
+	if payload.ServerID != "" {
+		q = getOrCreateProducerQueue(queueCustomDomain + "-" + payload.ServerID)
+	}
+
+	return q.Add(TaskRemoveCustomDomain.WithArgs(ctx, payload))
 }

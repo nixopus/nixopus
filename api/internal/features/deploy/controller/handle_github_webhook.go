@@ -13,10 +13,10 @@ import (
 	"time"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 var (
@@ -67,27 +67,27 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.Me
 	payload, err := io.ReadAll(f.Request().Body)
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to read webhook payload", err.Error())
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	signature := f.Request().Header.Get("X-Hub-Signature-256")
 	if signature == "" {
 		c.logger.Log(logger.Error, "missing webhook signature", "")
-		return nil, fuego.HTTPError{
+		return nil, fuego.UnauthorizedError{
+			Detail: "missing webhook signature",
 			Err:    fmt.Errorf("missing webhook signature"),
-			Status: http.StatusUnauthorized,
 		}
 	}
 
 	webhookSecret := config.AppConfig.GitHub.WebhookSecret
 	if !verifyWebhookSignature(payload, signature, webhookSecret) {
 		c.logger.Log(logger.Error, "invalid webhook signature", "")
-		return nil, fuego.HTTPError{
+		return nil, fuego.UnauthorizedError{
+			Detail: "invalid webhook signature",
 			Err:    fmt.Errorf("invalid webhook signature"),
-			Status: http.StatusUnauthorized,
 		}
 	}
 
@@ -103,9 +103,9 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.Me
 	var webhookPayload shared_types.WebhookPayload
 	if err := json.Unmarshal(payload, &webhookPayload); err != nil {
 		c.logger.Log(logger.Error, "failed to parse webhook payload", err.Error())
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -123,6 +123,7 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.Me
 		c.logger.Log(logger.Error, "failed to enqueue webhook task", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

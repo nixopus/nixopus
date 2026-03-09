@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/auth/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type AuthService struct {

@@ -1,7 +1,7 @@
 package auth
 
 // DEPRECATED: These tests are for the old custom auth flow.
-// Authentication is now handled by SuperTokens.
+// Authentication is now handled by Better Auth.
 // These integration tests also have a fundamental issue: they create users
 // in the test database but make HTTP calls to a server using a different database.
 
@@ -10,8 +10,8 @@ package auth
 // 	"testing"
 //
 // 	. "github.com/Eun/go-hit"
-// 	"github.com/raghavyuva/nixopus-api/internal/tests"
-// 	"github.com/raghavyuva/nixopus-api/internal/testutils"
+// 	"github.com/nixopus/nixopus/api/internal/tests"
+// 	"github.com/nixopus/nixopus/api/internal/testutils"
 // )
 //
 // func TestSendVerificationEmail(t *testing.T) {

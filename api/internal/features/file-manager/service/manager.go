@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
 	"github.com/pkg/sftp"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 )
 
 type FileInfo struct {

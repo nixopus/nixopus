@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/cache"
-	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
-	appStorage "github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/cache"
+	betterauth "github.com/nixopus/nixopus/api/internal/features/auth"
+	appStorage "github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 // rbacCache is a package-level cache instance for RBAC permissions
@@ -190,6 +190,9 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 		if authHeader := originalReq.Header.Get("Authorization"); authHeader != "" {
 			req.Header.Set("Authorization", authHeader)
 		}
+		if apiKey := originalReq.Header.Get("x-api-key"); apiKey != "" {
+			req.Header.Set("x-api-key", apiKey)
+		}
 		for _, cookie := range originalReq.Cookies() {
 			req.AddCookie(cookie)
 		}
@@ -282,6 +285,7 @@ var rolePermissions = map[string][]string{
 		"server:create", "server:read", "server:update", "server:delete",
 		"trail:create", "trail:read", "trail:update", "trail:delete",
 		"execute:create", "execute:read", "execute:update", "execute:delete",
+		"machine:create", "machine:read", "machine:update", "machine:delete",
 	},
 	"admin": {
 		"user:create", "user:read", "user:update", "user:delete",
@@ -302,6 +306,7 @@ var rolePermissions = map[string][]string{
 		"server:create", "server:read", "server:update", "server:delete",
 		"trail:create", "trail:read", "trail:update", "trail:delete",
 		"execute:create", "execute:read", "execute:update", "execute:delete",
+		"machine:create", "machine:read", "machine:update", "machine:delete",
 	},
 	"member": {
 		"user:read",
@@ -321,6 +326,7 @@ var rolePermissions = map[string][]string{
 		"server:create", "server:read", "server:update", "server:delete",
 		"trail:create", "trail:read", "trail:update", "trail:delete",
 		"execute:create", "execute:read", "execute:update", "execute:delete",
+		"machine:create", "machine:read", "machine:update",
 	},
 	"viewer": {
 		"user:read", "organization:read", "role:read", "permission:read",
@@ -328,6 +334,7 @@ var rolePermissions = map[string][]string{
 		"deploy:read", "container:read", "audit:read", "terminal:read",
 		"feature_flags:read", "dashboard:read", "extension:read",
 		"healthcheck:read", "server:read", "trail:read", "execute:read",
+		"machine:read",
 	},
 }
 

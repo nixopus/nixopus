@@ -2,13 +2,13 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	health "github.com/raghavyuva/nixopus-api/internal/features/health"
-	// api "github.com/raghavyuva/nixopus-api/internal/version" // Commented out - version manager disabled
+	health "github.com/nixopus/nixopus/api/internal/features/health"
+	// api "github.com/nixopus/nixopus/api/internal/version" // Commented out - version manager disabled
 )
 
 // RegisterHealthRoutes registers health check and version routes
 func (router *Router) RegisterHealthRoutes(healthGroup *fuego.Server) {
-	fuego.Get(healthGroup, "", health.HealthCheck)
+	fuego.Get(healthGroup, "", health.HealthCheck, fuego.OptionSummary("Health check"))
 	// Commented out - version manager related endpoint
 	// versionGroup := fuego.Group(healthGroup, "/versions")
 	// fuego.Get(versionGroup, "", func(c fuego.ContextNoBody) (interface{}, error) {

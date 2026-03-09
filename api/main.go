@@ -13,14 +13,14 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	_ "github.com/raghavyuva/nixopus-api/internal/log"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
-	"github.com/raghavyuva/nixopus-api/internal/redisclient"
-	"github.com/raghavyuva/nixopus-api/internal/routes"
-	"github.com/raghavyuva/nixopus-api/internal/scheduler"
-	"github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	_ "github.com/nixopus/nixopus/api/internal/log"
+	"github.com/nixopus/nixopus/api/internal/queue"
+	"github.com/nixopus/nixopus/api/internal/redisclient"
+	"github.com/nixopus/nixopus/api/internal/routes"
+	"github.com/nixopus/nixopus/api/internal/scheduler"
+	"github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/vmihailenco/taskq/v3"
 )
 
@@ -68,6 +68,7 @@ func main() {
 	queue.SetupProvisionQueue()
 	queue.SetupCustomDomainQueue()
 	queue.SetupResourceUpdateQueue()
+	queue.SetupMachineLifecycleQueue(ctx)
 
 	router := routes.NewRouter(app)
 
@@ -83,6 +84,8 @@ func main() {
 	}
 	schedulers.HealthCheck.Start()
 	log.Println("Health check scheduler started successfully")
+	schedulers.Billing.Start()
+	log.Println("Billing scheduler started successfully")
 
 	router.SetupRoutes()
 
@@ -95,6 +98,7 @@ func main() {
 		queue.Close()
 		schedulers.Main.Stop()
 		schedulers.HealthCheck.Stop()
+		schedulers.Billing.Stop()
 		os.Exit(0)
 	}()
 	log.Printf("Server starting on port %s", config.AppConfig.Server.Port)

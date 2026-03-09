@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (s *HealthCheckService) GetDueHealthChecks() ([]*shared_types.HealthCheck, error) {

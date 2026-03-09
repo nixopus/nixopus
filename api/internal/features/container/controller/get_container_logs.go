@@ -4,18 +4,18 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/container/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/container/service"
+	"github.com/nixopus/nixopus/api/internal/features/container/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.ContainerLogsRequest]) (*types.ContainerLogsResponse, error) {
 	req, err := f.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -27,6 +27,7 @@ func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.Con
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -51,6 +52,7 @@ func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.Con
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

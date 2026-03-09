@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/melbahja/goph"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
 )
 
 const remoteDockerSocket = "/var/run/docker.sock"

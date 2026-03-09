@@ -5,9 +5,9 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type UpdateLabelsRequest struct {
@@ -18,45 +18,42 @@ func (c *DeployController) UpdateApplicationLabels(f fuego.ContextWithBody[Updat
 	data, err := f.Body()
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to read request body", err.Error())
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	applicationID := f.QueryParam("id")
 	if applicationID == "" {
 		c.logger.Log(logger.Error, "application id is required", "")
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
+		return nil, fuego.BadRequestError{
+			Detail: "application ID is required",
 		}
 	}
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
 		c.logger.Log(logger.Error, "user not found", "")
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
 		c.logger.Log(logger.Error, "organization not found", "")
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "organization not found",
 		}
 	}
 
 	appID, err := uuid.Parse(applicationID)
 	if err != nil {
 		c.logger.Log(logger.Error, "invalid application id", err.Error())
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -65,6 +62,7 @@ func (c *DeployController) UpdateApplicationLabels(f fuego.ContextWithBody[Updat
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

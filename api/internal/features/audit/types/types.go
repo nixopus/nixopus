@@ -1,6 +1,6 @@
 package types
 
-import shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+import shared_types "github.com/nixopus/nixopus/api/internal/types"
 
 // ActivityMessage represents a human-readable activity from audit logs
 // @Description Human-readable activity derived from audit log

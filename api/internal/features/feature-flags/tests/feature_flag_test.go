@@ -3,10 +3,10 @@ package tests
 import (
 	"testing"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/feature-flags/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/feature-flags/storage"
-	"github.com/raghavyuva/nixopus-api/internal/testutils"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/feature-flags/service"
+	"github.com/nixopus/nixopus/api/internal/features/feature-flags/storage"
+	"github.com/nixopus/nixopus/api/internal/testutils"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/stretchr/testify/assert"
 )
 

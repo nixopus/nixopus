@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/user/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 // GetUserPreferences retrieves user preferences
@@ -16,9 +16,8 @@ func (c *UserController) GetUserPreferences(s fuego.ContextNoBody) (*types.UserP
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
@@ -27,6 +26,7 @@ func (c *UserController) GetUserPreferences(s fuego.ContextNoBody) (*types.UserP
 		c.logger.Log(logger.Error, "failed to get user preferences", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -44,17 +44,16 @@ func (c *UserController) UpdateUserPreferences(s fuego.ContextWithBody[shared_ty
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	req, err := s.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -63,6 +62,7 @@ func (c *UserController) UpdateUserPreferences(s fuego.ContextWithBody[shared_ty
 		c.logger.Log(logger.Error, "failed to update user preferences", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

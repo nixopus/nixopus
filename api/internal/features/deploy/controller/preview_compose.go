@@ -6,28 +6,28 @@ import (
 	"path"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/tasks"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *DeployController) PreviewComposeServices(f fuego.ContextWithBody[types.PreviewComposeRequest]) (*types.PreviewComposeResponse, error) {
 	data, err := f.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	if data.Repository == "" {
-		return nil, fuego.HTTPError{Err: types.ErrMissingRepository, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: types.ErrMissingRepository.Error(), Err: types.ErrMissingRepository}
 	}
 	if data.Branch == "" {
-		return nil, fuego.HTTPError{Err: types.ErrMissingBranch, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: types.ErrMissingBranch.Error(), Err: types.ErrMissingBranch}
 	}
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusUnauthorized}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	filePath := composeFilePath(data.BasePath, data.DockerfilePath)
@@ -40,6 +40,7 @@ func (c *DeployController) PreviewComposeServices(f fuego.ContextWithBody[types.
 		c.logger.Log(logger.Warning, "preview-compose: failed to fetch from GitHub", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusUnprocessableEntity,
 		}
 	}
@@ -50,6 +51,7 @@ func (c *DeployController) PreviewComposeServices(f fuego.ContextWithBody[types.
 		c.logger.Log(logger.Warning, "preview-compose: YAML parse error", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusUnprocessableEntity,
 		}
 	}

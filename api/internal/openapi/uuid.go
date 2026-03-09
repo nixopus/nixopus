@@ -2,7 +2,9 @@ package openapi
 
 import (
 	"encoding/json"
+	"math"
 	"reflect"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/google/uuid"
@@ -47,5 +49,46 @@ func SchemaCustomizer(name string, t reflect.Type, tag reflect.StructTag, schema
 		return nil
 	}
 
+	// Common query/filter constraints improve LLM parameter selection quality.
+	switch strings.ToLower(name) {
+	case "page":
+		schema.Type = &openapi3.Types{"integer"}
+		schema.Min = ptrFloat(1)
+		schema.Default = float64(1)
+	case "page_size", "pagesize", "limit":
+		schema.Type = &openapi3.Types{"integer"}
+		schema.Min = ptrFloat(1)
+		schema.Max = ptrFloat(100)
+		if schema.Default == nil {
+			schema.Default = float64(20)
+		}
+	case "sort_direction", "sortorder", "sort_order":
+		schema.Type = &openapi3.Types{"string"}
+		schema.Enum = []any{"asc", "desc"}
+	case "period":
+		schema.Type = &openapi3.Types{"string"}
+		schema.Enum = []any{"1h", "24h", "7d", "30d"}
+		if schema.Default == nil {
+			schema.Default = "24h"
+		}
+	}
+
+	if strings.EqualFold(name, "id") || strings.HasSuffix(strings.ToLower(name), "_id") {
+		if schema.Type == nil || schema.Type.Is("string") {
+			schema.Type = &openapi3.Types{"string"}
+			if schema.Format == "" {
+				schema.Format = "uuid"
+			}
+		}
+	}
+
 	return nil
+}
+
+func ptrFloat(v float64) *float64 {
+	// Ensure finite numbers are always emitted.
+	if math.IsNaN(v) || math.IsInf(v, 0) {
+		return nil
+	}
+	return &v
 }

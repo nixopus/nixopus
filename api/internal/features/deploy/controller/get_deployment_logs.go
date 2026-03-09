@@ -7,9 +7,9 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type GetDeploymentLogsRequest struct {
@@ -44,9 +44,9 @@ func (c *DeployController) GetDeploymentLogs(f fuego.ContextNoBody) (*types.Logs
 	if startTimeStr != "" {
 		startTime, err = time.Parse(time.RFC3339, startTimeStr)
 		if err != nil {
-			return nil, fuego.HTTPError{
+			return nil, fuego.BadRequestError{
+				Detail: err.Error(),
 				Err:    err,
-				Status: http.StatusBadRequest,
 			}
 		}
 	}
@@ -54,9 +54,9 @@ func (c *DeployController) GetDeploymentLogs(f fuego.ContextNoBody) (*types.Logs
 	if endTimeStr != "" {
 		endTime, err = time.Parse(time.RFC3339, endTimeStr)
 		if err != nil {
-			return nil, fuego.HTTPError{
+			return nil, fuego.BadRequestError{
+				Detail: err.Error(),
 				Err:    err,
-				Status: http.StatusBadRequest,
 			}
 		}
 	}
@@ -64,18 +64,16 @@ func (c *DeployController) GetDeploymentLogs(f fuego.ContextNoBody) (*types.Logs
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
 		c.logger.Log(logger.Error, "user not found", "")
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
 		c.logger.Log(logger.Error, "organization not found", "")
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "organization not found",
 		}
 	}
 
@@ -84,6 +82,7 @@ func (c *DeployController) GetDeploymentLogs(f fuego.ContextNoBody) (*types.Logs
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

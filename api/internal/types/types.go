@@ -6,18 +6,19 @@ import (
 )
 
 type Config struct {
-	Server     ServerConfig     `mapstructure:"server"`
-	Database   DatabaseConfig   `mapstructure:"database"`
-	Redis      RedisConfig      `mapstructure:"redis"`
-	Proxy      ProxyConfig      `mapstructure:"proxy"`
-	CORS       CORSConfig       `mapstructure:"cors"`
-	App        AppConfig        `mapstructure:"app"`
-	GitHub     GitHubConfig     `mapstructure:"github"`
-	BetterAuth BetterAuthConfig `mapstructure:"betterauth"`
-	Stripe     StripeConfig     `mapstructure:"stripe"`
-	Trail      TrailConfig      `mapstructure:"trail"`
-	Live       LiveConfig       `mapstructure:"live"`
-	S3         S3Config         `mapstructure:"s3"`
+	Server       ServerConfig       `mapstructure:"server"`
+	Database     DatabaseConfig     `mapstructure:"database"`
+	Redis        RedisConfig        `mapstructure:"redis"`
+	Proxy        ProxyConfig        `mapstructure:"proxy"`
+	CORS         CORSConfig         `mapstructure:"cors"`
+	App          AppConfig          `mapstructure:"app"`
+	GitHub       GitHubConfig       `mapstructure:"github"`
+	BetterAuth   BetterAuthConfig   `mapstructure:"betterauth"`
+	AgentChannel AgentChannelConfig `mapstructure:"agent_channel"`
+	Stripe       StripeConfig       `mapstructure:"stripe"`
+	Trail        TrailConfig        `mapstructure:"trail"`
+	Live         LiveConfig         `mapstructure:"live"`
+	S3           S3Config           `mapstructure:"s3"`
 }
 
 // LiveConfig holds configuration for the live gateway (WebSocket, file sync, build).
@@ -50,6 +51,12 @@ type S3Config struct {
 type BetterAuthConfig struct {
 	URL    string `mapstructure:"url" validate:"required"`
 	Secret string `mapstructure:"secret" validate:"required"`
+}
+
+type AgentChannelConfig struct {
+	URL          string `mapstructure:"url"`
+	ClientID     string `mapstructure:"client_id"`
+	ClientSecret string `mapstructure:"client_secret"`
 }
 
 type ServerConfig struct {
@@ -97,6 +104,7 @@ type AppConfig struct {
 	Version      string `mapstructure:"version"`
 	LogsPath     string `mapstructure:"logs_path"`
 	DeployDomain string `mapstructure:"deploy_domain"` // Base domain for generated app URLs (e.g. nixopus.com)
+	SelfHosted   bool   `mapstructure:"self_hosted"`   // true for self-hosted installs, false for managed/cloud
 }
 
 type GitHubConfig struct {

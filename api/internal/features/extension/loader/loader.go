@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/parser"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/extension/parser"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 

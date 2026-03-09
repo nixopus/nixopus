@@ -1,15 +1,11 @@
 package controller
 
 import (
-	"errors"
-	"net/http"
-
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/trail/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 // GetStatus handles GET /api/v1/trail/status/{sessionId}
@@ -25,30 +21,21 @@ import (
 //   - 400 Bad Request: invalid session ID format
 //   - 401 Unauthorized: authentication required
 //   - 404 Not Found: provision not found or not owned by user
-func (c *TrailController) GetStatus(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *TrailController) GetStatus(f fuego.ContextNoBody) (*types.TrailStatusEnvelopeResponse, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    errors.New("authentication required"),
-			Status: http.StatusUnauthorized,
-		}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	sessionID := f.PathParam("sessionId")
 	if sessionID == "" {
-		return nil, fuego.HTTPError{
-			Err:    types.ErrInvalidSessionID,
-			Status: http.StatusBadRequest,
-		}
+		return nil, fuego.BadRequestError{Detail: types.ErrInvalidSessionID.Error(), Err: types.ErrInvalidSessionID}
 	}
 
 	if _, err := uuid.Parse(sessionID); err != nil {
-		return nil, fuego.HTTPError{
-			Err:    types.ErrInvalidSessionID,
-			Status: http.StatusBadRequest,
-		}
+		return nil, fuego.BadRequestError{Detail: types.ErrInvalidSessionID.Error(), Err: types.ErrInvalidSessionID}
 	}
 
 	result, err := c.service.GetStatus(user.ID.String(), sessionID)
@@ -57,11 +44,12 @@ func (c *TrailController) GetStatus(f fuego.ContextNoBody) (*shared_types.Respon
 		status := mapErrorToStatus(err)
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: status,
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.TrailStatusEnvelopeResponse{
 		Status:  "success",
 		Message: "Status retrieved successfully",
 		Data:    result,

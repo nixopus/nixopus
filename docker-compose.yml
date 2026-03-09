@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   nixopus-api:
-    image: ghcr.io/${GITHUB_REPOSITORY:-raghavyuva/nixopus}-api:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-nixopus/nixopus}-api:latest
     container_name: nixopus-api
     ports:
       - "${API_PORT:-8443}:8443"
@@ -78,7 +78,7 @@ services:
       retries: 5
 
   nixopus-view:
-    image: ghcr.io/${GITHUB_REPOSITORY:-raghavyuva/nixopus}-view:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-nixopus/nixopus}-view:latest
     container_name: nixopus-view
     build:
       args:

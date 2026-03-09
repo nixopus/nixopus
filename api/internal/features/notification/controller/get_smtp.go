@@ -6,27 +6,27 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/notification"
+	"github.com/nixopus/nixopus/api/internal/features/notification/controller/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*types.SMTPConfigResponse, error) {
 	id := f.QueryParam("id")
 	if id == "" {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: notification.ErrMissingID.Error(),
 			Err:    notification.ErrMissingID,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 	if user == nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.UnauthorizedError{
+			Detail: notification.ErrAccessDenied.Error(),
 			Err:    notification.ErrAccessDenied,
-			Status: http.StatusUnauthorized,
 		}
 	}
 
@@ -34,15 +34,15 @@ func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*types.SMTPConf
 	// Query param id must match the authenticated org to prevent cross-org access.
 	ctxOrg := utils.GetOrganizationID(r)
 	if ctxOrg == uuid.Nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.ForbiddenError{
+			Detail: notification.ErrUserDoesNotBelongToOrganization.Error(),
 			Err:    notification.ErrUserDoesNotBelongToOrganization,
-			Status: http.StatusForbidden,
 		}
 	}
 	if ctxOrg.String() != id {
-		return nil, fuego.HTTPError{
+		return nil, fuego.ForbiddenError{
+			Detail: notification.ErrUserDoesNotBelongToOrganization.Error(),
 			Err:    notification.ErrUserDoesNotBelongToOrganization,
-			Status: http.StatusForbidden,
 		}
 	}
 	orgID := id
@@ -56,6 +56,7 @@ func (c *NotificationController) GetSmtp(f fuego.ContextNoBody) (*types.SMTPConf
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

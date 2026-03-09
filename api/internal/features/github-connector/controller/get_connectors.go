@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *GithubConnectorController) GetGithubConnectors(f fuego.ContextNoBody) (*types.ListConnectorsResponse, error) {
@@ -15,10 +15,7 @@ func (c *GithubConnectorController) GetGithubConnectors(f fuego.ContextNoBody) (
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
-		}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	connectors, err := c.service.GetAllConnectors(user.ID.String())
@@ -26,6 +23,7 @@ func (c *GithubConnectorController) GetGithubConnectors(f fuego.ContextNoBody) (
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

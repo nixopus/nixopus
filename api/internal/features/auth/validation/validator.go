@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/auth/types"
+	"github.com/nixopus/nixopus/api/internal/features/auth/types"
 )
 
 const (

@@ -3,9 +3,9 @@ package service
 import (
 	"fmt"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/trail/types"
+	"github.com/nixopus/nixopus/api/internal/queue"
 )
 
 func (s *TrailService) UpgradeResources(userID, orgID string, vcpu, memoryMB int) error {
@@ -31,6 +31,10 @@ func (s *TrailService) UpgradeResources(userID, orgID string, vcpu, memoryMB int
 		MemoryMB:  memoryMB,
 		UserID:    userID,
 		OrgID:     orgID,
+	}
+
+	if provision.ServerID != nil {
+		payload.ServerID = provision.ServerID.String()
 	}
 
 	if err := queue.EnqueueResourceUpdateTask(s.ctx, payload); err != nil {

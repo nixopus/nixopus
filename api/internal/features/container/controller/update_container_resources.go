@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/container/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
+	"github.com/nixopus/nixopus/api/internal/features/container/service"
+	"github.com/nixopus/nixopus/api/internal/features/container/types"
 )
 
 // UpdateContainerResources updates the resource limits (memory, swap, CPU) of a running container.
@@ -26,9 +26,9 @@ func (c *ContainerController) UpdateContainerResources(f fuego.ContextWithBody[t
 
 	body, err := f.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -36,6 +36,7 @@ func (c *ContainerController) UpdateContainerResources(f fuego.ContextWithBody[t
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -51,6 +52,7 @@ func (c *ContainerController) UpdateContainerResources(f fuego.ContextWithBody[t
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

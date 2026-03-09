@@ -451,7 +451,7 @@ export const ContainerCard = ({ container, onClick, onAction }: ContainerCardPro
       onClick={onClick}
       className={cn(
         'group relative rounded-xl p-5 cursor-pointer transition-all bg-muted/50 duration-200',
-        'hover:bg-muted/50 border border-transparent hover:border-border/50'
+        'hover:bg-muted/50 border border-border/30 hover:border-border/60 shadow-sm'
       )}
     >
       <div className="flex items-start justify-between gap-4">

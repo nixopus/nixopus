@@ -6,9 +6,9 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReDeployApplicationRequest]) (*types.ApplicationResponse, error) {
@@ -18,15 +18,15 @@ func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReD
 	if err != nil {
 		if err == io.EOF {
 			c.logger.Log(logger.Error, "empty request body received", "id is required for redeployment")
-			return nil, fuego.HTTPError{
+			return nil, fuego.BadRequestError{
+				Detail: types.ErrMissingID.Error(),
 				Err:    types.ErrMissingID,
-				Status: http.StatusBadRequest,
 			}
 		}
 		c.logger.Log(logger.Error, "failed to read request body", err.Error())
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -34,27 +34,25 @@ func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReD
 
 	if err := c.validator.ValidateRequest(&data); err != nil {
 		c.logger.Log(logger.Error, "request validation failed", "id: "+data.ID.String()+", error: "+err.Error())
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
 		c.logger.Log(logger.Error, "user authentication failed", "id: "+data.ID.String())
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
 		c.logger.Log(logger.Error, "organization not found", "id: "+data.ID.String())
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "organization not found",
 		}
 	}
 
@@ -65,6 +63,7 @@ func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReD
 		c.logger.Log(logger.Error, "failed to redeploy application", "id: "+data.ID.String()+", error: "+err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

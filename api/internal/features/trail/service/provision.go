@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/trail/types"
 )
 
 // ProvisionTrail handles the business logic for provisioning a new trail instance.
@@ -108,6 +108,11 @@ func (s *TrailService) ProvisionTrail(userID, orgID string, req types.ProvisionR
 		s.logger.Log(logger.Warning, fmt.Sprintf("Failed to set user provision_status=PROVISIONING: %v", err), userID)
 	}
 
+	serverID, err := s.storage.SelectBestServer(1, 1024, 25)
+	if err != nil {
+		s.logger.Log(logger.Warning, fmt.Sprintf("Server scheduling failed, falling back to legacy queue: %v", err), userID)
+	}
+
 	payload := types.ProvisionPayload{
 		SessionID:          provisionDetails.ID.String(),
 		Subdomain:          subdomain,
@@ -116,6 +121,7 @@ func (s *TrailService) ProvisionTrail(userID, orgID string, req types.ProvisionR
 		UserID:             userID,
 		OrgID:              orgID,
 		ProvisionDetailsID: provisionDetails.ID.String(),
+		ServerID:           serverID,
 	}
 
 	if err := s.EnqueueProvisionTask(s.ctx, payload); err != nil {

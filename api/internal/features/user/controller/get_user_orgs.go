@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/user/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (u *UserController) GetUserOrganizations(s fuego.ContextNoBody) (*types.UserOrganizationsListResponse, error) {
@@ -15,9 +15,8 @@ func (u *UserController) GetUserOrganizations(s fuego.ContextNoBody) (*types.Use
 
 	user := utils.GetUser(w, r)
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
@@ -27,6 +26,7 @@ func (u *UserController) GetUserOrganizations(s fuego.ContextNoBody) (*types.Use
 		u.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

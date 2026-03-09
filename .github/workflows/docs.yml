@@ -5,12 +5,12 @@
 name: Docs Build & Deploy
 
 on:
-  push:
-    branches:
-      - master
-      - feat/develop
-    paths:
-      - 'docs/**'
+  workflow_call:
+    secrets:
+      POSTHOG_API_KEY:
+        required: false
+      POSTHOG_HOST:
+        required: false
   workflow_dispatch:
 
 permissions:

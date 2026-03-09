@@ -1,12 +1,10 @@
 package controller
 
 import (
-	"net/http"
-
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/user/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (u *UserController) GetUserDetails(s fuego.ContextNoBody) (*types.UserResponse, error) {
@@ -17,9 +15,8 @@ func (u *UserController) GetUserDetails(s fuego.ContextNoBody) (*types.UserRespo
 	u.logger.Log(logger.Info, "getting user details", "")
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 

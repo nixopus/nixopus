@@ -6,12 +6,12 @@ import (
 
 	"github.com/docker/docker/api/types/image"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
-	s3store "github.com/raghavyuva/nixopus-api/internal/features/deploy/s3"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/caddy"
+	s3store "github.com/nixopus/nixopus/api/internal/features/deploy/s3"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // DeleteDeployment deletes a deployment and its associated resources.

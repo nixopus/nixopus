@@ -1,8 +1,8 @@
 package types
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/notification"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // MessageResponse is a generic response with just status and message

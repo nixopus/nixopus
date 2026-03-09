@@ -1,4 +1,4 @@
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { useUserOrganizations } from '@/packages/hooks/auth/use-better-auth-orgs';
 import { useNavigationState } from '@/packages/hooks/shared/use_navigation_state';
@@ -16,7 +16,7 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, ChartColumnDecreasing, MessageSquare } from 'lucide-react';
+import { Layers, ChartColumnDecreasing, MessageSquare, Puzzle } from 'lucide-react';
 import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 
 const data = {
@@ -28,16 +28,22 @@ const data = {
       resource: 'deploy'
     },
     {
+      title: 'navigation.chats',
+      url: '/chats',
+      icon: MessageSquare,
+      resource: 'ai'
+    },
+    {
       title: 'navigation.dashboard',
       url: '/charts',
       icon: ChartColumnDecreasing,
       resource: 'dashboard'
     },
     {
-      title: 'navigation.chats',
-      url: '/chats',
-      icon: MessageSquare,
-      resource: 'ai'
+      title: 'navigation.integrations',
+      url: '/integrations',
+      icon: Puzzle,
+      resource: 'notification'
     }
   ]
 };
@@ -50,7 +56,6 @@ export function useAppSidebar() {
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const dispatch = useAppDispatch();
   const { canAccessResource } = useRBAC();
-  const router = useRouter();
   const pathname = usePathname();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const { closeSettings } = useSettingsModal();
@@ -102,7 +107,7 @@ export function useAppSidebar() {
   };
 
   const handleSponsor = () => {
-    window.open('https://github.com/sponsors/raghavyuva', '_blank');
+    window.open('https://github.com/sponsors/nixopus', '_blank');
   };
 
   const getClientInfo = () => {
@@ -169,7 +174,7 @@ If applicable, add screenshots to help explain your problem.
 Add any other context about the problem here.`;
 
     const encodedBody = encodeURIComponent(issueBody);
-    const url = `https://github.com/raghavyuva/nixopus/issues/new?template=bug_report.md&body=${encodedBody}`;
+    const url = `https://github.com/nixopus/nixopus/issues/new?template=bug_report.md&body=${encodedBody}`;
     window.open(url, '_blank');
   };
 
@@ -190,14 +195,14 @@ Add any other context about the problem here.`;
       resetApiStates();
       dispatch({ type: 'RESET_STATE' });
       await dispatch(logoutUser() as any);
-      router.push('/auth');
+      window.location.href = '/auth';
     } catch (error) {
       console.error('Logout failed:', error);
       clearLocalStorage();
       resetApiStates();
       dispatch({ type: 'RESET_STATE' });
       dispatch(logout());
-      router.push('/auth');
+      window.location.href = '/auth';
     }
   };
 

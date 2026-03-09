@@ -4,23 +4,18 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/file-manager/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/file-manager/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
-type ListFilesRequest struct {
-	Path string `json:"path"`
-}
-
-func (c *FileManagerController) ListFiles(f fuego.ContextWithBody[ListFilesRequest]) (*types.ListFilesResponse, error) {
+func (c *FileManagerController) ListFiles(f fuego.ContextNoBody) (*types.ListFilesResponse, error) {
 	_, r := f.Response(), f.Request()
 	path := r.URL.Query().Get("path")
 
 	if path == "" {
 		c.logger.Log(logger.Error, "path is required", "")
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
+		return nil, fuego.BadRequestError{
+			Detail: "path is required",
 		}
 	}
 
@@ -29,6 +24,7 @@ func (c *FileManagerController) ListFiles(f fuego.ContextWithBody[ListFilesReque
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

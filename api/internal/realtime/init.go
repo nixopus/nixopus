@@ -10,11 +10,11 @@ import (
 
 	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal/features/dashboard"
-	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/realtime"
-	"github.com/raghavyuva/nixopus-api/internal/features/terminal"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/dashboard"
+	deploy "github.com/nixopus/nixopus/api/internal/features/deploy/controller"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/realtime"
+	"github.com/nixopus/nixopus/api/internal/features/terminal"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 

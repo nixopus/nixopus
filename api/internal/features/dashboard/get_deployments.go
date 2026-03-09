@@ -1,7 +1,7 @@
 package dashboard
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 func (p *OrgPoller) getDeployments() {

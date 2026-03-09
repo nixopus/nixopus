@@ -3,8 +3,8 @@ package service
 import (
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (s *UserService) GetSettings(userID string) (*types.UserSettings, error) {

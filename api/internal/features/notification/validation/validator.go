@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/storage"
+	"github.com/nixopus/nixopus/api/internal/features/notification"
+	"github.com/nixopus/nixopus/api/internal/features/notification/storage"
 )
 
 type Validator struct {

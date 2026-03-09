@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/user/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type UpdateFontRequest struct {
@@ -19,17 +19,16 @@ func (c *UserController) UpdateFont(s fuego.ContextWithBody[UpdateFontRequest]) 
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	req, err := s.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -38,6 +37,7 @@ func (c *UserController) UpdateFont(s fuego.ContextWithBody[UpdateFontRequest]) 
 		c.logger.Log(logger.Error, "failed to update font settings", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -58,17 +58,16 @@ func (c *UserController) UpdateTheme(s fuego.ContextWithBody[UpdateThemeRequest]
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	req, err := s.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -77,6 +76,7 @@ func (c *UserController) UpdateTheme(s fuego.ContextWithBody[UpdateThemeRequest]
 		c.logger.Log(logger.Error, "failed to update theme", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -97,17 +97,16 @@ func (c *UserController) UpdateLanguage(s fuego.ContextWithBody[UpdateLanguageRe
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	req, err := s.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -116,6 +115,7 @@ func (c *UserController) UpdateLanguage(s fuego.ContextWithBody[UpdateLanguageRe
 		c.logger.Log(logger.Error, "failed to update language", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -136,17 +136,16 @@ func (c *UserController) UpdateAutoUpdate(s fuego.ContextWithBody[UpdateAutoUpda
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	req, err := s.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -155,6 +154,7 @@ func (c *UserController) UpdateAutoUpdate(s fuego.ContextWithBody[UpdateAutoUpda
 		c.logger.Log(logger.Error, "failed to update auto update setting", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -171,9 +171,8 @@ func (c *UserController) GetSettings(s fuego.ContextNoBody) (*types.UserSettings
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
@@ -182,6 +181,7 @@ func (c *UserController) GetSettings(s fuego.ContextNoBody) (*types.UserSettings
 		c.logger.Log(logger.Error, "failed to get user settings", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

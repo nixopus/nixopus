@@ -3,8 +3,8 @@ package service
 import (
 	"fmt"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/trail/types"
 )
 
 // GetStatus retrieves the current status of a trail provision.

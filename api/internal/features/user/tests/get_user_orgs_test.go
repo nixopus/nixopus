@@ -5,9 +5,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/user/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/user/service"
+	"github.com/nixopus/nixopus/api/internal/features/user/types"
 	"github.com/stretchr/testify/assert"
 )
 

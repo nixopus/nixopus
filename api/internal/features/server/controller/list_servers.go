@@ -7,9 +7,9 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/server/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/server/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *ServerController) ListServers(f fuego.ContextNoBody) (*types.ListServersResponse, error) {
@@ -17,20 +17,14 @@ func (c *ServerController) ListServers(f fuego.ContextNoBody) (*types.ListServer
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
-		}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	// Get organization ID from context
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
 		c.logger.Log(logger.Error, "Organization ID not found in context", "")
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
-		}
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	// Parse query parameters
@@ -83,6 +77,7 @@ func (c *ServerController) ListServers(f fuego.ContextNoBody) (*types.ListServer
 		c.logger.Log(logger.Error, err.Error(), orgID.String())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

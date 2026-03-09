@@ -2,7 +2,7 @@ package service
 
 import (
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	"github.com/nixopus/nixopus/api/internal/features/notification"
 )
 
 // GetPreferences fetches the notification preferences for the given user

@@ -3,11 +3,11 @@ package controller
 import (
 	"context"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/validation"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/features/healthcheck/service"
+	"github.com/nixopus/nixopus/api/internal/features/healthcheck/storage"
+	"github.com/nixopus/nixopus/api/internal/features/healthcheck/validation"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 type HealthCheckController struct {

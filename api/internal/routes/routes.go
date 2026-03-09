@@ -3,43 +3,46 @@ package routes
 import (
 	"log"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal/cache"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	audit "github.com/raghavyuva/nixopus-api/internal/features/audit/controller"
-	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
-	auth_service "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
-	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
-	container "github.com/raghavyuva/nixopus-api/internal/features/container/controller"
-	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
-	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
-	extension "github.com/raghavyuva/nixopus-api/internal/features/extension/controller"
-	feature_flags_controller "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller"
-	feature_flags_service "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/service"
-	feature_flags_storage "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/storage"
-	file_manager "github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller"
-	githubConnector "github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller"
-	healthcheck "github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
-	server_controller "github.com/raghavyuva/nixopus-api/internal/features/server/controller"
-	trail "github.com/raghavyuva/nixopus-api/internal/features/trail/controller"
-	"github.com/raghavyuva/nixopus-api/internal/openapi"
+	"github.com/nixopus/nixopus/api/internal/cache"
+	"github.com/nixopus/nixopus/api/internal/config"
+	audit "github.com/nixopus/nixopus/api/internal/features/audit/controller"
+	auth "github.com/nixopus/nixopus/api/internal/features/auth/controller"
+	auth_service "github.com/nixopus/nixopus/api/internal/features/auth/service"
+	user_storage "github.com/nixopus/nixopus/api/internal/features/auth/storage"
+	container "github.com/nixopus/nixopus/api/internal/features/container/controller"
+	deploy "github.com/nixopus/nixopus/api/internal/features/deploy/controller"
+	domain "github.com/nixopus/nixopus/api/internal/features/domain/controller"
+	extension "github.com/nixopus/nixopus/api/internal/features/extension/controller"
+	feature_flags_controller "github.com/nixopus/nixopus/api/internal/features/feature-flags/controller"
+	feature_flags_service "github.com/nixopus/nixopus/api/internal/features/feature-flags/service"
+	feature_flags_storage "github.com/nixopus/nixopus/api/internal/features/feature-flags/storage"
+	file_manager "github.com/nixopus/nixopus/api/internal/features/file-manager/controller"
+	githubConnector "github.com/nixopus/nixopus/api/internal/features/github-connector/controller"
+	healthcheck "github.com/nixopus/nixopus/api/internal/features/healthcheck/controller"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	machine_controller "github.com/nixopus/nixopus/api/internal/features/machine/controller"
+	"github.com/nixopus/nixopus/api/internal/features/notification"
+	"github.com/nixopus/nixopus/api/internal/features/notification/channel"
+	notificationController "github.com/nixopus/nixopus/api/internal/features/notification/controller"
+	server_controller "github.com/nixopus/nixopus/api/internal/features/server/controller"
+	trail "github.com/nixopus/nixopus/api/internal/features/trail/controller"
+	"github.com/nixopus/nixopus/api/internal/openapi"
 
-	// Organization packages removed - migrated to Better Auth
-	update "github.com/raghavyuva/nixopus-api/internal/features/update/controller"
-	update_service "github.com/raghavyuva/nixopus-api/internal/features/update/service"
-	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
-	"github.com/raghavyuva/nixopus-api/internal/middleware"
-	"github.com/raghavyuva/nixopus-api/internal/realtime"
-	"github.com/raghavyuva/nixopus-api/internal/scheduler"
-	"github.com/raghavyuva/nixopus-api/internal/storage"
-	api "github.com/raghavyuva/nixopus-api/internal/version"
+	update "github.com/nixopus/nixopus/api/internal/features/update/controller"
+	update_service "github.com/nixopus/nixopus/api/internal/features/update/service"
+	user "github.com/nixopus/nixopus/api/internal/features/user/controller"
+	"github.com/nixopus/nixopus/api/internal/middleware"
+	"github.com/nixopus/nixopus/api/internal/realtime"
+	"github.com/nixopus/nixopus/api/internal/scheduler"
+	"github.com/nixopus/nixopus/api/internal/storage"
+	api "github.com/nixopus/nixopus/api/internal/version"
 )
 
 // Router holds the application dependencies for route handlers
@@ -124,6 +127,7 @@ func (router *Router) createServer(port string) *fuego.Server {
 			},
 		}),
 		fuego.WithAddr(":"+port),
+		fuego.WithRouteOptions(openapi.RouteContractOption()),
 	)
 }
 
@@ -131,12 +135,10 @@ func (router *Router) createServer(port string) *fuego.Server {
 func (router *Router) setupAuthentication(server *fuego.Server) {
 	fuego.Use(server, func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			// Skip auth for public routes
 			if config.AppConfig.App.Environment == "development" && strings.HasPrefix(r.URL.Path, "/swagger") {
 				next.ServeHTTP(w, r)
 				return
 			}
-			// Skip auth for live deploy routes
 			if strings.HasPrefix(r.URL.Path, "/api/v1/live") || strings.HasPrefix(r.URL.Path, "/ws/live") {
 				next.ServeHTTP(w, r)
 				return
@@ -151,96 +153,110 @@ func (router *Router) SetSchedulers(schedulers *scheduler.Schedulers) {
 	router.schedulers = schedulers
 }
 
+// initChannels creates and returns the notification channel adapters
+// backed by the application database.
+func (router *Router) initChannels() map[string]channel.Channel {
+	db := router.app.Store.DB
+	ctx := router.app.Ctx
+	channels := map[string]channel.Channel{
+		"email":   channel.NewEmailChannel(db, ctx),
+		"slack":   channel.NewSlackChannel(db, ctx),
+		"discord": channel.NewDiscordChannel(db, ctx),
+	}
+
+	agentCfg := config.AppConfig.AgentChannel
+	authURL := strings.TrimRight(config.AppConfig.BetterAuth.URL, "/")
+
+	if agentCfg.URL != "" && authURL != "" && agentCfg.ClientID != "" && agentCfg.ClientSecret != "" {
+		webhookURL := strings.TrimRight(agentCfg.URL, "/") + "/api/webhooks/events"
+		tokenURL := authURL + "/api/auth/oauth2/token"
+		channels["agent"] = channel.NewAgentChannel(webhookURL, tokenURL, agentCfg.ClientID, agentCfg.ClientSecret)
+	}
+
+	return channels
+}
+
 // SetupRoutes initializes and configures all application routes
 func (router *Router) SetupRoutes() {
-	// Load .env file if it exists (optional when using secret manager)
 	if err := godotenv.Load(); err != nil {
-		// .env file is optional when using secret manager
 		log.Println("Info: .env file not found, using environment variables and secret manager")
 	}
 
-	// Save version documentation
-	// Commented out - version manager creating version.json every time causing troubles
-	// docs := api.NewVersionDocumentation()
-	// if err := docs.Save("api/versions.json"); err != nil {
-	// 	log.Printf("Warning: Failed to save version documentation: %v", err)
-	// }
+	// Initialize notification dispatcher with channel adapters
+	channels := router.initChannels()
+	dispatcher := notification.NewDispatcher(router.app.Store.DB, router.app.Ctx, router.logger, channels)
+	dispatcher.SetupQueue()
 
-	// Initialize notification manager
-	notificationManager := notification.NewNotificationManager(router.app.Store.DB)
-	notificationManager.Start()
+	if router.schedulers != nil && router.schedulers.HealthCheck != nil {
+		router.schedulers.HealthCheck.SetNotifier(dispatcher)
+	}
 
-	// Create and configure server
 	PORT := config.AppConfig.Server.Port
 	server := router.createServer(PORT)
 	apiV1 := api.NewVersion(api.CurrentVersion)
 
-	// Register public routes (no auth required)
-	router.registerPublicRoutes(server, apiV1, notificationManager)
+	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
+	if err != nil {
+		log.Fatalf("Failed to create deploy controller: %v", err)
+	}
 
-	// Apply authentication middleware
+	router.registerPublicRoutes(server, apiV1, dispatcher, deployController)
 	router.setupAuthentication(server)
-
-	// Register protected routes
-	router.registerProtectedRoutes(server, apiV1, notificationManager)
+	router.registerProtectedRoutes(server, apiV1, dispatcher, deployController)
 
 	log.Printf("Server starting on port %s", PORT)
 	log.Printf("Swagger UI available at: http://localhost:%s/swagger/", PORT)
+	_ = os.Remove("doc/openapi.json")
+	go func() {
+		if err := openapi.PostProcessSpecWithRetry("doc/openapi.json", 30*time.Second); err != nil {
+			log.Printf("Warning: failed to post-process OpenAPI spec: %v", err)
+		}
+	}()
 	server.Run()
 }
 
 // registerPublicRoutes registers routes that don't require authentication
-func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Version, notificationManager *notification.NotificationManager) {
-	// Health routes
+func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Version, dispatcher *notification.Dispatcher, deployController *deploy.DeployController) {
 	healthGroup := fuego.Group(server, apiV1.Path+"/health")
 	router.RegisterHealthRoutes(healthGroup)
 
-	// Webhook routes
-	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
-	if err != nil {
-		log.Fatalf("Failed to create deploy controller: %v", err)
-	}
 	webhookGroup := fuego.Group(server, apiV1.Path+"/webhook")
-	fuego.Post(webhookGroup, "", deployController.HandleGithubWebhook)
+	fuego.Post(
+		webhookGroup,
+		"",
+		deployController.HandleGithubWebhook,
+		fuego.OptionSummary("Handle GitHub webhook"),
+	)
 
-	// WebSocket routes
 	router.RegisterWebSocketRoutes(server, deployController, router.schedulers.HealthCheck)
 
-	router.RegisterLiveDeployRoutes(server, apiV1)
-
-	// Internal service-to-service routes (validated via X-Internal-Secret header)
 	trailInternalController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	trailInternalGroup := fuego.Group(server, apiV1.Path+"/trail")
 	router.RegisterTrailInternalRoutes(trailInternalGroup, trailInternalController)
 
-	// Public auth routes
-	authController := router.createAuthController(notificationManager)
+	authController := router.createAuthController(dispatcher)
 	authGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.RegisterAuthRoutes(authGroup, authController)
 }
 
 // registerProtectedRoutes registers routes that require authentication
-func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Version, notificationManager *notification.NotificationManager) {
-	// Authenticated auth routes (CLI init requires authentication)
-	authController := router.createAuthController(notificationManager)
+func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Version, dispatcher *notification.Dispatcher, deployController *deploy.DeployController) {
+	authController := router.createAuthController(dispatcher)
 	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.applyMiddleware(authProtectedGroup, MiddlewareConfig{RBAC: false, Audit: false, ResourceName: "auth"})
 	router.RegisterAuthProtectedRoutes(authProtectedGroup, authController)
 
-	// User routes
 	userController := user.NewUserController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	userGroup := fuego.Group(server, apiV1.Path+"/user")
 	router.applyMiddleware(userGroup, MiddlewareConfig{RBAC: false, Audit: false, ResourceName: "user"})
 	router.RegisterUserRoutes(userGroup, userController)
 
-	// Domain routes
-	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
 	domainGroup := fuego.Group(server, apiV1.Path+"/domain")
 	router.applyMiddleware(domainGroup, MiddlewareConfig{RBAC: true, FeatureFlag: "domain", Audit: true, ResourceName: "domain"})
 	router.RegisterDomainRoutes(domainGroup, domainController)
 
-	// GitHub connector routes
-	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
 	githubConnectorGroup := fuego.Group(server, apiV1.Path+"/github-connector")
 	router.applyMiddleware(githubConnectorGroup, MiddlewareConfig{
 		RBAC:         true,
@@ -250,8 +266,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterGithubConnectorRoutes(githubConnectorGroup, githubConnectorController)
 
-	// Notification routes
-	notifController := notificationController.NewNotificationController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	notifController := notificationController.NewNotificationController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
 	notificationGroup := fuego.Group(server, apiV1.Path+"/notification")
 	router.applyMiddleware(notificationGroup, MiddlewareConfig{
 		RBAC:         true,
@@ -261,11 +276,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterNotificationRoutes(notificationGroup, notifController)
 
-	// Organization routes - migrated to Better Auth
-	// Organization management is now handled by Better Auth
-
-	// File manager routes
-	fileManagerController := file_manager.NewFileManagerController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	fileManagerController := file_manager.NewFileManagerController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
 	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager")
 	router.applyMiddleware(fileManagerGroup, MiddlewareConfig{
 		RBAC:         true,
@@ -275,11 +286,6 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterFileManagerRoutes(fileManagerGroup, fileManagerController)
 
-	// Deploy routes
-	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
-	if err != nil {
-		log.Fatalf("Failed to create deploy controller: %v", err)
-	}
 	deployGroup := fuego.Group(server, apiV1.Path+"/deploy")
 	router.applyMiddleware(deployGroup, MiddlewareConfig{
 		RBAC:         true,
@@ -289,19 +295,16 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterDeployRoutes(deployGroup, deployController)
 
-	// Audit routes
 	auditController := audit.NewAuditController(router.app.Store.DB, router.app.Ctx, router.logger)
 	auditGroup := fuego.Group(server, apiV1.Path+"/audit")
 	router.applyMiddleware(auditGroup, MiddlewareConfig{RBAC: true, FeatureFlag: "audit", Audit: true, ResourceName: "audit"})
 	router.RegisterAuditRoutes(auditGroup, auditController)
 
-	// Update routes
 	updateService := update_service.NewUpdateService(router.app, &router.logger, router.app.Ctx)
 	updateController := update.NewUpdateController(updateService, &router.logger)
 	updateGroup := fuego.Group(server, apiV1.Path+"/update")
 	router.RegisterUpdateRoutes(updateGroup, updateController)
 
-	// Feature flag routes
 	featureFlagController := router.createFeatureFlagController()
 	featureFlagReadGroup := fuego.Group(server, apiV1.Path+"/feature-flags")
 	featureFlagWriteGroup := fuego.Group(server, apiV1.Path+"/feature-flags")
@@ -310,8 +313,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.applyMiddleware(featureFlagWriteGroup, featureFlagMiddleware)
 	router.RegisterFeatureFlagRoutes(featureFlagReadGroup, featureFlagWriteGroup, featureFlagController)
 
-	// Container routes
-	containerController, err := container.NewContainerController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	containerController, err := container.NewContainerController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
 	if err != nil {
 		log.Fatalf("Failed to create container controller: %v", err)
 	}
@@ -324,7 +326,6 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterContainerRoutes(containerGroup, containerController)
 
-	// Health check routes
 	healthCheckController := healthcheck.NewHealthCheckController(router.app.Store, router.app.Ctx, router.logger)
 	healthCheckGroup := fuego.Group(server, apiV1.Path+"/healthcheck")
 	router.applyMiddleware(healthCheckGroup, MiddlewareConfig{
@@ -335,7 +336,6 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterHealthCheckRoutes(healthCheckGroup, healthCheckController)
 
-	// Extension routes
 	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, router.logger, config.AppConfig.Redis.URL)
 	extensionGroup := fuego.Group(server, apiV1.Path+"/extensions")
 	router.applyMiddleware(extensionGroup, MiddlewareConfig{
@@ -346,8 +346,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterExtensionRoutes(extensionGroup, extensionController)
 
-	// Server routes
-	serverController := server_controller.NewServerController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	serverController := server_controller.NewServerController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
 	serverGroup := fuego.Group(server, apiV1.Path+"/servers")
 	router.applyMiddleware(serverGroup, MiddlewareConfig{
 		RBAC:         true,
@@ -356,7 +355,23 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterServerRoutes(serverGroup, serverController)
 
-	// Trail routes
+	machineController := machine_controller.NewMachineController(router.app.Store, router.app.Ctx, router.logger)
+	machineGroup := fuego.Group(server, apiV1.Path+"/machine")
+	router.applyMiddleware(machineGroup, MiddlewareConfig{
+		RBAC:         true,
+		Audit:        true,
+		ResourceName: "machine",
+	})
+	router.RegisterMachineRoutes(machineGroup, machineController)
+
+	machineBillingGroup := fuego.Group(server, apiV1.Path+"/machine")
+	router.applyMiddleware(machineBillingGroup, MiddlewareConfig{
+		RBAC:         false,
+		Audit:        true,
+		ResourceName: "machine",
+	})
+	router.RegisterMachineBillingRoutes(machineBillingGroup, machineController)
+
 	trailController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	trailGroup := fuego.Group(server, apiV1.Path+"/trail")
 	router.applyMiddleware(trailGroup, MiddlewareConfig{
@@ -368,15 +383,12 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterTrailRoutes(trailGroup, trailController)
 }
 
-// createAuthController creates and returns an auth controller
-// Better Auth handles authentication
-func (router *Router) createAuthController(notificationManager *notification.NotificationManager) *auth.AuthController {
+func (router *Router) createAuthController(dispatcher *notification.Dispatcher) *auth.AuthController {
 	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	authService := auth_service.NewAuthService(userStorage, router.logger, router.app.Ctx, config.AppConfig.Redis.URL)
-	return auth.NewAuthController(router.app.Ctx, router.logger, notificationManager, *authService, router.app.Store)
+	return auth.NewAuthController(router.app.Ctx, router.logger, dispatcher, *authService, router.app.Store)
 }
 
-// createFeatureFlagController creates and returns a feature flag controller
 func (router *Router) createFeatureFlagController() *feature_flags_controller.FeatureFlagController {
 	featureFlagStorage := &feature_flags_storage.FeatureFlagStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
 	featureFlagService := feature_flags_service.NewFeatureFlagService(featureFlagStorage, router.logger, router.app.Ctx)

@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (s *DeployService) GetApplications(page string, pageSize string, sortBy string, sortDirection string, organizationID uuid.UUID) ([]shared_types.Application, int, error) {

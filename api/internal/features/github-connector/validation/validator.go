@@ -3,8 +3,8 @@ package validation
 import (
 	"strings"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // GithubConnectorRepository defines the interface for the storage dependency

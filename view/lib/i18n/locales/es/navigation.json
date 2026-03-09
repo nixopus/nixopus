@@ -28,6 +28,7 @@
       "terminal": {
         "togglePosition": "Cambiar Posición del Terminal (Ctrl+T)"
       }
-    }
+    },
+    "integrations": "Integrations"
   }
 }

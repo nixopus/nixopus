@@ -3,16 +3,17 @@ package types
 import (
 	"errors"
 
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type CreateGithubConnectorRequest struct {
-	AppID         string `json:"app_id"`
-	Slug          string `json:"slug"`
-	Pem           string `json:"pem"`
-	ClientID      string `json:"client_id"`
-	ClientSecret  string `json:"client_secret"`
-	WebhookSecret string `json:"webhook_secret"`
+	AppID          string `json:"app_id"`
+	Slug           string `json:"slug"`
+	Pem            string `json:"pem"`
+	ClientID       string `json:"client_id"`
+	ClientSecret   string `json:"client_secret"`
+	WebhookSecret  string `json:"webhook_secret"`
+	InstallationID string `json:"installation_id,omitempty"`
 }
 
 type UpdateGithubConnectorRequest struct {

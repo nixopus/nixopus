@@ -108,6 +108,7 @@
       "deployed": "Deployed",
       "failed": "Failed",
       "inProgress": "In Progress",
+      "cancelled": "Cancelled",
       "count": "Count",
       "status": "Status"
     }

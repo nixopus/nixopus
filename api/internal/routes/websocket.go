@@ -4,9 +4,9 @@ import (
 	"log"
 
 	"github.com/go-fuego/fuego"
-	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
-	"github.com/raghavyuva/nixopus-api/internal/realtime"
-	"github.com/raghavyuva/nixopus-api/internal/scheduler"
+	deploy "github.com/nixopus/nixopus/api/internal/features/deploy/controller"
+	"github.com/nixopus/nixopus/api/internal/realtime"
+	"github.com/nixopus/nixopus/api/internal/scheduler"
 )
 
 // RegisterWebSocketRoutes registers WebSocket routes
@@ -29,7 +29,13 @@ func (router *Router) RegisterWebSocketRoutes(server *fuego.Server, deployContro
 		return nil, nil
 	}
 
-	fuego.Get(server, "/ws", wsHandler)
+	fuego.Get(
+		server,
+		"/ws",
+		wsHandler,
+		fuego.OptionSummary("Open dashboard WebSocket"),
+		fuego.OptionHide(),
+	)
 }
 
 // GetSocketServer returns the WebSocket server instance

@@ -2,8 +2,8 @@ package service
 
 import (
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/healthcheck/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 func (s *HealthCheckService) DeleteHealthCheck(applicationIDStr string, organizationID uuid.UUID) error {

@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/raghavyuva/nixopus-api/internal/features/dashboard"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/dashboard"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/types"
 )
 
 // handleStopDashboardMonitor stops the dashboard monitor for a given connection.

@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/storage"
+	"github.com/nixopus/nixopus/api/internal/features/extension/storage"
 )
 
 type Validator struct {

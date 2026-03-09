@@ -5,15 +5,15 @@ import (
 	"testing"
 
 	. "github.com/Eun/go-hit"
-	"github.com/raghavyuva/nixopus-api/internal/tests"
-	"github.com/raghavyuva/nixopus-api/internal/testutils"
+	"github.com/nixopus/nixopus/api/internal/tests"
+	"github.com/nixopus/nixopus/api/internal/testutils"
 )
 
 func TestGetUserDetails(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	userID := auth.User.ID.String()

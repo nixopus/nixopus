@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 // DeleteConnector deletes a GitHub connector for the given user.

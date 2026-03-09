@@ -6,9 +6,9 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *DeployController) HandleRecover(f fuego.ContextWithBody[types.RecoverRequest]) (*types.RecoverResponse, error) {
@@ -17,27 +17,25 @@ func (c *DeployController) HandleRecover(f fuego.ContextWithBody[types.RecoverRe
 	data, err := f.Body()
 	if err != nil {
 		c.logger.Log(logger.Error, "failed to read request body", err.Error())
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
 		c.logger.Log(logger.Error, "user authentication failed during recovery", "")
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "authentication required",
 		}
 	}
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
 		c.logger.Log(logger.Error, "organization not found during recovery", "")
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
+		return nil, fuego.UnauthorizedError{
+			Detail: "organization not found",
 		}
 	}
 
@@ -46,13 +44,16 @@ func (c *DeployController) HandleRecover(f fuego.ContextWithBody[types.RecoverRe
 	result, err := c.taskService.RecoverApplications(f.Request().Context(), organizationID, data.ApplicationID)
 	if err != nil {
 		c.logger.Log(logger.Error, "recovery failed", "error: "+err.Error())
-		status := http.StatusInternalServerError
 		if err == types.ErrS3NotConfigured {
-			status = http.StatusBadRequest
+			return nil, fuego.BadRequestError{
+				Detail: err.Error(),
+				Err:    err,
+			}
 		}
 		return nil, fuego.HTTPError{
 			Err:    err,
-			Status: status,
+			Detail: err.Error(),
+			Status: http.StatusInternalServerError,
 		}
 	}
 

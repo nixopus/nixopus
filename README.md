@@ -11,12 +11,12 @@
   <a href="https://docs.nixopus.com"><b>Documentation</b></a> •
   <a href="https://nixopus.com/blog"><b>Blog</b></a> •
   <a href="https://discord.gg/skdcq39Wpv"><b>Discord</b></a> •
-  <a href="https://github.com/raghavyuva/nixopus/discussions/262"><b>Roadmap</b></a>
+  <a href="https://github.com/nixopus/nixopus/discussions/262"><b>Roadmap</b></a>
 </p>
 
 <br>
 <p align="center">
- <a href="https://trendshift.io/repositories/15336" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15336" alt="raghavyuva/nixopus | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+ <a href="https://trendshift.io/repositories/15336" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15336" alt="nixopus/nixopus | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
 </p>
 <br>
 
@@ -72,7 +72,7 @@ You can customize your installation by providing the following optional paramete
 - `--timeout` or `-t`: Set timeout for each step (default: 300 seconds)
 - `--force` or `-f`: Replace files if they already exist
 - `--dry-run` or `-d`: See what would happen without making changes
-- `--config-file` or `-c`: Path to custom config file (defaults to built-in [`config.prod.yaml`](https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/master/helpers/config.prod.yaml))
+- `--config-file` or `-c`: Path to custom config file (defaults to built-in [`config.prod.yaml`](https://raw.githubusercontent.com/nixopus/nixopus/refs/heads/master/helpers/config.prod.yaml))
 
 Example with optional parameters:
 
@@ -103,6 +103,6 @@ Nixopus is derived from the combination of "octopus" and the Linux penguin (Tux)
 
 ## Contributors
 
-<a href="https://github.com/raghavyuva/nixopus/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=raghavyuva/nixopus" alt="Nixopus project contributors" />
+<a href="https://github.com/nixopus/nixopus/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=nixopus/nixopus" alt="Nixopus project contributors" />
 </a>

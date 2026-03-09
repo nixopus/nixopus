@@ -1,9 +1,14 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { Streamdown } from 'streamdown';
+import {
+  STREAMDOWN_PLUGINS,
+  STREAMDOWN_CONTROLS,
+  STREAMDOWN_ANIMATED
+} from '@/packages/lib/streamdown-config';
 import {
   Button,
   ScrollArea,
@@ -40,23 +45,38 @@ import {
   X,
   CirclePlus,
   Search,
-  Check
+  Check,
+  ChevronRight,
+  ChevronDown,
+  Copy,
+  Pencil,
+  Zap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import {
-  useAgentChat,
   type ChatMessage,
-  type PendingToolApproval
+  type MessagePart,
+  type PendingToolApproval,
+  type OmStatus,
+  type AgentQuestion,
+  type AgentQuestionField
 } from '@/packages/hooks/ai/use-agent-chat';
-import { useChatThreads, type ChatThread } from '@/packages/hooks/ai/use-chat-threads';
+import { ContextWindowBar } from './context-window-bar';
+import { type ChatThread } from '@/packages/hooks/ai/use-chat-threads';
 import {
   type ChatContext,
   type ContextProviderData,
-  useChatContextProviders,
   stripContextFromMessageText
 } from '@/packages/hooks/ai/chat-context';
-import { useMemorySearch } from '@/packages/hooks/ai/use-memory-search';
+import {
+  useChatPage,
+  useThreadSidebarSearch,
+  useChatMessagesScroll,
+  useContextSearch,
+  formatTime,
+  AVAILABLE_MODELS
+} from '@/packages/hooks/ai/use-chat-page';
 
 function NixopusIcon({ className }: { className?: string }) {
   const { resolvedTheme } = useTheme();
@@ -66,105 +86,69 @@ function NixopusIcon({ className }: { className?: string }) {
 
 export function ChatPage() {
   const { t } = useTranslation();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('chat_sidebar_collapsed') === 'true';
-    }
-    return false;
-  });
-  const [selectedContexts, setSelectedContexts] = useState<ChatContext[]>([]);
-  const [autoRunTools, setAutoRunTools] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('chat_auto_run_tools') === 'true';
-    }
-    return false;
-  });
+  const page = useChatPage();
 
-  useEffect(() => {
-    localStorage.setItem('chat_sidebar_collapsed', String(sidebarCollapsed));
-  }, [sidebarCollapsed]);
-
-  useEffect(() => {
-    localStorage.setItem('chat_auto_run_tools', String(autoRunTools));
-  }, [autoRunTools]);
-
-  const contextProviders = useChatContextProviders();
-
-  const threads = useChatThreads();
-  const chat = useAgentChat({
-    threadId: threads.activeThreadId,
-    resourceId: threads.resourceId,
-    contexts: selectedContexts,
-    autoRunTools,
-    onFirstMessage: (content) => {
-      if (threads.activeThreadId) {
-        const title = content.length > 50 ? content.slice(0, 50) + '…' : content;
-        threads.updateThreadTitle(threads.activeThreadId, title);
-      }
-    }
-  });
-
-  const handleNewChat = () => {
-    threads.createThread(t('ai.threads.untitledChat'));
-  };
-
-  if (!chat.isAgentConfigured) {
+  if (!page.isAgentConfigured) {
     return <AgentDisabledState />;
   }
 
   return (
     <div className="flex h-full w-full overflow-hidden">
       <ThreadSidebar
-        threads={threads.threads}
-        activeThreadId={threads.activeThreadId}
-        resourceId={threads.resourceId}
-        isLoading={!threads.isInitialized}
-        isCollapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-        onSelectThread={threads.setActiveThreadId}
-        onNewChat={handleNewChat}
-        onDeleteThread={threads.deleteThread}
+        threads={page.threads}
+        activeThreadId={page.activeThreadId}
+        resourceId={page.resourceId}
+        isLoading={!page.isThreadsInitialized}
+        isCollapsed={page.sidebarCollapsed}
+        onToggleCollapse={page.toggleSidebarCollapse}
+        onSelectThread={page.setActiveThreadId}
+        onNewChat={page.handleNewChat}
+        onDeleteThread={page.deleteThread}
+        onRenameThread={page.renameThread}
       />
       <div className="flex flex-1 flex-col min-w-0">
-        {threads.activeThreadId ? (
+        {page.activeQuestion && (
+          <AgentQuestionModal
+            question={page.activeQuestion}
+            onSubmit={page.submitQuestionResponse}
+            onDismiss={page.dismissQuestion}
+          />
+        )}
+        {!page.isThreadsInitialized ? (
+          <MessagesSkeleton />
+        ) : page.activeThreadId ? (
           <>
-            {chat.isLoadingHistory ? (
+            {page.isLoadingHistory ? (
               <MessagesSkeleton />
             ) : (
               <ChatMessages
-                messages={chat.messages}
-                isStreaming={chat.isStreaming}
-                scrollRef={chat.scrollRef}
-                onSuggestionClick={chat.handleSuggestionClick}
-                pendingToolApproval={chat.pendingToolApproval}
-                autoRunTools={autoRunTools}
-                onApproveToolCall={chat.handleApproveToolCall}
-                onDeclineToolCall={chat.handleDeclineToolCall}
+                messages={page.messages}
+                isStreaming={page.isStreaming}
+                scrollRef={page.scrollRef}
+                onSuggestionClick={page.handleSuggestionClick}
+                pendingToolApproval={page.pendingToolApproval}
+                autoRunTools={page.autoRunTools}
+                onApproveToolCall={page.handleApproveToolCall}
+                onDeclineToolCall={page.handleDeclineToolCall}
               />
             )}
+            {page.omStatus && <ContextWindowBar omStatus={page.omStatus} />}
             <ChatInput
-              inputValue={chat.inputValue}
-              isStreaming={chat.isStreaming}
-              textareaRef={chat.textareaRef}
-              selectedContexts={selectedContexts}
-              contextProviders={contextProviders}
-              autoRunTools={autoRunTools}
-              onAutoRunToolsChange={setAutoRunTools}
-              onAddContext={(ctx) =>
-                setSelectedContexts((prev) => {
-                  if (prev.some((c) => c.type === ctx.type && c.id === ctx.id)) return prev;
-                  return [...prev, ctx];
-                })
-              }
-              onRemoveContext={(ctx) =>
-                setSelectedContexts((prev) =>
-                  prev.filter((c) => !(c.type === ctx.type && c.id === ctx.id))
-                )
-              }
-              onSubmit={chat.handleSubmit}
-              onKeyDown={chat.handleKeyDown}
-              onChange={chat.handleInputChange}
-              onStop={chat.stopStreaming}
+              inputValue={page.inputValue}
+              isStreaming={page.isStreaming}
+              textareaRef={page.textareaRef}
+              selectedContexts={page.selectedContexts}
+              contextProviders={page.contextProviders}
+              autoRunTools={page.autoRunTools}
+              onAutoRunToolsChange={page.setAutoRunTools}
+              selectedModel={page.selectedModel}
+              onModelChange={page.setSelectedModel}
+              onAddContext={page.addContext}
+              onRemoveContext={page.removeContext}
+              onSubmit={page.handleSubmit}
+              onKeyDown={page.handleKeyDown}
+              onChange={page.handleInputChange}
+              onStop={page.stopStreaming}
             />
           </>
         ) : (
@@ -177,7 +161,7 @@ export function ChatPage() {
               <p className="text-sm text-muted-foreground max-w-sm">
                 {t('ai.emptyState.description')}
               </p>
-              <Button onClick={handleNewChat} className="gap-2">
+              <Button onClick={page.handleNewChat} className="gap-2">
                 <Plus className="size-4" />
                 {t('ai.threads.newChat')}
               </Button>
@@ -199,6 +183,7 @@ interface ThreadSidebarProps {
   onSelectThread: (id: string) => void;
   onNewChat: () => void;
   onDeleteThread: (id: string) => void;
+  onRenameThread: (id: string, title: string) => void;
 }
 
 function ThreadSidebar({
@@ -210,11 +195,11 @@ function ThreadSidebar({
   onToggleCollapse,
   onSelectThread,
   onNewChat,
-  onDeleteThread
+  onDeleteThread,
+  onRenameThread
 }: ThreadSidebarProps) {
   const { t } = useTranslation();
-  const [searchInputValue, setSearchInputValue] = useState('');
-  const memorySearch = useMemorySearch(resourceId);
+  const sidebarSearch = useThreadSidebarSearch(resourceId);
 
   if (isCollapsed) {
     return (
@@ -295,20 +280,9 @@ function ThreadSidebar({
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
           <Input
-            value={searchInputValue}
-            onChange={(e) => {
-              setSearchInputValue(e.target.value);
-              if (!e.target.value.trim()) memorySearch.clear();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                memorySearch.search(searchInputValue);
-              }
-              if (e.key === 'Escape') {
-                setSearchInputValue('');
-                memorySearch.clear();
-              }
-            }}
+            value={sidebarSearch.searchInputValue}
+            onChange={(e) => sidebarSearch.handleSearchInputChange(e.target.value)}
+            onKeyDown={(e) => sidebarSearch.handleSearchKeyDown(e.key)}
             placeholder={t('ai.threads.searchChats' as Parameters<typeof t>[0])}
             className="h-8 pl-7 text-xs"
           />
@@ -317,28 +291,22 @@ function ThreadSidebar({
       <Separator />
       <div className="px-3 py-2">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {memorySearch.results.length > 0
+          {sidebarSearch.memorySearchResults.length > 0
             ? t('ai.threads.searchResults' as Parameters<typeof t>[0])
             : t('ai.threads.recentChats')}
         </span>
       </div>
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 [&_[data-radix-scroll-area-viewport]>div]:!block [&_[data-radix-scroll-area-viewport]>div]:!min-w-0">
         <div className="px-2 pb-2 space-y-0.5">
-          {memorySearch.results.length > 0 ? (
-            memorySearch.isSearching ? (
+          {sidebarSearch.memorySearchResults.length > 0 ? (
+            sidebarSearch.isSearching ? (
               <ThreadsSkeleton />
             ) : (
-              memorySearch.results.map((r) => (
+              sidebarSearch.memorySearchResults.map((r) => (
                 <button
                   key={r.id}
                   type="button"
-                  onClick={() => {
-                    if (r.threadId) {
-                      onSelectThread(r.threadId);
-                      setSearchInputValue('');
-                      memorySearch.clear();
-                    }
-                  }}
+                  onClick={() => sidebarSearch.handleSelectSearchResult(r.threadId, onSelectThread)}
                   className="w-full flex flex-col gap-0.5 px-3 py-2 rounded-md text-left text-sm hover:bg-muted/60 transition-colors"
                 >
                   <span className="text-xs text-muted-foreground truncate">
@@ -366,6 +334,7 @@ function ThreadSidebar({
                 isActive={thread.id === activeThreadId}
                 onSelect={() => onSelectThread(thread.id)}
                 onDelete={() => onDeleteThread(thread.id)}
+                onRename={(title) => onRenameThread(thread.id, title)}
               />
             ))
           )}
@@ -381,37 +350,110 @@ interface ThreadItemProps {
   isActive: boolean;
   onSelect: () => void;
   onDelete: () => void;
+  onRename: (title: string) => void;
 }
 
-function ThreadItem({ thread, isActive, onSelect, onDelete }: ThreadItemProps) {
+function ThreadItem({ thread, isActive, onSelect, onDelete, onRename }: ThreadItemProps) {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editValue, setEditValue] = React.useState(thread.title);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [isEditing]);
+
+  const handleStartEditing = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditValue(thread.title);
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    const trimmed = editValue.trim();
+    if (trimmed && trimmed !== thread.title) {
+      onRename(trimmed);
+    }
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    }
+    if (e.key === 'Escape') {
+      setEditValue(thread.title);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div
+        className={cn(
+          'relative w-full min-w-0 flex items-center gap-2 px-3 py-1.5 rounded-md text-sm',
+          isActive ? 'bg-primary/10' : 'bg-muted/60'
+        )}
+      >
+        <MessageSquare className="size-4 shrink-0 text-muted-foreground" />
+        <Input
+          ref={inputRef}
+          value={editValue}
+          onChange={(e) => setEditValue(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={handleKeyDown}
+          className="h-6 px-1 text-sm border-none bg-transparent focus-visible:ring-1 focus-visible:ring-primary/40"
+        />
+      </div>
+    );
+  }
+
   return (
     <button
       onClick={onSelect}
+      onDoubleClick={handleStartEditing}
       className={cn(
-        'w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group text-left',
+        'relative w-full min-w-0 flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group text-left',
         isActive
           ? 'bg-primary/10 text-primary font-medium'
           : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
       )}
     >
       <MessageSquare className="size-4 shrink-0" />
-      <span className="flex-1 truncate">{thread.title}</span>
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span
-              role="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 hover:text-destructive"
-            >
-              <Trash2 className="size-3.5" />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent side="right">Delete</TooltipContent>
-        </Tooltip>
+      <span className="flex-1 min-w-0 truncate text-left">{thread.title}</span>
+      <TooltipProvider delayDuration={0}>
+        <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-muted/80 backdrop-blur-sm rounded">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                role="button"
+                onClick={handleStartEditing}
+                className="p-1 rounded hover:bg-muted hover:text-foreground"
+              >
+                <Pencil className="size-3.5" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="right">Rename</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                role="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="p-1 rounded hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="size-3.5" />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="right">Delete</TooltipContent>
+          </Tooltip>
+        </div>
       </TooltipProvider>
     </button>
   );
@@ -438,14 +480,7 @@ function ChatMessages({
   onApproveToolCall,
   onDeclineToolCall
 }: ChatMessagesProps) {
-  const { t } = useTranslation();
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
-  }, [messages]);
+  const { containerRef } = useChatMessagesScroll(messages);
 
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto" {...({ ref: scrollRef } as any)}>
@@ -454,9 +489,17 @@ function ChatMessages({
           <ChatEmptyState onSuggestionClick={onSuggestionClick} />
         ) : (
           <div className="space-y-6">
-            {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
-            ))}
+            {messages.map((message, index) => {
+              const isLastAssistant = message.role === 'assistant' && index === messages.length - 1;
+              return (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  isStreaming={isStreaming}
+                  isLastAssistantMessage={isLastAssistant}
+                />
+              );
+            })}
             {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
               <StreamingIndicator />
             )}
@@ -547,12 +590,204 @@ function ChatEmptyState({ onSuggestionClick }: ChatEmptyStateProps) {
   );
 }
 
-interface MessageBubbleProps {
-  message: ChatMessage;
+function formatToolName(name: string): string {
+  return name
+    .replace(/[-_]/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/^./, (s) => s.toUpperCase());
 }
 
-function MessageBubble({ message }: MessageBubbleProps) {
+function getToolArgsSummary(args: unknown): string | null {
+  if (!args || typeof args !== 'object') return null;
+  const a = args as Record<string, unknown>;
+  if (a.name && typeof a.name === 'string') return a.name;
+  if (a.owner && a.repo) return `${a.owner}/${a.repo}`;
+  if (a.id && typeof a.id === 'string') return a.id.length > 12 ? a.id.slice(0, 8) + '...' : a.id;
+  return null;
+}
+
+function ToolCallIndicator({ part }: { part: Extract<MessagePart, { type: 'tool-call' }> }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const isRunning = part.status === 'running';
+  const name = formatToolName(part.toolName);
+  const summary = getToolArgsSummary(part.args);
+  const argsObj =
+    part.args && typeof part.args === 'object' ? (part.args as Record<string, unknown>) : null;
+  const hasDetails = argsObj !== null && Object.keys(argsObj).length > 0;
+
+  return (
+    <div className="text-xs text-muted-foreground/70">
+      <button
+        type="button"
+        onClick={() => hasDetails && setExpanded((v) => !v)}
+        className={cn(
+          'flex items-center gap-1.5 py-1 px-1 rounded-md transition-colors w-full text-left',
+          hasDetails && 'hover:text-muted-foreground hover:bg-muted/40 cursor-pointer'
+        )}
+      >
+        {isRunning ? (
+          <Loader2 className="size-3 animate-spin shrink-0 text-primary" />
+        ) : (
+          <Check className="size-3 shrink-0 text-muted-foreground/50" />
+        )}
+        <span className={cn(isRunning && 'text-muted-foreground')}>{name}</span>
+        {summary && <span className="text-muted-foreground/40">— {summary}</span>}
+        {hasDetails && (
+          <ChevronRight
+            className={cn(
+              'size-3 shrink-0 ml-auto transition-transform text-muted-foreground/40',
+              expanded && 'rotate-90'
+            )}
+          />
+        )}
+      </button>
+      {expanded && hasDetails && (
+        <pre className="mt-1 ml-5 p-2 rounded-md bg-muted/30 text-[10px] leading-relaxed text-muted-foreground/60 overflow-x-auto max-h-32">
+          {JSON.stringify(part.args, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+function CollapsibleTextPart({ content }: { content: string }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const firstLine = content
+    .split('\n')[0]
+    .replace(/^[#*>\s-]+/, '')
+    .trim();
+  const preview = firstLine.slice(0, 120);
+
+  return (
+    <div className="text-xs text-muted-foreground/60">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-center gap-1.5 py-0.5 px-1 rounded-md hover:text-muted-foreground hover:bg-muted/40 transition-colors w-full text-left"
+      >
+        <ChevronRight
+          className={cn(
+            'size-3 shrink-0 transition-transform text-muted-foreground/40',
+            expanded && 'rotate-90'
+          )}
+        />
+        <span className="truncate">
+          {preview}
+          {!expanded && firstLine.length > 120 && '…'}
+        </span>
+      </button>
+      {expanded && (
+        <div className="mt-1 ml-5 text-sm text-foreground">
+          <Streamdown
+            plugins={STREAMDOWN_PLUGINS}
+            controls={STREAMDOWN_CONTROLS}
+            animated={STREAMDOWN_ANIMATED}
+          >
+            {content}
+          </Streamdown>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard access denied
+    }
+  };
+
+  return (
+    <TooltipProvider delayDuration={0}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="inline-flex items-center justify-center size-7 rounded-md text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted/60 transition-colors"
+          >
+            {copied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          {copied ? 'Copied!' : 'Copy'}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
+interface MessageBubbleProps {
+  message: ChatMessage;
+  isStreaming?: boolean;
+  isLastAssistantMessage?: boolean;
+}
+
+function MessageBubble({
+  message,
+  isStreaming = false,
+  isLastAssistantMessage = false
+}: MessageBubbleProps) {
   const isUser = message.role === 'user';
+  const hasParts = !isUser && message.parts && message.parts.length > 0;
+
+  if (hasParts) {
+    const lastTextIndex = message.parts!.reduce(
+      (acc: number, p: MessagePart, i: number) => (p.type === 'text' ? i : acc),
+      -1
+    );
+
+    return (
+      <div className="flex gap-3">
+        <Avatar className="size-8 shrink-0 mt-0.5">
+          <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+            <NixopusIcon className="size-4" />
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 max-w-[85%] flex flex-col gap-1">
+          {message.parts!.map((part, index) => {
+            if (part.type === 'text' && part.content) {
+              const isLastText = index === lastTextIndex;
+              const isActivelyStreaming = isStreaming && isLastAssistantMessage && isLastText;
+
+              if (!isLastText && !isActivelyStreaming) {
+                return <CollapsibleTextPart key={index} content={part.content} />;
+              }
+
+              return (
+                <div key={index} className="text-sm text-foreground">
+                  <Streamdown
+                    plugins={STREAMDOWN_PLUGINS}
+                    controls={STREAMDOWN_CONTROLS}
+                    animated={STREAMDOWN_ANIMATED}
+                    isAnimating={isActivelyStreaming}
+                    caret={isActivelyStreaming ? 'block' : undefined}
+                  >
+                    {part.content}
+                  </Streamdown>
+                </div>
+              );
+            }
+            if (part.type === 'tool-call') {
+              return <ToolCallIndicator key={index} part={part} />;
+            }
+            return null;
+          })}
+          <div className="flex items-center gap-1 mt-1 px-1">
+            <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
+            <CopyButton text={message.content} />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={cn('flex gap-3', isUser ? 'flex-row-reverse' : 'flex-row')}>
@@ -597,20 +832,42 @@ function MessageBubble({ message }: MessageBubbleProps) {
             <p className="text-sm whitespace-pre-wrap">
               {stripContextFromMessageText(message.content)}
             </p>
+          ) : isStreaming && isLastAssistantMessage && !message.content.trim() ? (
+            <span className="text-sm text-muted-foreground">
+              Thinking
+              <span className="inline-flex">
+                <span className="animate-pulse" style={{ animationDelay: '0ms' }}>
+                  .
+                </span>
+                <span className="animate-pulse" style={{ animationDelay: '150ms' }}>
+                  .
+                </span>
+                <span className="animate-pulse" style={{ animationDelay: '300ms' }}>
+                  .
+                </span>
+              </span>
+            </span>
           ) : (
-            <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2">
-              <Streamdown isAnimating={false}>{message.content}</Streamdown>
-            </div>
+            <Streamdown
+              plugins={STREAMDOWN_PLUGINS}
+              controls={STREAMDOWN_CONTROLS}
+              animated={STREAMDOWN_ANIMATED}
+              isAnimating={isStreaming && isLastAssistantMessage}
+              caret={isStreaming && isLastAssistantMessage ? 'block' : undefined}
+            >
+              {message.content}
+            </Streamdown>
           )}
         </div>
-        <span
+        <div
           className={cn(
-            'text-xs text-muted-foreground mt-1 px-1',
-            isUser ? 'text-right' : 'text-left'
+            'flex items-center gap-1 mt-1 px-1',
+            isUser ? 'justify-end' : 'justify-start'
           )}
         >
-          {formatTime(message.timestamp)}
-        </span>
+          <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
+          {!isUser && <CopyButton text={message.content} />}
+        </div>
       </div>
     </div>
   );
@@ -626,17 +883,20 @@ function StreamingIndicator() {
       </Avatar>
       <div className="flex-1">
         <div className="bg-muted/60 rounded-2xl rounded-tl-md px-4 py-3 inline-block">
-          <div className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-primary/60 animate-pulse" />
-            <span
-              className="size-2 rounded-full bg-primary/60 animate-pulse"
-              style={{ animationDelay: '150ms' }}
-            />
-            <span
-              className="size-2 rounded-full bg-primary/60 animate-pulse"
-              style={{ animationDelay: '300ms' }}
-            />
-          </div>
+          <span className="text-sm text-muted-foreground">
+            Thinking
+            <span className="inline-flex">
+              <span className="animate-pulse" style={{ animationDelay: '0ms' }}>
+                .
+              </span>
+              <span className="animate-pulse" style={{ animationDelay: '150ms' }}>
+                .
+              </span>
+              <span className="animate-pulse" style={{ animationDelay: '300ms' }}>
+                .
+              </span>
+            </span>
+          </span>
         </div>
       </div>
     </div>
@@ -661,14 +921,10 @@ function ContextSubMenu({
   onRemoveContext
 }: ContextSubMenuProps) {
   const { t } = useTranslation();
-  const [search, setSearch] = useState('');
+  const { search, setSearch, filtered } = useContextSearch(provider.items);
 
   const isSelected = (ctx: ChatContext) =>
     selectedContexts.some((c) => c.type === ctx.type && c.id === ctx.id);
-
-  const filtered = search.trim()
-    ? provider.items.filter((item) => item.label.toLowerCase().includes(search.toLowerCase()))
-    : provider.items;
 
   return (
     <DropdownMenuSub>
@@ -751,6 +1007,8 @@ interface ChatInputProps {
   contextProviders: ContextProviderData[];
   autoRunTools: boolean;
   onAutoRunToolsChange: (value: boolean) => void;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
   onAddContext: (ctx: ChatContext) => void;
   onRemoveContext: (ctx: ChatContext) => void;
   onSubmit: (e?: React.FormEvent) => void;
@@ -767,6 +1025,8 @@ function ChatInput({
   contextProviders,
   autoRunTools,
   onAutoRunToolsChange,
+  selectedModel,
+  onModelChange,
   onAddContext,
   onRemoveContext,
   onSubmit,
@@ -775,9 +1035,8 @@ function ChatInput({
   onStop
 }: ChatInputProps) {
   const { t } = useTranslation();
-
-  const isSelected = (ctx: ChatContext) =>
-    selectedContexts.some((c) => c.type === ctx.type && c.id === ctx.id);
+  const currentModelLabel =
+    AVAILABLE_MODELS.find((m) => m.id === selectedModel)?.label ?? selectedModel;
 
   return (
     <div className="shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-sm p-4">
@@ -807,6 +1066,38 @@ function ChatInput({
               </span>
             );
           })}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted border border-border/50 transition-colors"
+              >
+                <Zap className="size-3" />
+                <span>{currentModelLabel}</span>
+                <ChevronDown className="size-3 opacity-50" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-52">
+              {AVAILABLE_MODELS.map((model) => (
+                <DropdownMenuItem
+                  key={model.id}
+                  onClick={() => onModelChange(model.id)}
+                  className={cn(
+                    'flex items-center gap-2',
+                    selectedModel === model.id && 'bg-primary/10'
+                  )}
+                >
+                  <Check
+                    className={cn(
+                      'size-3.5 shrink-0',
+                      selectedModel === model.id ? 'opacity-100 text-primary' : 'opacity-0'
+                    )}
+                  />
+                  <span>{model.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="flex items-center gap-1 rounded-md border border-border/50 p-0.5">
             <button
               type="button"
@@ -899,6 +1190,157 @@ function ChatInput({
   );
 }
 
+interface QuestionFieldInputProps {
+  field: AgentQuestionField;
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function QuestionFieldInput({ field, value, onChange }: QuestionFieldInputProps) {
+  switch (field.type) {
+    case 'textarea':
+      return (
+        <Textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={field.placeholder}
+          rows={3}
+          className="resize-y text-sm"
+        />
+      );
+    case 'select':
+      return (
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+          <option value="">{field.placeholder || 'Select...'}</option>
+          {field.options?.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      );
+    case 'toggle':
+      return (
+        <button
+          type="button"
+          onClick={() => onChange(value === 'true' ? 'false' : 'true')}
+          className="flex items-center gap-2.5"
+        >
+          <div
+            className={cn(
+              'w-9 h-5 rounded-full relative transition-colors',
+              value === 'true' ? 'bg-primary' : 'bg-muted-foreground/30'
+            )}
+          >
+            <div
+              className={cn(
+                'absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform',
+                value === 'true' ? 'translate-x-[18px]' : 'translate-x-0.5'
+              )}
+            />
+          </div>
+          <span className="text-sm text-foreground">{value === 'true' ? 'Yes' : 'No'}</span>
+        </button>
+      );
+    default:
+      return (
+        <Input
+          type={field.type === 'password' ? 'password' : 'text'}
+          value={value}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+          placeholder={field.placeholder}
+          className="text-sm"
+        />
+      );
+  }
+}
+
+interface AgentQuestionModalProps {
+  question: AgentQuestion;
+  onSubmit: (answers: Record<string, string>) => void;
+  onDismiss: () => void;
+}
+
+function AgentQuestionModal({ question, onSubmit, onDismiss }: AgentQuestionModalProps) {
+  const [values, setValues] = React.useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    for (const field of question.fields) {
+      initial[field.name] = field.defaultValue ?? (field.type === 'toggle' ? 'false' : '');
+    }
+    return initial;
+  });
+  const [errors, setErrors] = React.useState<Record<string, boolean>>({});
+
+  const handleChange = React.useCallback((name: string, value: string) => {
+    setValues((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: false }));
+  }, []);
+
+  const handleSubmit = React.useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const newErrors: Record<string, boolean> = {};
+      let hasErrors = false;
+      for (const field of question.fields) {
+        if (field.required && !values[field.name]?.trim()) {
+          newErrors[field.name] = true;
+          hasErrors = true;
+        }
+      }
+      if (hasErrors) {
+        setErrors(newErrors);
+        return;
+      }
+      onSubmit(values);
+    },
+    [question.fields, values, onSubmit]
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onDismiss} />
+      <div className="relative z-10 w-full max-w-md mx-4 rounded-xl overflow-hidden bg-background border border-border shadow-2xl">
+        <div className="px-5 pt-5 pb-3">
+          <h2 className="text-base font-semibold text-foreground">{question.title}</h2>
+          {question.description && (
+            <p className="mt-1 text-sm text-muted-foreground">{question.description}</p>
+          )}
+        </div>
+        <form onSubmit={handleSubmit} className="px-5 pb-5">
+          <div className="flex flex-col gap-4 max-h-[50vh] overflow-y-auto pr-1">
+            {question.fields.map((field) => (
+              <div key={field.name} className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  {field.label}
+                  {field.required && <span className="text-destructive ml-0.5">*</span>}
+                </label>
+                <QuestionFieldInput
+                  field={field}
+                  value={values[field.name] ?? ''}
+                  onChange={(v) => handleChange(field.name, v)}
+                />
+                {errors[field.name] && <span className="text-xs text-destructive">Required</span>}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2 mt-5 pt-4 border-t border-border/50">
+            <Button type="button" variant="outline" size="sm" onClick={onDismiss}>
+              Cancel
+            </Button>
+            <Button type="submit" size="sm">
+              Submit
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function Skeleton({ className }: { className?: string }) {
   return <div className={cn('animate-pulse rounded-md bg-muted', className)} />;
 }
@@ -973,8 +1415,4 @@ function AgentDisabledState() {
       </div>
     </div>
   );
-}
-
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }

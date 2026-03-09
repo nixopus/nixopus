@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/notification"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // GetSmtp returns the SMTP configuration associated with the given ID.

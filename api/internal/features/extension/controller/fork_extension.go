@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/extension/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type ForkExtensionRequest struct {
@@ -16,11 +16,11 @@ type ForkExtensionRequest struct {
 func (c *ExtensionsController) ForkExtension(ctx fuego.ContextWithBody[ForkExtensionRequest]) (*types.ExtensionResponse, error) {
 	extensionID := ctx.PathParam("extension_id")
 	if extensionID == "" {
-		return nil, fuego.HTTPError{Err: nil, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: "extension ID is required"}
 	}
 	req, err := ctx.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusBadRequest}
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 	var yamlOverride string
 	if req.YAMLContent != nil {
@@ -35,7 +35,7 @@ func (c *ExtensionsController) ForkExtension(ctx fuego.ContextWithBody[ForkExten
 	newExt, err := c.service.ForkExtension(extensionID, yamlOverride, authorName)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
+		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 	return &types.ExtensionResponse{
 		Status:  "success",

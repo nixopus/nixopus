@@ -51,9 +51,24 @@ export function DeploymentLogsTable({
 
   const logs = React.useMemo(() => {
     if (!additionalLogs || additionalLogs.length === 0) return deploymentLogs;
-    const merged = [...deploymentLogs, ...additionalLogs];
+
+    const filteredAdditional = additionalLogs.filter((log) => {
+      const matchesSearch =
+        !searchTerm || log.message.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesLevel = filters.level === 'all' || log.level === filters.level;
+      const matchesDate = (() => {
+        if (!filters.startDate && !filters.endDate) return true;
+        const logDate = new Date(log.timestamp);
+        if (filters.startDate && logDate < new Date(filters.startDate)) return false;
+        if (filters.endDate && logDate > new Date(filters.endDate + 'T23:59:59')) return false;
+        return true;
+      })();
+      return matchesSearch && matchesLevel && matchesDate;
+    });
+
+    const merged = [...deploymentLogs, ...filteredAdditional];
     return merged.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-  }, [deploymentLogs, additionalLogs]);
+  }, [deploymentLogs, additionalLogs, searchTerm, filters]);
 
   const {
     hasLogs,

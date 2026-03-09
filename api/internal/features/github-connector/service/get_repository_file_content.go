@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 type githubContentResponse struct {

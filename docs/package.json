@@ -15,5 +15,8 @@
     "mermaid": "^11.6.0",
     "posthog-js": "^1.0.0",
     "vitepress-openapi": "^0.1.13"
+  },
+  "resolutions": {
+    "preact": "^10.28.2"
   }
 }

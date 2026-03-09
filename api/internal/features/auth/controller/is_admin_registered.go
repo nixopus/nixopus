@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	auth_types "github.com/raghavyuva/nixopus-api/internal/features/auth/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	auth_types "github.com/nixopus/nixopus/api/internal/features/auth/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/uptrace/bun"
 )
 
@@ -56,6 +56,7 @@ func (ar *AuthController) IsAdminRegistered(s fuego.ContextNoBody) (*auth_types.
 		ar.logger.Log(logger.Error, "failed to check admin registration", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

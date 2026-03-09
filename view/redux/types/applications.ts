@@ -108,7 +108,8 @@ export type Status =
   | 'deployed'
   | 'started'
   | 'running'
-  | 'stopped';
+  | 'stopped'
+  | 'cancelled';
 
 export type Environment = string;
 

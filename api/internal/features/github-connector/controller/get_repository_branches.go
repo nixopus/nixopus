@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type GetGithubRepositoryBranchesRequest struct {
@@ -20,25 +20,16 @@ func (c *GithubConnectorController) GetGithubRepositoryBranches(f fuego.ContextW
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusUnauthorized,
-		}
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	body, err := f.Body()
 	if err != nil {
-		return nil, fuego.HTTPError{
-			Err:    err,
-			Status: http.StatusBadRequest,
-		}
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	if strings.TrimSpace(body.RepositoryName) == "" {
-		return nil, fuego.HTTPError{
-			Err:    fmt.Errorf("repository_name is required"),
-			Status: http.StatusBadRequest,
-		}
+		return nil, fuego.BadRequestError{Detail: "repository_name is required", Err: fmt.Errorf("repository_name is required")}
 	}
 
 	branches, err := c.service.GetGithubRepositoryBranches(user.ID.String(), body.RepositoryName)
@@ -46,6 +37,7 @@ func (c *GithubConnectorController) GetGithubRepositoryBranches(f fuego.ContextW
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

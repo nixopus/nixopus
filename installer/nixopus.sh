@@ -3,6 +3,11 @@ set -euo pipefail
 
 NIXOPUS_HOME="${NIXOPUS_HOME:-/opt/nixopus}"
 
+if [ "$(id -u)" -ne 0 ]; then
+    echo "nixopus requires root. Run: sudo nixopus $*" >&2
+    exit 1
+fi
+
 if [ ! -f "$NIXOPUS_HOME/.env" ]; then
     echo "Nixopus not found at $NIXOPUS_HOME. Is it installed?" >&2
     exit 1
@@ -33,6 +38,14 @@ sedi() {
 }
 
 redact() { echo "${1:0:4}****${1: -4}"; }
+
+format_ip_for_url() {
+    if [[ "$1" == *:* ]]; then
+        echo "[$1]"
+    else
+        echo "$1"
+    fi
+}
 
 cmd_status() {
     dc ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
@@ -81,11 +94,12 @@ cmd_uninstall() {
         exit 0
     fi
 
-    dc down
     if [ "${1:-}" = "--purge" ]; then
         dc down -v
         rm -rf "$NIXOPUS_HOME"
         echo "All data removed."
+    else
+        dc down
     fi
 
     rm -f /usr/local/bin/nixopus
@@ -118,6 +132,7 @@ cmd_config() {
     echo "Access:       ${ALLOWED_ORIGIN:-unknown}"
     echo "HTTP Port:    ${CADDY_HTTP_PORT:-80}"
     echo "HTTPS Port:   ${CADDY_HTTPS_PORT:-443}"
+    echo "SSH Host:     ${SSH_HOST:-${HOST_IP:-<unknown>}}"
     echo "SSH Port:     ${SSH_PORT:-22}"
     echo "SSH User:     ${SSH_USER:-root}"
     echo ""
@@ -160,20 +175,26 @@ cmd_domain() {
     fi
 
     if [ "$action" = "remove" ]; then
-        local host_ip
+        local host_ip http_port base_url
         host_ip=$(grep "^HOST_IP=" "$NIXOPUS_HOME/.env" | cut -d= -f2)
-        local http_port
         http_port=$(grep "^CADDY_HTTP_PORT=" "$NIXOPUS_HOME/.env" | cut -d= -f2)
+        local ip_for_url
+        ip_for_url=$(format_ip_for_url "$host_ip")
+        if [ "${http_port:-80}" = "80" ]; then
+            base_url="http://${ip_for_url}"
+        else
+            base_url="http://${ip_for_url}:${http_port}"
+        fi
 
         sedi "s|^DOMAIN=.*|DOMAIN=|" "$NIXOPUS_HOME/.env"
         sedi "s|^SITE_ADDRESS=.*|SITE_ADDRESS=:80|" "$NIXOPUS_HOME/.env"
-        sedi "s|^ALLOWED_ORIGIN=.*|ALLOWED_ORIGIN=http://${host_ip}|" "$NIXOPUS_HOME/.env"
-        sedi "s|^API_URL=.*|API_URL=http://${host_ip}/api|" "$NIXOPUS_HOME/.env"
-        sedi "s|^AUTH_PUBLIC_URL=.*|AUTH_PUBLIC_URL=http://${host_ip}|" "$NIXOPUS_HOME/.env"
+        sedi "s|^ALLOWED_ORIGIN=.*|ALLOWED_ORIGIN=${base_url}|" "$NIXOPUS_HOME/.env"
+        sedi "s|^API_URL=.*|API_URL=${base_url}/api|" "$NIXOPUS_HOME/.env"
+        sedi "s|^AUTH_PUBLIC_URL=.*|AUTH_PUBLIC_URL=${base_url}|" "$NIXOPUS_HOME/.env"
         sedi "s|^AUTH_COOKIE_DOMAIN=.*|AUTH_COOKIE_DOMAIN=|" "$NIXOPUS_HOME/.env"
         sedi "s|^AUTH_SECURE_COOKIES=.*|AUTH_SECURE_COOKIES=false|" "$NIXOPUS_HOME/.env"
 
-        echo "Switched to IP-based mode (http://${host_ip})"
+        echo "Switched to IP-based mode (${base_url})"
         echo "Restarting services..."
         dc up -d --remove-orphans
     fi
@@ -200,6 +221,39 @@ cmd_port() {
     esac
 
     echo "Set $port_type port to $port_val"
+    echo "Restarting services..."
+    dc up -d --remove-orphans
+}
+
+cmd_ip() {
+    local action="${1:-}" new_ip="${2:-}"
+    load_env
+    if [ "$action" != "set" ] || [ -z "$new_ip" ]; then
+        echo "── IP Configuration ──"
+        echo "Host IP:  ${HOST_IP:-<unknown>}"
+        echo "Access:   ${ALLOWED_ORIGIN:-unknown}"
+        echo ""
+        echo "Usage: nixopus ip set <ip>"
+        return
+    fi
+
+    sedi "s|^HOST_IP=.*|HOST_IP=${new_ip}|" "$NIXOPUS_HOME/.env"
+    if [ -z "${DOMAIN:-}" ]; then
+        local ip_for_url
+        ip_for_url=$(format_ip_for_url "$new_ip")
+        local http_port
+        http_port=$(grep "^CADDY_HTTP_PORT=" "$NIXOPUS_HOME/.env" | cut -d= -f2)
+        local base_url
+        if [ "${http_port:-80}" = "80" ]; then
+            base_url="http://${ip_for_url}"
+        else
+            base_url="http://${ip_for_url}:${http_port}"
+        fi
+        sedi "s|^ALLOWED_ORIGIN=.*|ALLOWED_ORIGIN=${base_url}|" "$NIXOPUS_HOME/.env"
+        sedi "s|^API_URL=.*|API_URL=${base_url}/api|" "$NIXOPUS_HOME/.env"
+        sedi "s|^AUTH_PUBLIC_URL=.*|AUTH_PUBLIC_URL=${base_url}|" "$NIXOPUS_HOME/.env"
+    fi
+    echo "Set IP to $new_ip"
     echo "Restarting services..."
     dc up -d --remove-orphans
 }
@@ -246,6 +300,7 @@ cmd_help() {
     echo "  config set K=V      Update configuration value"
     echo "  domain add <domain> Switch to domain-based HTTPS"
     echo "  domain remove       Switch back to IP-based HTTP"
+    echo "  ip set <ip>         Change host IP (IP mode only)"
     echo "  port                Show port configuration"
     echo "  port set <type> <n> Change port (http, https, ssh)"
     echo "  backup              Backup database and config"
@@ -262,6 +317,7 @@ case "${1:-help}" in
     uninstall) shift; cmd_uninstall "${1:-}" ;;
     config)    shift; cmd_config "$@" ;;
     domain)    shift; cmd_domain "$@" ;;
+    ip)        shift; cmd_ip "$@" ;;
     port)      shift; cmd_port "$@" ;;
     backup)    cmd_backup ;;
     info)      cmd_info ;;

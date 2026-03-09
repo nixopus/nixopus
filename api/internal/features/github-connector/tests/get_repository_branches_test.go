@@ -14,9 +14,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/service"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -149,7 +149,7 @@ func TestGetGithubRepositoryBranches(t *testing.T) {
 			},
 			expectedBranches: nil,
 			expectedError:    true,
-			expectedErrorMsg: "Failed to get installation token",
+			expectedErrorMsg: "authentication failed",
 		},
 		{
 			name:           "GitHub API error for branches",

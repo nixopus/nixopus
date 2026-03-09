@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	s3store "github.com/raghavyuva/nixopus-api/internal/features/deploy/s3"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	s3store "github.com/nixopus/nixopus/api/internal/features/deploy/s3"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	sshpkg "github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // RollbackDeployment enqueues a rollback task to rebuild and deploy a previous commit

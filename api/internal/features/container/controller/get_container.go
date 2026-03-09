@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/container/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/container/service"
+	"github.com/nixopus/nixopus/api/internal/features/container/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 func (c *ContainerController) GetContainer(f fuego.ContextNoBody) (*types.GetContainerResponse, error) {
@@ -17,6 +17,7 @@ func (c *ContainerController) GetContainer(f fuego.ContextNoBody) (*types.GetCon
 	if err != nil {
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -26,6 +27,7 @@ func (c *ContainerController) GetContainer(f fuego.ContextNoBody) (*types.GetCon
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

@@ -7,18 +7,17 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/validation"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/service"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/storage"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/tasks"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/validation"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/utils"
 
-	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
-	github_storage "github.com/raghavyuva/nixopus-api/internal/features/github-connector/storage"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	github_service "github.com/nixopus/nixopus/api/internal/features/github-connector/service"
+	github_storage "github.com/nixopus/nixopus/api/internal/features/github-connector/storage"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type DeployController struct {
@@ -28,7 +27,7 @@ type DeployController struct {
 	storage       *storage.DeployStorage
 	ctx           context.Context
 	logger        logger.Logger
-	notification  *notification.NotificationManager
+	notifier      shared_types.Notifier
 	taskService   *tasks.TaskService
 	githubService *github_service.GithubConnectorService
 }
@@ -37,11 +36,11 @@ func NewDeployController(
 	store *shared_storage.Store,
 	ctx context.Context,
 	l logger.Logger,
-	notificationManager *notification.NotificationManager,
+	notifier shared_types.Notifier,
 ) (*DeployController, error) {
 	deployStorage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
 	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})
-	taskService := tasks.NewTaskService(&deployStorage, l, github_service, store)
+	taskService := tasks.NewTaskService(&deployStorage, l, github_service, store, notifier)
 	taskService.SetupCreateDeploymentQueue()
 
 	// TODO: Re-enable reconciler and health monitor once systemd-based Caddy
@@ -63,7 +62,7 @@ func NewDeployController(
 		storage:       &deployStorage,
 		ctx:           ctx,
 		logger:        l,
-		notification:  notificationManager,
+		notifier:      notifier,
 		taskService:   taskService,
 		githubService: github_service,
 	}, nil

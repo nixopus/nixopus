@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
 	"github.com/pkg/sftp"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 )
 
 const (

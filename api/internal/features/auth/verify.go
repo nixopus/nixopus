@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/config"
 )
 
 // HTTPClient is a shared HTTP client for Better Auth API calls.

@@ -332,6 +332,12 @@
             "error": "Failed to redeploy application",
             "permissionError": "You do not have permission to redeploy applications"
           },
+          "cancelDeployment": {
+            "button": "Cancel Build",
+            "cancelling": "Cancelling...",
+            "success": "Deployment cancellation initiated",
+            "error": "Failed to cancel deployment"
+          },
           "open": "Open application in new tab"
         }
       }
@@ -503,6 +509,13 @@
       "connectButton": "Connect GitHub",
       "terms": "By connecting, you agree to our Terms of Service and Privacy Policy."
     },
+    "managedSetup": {
+      "title": "Connect Your GitHub Account",
+      "description": "Install the Nixopus GitHub App on your account or organization to connect your repositories.",
+      "connectButton": "Install GitHub App",
+      "loading": "Loading configuration...",
+      "error": "GitHub App is not configured. Please contact your administrator."
+    },
     "githubManifest": {
       "title": "Create GitHub App",
       "appName": {
@@ -520,35 +533,17 @@
     "githubSetup": {
       "steps": {
         "welcome": {
-          "title": "Get Started",
-          "description": "Connect your GitHub account"
+          "title": "Get Started"
         },
         "createApp": {
-          "title": "Create App",
-          "description": "Set up GitHub App"
+          "title": "Create App"
         },
         "installApp": {
-          "title": "Install",
-          "description": "Connect repositories"
+          "title": "Install"
         }
       },
       "welcome": {
-        "title": "Connect Your GitHub Account",
-        "description": "Create a GitHub App to deploy applications directly from your repositories. This setup takes just a few minutes.",
-        "benefits": {
-          "secure": {
-            "title": "GitHub App Manifest",
-            "description": "We'll create a GitHub App using the manifest flow. Your credentials are securely managed through GitHub's app system."
-          },
-          "automated": {
-            "title": "Automated Deployments",
-            "description": "Automatically deploy your applications when you push code to your repositories."
-          },
-          "repositories": {
-            "title": "Access Your Repositories",
-            "description": "Select and deploy from any of your GitHub repositories with just a few clicks."
-          }
-        }
+        "title": "Connect Your GitHub Account"
       },
       "buttons": {
         "next": "Continue",

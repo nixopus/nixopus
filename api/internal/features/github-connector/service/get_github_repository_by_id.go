@@ -6,8 +6,8 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // GetGithubRepositoryByID gets repository details from GitHub by repository ID.

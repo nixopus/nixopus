@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/caddy"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // UpdateDeployment updates an existing application configuration
@@ -101,10 +101,16 @@ func (s *TaskService) HandleUpdateDockerfileDeployment(ctx context.Context, Task
 	})
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to resolve source: "+err.Error(), shared_types.Failed)
+		s.emitDeployFailed(TaskPayload, err)
 		return err
 	}
 
 	taskCtx.LogAndUpdateStatus("Source resolved successfully", shared_types.Building)
+
+	if err := checkCancelled(ctx); err != nil {
+		taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
+		return err
+	}
 
 	// Add organization ID to context for docker service
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
@@ -119,7 +125,17 @@ func (s *TaskService) HandleUpdateDockerfileDeployment(ctx context.Context, Task
 		Context:           orgCtx,
 	})
 	if err != nil {
+		if ctx.Err() != nil {
+			taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
+			return ctx.Err()
+		}
 		taskCtx.LogAndUpdateStatus("Failed to build image: "+err.Error(), shared_types.Failed)
+		s.emitDeployFailed(TaskPayload, err)
+		return err
+	}
+
+	if err := checkCancelled(ctx); err != nil {
+		taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
 		return err
 	}
 
@@ -129,9 +145,15 @@ func (s *TaskService) HandleUpdateDockerfileDeployment(ctx context.Context, Task
 
 	taskCtx.UpdateStatus(shared_types.Deploying)
 
+	if err := checkCancelled(ctx); err != nil {
+		taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
+		return err
+	}
+
 	containerResult, err := s.AtomicUpdateContainer(orgCtx, TaskPayload, taskCtx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to update container: "+err.Error(), shared_types.Failed)
+		s.emitDeployFailed(TaskPayload, err)
 		return err
 	}
 
@@ -142,12 +164,14 @@ func (s *TaskService) HandleUpdateDockerfileDeployment(ctx context.Context, Task
 		port, err := strconv.Atoi(containerResult.AvailablePort)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
+			s.emitDeployFailed(TaskPayload, err)
 			return err
 		}
 
 		upstreamHost, err := GetSSHHostForOrganization(ctx, TaskPayload.Application.OrganizationID)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to get SSH host: "+err.Error(), shared_types.Failed)
+			s.emitDeployFailed(TaskPayload, err)
 			return err
 		}
 
@@ -164,6 +188,7 @@ func (s *TaskService) HandleUpdateDockerfileDeployment(ctx context.Context, Task
 
 		if err := caddy.AddDomainsAtomic(orgCtx, nil, &s.Logger, routes); err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to configure proxy: "+err.Error(), shared_types.Failed)
+			s.emitDeployFailed(TaskPayload, err)
 			s.cleanupServiceOnFailure(orgCtx, TaskPayload.Application.Name, taskCtx)
 			return err
 		}

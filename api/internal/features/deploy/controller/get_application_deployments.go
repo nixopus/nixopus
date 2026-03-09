@@ -6,17 +6,11 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
-type GetApplicationDeploymentsRequest struct {
-	ID       string `json:"id"`
-	Page     string `json:"page"`
-	PageSize string `json:"limit"`
-}
-
-func (c *DeployController) GetApplicationDeployments(f fuego.ContextWithBody[GetApplicationDeploymentsRequest]) (*types.ListDeploymentsResponse, error) {
+func (c *DeployController) GetApplicationDeployments(f fuego.ContextNoBody) (*types.ListDeploymentsResponse, error) {
 	r := f.Request()
 	id := r.URL.Query().Get("id")
 	page := r.URL.Query().Get("page")
@@ -24,9 +18,8 @@ func (c *DeployController) GetApplicationDeployments(f fuego.ContextWithBody[Get
 
 	if id == "" {
 		c.logger.Log(logger.Error, "application ID is required", "")
-		return nil, fuego.HTTPError{
-			Err:    nil,
-			Status: http.StatusBadRequest,
+		return nil, fuego.BadRequestError{
+			Detail: "application ID is required",
 		}
 	}
 
@@ -41,9 +34,9 @@ func (c *DeployController) GetApplicationDeployments(f fuego.ContextWithBody[Get
 	applicationID, err := uuid.Parse(id)
 	if err != nil {
 		c.logger.Log(logger.Error, "Invalid application ID", err.Error())
-		return nil, fuego.HTTPError{
+		return nil, fuego.BadRequestError{
+			Detail: err.Error(),
 			Err:    err,
-			Status: http.StatusBadRequest,
 		}
 	}
 
@@ -62,6 +55,7 @@ func (c *DeployController) GetApplicationDeployments(f fuego.ContextWithBody[Get
 		c.logger.Log(logger.Error, "Failed to get application deployments", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
+			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

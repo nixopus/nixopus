@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -356,6 +356,10 @@ func TestConfigurationValidation(t *testing.T) {
 			},
 			CORS: types.CORSConfig{
 				AllowedOrigin: "http://localhost:3000",
+			},
+			BetterAuth: types.BetterAuthConfig{
+				URL:    "http://localhost:3000/api/auth",
+				Secret: "test-secret",
 			},
 		}
 
