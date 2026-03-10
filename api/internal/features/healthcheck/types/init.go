@@ -2,6 +2,8 @@ package types
 
 import (
 	"errors"
+
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // CreateHealthCheckRequest represents a request to create a health check
@@ -69,3 +71,46 @@ var (
 	ErrPermissionDenied         = errors.New("permission denied")
 	ErrRateLimitExceeded        = errors.New("rate limit exceeded")
 )
+
+// HealthCheckResponse is a typed response for single health check operations.
+type HealthCheckResponse struct {
+	Status  string                    `json:"status"`
+	Message string                    `json:"message,omitempty"`
+	Data    *shared_types.HealthCheck `json:"data,omitempty"`
+	Error   string                    `json:"error,omitempty"`
+}
+
+// HealthCheckResultsResponse is a typed response for health check results.
+type HealthCheckResultsResponse struct {
+	Status  string                            `json:"status"`
+	Message string                            `json:"message,omitempty"`
+	Data    []*shared_types.HealthCheckResult `json:"data,omitempty"`
+	Error   string                            `json:"error,omitempty"`
+}
+
+// HealthCheckStatsData is the typed stats payload for health check metrics.
+type HealthCheckStatsData struct {
+	ApplicationID    string  `json:"application_id"`
+	UptimePercentage float64 `json:"uptime_percentage"`
+	AvgResponseTime  int     `json:"avg_response_time_ms"`
+	TotalChecks      int     `json:"total_checks"`
+	SuccessfulChecks int     `json:"successful_checks"`
+	FailedChecks     int     `json:"failed_checks"`
+	Period           string  `json:"period"`
+	LastStatus       string  `json:"last_status"`
+}
+
+// HealthCheckStatsResponse is a typed response for health check statistics.
+type HealthCheckStatsResponse struct {
+	Status  string                `json:"status"`
+	Message string                `json:"message,omitempty"`
+	Data    *HealthCheckStatsData `json:"data,omitempty"`
+	Error   string                `json:"error,omitempty"`
+}
+
+// HealthCheckMessageResponse is a typed message-only response.
+type HealthCheckMessageResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message,omitempty"`
+	Error   string `json:"error,omitempty"`
+}

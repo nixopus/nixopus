@@ -38,6 +38,29 @@ type UpgradeResourcesRequest struct {
 	MemoryMB  int    `json:"memory_mb"`
 }
 
+// ProvisionTrailResponse is a typed response for provisioning requests.
+type ProvisionTrailResponse struct {
+	Status  string             `json:"status"`
+	Message string             `json:"message,omitempty"`
+	Data    *ProvisionResponse `json:"data,omitempty"`
+	Error   string             `json:"error,omitempty"`
+}
+
+// TrailStatusEnvelopeResponse is a typed response for trail status retrieval.
+type TrailStatusEnvelopeResponse struct {
+	Status  string          `json:"status"`
+	Message string          `json:"message,omitempty"`
+	Data    *StatusResponse `json:"data,omitempty"`
+	Error   string          `json:"error,omitempty"`
+}
+
+// UpgradeResourcesResponse is a typed message response for resource upgrades.
+type UpgradeResourcesResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message,omitempty"`
+	Error   string `json:"error,omitempty"`
+}
+
 // ProvisionPayload represents the payload sent to the Redis queue for async processing.
 type ProvisionPayload struct {
 	SessionID          string `json:"session_id"`

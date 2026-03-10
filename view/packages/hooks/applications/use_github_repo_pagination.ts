@@ -101,9 +101,25 @@ function useGithubRepoPagination() {
     []
   );
 
-  const onSelectRepository = (repository: string) => {
-    setSelectedRepository(repository);
-    router.push(`/apps/create/${repository}`);
+  const onSelectRepository = (repositoryId: string) => {
+    setSelectedRepository(repositoryId);
+    const repo = paginatedApplications?.find(
+      (r: GithubRepository) => r.id.toString() === repositoryId
+    );
+    if (repo) {
+      const params = new URLSearchParams({
+        repo_id: repo.id.toString(),
+        repo_name: repo.name,
+        repo_full_name: repo.full_name,
+        repo_default_branch: repo.default_branch || 'main',
+        repo_visibility: repo.private ? 'private' : 'public',
+        ...(repo.clone_url && { repo_clone_url: repo.clone_url }),
+        ...(repo.language && { repo_language: repo.language }),
+        ...(repo.description && { repo_description: repo.description }),
+        ...(repo.html_url && { repo_html_url: repo.html_url })
+      });
+      router.push(`/chats?${params.toString()}`);
+    }
   };
 
   return {

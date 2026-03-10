@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Streamdown } from 'streamdown';
 import {
   Button,
@@ -64,8 +65,90 @@ function NixopusIcon({ className }: { className?: string }) {
   return <Image src={src} alt="Nixopus" width={16} height={16} className={className} />;
 }
 
+const CHAT_STREAMDOWN_COMPONENTS = {
+  a: ({ href, children, ...props }: React.ComponentPropsWithoutRef<'a'>) => (
+    <a
+      {...props}
+      href={href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className={cn('text-primary underline underline-offset-2 hover:opacity-90', props.className)}
+    >
+      {children}
+    </a>
+  ),
+  pre: ({ children, ...props }: React.ComponentPropsWithoutRef<'pre'>) => (
+    <pre
+      {...props}
+      className={cn(
+        'my-2 overflow-x-auto rounded-md border border-border/60 bg-background/70 p-3 text-xs',
+        props.className
+      )}
+    >
+      {children}
+    </pre>
+  ),
+  code: ({ children, className, ...props }: React.ComponentPropsWithoutRef<'code'>) => {
+    const isBlock = Boolean(className?.includes('language-'));
+    if (isBlock) {
+      return (
+        <code {...props} className={className}>
+          {children}
+        </code>
+      );
+    }
+    return (
+      <code
+        {...props}
+        className={cn(
+          'rounded bg-background/70 px-1 py-0.5 font-mono text-[0.85em] text-foreground',
+          className
+        )}
+      >
+        {children}
+      </code>
+    );
+  },
+  table: ({ children, ...props }: React.ComponentPropsWithoutRef<'table'>) => (
+    <div className="my-2 overflow-x-auto">
+      <table {...props} className={cn('w-full text-sm border-collapse', props.className)}>
+        {children}
+      </table>
+    </div>
+  ),
+  th: ({ children, ...props }: React.ComponentPropsWithoutRef<'th'>) => (
+    <th
+      {...props}
+      className={cn(
+        'border border-border/60 bg-muted/40 px-2 py-1 text-left text-xs font-medium',
+        props.className
+      )}
+    >
+      {children}
+    </th>
+  ),
+  td: ({ children, ...props }: React.ComponentPropsWithoutRef<'td'>) => (
+    <td {...props} className={cn('border border-border/50 px-2 py-1 align-top', props.className)}>
+      {children}
+    </td>
+  ),
+  blockquote: ({ children, ...props }: React.ComponentPropsWithoutRef<'blockquote'>) => (
+    <blockquote
+      {...props}
+      className={cn(
+        'my-2 border-l-2 border-border pl-3 text-muted-foreground italic',
+        props.className
+      )}
+    >
+      {children}
+    </blockquote>
+  )
+};
+
 export function ChatPage() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
+  const navRouter = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('chat_sidebar_collapsed') === 'true';
@@ -79,6 +162,8 @@ export function ChatPage() {
     }
     return false;
   });
+  const [pendingDeployPrompt, setPendingDeployPrompt] = useState<string | null>(null);
+  const repoParamsHandledRef = useRef(false);
 
   useEffect(() => {
     localStorage.setItem('chat_sidebar_collapsed', String(sidebarCollapsed));
@@ -96,6 +181,7 @@ export function ChatPage() {
     resourceId: threads.resourceId,
     contexts: selectedContexts,
     autoRunTools,
+    waitForThread: threads.waitForThread,
     onFirstMessage: (content) => {
       if (threads.activeThreadId) {
         const title = content.length > 50 ? content.slice(0, 50) + '…' : content;
@@ -103,6 +189,73 @@ export function ChatPage() {
       }
     }
   });
+
+  useEffect(() => {
+    if (repoParamsHandledRef.current || !threads.isInitialized) return;
+
+    const repoId = searchParams.get('repo_id');
+    const repoName = searchParams.get('repo_name');
+    const repoFullName = searchParams.get('repo_full_name');
+
+    if (!repoId || !repoName || !repoFullName) return;
+
+    repoParamsHandledRef.current = true;
+
+    const defaultBranch = searchParams.get('repo_default_branch') || 'main';
+    const visibility = searchParams.get('repo_visibility') || 'public';
+    const cloneUrl = searchParams.get('repo_clone_url') || '';
+    const language = searchParams.get('repo_language') || '';
+    const description = searchParams.get('repo_description') || '';
+    const htmlUrl = searchParams.get('repo_html_url') || '';
+
+    threads.createThread(repoName);
+
+    const meta: Record<string, string> = {
+      'GitHub Repo ID': repoId,
+      'Default Branch': defaultBranch,
+      Visibility: visibility
+    };
+    if (cloneUrl) meta['Clone URL'] = cloneUrl;
+    if (language) meta['Language'] = language;
+    if (htmlUrl) meta['GitHub URL'] = htmlUrl;
+
+    setSelectedContexts([
+      {
+        type: 'Repository',
+        id: repoId,
+        label: repoFullName,
+        meta
+      }
+    ]);
+
+    const promptLines = [
+      `I want to deploy the GitHub repository "${repoFullName}" as a new application.`,
+      '',
+      `- GitHub Repository ID (numeric): ${repoId} — use this as the "repository" field when calling createProject`,
+      `- Repository name: ${repoFullName}`,
+      `- Default branch: ${defaultBranch}`,
+      `- Visibility: ${visibility}`
+    ];
+    if (language) promptLines.push(`- Primary language: ${language}`);
+    if (description) promptLines.push(`- Description: ${description}`);
+    if (cloneUrl) promptLines.push(`- Clone URL: ${cloneUrl}`);
+    promptLines.push(
+      '',
+      'No application exists yet — please use createProject with the GitHub repository ID above to create and deploy it.'
+    );
+
+    setPendingDeployPrompt(promptLines.join('\n'));
+
+    navRouter.replace('/chats');
+  }, [threads.isInitialized, searchParams]);
+
+  useEffect(() => {
+    if (pendingDeployPrompt && threads.activeThreadId) {
+      chat.setInputValue(pendingDeployPrompt);
+      setPendingDeployPrompt(null);
+      setTimeout(() => chat.textareaRef.current?.focus(), 100);
+    }
+  }, [pendingDeployPrompt, threads.activeThreadId]);
 
   const handleNewChat = () => {
     threads.createThread(t('ai.threads.untitledChat'));
@@ -599,7 +752,9 @@ function MessageBubble({ message }: MessageBubbleProps) {
             </p>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2">
-              <Streamdown isAnimating={false}>{message.content}</Streamdown>
+              <Streamdown components={CHAT_STREAMDOWN_COMPONENTS} isAnimating={false}>
+                {message.content}
+              </Streamdown>
             </div>
           )}
         </div>

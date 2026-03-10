@@ -78,10 +78,16 @@ func (c *DeployController) IndexCodebase(f fuego.ContextNoBody) (*types.IndexCod
 		}
 	}
 
+	data := types.IndexCodebaseResponseData{}
+	if result != nil {
+		data.Indexed = result.Indexed
+		data.Skipped = result.Skipped
+	}
+
 	return &types.IndexCodebaseResponse{
 		Status:  "success",
 		Message: "Codebase indexed successfully",
-		Data:    result,
+		Data:    data,
 	}, nil
 }
 
