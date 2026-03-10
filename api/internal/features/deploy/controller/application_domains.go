@@ -497,7 +497,7 @@ func resolveDockerPublishedPort(ctx context.Context, serviceName string) (int, e
 }
 
 // GetComposeServices returns the discovered compose services for an application.
-func (c *DeployController) GetComposeServices(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *DeployController) GetComposeServices(f fuego.ContextNoBody) (*types.ComposeServicesResponse, error) {
 	applicationID := f.QueryParam("id")
 	if applicationID == "" {
 		return nil, fuego.HTTPError{
@@ -548,7 +548,7 @@ func (c *DeployController) GetComposeServices(f fuego.ContextNoBody) (*shared_ty
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.ComposeServicesResponse{
 		Status:  "success",
 		Message: "Compose services fetched successfully",
 		Data:    services,

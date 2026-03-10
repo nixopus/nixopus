@@ -3,7 +3,9 @@ package routes
 import (
 	"log"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
@@ -124,6 +126,7 @@ func (router *Router) createServer(port string) *fuego.Server {
 			},
 		}),
 		fuego.WithAddr(":"+port),
+		fuego.WithRouteOptions(openapi.RouteContractOption()),
 	)
 }
 
@@ -186,6 +189,12 @@ func (router *Router) SetupRoutes() {
 
 	log.Printf("Server starting on port %s", PORT)
 	log.Printf("Swagger UI available at: http://localhost:%s/swagger/", PORT)
+	_ = os.Remove("doc/openapi.json")
+	go func() {
+		if err := openapi.PostProcessSpecWithRetry("doc/openapi.json", 30*time.Second); err != nil {
+			log.Printf("Warning: failed to post-process OpenAPI spec: %v", err)
+		}
+	}()
 	server.Run()
 }
 
@@ -201,7 +210,12 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 		log.Fatalf("Failed to create deploy controller: %v", err)
 	}
 	webhookGroup := fuego.Group(server, apiV1.Path+"/webhook")
-	fuego.Post(webhookGroup, "", deployController.HandleGithubWebhook)
+	fuego.Post(
+		webhookGroup,
+		"",
+		deployController.HandleGithubWebhook,
+		fuego.OptionSummary("Handle GitHub webhook"),
+	)
 
 	// WebSocket routes
 	router.RegisterWebSocketRoutes(server, deployController, router.schedulers.HealthCheck)
