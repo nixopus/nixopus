@@ -251,6 +251,13 @@ type LabelsResponse struct {
 	Data    []string `json:"data"`
 }
 
+// ComposeServicesResponse is the typed response for compose service listing.
+type ComposeServicesResponse struct {
+	Status  string                        `json:"status"`
+	Message string                        `json:"message"`
+	Data    []shared_types.ComposeService `json:"data"`
+}
+
 type RecoverRequest struct {
 	ApplicationID *uuid.UUID `json:"application_id,omitempty"`
 }
@@ -274,9 +281,14 @@ type RecoverResponse struct {
 }
 
 type IndexCodebaseResponse struct {
-	Status  string      `json:"status"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data"`
+	Status  string                    `json:"status"`
+	Message string                    `json:"message"`
+	Data    IndexCodebaseResponseData `json:"data"`
+}
+
+type IndexCodebaseResponseData struct {
+	Indexed int `json:"indexed"`
+	Skipped int `json:"skipped"`
 }
 
 var (

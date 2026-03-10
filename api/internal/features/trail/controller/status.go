@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -25,7 +24,7 @@ import (
 //   - 400 Bad Request: invalid session ID format
 //   - 401 Unauthorized: authentication required
 //   - 404 Not Found: provision not found or not owned by user
-func (c *TrailController) GetStatus(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *TrailController) GetStatus(f fuego.ContextNoBody) (*types.TrailStatusEnvelopeResponse, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
@@ -61,7 +60,7 @@ func (c *TrailController) GetStatus(f fuego.ContextNoBody) (*shared_types.Respon
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.TrailStatusEnvelopeResponse{
 		Status:  "success",
 		Message: "Status retrieved successfully",
 		Data:    result,

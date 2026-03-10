@@ -7,11 +7,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *HealthCheckController) CreateHealthCheck(f fuego.ContextWithBody[types.CreateHealthCheckRequest]) (*shared_types.Response, error) {
+func (c *HealthCheckController) CreateHealthCheck(f fuego.ContextWithBody[types.CreateHealthCheckRequest]) (*types.HealthCheckResponse, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
@@ -33,7 +32,7 @@ func (c *HealthCheckController) CreateHealthCheck(f fuego.ContextWithBody[types.
 	if err := c.validator.ValidateRequest(&body); err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		statusCode, mappedErr := mapHealthCheckError(err)
-		return &shared_types.Response{
+		return &types.HealthCheckResponse{
 			Status: "error",
 			Error:  mappedErr.Error(),
 		}, fuego.HTTPError{Status: statusCode}
@@ -43,13 +42,13 @@ func (c *HealthCheckController) CreateHealthCheck(f fuego.ContextWithBody[types.
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		statusCode, mappedErr := mapHealthCheckError(err)
-		return &shared_types.Response{
+		return &types.HealthCheckResponse{
 			Status: "error",
 			Error:  mappedErr.Error(),
 		}, fuego.HTTPError{Status: statusCode}
 	}
 
-	return &shared_types.Response{
+	return &types.HealthCheckResponse{
 		Status:  "success",
 		Message: "Health check created successfully",
 		Data:    healthCheck,

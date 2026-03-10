@@ -20,10 +20,6 @@ export function LogoutDialog({ open, onConfirm, onCancel }: LogoutDialogProps) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Confirm Logout</DialogTitle>
-          <DialogDescription>
-            Are you sure you want to logout? This will clear your session and redirect you to the
-            login page.
-          </DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button

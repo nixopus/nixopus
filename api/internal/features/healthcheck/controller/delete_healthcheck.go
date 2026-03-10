@@ -7,11 +7,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *HealthCheckController) DeleteHealthCheck(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *HealthCheckController) DeleteHealthCheck(f fuego.ContextNoBody) (*types.HealthCheckMessageResponse, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
@@ -33,15 +32,14 @@ func (c *HealthCheckController) DeleteHealthCheck(f fuego.ContextNoBody) (*share
 	if err := c.service.DeleteHealthCheck(applicationID, orgID); err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		statusCode, mappedErr := mapHealthCheckError(err)
-		return &shared_types.Response{
+		return &types.HealthCheckMessageResponse{
 			Status: "error",
 			Error:  mappedErr.Error(),
 		}, fuego.HTTPError{Status: statusCode}
 	}
 
-	return &shared_types.Response{
+	return &types.HealthCheckMessageResponse{
 		Status:  "success",
 		Message: "Health check deleted successfully",
-		Data:    nil,
 	}, nil
 }
