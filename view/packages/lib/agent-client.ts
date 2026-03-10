@@ -4,6 +4,7 @@ export const AGENT_ID = 'deploy-agent';
 
 let cachedAgentBaseUrl: string | null = null;
 let agentBaseUrlPromise: Promise<string> | null = null;
+const AGENT_PROXY_BASE_PATH = '/api/agent';
 
 async function getAgentBaseUrl(): Promise<string> {
   if (cachedAgentBaseUrl !== null) {
@@ -20,7 +21,9 @@ async function getAgentBaseUrl(): Promise<string> {
       })
       .then((cfg) => {
         const agentUrl = typeof cfg.agentUrl === 'string' ? cfg.agentUrl : '';
-        cachedAgentBaseUrl = agentUrl;
+        if (agentUrl) {
+          cachedAgentBaseUrl = agentUrl;
+        }
         return agentUrl;
       })
       .finally(() => {
@@ -92,10 +95,10 @@ async function agentFetch(
   headers: Record<string, string>,
   signal?: AbortSignal
 ): Promise<Response> {
-  const baseUrl = await getAgentBaseUrl();
-  if (!baseUrl) throw new Error('AGENT_URL is not configured');
-
-  const url = `${baseUrl.replace(/\/$/, '')}/api${path}`;
+  const baseUrl = await getAgentBaseUrl().catch(() => '');
+  const url = baseUrl
+    ? `${baseUrl.replace(/\/$/, '')}/api${path}`
+    : `${AGENT_PROXY_BASE_PATH}/api${path}`;
   const reqHeaders: Record<string, string> = {
     'Content-Type': 'application/json'
   };

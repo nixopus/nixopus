@@ -65,6 +65,86 @@ function NixopusIcon({ className }: { className?: string }) {
   return <Image src={src} alt="Nixopus" width={16} height={16} className={className} />;
 }
 
+const CHAT_STREAMDOWN_COMPONENTS = {
+  a: ({ href, children, ...props }: React.ComponentPropsWithoutRef<'a'>) => (
+    <a
+      {...props}
+      href={href}
+      target="_blank"
+      rel="noreferrer noopener"
+      className={cn('text-primary underline underline-offset-2 hover:opacity-90', props.className)}
+    >
+      {children}
+    </a>
+  ),
+  pre: ({ children, ...props }: React.ComponentPropsWithoutRef<'pre'>) => (
+    <pre
+      {...props}
+      className={cn(
+        'my-2 overflow-x-auto rounded-md border border-border/60 bg-background/70 p-3 text-xs',
+        props.className
+      )}
+    >
+      {children}
+    </pre>
+  ),
+  code: ({ children, className, ...props }: React.ComponentPropsWithoutRef<'code'>) => {
+    const isBlock = Boolean(className?.includes('language-'));
+    if (isBlock) {
+      return (
+        <code {...props} className={className}>
+          {children}
+        </code>
+      );
+    }
+    return (
+      <code
+        {...props}
+        className={cn(
+          'rounded bg-background/70 px-1 py-0.5 font-mono text-[0.85em] text-foreground',
+          className
+        )}
+      >
+        {children}
+      </code>
+    );
+  },
+  table: ({ children, ...props }: React.ComponentPropsWithoutRef<'table'>) => (
+    <div className="my-2 overflow-x-auto">
+      <table {...props} className={cn('w-full text-sm border-collapse', props.className)}>
+        {children}
+      </table>
+    </div>
+  ),
+  th: ({ children, ...props }: React.ComponentPropsWithoutRef<'th'>) => (
+    <th
+      {...props}
+      className={cn(
+        'border border-border/60 bg-muted/40 px-2 py-1 text-left text-xs font-medium',
+        props.className
+      )}
+    >
+      {children}
+    </th>
+  ),
+  td: ({ children, ...props }: React.ComponentPropsWithoutRef<'td'>) => (
+    <td {...props} className={cn('border border-border/50 px-2 py-1 align-top', props.className)}>
+      {children}
+    </td>
+  ),
+  blockquote: ({ children, ...props }: React.ComponentPropsWithoutRef<'blockquote'>) => (
+    <blockquote
+      {...props}
+      className={cn(
+        'my-2 border-l-2 border-border pl-3 text-muted-foreground italic',
+        props.className
+      )}
+    >
+      {children}
+    </blockquote>
+  )
+};
+
 export function ChatPage() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
@@ -672,7 +752,9 @@ function MessageBubble({ message }: MessageBubbleProps) {
             </p>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2">
-              <Streamdown isAnimating={false}>{message.content}</Streamdown>
+              <Streamdown components={CHAT_STREAMDOWN_COMPONENTS} isAnimating={false}>
+                {message.content}
+              </Streamdown>
             </div>
           )}
         </div>

@@ -321,41 +321,8 @@
 					},
 					"logs": {
 						"items": {
-							"nullable": true,
-							"properties": {
-								"application": {
-									"$ref": "#/components/schemas/Application"
-								},
-								"application_deployment": {
-									"$ref": "#/components/schemas/ApplicationDeployment"
-								},
-								"application_deployment_id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"application_id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"created_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"log": {
-									"type": "string"
-								},
-								"updated_at": {
-									"format": "date-time",
-									"type": "string"
-								}
-							},
-							"type": "object"
+							"$ref": "#/components/schemas/ApplicationLogs"
 						},
-						"nullable": true,
 						"type": "array"
 					},
 					"name": {
@@ -1643,41 +1610,7 @@
 						"type": "string"
 					},
 					"compose_service": {
-						"nullable": true,
-						"properties": {
-							"application": {
-								"$ref": "#/components/schemas/Application"
-							},
-							"application_id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"created_at": {
-								"format": "date-time",
-								"type": "string"
-							},
-							"domains": {
-								"items": {
-									"$ref": "#/components/schemas/ApplicationDomain"
-								},
-								"type": "array"
-							},
-							"id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"port": {
-								"type": "integer"
-							},
-							"service_name": {
-								"type": "string"
-							},
-							"updated_at": {
-								"format": "date-time",
-								"type": "string"
-							}
-						},
-						"type": "object"
+						"$ref": "#/components/schemas/ComposeService"
 					},
 					"compose_service_id": {
 						"format": "uuid",
