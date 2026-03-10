@@ -1,3 +1,12 @@
+# [0.1.0-alpha.156](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.155...v0.1.0-alpha.156) (2026-03-10)
+
+
+### Bug Fixes
+
+* remove consumer from custom domain which consumed trail provisioning ([b98dd2f](https://github.com/raghavyuva/nixopus/commit/b98dd2f371ac3619d18a0c9fc735c8d09e85bade))
+
+
+
 # [0.1.0-alpha.155](https://github.com/raghavyuva/nixopus/compare/v0.1.0-alpha.154...v0.1.0-alpha.155) (2026-03-10)
 
 
