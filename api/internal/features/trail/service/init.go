@@ -112,7 +112,7 @@ func generateRandomSubdomain() (string, error) {
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
-	return "trail-" + hex.EncodeToString(bytes), nil
+	return hex.EncodeToString(bytes), nil
 }
 
 // generateRandomString generates a random alphanumeric string of the given length.

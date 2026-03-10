@@ -8,11 +8,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *HealthCheckController) GetHealthCheckResults(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *HealthCheckController) GetHealthCheckResults(f fuego.ContextNoBody) (*types.HealthCheckResultsResponse, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
@@ -47,7 +46,7 @@ func (c *HealthCheckController) GetHealthCheckResults(f fuego.ContextNoBody) (*s
 		return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
 	}
 
-	return &shared_types.Response{
+	return &types.HealthCheckResultsResponse{
 		Status:  "success",
 		Message: "Health check results fetched successfully",
 		Data:    results,

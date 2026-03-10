@@ -5,13 +5,13 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
+	healthcheck_service "github.com/raghavyuva/nixopus-api/internal/features/healthcheck/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *HealthCheckController) GetHealthCheckStats(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *HealthCheckController) GetHealthCheckStats(f fuego.ContextNoBody) (*types.HealthCheckStatsResponse, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
@@ -41,9 +41,28 @@ func (c *HealthCheckController) GetHealthCheckStats(f fuego.ContextNoBody) (*sha
 		return nil, fuego.HTTPError{Err: err, Status: http.StatusInternalServerError}
 	}
 
-	return &shared_types.Response{
+	data := mapStatsResponse(stats)
+
+	return &types.HealthCheckStatsResponse{
 		Status:  "success",
 		Message: "Health check stats fetched successfully",
-		Data:    stats,
+		Data:    data,
 	}, nil
+}
+
+func mapStatsResponse(stats *healthcheck_service.HealthCheckStatsResponse) *types.HealthCheckStatsData {
+	if stats == nil {
+		return nil
+	}
+
+	return &types.HealthCheckStatsData{
+		ApplicationID:    stats.ApplicationID,
+		UptimePercentage: stats.UptimePercentage,
+		AvgResponseTime:  stats.AvgResponseTime,
+		TotalChecks:      stats.TotalChecks,
+		SuccessfulChecks: stats.SuccessfulChecks,
+		FailedChecks:     stats.FailedChecks,
+		Period:           stats.Period,
+		LastStatus:       stats.LastStatus,
+	}
 }

@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/types"
 	"golang.org/x/time/rate"
 )
 
@@ -20,6 +19,11 @@ var (
 type client struct {
 	limiter  *rate.Limiter
 	lastSeen time.Time
+}
+
+type rateLimitResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message,omitempty"`
 }
 
 func StartCleanupTask() {
@@ -89,7 +93,7 @@ func RateLimiter(next http.Handler) http.Handler {
 		if !allowed {
 			clientsMtx.Unlock()
 			fmt.Printf("Rate limit exceeded for IP: %s\n", ip)
-			message := types.Response{
+			message := rateLimitResponse{
 				Status:  "Request Failed",
 				Message: "The API is at capacity, try again later.",
 			}

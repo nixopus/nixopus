@@ -8,11 +8,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
-type ListFilesRequest struct {
-	Path string `json:"path"`
-}
-
-func (c *FileManagerController) ListFiles(f fuego.ContextWithBody[ListFilesRequest]) (*types.ListFilesResponse, error) {
+func (c *FileManagerController) ListFiles(f fuego.ContextNoBody) (*types.ListFilesResponse, error) {
 	_, r := f.Response(), f.Request()
 	path := r.URL.Query().Get("path")
 
