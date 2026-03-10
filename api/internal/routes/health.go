@@ -8,7 +8,7 @@ import (
 
 // RegisterHealthRoutes registers health check and version routes
 func (router *Router) RegisterHealthRoutes(healthGroup *fuego.Server) {
-	fuego.Get(healthGroup, "", health.HealthCheck)
+	fuego.Get(healthGroup, "", health.HealthCheck, fuego.OptionSummary("Health check"))
 	// Commented out - version manager related endpoint
 	// versionGroup := fuego.Group(healthGroup, "/versions")
 	// fuego.Get(versionGroup, "", func(c fuego.ContextNoBody) (interface{}, error) {

@@ -75,11 +75,24 @@ func (router *Router) RegisterLiveDeployRoutes(server *fuego.Server, apiV1 api.V
 		controller.gateway.HandleWebSocket(c.Response(), c.Request())
 		return nil, nil
 	}
-	fuego.Get(server, "/ws/live/{application_id}", wsHandler)
+	fuego.Get(
+		server,
+		"/ws/live/{application_id}",
+		wsHandler,
+		fuego.OptionSummary("Open live deploy WebSocket"),
+		fuego.OptionHide(),
+	)
 
 	// Pause live dev service
 	liveGroup := fuego.Group(server, apiV1.Path+"/live")
-	fuego.Post(liveGroup, "/pause", controller.HandlePause)
+	fuego.Post(
+		liveGroup,
+		"/pause",
+		controller.HandlePause,
+		fuego.OptionSummary("Pause live deploy service"),
+		fuego.OptionQuery("application_id", "Application ID"),
+		fuego.OptionQuery("token", "Session token"),
+	)
 }
 
 // PauseRequest holds the optional request body for pause
@@ -87,9 +100,14 @@ type PauseRequest struct {
 	ApplicationID string `json:"application_id"`
 }
 
+type PauseResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message,omitempty"`
+}
+
 // HandlePause pauses the live dev service for the given application.
 // Accepts application_id via query param or JSON body.
-func (c *LiveDeployController) HandlePause(f fuego.ContextWithBody[PauseRequest]) (*types.Response, error) {
+func (c *LiveDeployController) HandlePause(f fuego.ContextWithBody[PauseRequest]) (*PauseResponse, error) {
 	r := f.Request()
 	applicationIDStr := r.URL.Query().Get("application_id")
 	if applicationIDStr == "" {
@@ -161,9 +179,8 @@ func (c *LiveDeployController) HandlePause(f fuego.ContextWithBody[PauseRequest]
 		}
 	}
 
-	return &types.Response{
+	return &PauseResponse{
 		Status:  "success",
 		Message: "Live dev service paused",
-		Data:    nil,
 	}, nil
 }

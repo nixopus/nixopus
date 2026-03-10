@@ -29,7 +29,13 @@ func (router *Router) RegisterWebSocketRoutes(server *fuego.Server, deployContro
 		return nil, nil
 	}
 
-	fuego.Get(server, "/ws", wsHandler)
+	fuego.Get(
+		server,
+		"/ws",
+		wsHandler,
+		fuego.OptionSummary("Open dashboard WebSocket"),
+		fuego.OptionHide(),
+	)
 }
 
 // GetSocketServer returns the WebSocket server instance

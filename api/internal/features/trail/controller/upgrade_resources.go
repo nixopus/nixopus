@@ -8,10 +8,9 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/config"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
-func (c *TrailController) UpgradeResources(f fuego.ContextWithBody[types.UpgradeResourcesRequest]) (*shared_types.Response, error) {
+func (c *TrailController) UpgradeResources(f fuego.ContextWithBody[types.UpgradeResourcesRequest]) (*types.UpgradeResourcesResponse, error) {
 	r := f.Request()
 
 	secret := r.Header.Get("X-Internal-Secret")
@@ -54,7 +53,7 @@ func (c *TrailController) UpgradeResources(f fuego.ContextWithBody[types.Upgrade
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.UpgradeResourcesResponse{
 		Status:  "success",
 		Message: "Resource upgrade enqueued",
 	}, nil

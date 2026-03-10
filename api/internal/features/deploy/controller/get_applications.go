@@ -10,13 +10,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-type GetApplicationsRequest struct {
-	Page       string `json:"page"`
-	PageSize   string `json:"page_size"`
-	Repository string `json:"repository"`
-}
-
-func (c *DeployController) GetApplications(f fuego.ContextWithBody[GetApplicationsRequest]) (*types.ListApplicationsResponse, error) {
+func (c *DeployController) GetApplications(f fuego.ContextNoBody) (*types.ListApplicationsResponse, error) {
 	w, r := f.Response(), f.Request()
 	page := r.URL.Query().Get("page")
 	pageSize := r.URL.Query().Get("page_size")

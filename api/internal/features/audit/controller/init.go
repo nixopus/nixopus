@@ -45,7 +45,11 @@ func (c *AuditController) GetRecentAuditLogs(f fuego.ContextNoBody) (*types.GetA
 
 	// Get query parameters
 	page := f.QueryParam("page")
-	pageSize := f.QueryParam("pageSize")
+	pageSize := f.QueryParam("page_size")
+	if pageSize == "" {
+		// Backward compatibility for older clients.
+		pageSize = f.QueryParam("pageSize")
+	}
 	search := f.QueryParam("search")
 	resourceType := f.QueryParam("resource_type")
 

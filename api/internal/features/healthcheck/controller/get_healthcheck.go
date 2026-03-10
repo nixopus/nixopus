@@ -7,11 +7,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
-func (c *HealthCheckController) GetHealthCheck(f fuego.ContextNoBody) (*shared_types.Response, error) {
+func (c *HealthCheckController) GetHealthCheck(f fuego.ContextNoBody) (*types.HealthCheckResponse, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
@@ -37,7 +36,7 @@ func (c *HealthCheckController) GetHealthCheck(f fuego.ContextNoBody) (*shared_t
 	}
 
 	// Return success with null data if health check doesn't exist
-	return &shared_types.Response{
+	return &types.HealthCheckResponse{
 		Status:  "success",
 		Message: "Health check fetched successfully",
 		Data:    healthCheck,
