@@ -28,7 +28,8 @@
       "search": "Search",
       "apps": "Apps",
       "containers": "Containers",
-      "domains": "Domains"
+      "domains": "Domains",
+      "repositories": "Repositories"
     },
     "toolApproval": {
       "title": "Tool approval required",

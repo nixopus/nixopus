@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Streamdown } from 'streamdown';
 import {
   Button,
@@ -66,6 +67,8 @@ function NixopusIcon({ className }: { className?: string }) {
 
 export function ChatPage() {
   const { t } = useTranslation();
+  const searchParams = useSearchParams();
+  const navRouter = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('chat_sidebar_collapsed') === 'true';
@@ -79,6 +82,8 @@ export function ChatPage() {
     }
     return false;
   });
+  const [pendingDeployPrompt, setPendingDeployPrompt] = useState<string | null>(null);
+  const repoParamsHandledRef = useRef(false);
 
   useEffect(() => {
     localStorage.setItem('chat_sidebar_collapsed', String(sidebarCollapsed));
@@ -96,6 +101,7 @@ export function ChatPage() {
     resourceId: threads.resourceId,
     contexts: selectedContexts,
     autoRunTools,
+    waitForThread: threads.waitForThread,
     onFirstMessage: (content) => {
       if (threads.activeThreadId) {
         const title = content.length > 50 ? content.slice(0, 50) + '…' : content;
@@ -103,6 +109,73 @@ export function ChatPage() {
       }
     }
   });
+
+  useEffect(() => {
+    if (repoParamsHandledRef.current || !threads.isInitialized) return;
+
+    const repoId = searchParams.get('repo_id');
+    const repoName = searchParams.get('repo_name');
+    const repoFullName = searchParams.get('repo_full_name');
+
+    if (!repoId || !repoName || !repoFullName) return;
+
+    repoParamsHandledRef.current = true;
+
+    const defaultBranch = searchParams.get('repo_default_branch') || 'main';
+    const visibility = searchParams.get('repo_visibility') || 'public';
+    const cloneUrl = searchParams.get('repo_clone_url') || '';
+    const language = searchParams.get('repo_language') || '';
+    const description = searchParams.get('repo_description') || '';
+    const htmlUrl = searchParams.get('repo_html_url') || '';
+
+    threads.createThread(repoName);
+
+    const meta: Record<string, string> = {
+      'GitHub Repo ID': repoId,
+      'Default Branch': defaultBranch,
+      Visibility: visibility
+    };
+    if (cloneUrl) meta['Clone URL'] = cloneUrl;
+    if (language) meta['Language'] = language;
+    if (htmlUrl) meta['GitHub URL'] = htmlUrl;
+
+    setSelectedContexts([
+      {
+        type: 'Repository',
+        id: repoId,
+        label: repoFullName,
+        meta
+      }
+    ]);
+
+    const promptLines = [
+      `I want to deploy the GitHub repository "${repoFullName}" as a new application.`,
+      '',
+      `- GitHub Repository ID (numeric): ${repoId} — use this as the "repository" field when calling createProject`,
+      `- Repository name: ${repoFullName}`,
+      `- Default branch: ${defaultBranch}`,
+      `- Visibility: ${visibility}`
+    ];
+    if (language) promptLines.push(`- Primary language: ${language}`);
+    if (description) promptLines.push(`- Description: ${description}`);
+    if (cloneUrl) promptLines.push(`- Clone URL: ${cloneUrl}`);
+    promptLines.push(
+      '',
+      'No application exists yet — please use createProject with the GitHub repository ID above to create and deploy it.'
+    );
+
+    setPendingDeployPrompt(promptLines.join('\n'));
+
+    navRouter.replace('/chats');
+  }, [threads.isInitialized, searchParams]);
+
+  useEffect(() => {
+    if (pendingDeployPrompt && threads.activeThreadId) {
+      chat.setInputValue(pendingDeployPrompt);
+      setPendingDeployPrompt(null);
+      setTimeout(() => chat.textareaRef.current?.focus(), 100);
+    }
+  }, [pendingDeployPrompt, threads.activeThreadId]);
 
   const handleNewChat = () => {
     threads.createThread(t('ai.threads.untitledChat'));

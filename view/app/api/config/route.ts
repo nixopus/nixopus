@@ -19,7 +19,8 @@ export async function GET() {
     webhookUrl: process.env.WEBHOOK_URL || derived.webhookUrl,
     port: process.env.NEXT_PUBLIC_PORT || '7443',
     passwordLoginEnabled: process.env.PASSWORD_LOGIN_ENABLED !== 'false',
-    agentConfigured: Boolean(process.env.AGENT_URL)
+    agentConfigured: Boolean(process.env.AGENT_URL),
+    agentUrl: process.env.AGENT_URL || ''
   });
   response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
   return response;
