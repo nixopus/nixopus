@@ -10,13 +10,7 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 )
 
-type GetApplicationDeploymentsRequest struct {
-	ID       string `json:"id"`
-	Page     string `json:"page"`
-	PageSize string `json:"limit"`
-}
-
-func (c *DeployController) GetApplicationDeployments(f fuego.ContextWithBody[GetApplicationDeploymentsRequest]) (*types.ListDeploymentsResponse, error) {
+func (c *DeployController) GetApplicationDeployments(f fuego.ContextNoBody) (*types.ListDeploymentsResponse, error) {
 	r := f.Request()
 	id := r.URL.Query().Get("id")
 	page := r.URL.Query().Get("page")

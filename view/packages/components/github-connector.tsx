@@ -13,7 +13,6 @@ import {
   Github,
   Settings,
   Trash2,
-  RefreshCw,
   Plus,
   Check,
   ExternalLink,
@@ -31,29 +30,12 @@ const STEP_CONFIG = [
   {
     id: 'create-app',
     icon: Github,
-    titleKey: 'selfHost.githubSetup.steps.createApp.title',
-    descriptionKey: 'selfHost.githubSetup.steps.createApp.description'
+    titleKey: 'selfHost.githubSetup.steps.createApp.title'
   },
   {
     id: 'install-app',
     icon: CheckCircle2,
-    titleKey: 'selfHost.githubSetup.steps.installApp.title',
-    descriptionKey: 'selfHost.githubSetup.steps.installApp.description'
-  }
-] as const;
-
-const BENEFITS = [
-  {
-    key: 'secure',
-    icon: CheckCircle2
-  },
-  {
-    key: 'automated',
-    icon: CheckCircle2
-  },
-  {
-    key: 'repositories',
-    icon: CheckCircle2
+    titleKey: 'selfHost.githubSetup.steps.installApp.title'
   }
 ] as const;
 
@@ -146,29 +128,6 @@ interface WelcomeStepProps {
   onCreateClick?: (createFn: () => void) => void;
 }
 
-const BenefitItem: React.FC<{ benefitKey: string; Icon: typeof CheckCircle2 }> = ({
-  benefitKey,
-  Icon
-}) => {
-  const { t } = useTranslation();
-
-  return (
-    <div className="flex items-start gap-3 p-4 rounded-lg bg-muted/30">
-      <div className="rounded-full bg-primary/10 p-1.5 mt-0.5 shrink-0">
-        <Icon size={16} className="text-primary" />
-      </div>
-      <div className="flex-1 space-y-1">
-        <p className="text-sm font-medium">
-          {t(`selfHost.githubSetup.welcome.benefits.${benefitKey}.title` as any)}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {t(`selfHost.githubSetup.welcome.benefits.${benefitKey}.description` as any)}
-        </p>
-      </div>
-    </div>
-  );
-};
-
 const WelcomeHeader: React.FC = () => {
   const { t } = useTranslation();
 
@@ -177,12 +136,7 @@ const WelcomeHeader: React.FC = () => {
       <div className="rounded-full bg-primary/10 p-4">
         <Github size={48} className="text-primary" />
       </div>
-      <div className="space-y-2">
-        <h3 className="text-2xl font-semibold">{t('selfHost.githubSetup.welcome.title' as any)}</h3>
-        <p className="text-muted-foreground">
-          {t('selfHost.githubSetup.welcome.description' as any)}
-        </p>
-      </div>
+      <h3 className="text-2xl font-semibold">{t('selfHost.githubSetup.welcome.title' as any)}</h3>
     </div>
   );
 };
@@ -197,11 +151,6 @@ const WelcomeStep: React.FC<WelcomeStepProps> = ({
   return (
     <div className="pt-8 pb-6 px-6 space-y-6">
       <WelcomeHeader />
-      <div className="space-y-3 pt-2">
-        {BENEFITS.map((benefit) => (
-          <BenefitItem key={benefit.key} benefitKey={benefit.key} Icon={benefit.icon} />
-        ))}
-      </div>
       <div className="flex justify-center pt-2">
         <GitHubAppManifestComponent
           organization={organization}
@@ -251,16 +200,12 @@ const StepItem: React.FC<{
   stepId: string;
   Icon: typeof Github;
   titleKey: string;
-  descriptionKey: string;
-}> = ({ Stepper, stepId, Icon, titleKey, descriptionKey }) => {
+}> = ({ Stepper, stepId, Icon, titleKey }) => {
   const { t } = useTranslation();
 
   return (
     <Stepper.Step of={stepId} icon={<Icon size={20} />} className="flex-col gap-2">
       <Stepper.Title className="text-sm font-medium">{t(titleKey as any)}</Stepper.Title>
-      <Stepper.Description className="text-xs text-muted-foreground">
-        {t(descriptionKey as any)}
-      </Stepper.Description>
     </Stepper.Step>
   );
 };
@@ -276,7 +221,6 @@ const StepperNavigation: React.FC<StepperNavigationProps> = ({ Stepper }) => {
             stepId={step.id}
             Icon={step.icon}
             titleKey={step.titleKey}
-            descriptionKey={step.descriptionKey}
           />
         ))}
       </Stepper.Navigation>

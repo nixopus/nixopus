@@ -359,35 +359,17 @@
     "githubSetup": {
       "steps": {
         "welcome": {
-          "title": "Comenzar",
-          "description": "Conecta tu cuenta de GitHub"
+          "title": "Comenzar"
         },
         "createApp": {
-          "title": "Crear Aplicación",
-          "description": "Configurar Aplicación de GitHub"
+          "title": "Crear Aplicación"
         },
         "installApp": {
-          "title": "Instalar",
-          "description": "Conectar repositorios"
+          "title": "Instalar"
         }
       },
       "welcome": {
-        "title": "Conecta tu cuenta de GitHub",
-        "description": "Crea una Aplicación de GitHub para desplegar aplicaciones directamente desde tus repositorios. Esta configuración solo toma unos minutos.",
-        "benefits": {
-          "secure": {
-            "title": "Manifiesto de Aplicación GitHub",
-            "description": "Crearemos una Aplicación de GitHub usando el flujo de manifiesto. Tus credenciales se gestionan de forma segura a través del sistema de aplicaciones de GitHub."
-          },
-          "automated": {
-            "title": "Despliegues Automatizados",
-            "description": "Despliega automáticamente tus aplicaciones cuando subes código a tus repositorios."
-          },
-          "repositories": {
-            "title": "Accede a tus Repositorios",
-            "description": "Selecciona y despliega desde cualquiera de tus repositorios de GitHub con solo unos clics."
-          }
-        }
+        "title": "Conecta tu cuenta de GitHub"
       },
       "buttons": {
         "next": "Continuar",

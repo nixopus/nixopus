@@ -1,4 +1,4 @@
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAppSelector, useAppDispatch } from '@/redux/hooks';
 import { useUserOrganizations } from '@/packages/hooks/auth/use-better-auth-orgs';
 import { useNavigationState } from '@/packages/hooks/shared/use_navigation_state';
@@ -50,7 +50,6 @@ export function useAppSidebar() {
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const dispatch = useAppDispatch();
   const { canAccessResource } = useRBAC();
-  const router = useRouter();
   const pathname = usePathname();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const { closeSettings } = useSettingsModal();
@@ -190,14 +189,14 @@ Add any other context about the problem here.`;
       resetApiStates();
       dispatch({ type: 'RESET_STATE' });
       await dispatch(logoutUser() as any);
-      router.push('/auth');
+      window.location.href = '/auth';
     } catch (error) {
       console.error('Logout failed:', error);
       clearLocalStorage();
       resetApiStates();
       dispatch({ type: 'RESET_STATE' });
       dispatch(logout());
-      router.push('/auth');
+      window.location.href = '/auth';
     }
   };
 

@@ -3,7 +3,14 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAppSelector } from '@/redux/hooks';
 import { authClient } from '@/packages/lib/auth-client';
-import { createAgentClient, AGENT_ID } from '@/packages/lib/agent-client';
+import {
+  createAgentClient,
+  AGENT_ID,
+  streamAgent,
+  approveAgentToolCall,
+  declineAgentToolCall,
+  type StreamChunk
+} from '@/packages/lib/agent-client';
 import { useAgentConfigured } from '@/packages/hooks/shared/use-config';
 import { type ChatContext, formatContextsForAgent } from './chat-context';
 
@@ -21,6 +28,7 @@ interface UseAgentChatOptions {
   contexts?: ChatContext[];
   autoRunTools?: boolean;
   onFirstMessage?: (content: string) => void;
+  waitForThread?: (id: string) => Promise<void>;
 }
 
 async function getAuthHeaders(
@@ -77,7 +85,8 @@ export function useAgentChat({
   resourceId,
   contexts = [],
   autoRunTools = false,
-  onFirstMessage
+  onFirstMessage,
+  waitForThread
 }: UseAgentChatOptions) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
@@ -120,6 +129,9 @@ export function useAgentChat({
 
     (async () => {
       try {
+        if (waitForThread) await waitForThread(threadId);
+        if (cancelled) return;
+
         const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
         const client = createAgentClient(headers);
         const thread = client.getMemoryThread({ threadId, agentId: AGENT_ID });
@@ -154,15 +166,88 @@ export function useAgentChat({
     return () => {
       cancelled = true;
     };
-  }, [threadId, resourceId, token, organizationId, isAgentEnabled]);
+  }, [threadId, resourceId, token, organizationId, isAgentEnabled, waitForThread]);
+
+  const handleChunk = useCallback(
+    (
+      chunk: StreamChunk,
+      assistantMessageId: string,
+      runIdRef: { current: string },
+      abortSignal: AbortSignal
+    ) => {
+      if (abortSignal.aborted) return;
+
+      if (chunk.type === 'start' && chunk.runId) {
+        runIdRef.current = chunk.runId;
+      }
+
+      if (chunk.type === 'text-delta') {
+        const text = chunk.payload?.text as string | undefined;
+        if (text) {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantMessageId ? { ...m, content: m.content + text } : m))
+          );
+        }
+      }
+
+      if (
+        chunk.type === 'tool-call' ||
+        chunk.type === 'tool-call-start' ||
+        chunk.type === 'tool-call-approval'
+      ) {
+        const p = chunk.payload as
+          | {
+              toolCallId?: string;
+              toolName?: string;
+              args?: unknown;
+              runId?: string;
+              id?: string;
+            }
+          | undefined;
+        const rid = (p?.runId as string) ?? runIdRef.current;
+        const toolCallId = p?.toolCallId ?? p?.id;
+        if (rid && toolCallId) {
+          pendingApprovalRef.current = true;
+          setPendingToolApproval({
+            runId: rid,
+            toolCallId: String(toolCallId),
+            toolName: (p?.toolName as string) ?? 'tool',
+            args: p?.args ?? {}
+          });
+        }
+      }
+
+      if (chunk.type === 'finish' && chunk.payload) {
+        const finishReason = (chunk.payload as { finishReason?: string }).finishReason;
+        const suspendPayload = (
+          chunk.payload as {
+            suspendPayload?: {
+              toolCallId?: string;
+              runId?: string;
+              toolName?: string;
+              args?: unknown;
+            };
+          }
+        ).suspendPayload;
+        if (finishReason === 'suspended' && suspendPayload) {
+          pendingApprovalRef.current = true;
+          setPendingToolApproval({
+            runId: suspendPayload.runId ?? '',
+            toolCallId: suspendPayload.toolCallId ?? '',
+            toolName: (suspendPayload.toolName as string) ?? 'tool',
+            args: suspendPayload.args ?? {}
+          });
+        }
+      }
+    },
+    []
+  );
 
   const streamResponse = useCallback(
     async (userContent: string) => {
       if (!isAgentEnabled || !threadId) return;
 
       const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
-      const client = createAgentClient(headers);
-      const agent = client.getAgent(AGENT_ID);
 
       const abortController = new AbortController();
       abortRef.current = abortController;
@@ -174,83 +259,19 @@ export function useAgentChat({
         { id: assistantMessageId, role: 'assistant', content: '', timestamp: new Date() }
       ]);
 
-      const processNext = async (response: {
-        processDataStream: (opts: { onChunk: (chunk: unknown) => Promise<void> }) => Promise<void>;
-      }): Promise<void> => {
-        let runId = runIdRef.current;
-        const chunkHandler = async (chunk: unknown) => {
-          if (abortController.signal.aborted) return;
-          const c = chunk as { type?: string; runId?: string; payload?: Record<string, unknown> };
-          if (c.type === 'start' && c.runId) {
-            runIdRef.current = c.runId;
-          }
-          if (c.type === 'text-delta') {
-            const text = c.payload?.text as string | undefined;
-            if (text) {
-              setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === assistantMessageId ? { ...m, content: m.content + text } : m
-                )
-              );
-            }
-          }
-          if (c.type === 'tool-call' || c.type === 'tool-call-approval') {
-            const payload = c.payload as
-              | {
-                  toolCallId?: string;
-                  toolName?: string;
-                  args?: unknown;
-                  runId?: string;
-                  id?: string;
-                }
-              | undefined;
-            const rid = payload?.runId ?? runIdRef.current;
-            const toolCallId = payload?.toolCallId ?? payload?.id;
-            if (rid && toolCallId) {
-              pendingApprovalRef.current = true;
-              setPendingToolApproval({
-                runId: rid,
-                toolCallId: String(toolCallId),
-                toolName: (payload?.toolName as string) ?? 'tool',
-                args: payload?.args ?? {}
-              });
-            }
-          }
-          if (c.type === 'finish' && c.payload) {
-            const finishReason = (c.payload as { finishReason?: string }).finishReason;
-            const suspendPayload = (
-              c.payload as {
-                suspendPayload?: {
-                  toolCallId?: string;
-                  runId?: string;
-                  toolName?: string;
-                  args?: unknown;
-                };
-              }
-            ).suspendPayload;
-            if (finishReason === 'suspended' && suspendPayload) {
-              pendingApprovalRef.current = true;
-              setPendingToolApproval({
-                runId: suspendPayload.runId ?? '',
-                toolCallId: suspendPayload.toolCallId ?? '',
-                toolName: (suspendPayload.toolName as string) ?? 'tool',
-                args: suspendPayload.args ?? {}
-              });
-            }
-          }
-        };
-        await response.processDataStream({ onChunk: chunkHandler });
-      };
-
       try {
         const contextPrefix = formatContextsForAgent(contexts);
-        const response = await agent.stream(contextPrefix + userContent, {
-          memory: {
-            thread: threadId,
-            resource: resourceId || threadId
-          }
-        });
-        await processNext(response);
+        const stream = streamAgent(
+          contextPrefix + userContent,
+          threadId,
+          resourceId || threadId,
+          headers,
+          abortController.signal
+        );
+
+        for await (const chunk of stream) {
+          handleChunk(chunk, assistantMessageId, runIdRef, abortController.signal);
+        }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
 
@@ -271,7 +292,7 @@ export function useAgentChat({
         abortRef.current = null;
       }
     },
-    [threadId, resourceId, token, organizationId, isAgentEnabled, contexts]
+    [threadId, resourceId, token, organizationId, isAgentEnabled, contexts, handleChunk]
   );
 
   const handleApproveToolCall = useCallback(async () => {
@@ -281,9 +302,6 @@ export function useAgentChat({
     setPendingToolApproval(null);
     pendingApprovalRef.current = false;
 
-    const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
-    const client = createAgentClient(headers);
-    const agent = client.getAgent(AGENT_ID);
     const assistantMessageId = messages.filter((m) => m.role === 'assistant').pop()?.id;
     if (!assistantMessageId) {
       setIsStreaming(false);
@@ -294,77 +312,17 @@ export function useAgentChat({
     abortRef.current = abortController;
     const runIdRef = { current: '' };
 
-    const processNext = async (response: {
-      processDataStream: (opts: { onChunk: (chunk: unknown) => Promise<void> }) => Promise<void>;
-    }): Promise<void> => {
-      const chunkHandler = async (chunk: unknown) => {
-        if (abortController.signal.aborted) return;
-        const c = chunk as { type?: string; runId?: string; payload?: Record<string, unknown> };
-        if (c.type === 'start' && c.runId) runIdRef.current = c.runId;
-        if (c.type === 'text-delta') {
-          const text = c.payload?.text as string | undefined;
-          if (text) {
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantMessageId ? { ...m, content: m.content + text } : m
-              )
-            );
-          }
-        }
-        if (c.type === 'tool-call' || c.type === 'tool-call-approval') {
-          const payload = c.payload as
-            | {
-                toolCallId?: string;
-                toolName?: string;
-                args?: unknown;
-                runId?: string;
-                id?: string;
-              }
-            | undefined;
-          const rid = payload?.runId ?? runIdRef.current;
-          const toolCallId = payload?.toolCallId ?? payload?.id;
-          if (rid && toolCallId) {
-            pendingApprovalRef.current = true;
-            setPendingToolApproval({
-              runId: rid,
-              toolCallId: String(toolCallId),
-              toolName: (payload?.toolName as string) ?? 'tool',
-              args: payload?.args ?? {}
-            });
-          }
-        }
-        if (c.type === 'finish' && c.payload) {
-          const finishReason = (c.payload as { finishReason?: string }).finishReason;
-          const suspendPayload = (
-            c.payload as {
-              suspendPayload?: {
-                toolCallId?: string;
-                runId?: string;
-                toolName?: string;
-                args?: unknown;
-              };
-            }
-          ).suspendPayload;
-          if (finishReason === 'suspended' && suspendPayload) {
-            pendingApprovalRef.current = true;
-            setPendingToolApproval({
-              runId: suspendPayload.runId ?? '',
-              toolCallId: suspendPayload.toolCallId ?? '',
-              toolName: (suspendPayload.toolName as string) ?? 'tool',
-              args: suspendPayload.args ?? {}
-            });
-          }
-        }
-      };
-      await response.processDataStream({ onChunk: chunkHandler });
-    };
-
     try {
-      const response = await agent.approveToolCall({
-        runId: pending.runId,
-        toolCallId: pending.toolCallId
-      });
-      await processNext(response);
+      const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
+      const stream = approveAgentToolCall(
+        { runId: pending.runId, toolCallId: pending.toolCallId },
+        headers,
+        abortController.signal
+      );
+
+      for await (const chunk of stream) {
+        handleChunk(chunk, assistantMessageId, runIdRef, abortController.signal);
+      }
     } catch {
       setMessages((prev) =>
         prev.map((m) =>
@@ -377,7 +335,7 @@ export function useAgentChat({
       if (!pendingApprovalRef.current) setIsStreaming(false);
       abortRef.current = null;
     }
-  }, [pendingToolApproval, isAgentEnabled, token, organizationId, messages]);
+  }, [pendingToolApproval, isAgentEnabled, token, organizationId, messages, handleChunk]);
 
   const handleDeclineToolCall = useCallback(async () => {
     const pending = pendingToolApproval;
@@ -388,12 +346,7 @@ export function useAgentChat({
 
     try {
       const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
-      const client = createAgentClient(headers);
-      const agent = client.getAgent(AGENT_ID);
-      await agent.declineToolCall({
-        runId: pending.runId,
-        toolCallId: pending.toolCallId
-      });
+      await declineAgentToolCall({ runId: pending.runId, toolCallId: pending.toolCallId }, headers);
       const assistantMessageId = messages.filter((m) => m.role === 'assistant').pop()?.id;
       if (assistantMessageId) {
         setMessages((prev) =>
@@ -499,6 +452,7 @@ export function useAgentChat({
   return {
     messages,
     inputValue,
+    setInputValue,
     isStreaming,
     isLoadingHistory,
     isAgentConfigured: isAgentEnabled,

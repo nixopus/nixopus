@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
@@ -27,7 +26,7 @@ import (
 //   - 403 Forbidden: organization context required
 //   - 409 Conflict: active provision already exists
 //   - 503 Service Unavailable: system at capacity
-func (c *TrailController) ProvisionTrail(f fuego.ContextWithBody[types.ProvisionRequest]) (*shared_types.Response, error) {
+func (c *TrailController) ProvisionTrail(f fuego.ContextWithBody[types.ProvisionRequest]) (*types.ProvisionTrailResponse, error) {
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 
@@ -79,7 +78,7 @@ func (c *TrailController) ProvisionTrail(f fuego.ContextWithBody[types.Provision
 		}
 	}
 
-	return &shared_types.Response{
+	return &types.ProvisionTrailResponse{
 		Status:  "success",
 		Message: "Trail provisioning started",
 		Data:    result,
