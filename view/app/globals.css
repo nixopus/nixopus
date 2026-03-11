@@ -4,6 +4,8 @@
 @import 'streamdown/styles.css';
 @source "../node_modules/@nixopus/ui/dist/**/*.{js,jsx}";
 @source "../node_modules/streamdown/dist/*.js";
+@source "../node_modules/@streamdown/code/dist/*.js";
+@source "../node_modules/@streamdown/mermaid/dist/*.js";
 
 /* Scan nixopus-ui npm package source files for Tailwind classes */
 /* Tailwind resolves @source paths from the project root (billing-view/) */

@@ -1,10 +1,14 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { useSearchParams, useRouter } from 'next/navigation';
 import { Streamdown } from 'streamdown';
+import {
+  STREAMDOWN_PLUGINS,
+  STREAMDOWN_CONTROLS,
+  STREAMDOWN_ANIMATED
+} from '@/packages/lib/streamdown-config';
 import {
   Button,
   ScrollArea,
@@ -41,23 +45,29 @@ import {
   X,
   CirclePlus,
   Search,
-  Check
+  Check,
+  ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import {
-  useAgentChat,
   type ChatMessage,
+  type MessagePart,
   type PendingToolApproval
 } from '@/packages/hooks/ai/use-agent-chat';
-import { useChatThreads, type ChatThread } from '@/packages/hooks/ai/use-chat-threads';
+import { type ChatThread } from '@/packages/hooks/ai/use-chat-threads';
 import {
   type ChatContext,
   type ContextProviderData,
-  useChatContextProviders,
   stripContextFromMessageText
 } from '@/packages/hooks/ai/chat-context';
-import { useMemorySearch } from '@/packages/hooks/ai/use-memory-search';
+import {
+  useChatPage,
+  useThreadSidebarSearch,
+  useChatMessagesScroll,
+  useContextSearch,
+  formatTime
+} from '@/packages/hooks/ai/use-chat-page';
 
 function NixopusIcon({ className }: { className?: string }) {
   const { resolvedTheme } = useTheme();
@@ -65,259 +75,60 @@ function NixopusIcon({ className }: { className?: string }) {
   return <Image src={src} alt="Nixopus" width={16} height={16} className={className} />;
 }
 
-const CHAT_STREAMDOWN_COMPONENTS = {
-  a: ({ href, children, ...props }: React.ComponentPropsWithoutRef<'a'>) => (
-    <a
-      {...props}
-      href={href}
-      target="_blank"
-      rel="noreferrer noopener"
-      className={cn('text-primary underline underline-offset-2 hover:opacity-90', props.className)}
-    >
-      {children}
-    </a>
-  ),
-  pre: ({ children, ...props }: React.ComponentPropsWithoutRef<'pre'>) => (
-    <pre
-      {...props}
-      className={cn(
-        'my-2 overflow-x-auto rounded-md border border-border/60 bg-background/70 p-3 text-xs',
-        props.className
-      )}
-    >
-      {children}
-    </pre>
-  ),
-  code: ({ children, className, ...props }: React.ComponentPropsWithoutRef<'code'>) => {
-    const isBlock = Boolean(className?.includes('language-'));
-    if (isBlock) {
-      return (
-        <code {...props} className={className}>
-          {children}
-        </code>
-      );
-    }
-    return (
-      <code
-        {...props}
-        className={cn(
-          'rounded bg-background/70 px-1 py-0.5 font-mono text-[0.85em] text-foreground',
-          className
-        )}
-      >
-        {children}
-      </code>
-    );
-  },
-  table: ({ children, ...props }: React.ComponentPropsWithoutRef<'table'>) => (
-    <div className="my-2 overflow-x-auto">
-      <table {...props} className={cn('w-full text-sm border-collapse', props.className)}>
-        {children}
-      </table>
-    </div>
-  ),
-  th: ({ children, ...props }: React.ComponentPropsWithoutRef<'th'>) => (
-    <th
-      {...props}
-      className={cn(
-        'border border-border/60 bg-muted/40 px-2 py-1 text-left text-xs font-medium',
-        props.className
-      )}
-    >
-      {children}
-    </th>
-  ),
-  td: ({ children, ...props }: React.ComponentPropsWithoutRef<'td'>) => (
-    <td {...props} className={cn('border border-border/50 px-2 py-1 align-top', props.className)}>
-      {children}
-    </td>
-  ),
-  blockquote: ({ children, ...props }: React.ComponentPropsWithoutRef<'blockquote'>) => (
-    <blockquote
-      {...props}
-      className={cn(
-        'my-2 border-l-2 border-border pl-3 text-muted-foreground italic',
-        props.className
-      )}
-    >
-      {children}
-    </blockquote>
-  )
-};
-
 export function ChatPage() {
   const { t } = useTranslation();
-  const searchParams = useSearchParams();
-  const navRouter = useRouter();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('chat_sidebar_collapsed') === 'true';
-    }
-    return false;
-  });
-  const [selectedContexts, setSelectedContexts] = useState<ChatContext[]>([]);
-  const [autoRunTools, setAutoRunTools] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('chat_auto_run_tools') === 'true';
-    }
-    return false;
-  });
-  const [pendingDeployPrompt, setPendingDeployPrompt] = useState<string | null>(null);
-  const repoParamsHandledRef = useRef(false);
+  const page = useChatPage();
 
-  useEffect(() => {
-    localStorage.setItem('chat_sidebar_collapsed', String(sidebarCollapsed));
-  }, [sidebarCollapsed]);
-
-  useEffect(() => {
-    localStorage.setItem('chat_auto_run_tools', String(autoRunTools));
-  }, [autoRunTools]);
-
-  const contextProviders = useChatContextProviders();
-
-  const threads = useChatThreads();
-  const chat = useAgentChat({
-    threadId: threads.activeThreadId,
-    resourceId: threads.resourceId,
-    contexts: selectedContexts,
-    autoRunTools,
-    waitForThread: threads.waitForThread,
-    onFirstMessage: (content) => {
-      if (threads.activeThreadId) {
-        const title = content.length > 50 ? content.slice(0, 50) + '…' : content;
-        threads.updateThreadTitle(threads.activeThreadId, title);
-      }
-    }
-  });
-
-  useEffect(() => {
-    if (repoParamsHandledRef.current || !threads.isInitialized) return;
-
-    const repoId = searchParams.get('repo_id');
-    const repoName = searchParams.get('repo_name');
-    const repoFullName = searchParams.get('repo_full_name');
-
-    if (!repoId || !repoName || !repoFullName) return;
-
-    repoParamsHandledRef.current = true;
-
-    const defaultBranch = searchParams.get('repo_default_branch') || 'main';
-    const visibility = searchParams.get('repo_visibility') || 'public';
-    const cloneUrl = searchParams.get('repo_clone_url') || '';
-    const language = searchParams.get('repo_language') || '';
-    const description = searchParams.get('repo_description') || '';
-    const htmlUrl = searchParams.get('repo_html_url') || '';
-
-    threads.createThread(repoName);
-
-    const meta: Record<string, string> = {
-      'GitHub Repo ID': repoId,
-      'Default Branch': defaultBranch,
-      Visibility: visibility
-    };
-    if (cloneUrl) meta['Clone URL'] = cloneUrl;
-    if (language) meta['Language'] = language;
-    if (htmlUrl) meta['GitHub URL'] = htmlUrl;
-
-    setSelectedContexts([
-      {
-        type: 'Repository',
-        id: repoId,
-        label: repoFullName,
-        meta
-      }
-    ]);
-
-    const promptLines = [
-      `I want to deploy the GitHub repository "${repoFullName}" as a new application.`,
-      '',
-      `- GitHub Repository ID (numeric): ${repoId} — use this as the "repository" field when calling createProject`,
-      `- Repository name: ${repoFullName}`,
-      `- Default branch: ${defaultBranch}`,
-      `- Visibility: ${visibility}`
-    ];
-    if (language) promptLines.push(`- Primary language: ${language}`);
-    if (description) promptLines.push(`- Description: ${description}`);
-    if (cloneUrl) promptLines.push(`- Clone URL: ${cloneUrl}`);
-    promptLines.push(
-      '',
-      'No application exists yet — please use createProject with the GitHub repository ID above to create and deploy it.'
-    );
-
-    setPendingDeployPrompt(promptLines.join('\n'));
-
-    navRouter.replace('/chats');
-  }, [threads.isInitialized, searchParams]);
-
-  useEffect(() => {
-    if (pendingDeployPrompt && threads.activeThreadId) {
-      chat.setInputValue(pendingDeployPrompt);
-      setPendingDeployPrompt(null);
-      setTimeout(() => chat.textareaRef.current?.focus(), 100);
-    }
-  }, [pendingDeployPrompt, threads.activeThreadId]);
-
-  const handleNewChat = () => {
-    threads.createThread(t('ai.threads.untitledChat'));
-  };
-
-  if (!chat.isAgentConfigured) {
+  if (!page.isAgentConfigured) {
     return <AgentDisabledState />;
   }
 
   return (
     <div className="flex h-full w-full overflow-hidden">
       <ThreadSidebar
-        threads={threads.threads}
-        activeThreadId={threads.activeThreadId}
-        resourceId={threads.resourceId}
-        isLoading={!threads.isInitialized}
-        isCollapsed={sidebarCollapsed}
-        onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
-        onSelectThread={threads.setActiveThreadId}
-        onNewChat={handleNewChat}
-        onDeleteThread={threads.deleteThread}
+        threads={page.threads}
+        activeThreadId={page.activeThreadId}
+        resourceId={page.resourceId}
+        isLoading={!page.isThreadsInitialized}
+        isCollapsed={page.sidebarCollapsed}
+        onToggleCollapse={page.toggleSidebarCollapse}
+        onSelectThread={page.setActiveThreadId}
+        onNewChat={page.handleNewChat}
+        onDeleteThread={page.deleteThread}
       />
       <div className="flex flex-1 flex-col min-w-0">
-        {threads.activeThreadId ? (
+        {!page.isThreadsInitialized ? (
+          <MessagesSkeleton />
+        ) : page.activeThreadId ? (
           <>
-            {chat.isLoadingHistory ? (
+            {page.isLoadingHistory ? (
               <MessagesSkeleton />
             ) : (
               <ChatMessages
-                messages={chat.messages}
-                isStreaming={chat.isStreaming}
-                scrollRef={chat.scrollRef}
-                onSuggestionClick={chat.handleSuggestionClick}
-                pendingToolApproval={chat.pendingToolApproval}
-                autoRunTools={autoRunTools}
-                onApproveToolCall={chat.handleApproveToolCall}
-                onDeclineToolCall={chat.handleDeclineToolCall}
+                messages={page.messages}
+                isStreaming={page.isStreaming}
+                scrollRef={page.scrollRef}
+                onSuggestionClick={page.handleSuggestionClick}
+                pendingToolApproval={page.pendingToolApproval}
+                autoRunTools={page.autoRunTools}
+                onApproveToolCall={page.handleApproveToolCall}
+                onDeclineToolCall={page.handleDeclineToolCall}
               />
             )}
             <ChatInput
-              inputValue={chat.inputValue}
-              isStreaming={chat.isStreaming}
-              textareaRef={chat.textareaRef}
-              selectedContexts={selectedContexts}
-              contextProviders={contextProviders}
-              autoRunTools={autoRunTools}
-              onAutoRunToolsChange={setAutoRunTools}
-              onAddContext={(ctx) =>
-                setSelectedContexts((prev) => {
-                  if (prev.some((c) => c.type === ctx.type && c.id === ctx.id)) return prev;
-                  return [...prev, ctx];
-                })
-              }
-              onRemoveContext={(ctx) =>
-                setSelectedContexts((prev) =>
-                  prev.filter((c) => !(c.type === ctx.type && c.id === ctx.id))
-                )
-              }
-              onSubmit={chat.handleSubmit}
-              onKeyDown={chat.handleKeyDown}
-              onChange={chat.handleInputChange}
-              onStop={chat.stopStreaming}
+              inputValue={page.inputValue}
+              isStreaming={page.isStreaming}
+              textareaRef={page.textareaRef}
+              selectedContexts={page.selectedContexts}
+              contextProviders={page.contextProviders}
+              autoRunTools={page.autoRunTools}
+              onAutoRunToolsChange={page.setAutoRunTools}
+              onAddContext={page.addContext}
+              onRemoveContext={page.removeContext}
+              onSubmit={page.handleSubmit}
+              onKeyDown={page.handleKeyDown}
+              onChange={page.handleInputChange}
+              onStop={page.stopStreaming}
             />
           </>
         ) : (
@@ -330,7 +141,7 @@ export function ChatPage() {
               <p className="text-sm text-muted-foreground max-w-sm">
                 {t('ai.emptyState.description')}
               </p>
-              <Button onClick={handleNewChat} className="gap-2">
+              <Button onClick={page.handleNewChat} className="gap-2">
                 <Plus className="size-4" />
                 {t('ai.threads.newChat')}
               </Button>
@@ -366,8 +177,7 @@ function ThreadSidebar({
   onDeleteThread
 }: ThreadSidebarProps) {
   const { t } = useTranslation();
-  const [searchInputValue, setSearchInputValue] = useState('');
-  const memorySearch = useMemorySearch(resourceId);
+  const sidebarSearch = useThreadSidebarSearch(resourceId);
 
   if (isCollapsed) {
     return (
@@ -448,20 +258,9 @@ function ThreadSidebar({
         <div className="relative">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
           <Input
-            value={searchInputValue}
-            onChange={(e) => {
-              setSearchInputValue(e.target.value);
-              if (!e.target.value.trim()) memorySearch.clear();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                memorySearch.search(searchInputValue);
-              }
-              if (e.key === 'Escape') {
-                setSearchInputValue('');
-                memorySearch.clear();
-              }
-            }}
+            value={sidebarSearch.searchInputValue}
+            onChange={(e) => sidebarSearch.handleSearchInputChange(e.target.value)}
+            onKeyDown={(e) => sidebarSearch.handleSearchKeyDown(e.key)}
             placeholder={t('ai.threads.searchChats' as Parameters<typeof t>[0])}
             className="h-8 pl-7 text-xs"
           />
@@ -470,28 +269,22 @@ function ThreadSidebar({
       <Separator />
       <div className="px-3 py-2">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {memorySearch.results.length > 0
+          {sidebarSearch.memorySearchResults.length > 0
             ? t('ai.threads.searchResults' as Parameters<typeof t>[0])
             : t('ai.threads.recentChats')}
         </span>
       </div>
       <ScrollArea className="flex-1">
         <div className="px-2 pb-2 space-y-0.5">
-          {memorySearch.results.length > 0 ? (
-            memorySearch.isSearching ? (
+          {sidebarSearch.memorySearchResults.length > 0 ? (
+            sidebarSearch.isSearching ? (
               <ThreadsSkeleton />
             ) : (
-              memorySearch.results.map((r) => (
+              sidebarSearch.memorySearchResults.map((r) => (
                 <button
                   key={r.id}
                   type="button"
-                  onClick={() => {
-                    if (r.threadId) {
-                      onSelectThread(r.threadId);
-                      setSearchInputValue('');
-                      memorySearch.clear();
-                    }
-                  }}
+                  onClick={() => sidebarSearch.handleSelectSearchResult(r.threadId, onSelectThread)}
                   className="w-full flex flex-col gap-0.5 px-3 py-2 rounded-md text-left text-sm hover:bg-muted/60 transition-colors"
                 >
                   <span className="text-xs text-muted-foreground truncate">
@@ -591,14 +384,7 @@ function ChatMessages({
   onApproveToolCall,
   onDeclineToolCall
 }: ChatMessagesProps) {
-  const { t } = useTranslation();
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
-    }
-  }, [messages]);
+  const { containerRef } = useChatMessagesScroll(messages);
 
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto" {...({ ref: scrollRef } as any)}>
@@ -607,9 +393,17 @@ function ChatMessages({
           <ChatEmptyState onSuggestionClick={onSuggestionClick} />
         ) : (
           <div className="space-y-6">
-            {messages.map((message) => (
-              <MessageBubble key={message.id} message={message} />
-            ))}
+            {messages.map((message, index) => {
+              const isLastAssistant = message.role === 'assistant' && index === messages.length - 1;
+              return (
+                <MessageBubble
+                  key={message.id}
+                  message={message}
+                  isStreaming={isStreaming}
+                  isLastAssistantMessage={isLastAssistant}
+                />
+              );
+            })}
             {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
               <StreamingIndicator />
             )}
@@ -700,21 +494,170 @@ function ChatEmptyState({ onSuggestionClick }: ChatEmptyStateProps) {
   );
 }
 
-interface MessageBubbleProps {
-  message: ChatMessage;
+function formatToolName(name: string): string {
+  return name
+    .replace(/[-_]/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/^./, (s) => s.toUpperCase());
 }
 
-function MessageBubble({ message }: MessageBubbleProps) {
-  if (message.kind === 'status') {
+function getToolArgsSummary(args: unknown): string | null {
+  if (!args || typeof args !== 'object') return null;
+  const a = args as Record<string, unknown>;
+  if (a.name && typeof a.name === 'string') return a.name;
+  if (a.owner && a.repo) return `${a.owner}/${a.repo}`;
+  if (a.id && typeof a.id === 'string') return a.id.length > 12 ? a.id.slice(0, 8) + '...' : a.id;
+  return null;
+}
+
+function ToolCallIndicator({ part }: { part: Extract<MessagePart, { type: 'tool-call' }> }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const isRunning = part.status === 'running';
+  const name = formatToolName(part.toolName);
+  const summary = getToolArgsSummary(part.args);
+  const argsObj =
+    part.args && typeof part.args === 'object' ? (part.args as Record<string, unknown>) : null;
+  const hasDetails = argsObj !== null && Object.keys(argsObj).length > 0;
+
+  return (
+    <div className="text-xs text-muted-foreground/70">
+      <button
+        type="button"
+        onClick={() => hasDetails && setExpanded((v) => !v)}
+        className={cn(
+          'flex items-center gap-1.5 py-1 px-1 rounded-md transition-colors w-full text-left',
+          hasDetails && 'hover:text-muted-foreground hover:bg-muted/40 cursor-pointer'
+        )}
+      >
+        {isRunning ? (
+          <Loader2 className="size-3 animate-spin shrink-0 text-primary" />
+        ) : (
+          <Check className="size-3 shrink-0 text-muted-foreground/50" />
+        )}
+        <span className={cn(isRunning && 'text-muted-foreground')}>{name}</span>
+        {summary && <span className="text-muted-foreground/40">— {summary}</span>}
+        {hasDetails && (
+          <ChevronRight
+            className={cn(
+              'size-3 shrink-0 ml-auto transition-transform text-muted-foreground/40',
+              expanded && 'rotate-90'
+            )}
+          />
+        )}
+      </button>
+      {expanded && hasDetails && (
+        <pre className="mt-1 ml-5 p-2 rounded-md bg-muted/30 text-[10px] leading-relaxed text-muted-foreground/60 overflow-x-auto max-h-32">
+          {JSON.stringify(part.args, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+}
+
+function CollapsibleTextPart({ content }: { content: string }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const firstLine = content
+    .split('\n')[0]
+    .replace(/^[#*>\s-]+/, '')
+    .trim();
+  const preview = firstLine.slice(0, 120);
+
+  return (
+    <div className="text-xs text-muted-foreground/60">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-center gap-1.5 py-0.5 px-1 rounded-md hover:text-muted-foreground hover:bg-muted/40 transition-colors w-full text-left"
+      >
+        <ChevronRight
+          className={cn(
+            'size-3 shrink-0 transition-transform text-muted-foreground/40',
+            expanded && 'rotate-90'
+          )}
+        />
+        <span className="truncate">
+          {preview}
+          {!expanded && firstLine.length > 120 && '…'}
+        </span>
+      </button>
+      {expanded && (
+        <div className="mt-1 ml-5 text-sm text-foreground">
+          <Streamdown
+            plugins={STREAMDOWN_PLUGINS}
+            controls={STREAMDOWN_CONTROLS}
+            animated={STREAMDOWN_ANIMATED}
+          >
+            {content}
+          </Streamdown>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface MessageBubbleProps {
+  message: ChatMessage;
+  isStreaming?: boolean;
+  isLastAssistantMessage?: boolean;
+}
+
+function MessageBubble({
+  message,
+  isStreaming = false,
+  isLastAssistantMessage = false
+}: MessageBubbleProps) {
+  const isUser = message.role === 'user';
+  const hasParts = !isUser && message.parts && message.parts.length > 0;
+
+  if (hasParts) {
+    const lastTextIndex = message.parts!.reduce(
+      (acc: number, p: MessagePart, i: number) => (p.type === 'text' ? i : acc),
+      -1
+    );
+
     return (
-      <div className="flex items-center gap-2 px-2 py-1 text-xs text-muted-foreground">
-        <Loader2 className="size-3.5 animate-spin" />
-        <span>{message.content}</span>
+      <div className="flex gap-3">
+        <Avatar className="size-8 shrink-0 mt-0.5">
+          <AvatarFallback className="bg-muted text-muted-foreground text-xs font-medium">
+            <NixopusIcon className="size-4" />
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 max-w-[85%] flex flex-col gap-1">
+          {message.parts!.map((part, index) => {
+            if (part.type === 'text' && part.content) {
+              const isLastText = index === lastTextIndex;
+              const isActivelyStreaming = isStreaming && isLastAssistantMessage && isLastText;
+
+              if (!isLastText && !isActivelyStreaming) {
+                return <CollapsibleTextPart key={index} content={part.content} />;
+              }
+
+              return (
+                <div key={index} className="text-sm text-foreground">
+                  <Streamdown
+                    plugins={STREAMDOWN_PLUGINS}
+                    controls={STREAMDOWN_CONTROLS}
+                    animated={STREAMDOWN_ANIMATED}
+                    isAnimating={isActivelyStreaming}
+                    caret={isActivelyStreaming ? 'block' : undefined}
+                  >
+                    {part.content}
+                  </Streamdown>
+                </div>
+              );
+            }
+            if (part.type === 'tool-call') {
+              return <ToolCallIndicator key={index} part={part} />;
+            }
+            return null;
+          })}
+          <span className="text-xs text-muted-foreground mt-1 px-1">
+            {formatTime(message.timestamp)}
+          </span>
+        </div>
       </div>
     );
   }
-
-  const isUser = message.role === 'user';
 
   return (
     <div className={cn('flex gap-3', isUser ? 'flex-row-reverse' : 'flex-row')}>
@@ -760,11 +703,15 @@ function MessageBubble({ message }: MessageBubbleProps) {
               {stripContextFromMessageText(message.content)}
             </p>
           ) : (
-            <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-headings:my-2">
-              <Streamdown components={CHAT_STREAMDOWN_COMPONENTS} isAnimating={false}>
-                {message.content}
-              </Streamdown>
-            </div>
+            <Streamdown
+              plugins={STREAMDOWN_PLUGINS}
+              controls={STREAMDOWN_CONTROLS}
+              animated={STREAMDOWN_ANIMATED}
+              isAnimating={isStreaming && isLastAssistantMessage}
+              caret={isStreaming && isLastAssistantMessage ? 'block' : undefined}
+            >
+              {message.content}
+            </Streamdown>
           )}
         </div>
         <span
@@ -825,14 +772,10 @@ function ContextSubMenu({
   onRemoveContext
 }: ContextSubMenuProps) {
   const { t } = useTranslation();
-  const [search, setSearch] = useState('');
+  const { search, setSearch, filtered } = useContextSearch(provider.items);
 
   const isSelected = (ctx: ChatContext) =>
     selectedContexts.some((c) => c.type === ctx.type && c.id === ctx.id);
-
-  const filtered = search.trim()
-    ? provider.items.filter((item) => item.label.toLowerCase().includes(search.toLowerCase()))
-    : provider.items;
 
   return (
     <DropdownMenuSub>
@@ -939,9 +882,6 @@ function ChatInput({
   onStop
 }: ChatInputProps) {
   const { t } = useTranslation();
-
-  const isSelected = (ctx: ChatContext) =>
-    selectedContexts.some((c) => c.type === ctx.type && c.id === ctx.id);
 
   return (
     <div className="shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-sm p-4">
@@ -1137,8 +1077,4 @@ function AgentDisabledState() {
       </div>
     </div>
   );
-}
-
-function formatTime(date: Date): string {
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }

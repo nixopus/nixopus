@@ -105,14 +105,6 @@ export function useChatThreads() {
 
         mapped.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
         setThreads(mapped);
-
-        const savedActiveId = loadActiveThreadId();
-        if (savedActiveId && mapped.some((t) => t.id === savedActiveId)) {
-          setActiveThreadIdState(savedActiveId);
-        } else if (mapped.length > 0) {
-          setActiveThreadIdState(mapped[0].id);
-          saveActiveThreadId(mapped[0].id);
-        }
       } catch {
         // agent may be unreachable
       } finally {

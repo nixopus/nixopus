@@ -14,10 +14,21 @@ import {
 import { useAgentConfigured } from '@/packages/hooks/shared/use-config';
 import { type ChatContext, formatContextsForAgent } from './chat-context';
 
+export type MessagePart =
+  | { type: 'text'; content: string }
+  | {
+      type: 'tool-call';
+      toolName: string;
+      toolCallId: string;
+      args?: unknown;
+      status: 'running' | 'done';
+    };
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  parts?: MessagePart[];
   timestamp: Date;
   contexts?: ChatContext[];
   kind?: 'status';
@@ -81,55 +92,6 @@ export interface PendingToolApproval {
   args: unknown;
 }
 
-function getRecord(value: unknown): Record<string, unknown> | null {
-  if (!value || typeof value !== 'object') return null;
-  return value as Record<string, unknown>;
-}
-
-function getText(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const trimmed = value.trim();
-  return trimmed ? trimmed : null;
-}
-
-function formatToolProgress(chunk: StreamChunk): string | null {
-  let eventType: string | null = null;
-  let progressData: Record<string, unknown> | null = null;
-
-  if (chunk.type.startsWith('data-')) {
-    eventType = chunk.type;
-    progressData = getRecord(chunk.payload);
-  } else {
-    const payload = getRecord(chunk.payload);
-    const output = getRecord(payload?.output);
-    const outputType = getText(output?.type);
-    if (outputType?.startsWith('data-')) {
-      eventType = outputType;
-      progressData = getRecord(output?.payload) ?? output;
-    }
-  }
-
-  if (!eventType) return null;
-
-  const toolName =
-    getText(progressData?.toolName) ??
-    getText(progressData?.tool_name) ??
-    getText(progressData?.tool) ??
-    'Tool';
-  const stage =
-    getText(progressData?.stage) ??
-    getText(progressData?.step) ??
-    getText(progressData?.status) ??
-    eventType.replace(/^data-/, '').replace(/-/g, ' ');
-  const detail =
-    getText(progressData?.message) ??
-    getText(progressData?.detail) ??
-    getText(progressData?.text);
-
-  const base = `${toolName}: ${stage}`;
-  return detail ? `${base} - ${detail}` : base;
-}
-
 export function useAgentChat({
   threadId,
   resourceId,
@@ -147,7 +109,8 @@ export function useAgentChat({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const pendingApprovalRef = useRef(false);
-  const progressMessageIdRef = useRef<string | null>(null);
+  const needsStepSeparatorRef = useRef(false);
+  const needsNewTextPartRef = useRef(false);
 
   const token = useAppSelector((state) => state.auth.token);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
@@ -235,29 +198,38 @@ export function useAgentChat({
       if (chunk.type === 'text-delta') {
         const text = chunk.payload?.text as string | undefined;
         if (text) {
+          const insertSep = needsStepSeparatorRef.current;
+          const startNewPart = needsNewTextPartRef.current;
+          needsStepSeparatorRef.current = false;
+          needsNewTextPartRef.current = false;
           setMessages((prev) =>
-            prev.map((m) => (m.id === assistantMessageId ? { ...m, content: m.content + text } : m))
+            prev.map((m) => {
+              if (m.id !== assistantMessageId) return m;
+              const sep = insertSep && m.content.length > 0 ? '\n\n' : '';
+              const newContent = m.content + sep + text;
+
+              let parts = [...(m.parts || [])];
+              parts = parts.map((p) =>
+                p.type === 'tool-call' && p.status === 'running'
+                  ? { ...p, status: 'done' as const }
+                  : p
+              );
+              const lastPart = parts[parts.length - 1];
+              if (!startNewPart && lastPart?.type === 'text') {
+                parts[parts.length - 1] = { ...lastPart, content: lastPart.content + text };
+              } else {
+                parts.push({ type: 'text' as const, content: text });
+              }
+
+              return { ...m, content: newContent, parts };
+            })
           );
         }
       }
 
-      const progressText = formatToolProgress(chunk);
-      if (progressText) {
-        if (!progressMessageIdRef.current) {
-          const id = crypto.randomUUID();
-          progressMessageIdRef.current = id;
-          setMessages((prev) => [
-            ...prev,
-            { id, role: 'assistant', content: progressText, timestamp: new Date(), kind: 'status' }
-          ]);
-        } else {
-          const currentId = progressMessageIdRef.current;
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === currentId ? { ...m, content: progressText, timestamp: new Date(), kind: 'status' } : m
-            )
-          );
-        }
+      if (chunk.type === 'text-end' || chunk.type === 'step-finish') {
+        needsStepSeparatorRef.current = true;
+        needsNewTextPartRef.current = true;
       }
 
       if (
@@ -284,6 +256,47 @@ export function useAgentChat({
             toolName: (p?.toolName as string) ?? 'tool',
             args: p?.args ?? {}
           });
+        }
+
+        if (toolCallId) {
+          needsNewTextPartRef.current = true;
+          const toolName = (p?.toolName as string) ?? 'tool';
+          const tcId = String(toolCallId);
+          setMessages((prev) =>
+            prev.map((m) => {
+              if (m.id !== assistantMessageId) return m;
+              const parts = [...(m.parts || [])];
+              if (!parts.some((pt) => pt.type === 'tool-call' && pt.toolCallId === tcId)) {
+                parts.push({
+                  type: 'tool-call' as const,
+                  toolName,
+                  toolCallId: tcId,
+                  args: p?.args,
+                  status: 'running' as const
+                });
+              }
+              return { ...m, parts };
+            })
+          );
+        }
+      }
+
+      if (chunk.type === 'tool-result') {
+        const p = chunk.payload as { toolCallId?: string } | undefined;
+        const tcId = p?.toolCallId;
+        if (tcId) {
+          needsNewTextPartRef.current = true;
+          setMessages((prev) =>
+            prev.map((m) => {
+              if (m.id !== assistantMessageId) return m;
+              const parts = (m.parts || []).map((pt) =>
+                pt.type === 'tool-call' && pt.toolCallId === tcId
+                  ? { ...pt, status: 'done' as const }
+                  : pt
+              );
+              return { ...m, parts };
+            })
+          );
         }
       }
 
@@ -322,12 +335,11 @@ export function useAgentChat({
       const abortController = new AbortController();
       abortRef.current = abortController;
       const runIdRef = { current: '' };
-      progressMessageIdRef.current = null;
 
       const assistantMessageId = crypto.randomUUID();
       setMessages((prev) => [
         ...prev,
-        { id: assistantMessageId, role: 'assistant', content: '', timestamp: new Date() }
+        { id: assistantMessageId, role: 'assistant', content: '', timestamp: new Date(), parts: [] }
       ]);
 
       try {
@@ -361,6 +373,25 @@ export function useAgentChat({
           setIsStreaming(false);
         }
         abortRef.current = null;
+        needsStepSeparatorRef.current = false;
+        needsNewTextPartRef.current = false;
+        setMessages((prev) =>
+          prev.map((m) => {
+            if (m.id !== assistantMessageId || !m.parts) return m;
+            const hasRunning = m.parts.some(
+              (p) => p.type === 'tool-call' && p.status === 'running'
+            );
+            if (!hasRunning) return m;
+            return {
+              ...m,
+              parts: m.parts.map((p) =>
+                p.type === 'tool-call' && p.status === 'running'
+                  ? { ...p, status: 'done' as const }
+                  : p
+              )
+            };
+          })
+        );
       }
     },
     [threadId, resourceId, token, organizationId, isAgentEnabled, contexts, handleChunk]
@@ -382,7 +413,7 @@ export function useAgentChat({
     const abortController = new AbortController();
     abortRef.current = abortController;
     const runIdRef = { current: '' };
-    progressMessageIdRef.current = null;
+    needsNewTextPartRef.current = true;
 
     try {
       const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
@@ -406,6 +437,27 @@ export function useAgentChat({
     } finally {
       if (!pendingApprovalRef.current) setIsStreaming(false);
       abortRef.current = null;
+      needsStepSeparatorRef.current = false;
+      needsNewTextPartRef.current = false;
+      if (assistantMessageId) {
+        setMessages((prev) =>
+          prev.map((m) => {
+            if (m.id !== assistantMessageId || !m.parts) return m;
+            const hasRunning = m.parts.some(
+              (p) => p.type === 'tool-call' && p.status === 'running'
+            );
+            if (!hasRunning) return m;
+            return {
+              ...m,
+              parts: m.parts.map((p) =>
+                p.type === 'tool-call' && p.status === 'running'
+                  ? { ...p, status: 'done' as const }
+                  : p
+              )
+            };
+          })
+        );
+      }
     }
   }, [pendingToolApproval, isAgentEnabled, token, organizationId, messages, handleChunk]);
 

@@ -27,6 +27,7 @@ import (
 	githubConnector "github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller"
 	healthcheck "github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	machine_controller "github.com/raghavyuva/nixopus-api/internal/features/machine/controller"
 	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
 	server_controller "github.com/raghavyuva/nixopus-api/internal/features/server/controller"
@@ -369,6 +370,16 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		ResourceName: "server",
 	})
 	router.RegisterServerRoutes(serverGroup, serverController)
+
+	// Machine routes
+	machineController := machine_controller.NewMachineController(router.app.Store, router.app.Ctx, router.logger)
+	machineGroup := fuego.Group(server, apiV1.Path+"/machine")
+	router.applyMiddleware(machineGroup, MiddlewareConfig{
+		RBAC:         true,
+		Audit:        true,
+		ResourceName: "machine",
+	})
+	router.RegisterMachineRoutes(machineGroup, machineController)
 
 	// Trail routes
 	trailController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)

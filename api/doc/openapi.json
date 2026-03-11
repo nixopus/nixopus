@@ -981,86 +981,7 @@
 						"$ref": "#/components/schemas/Application"
 					},
 					"application_deployment": {
-						"nullable": true,
-						"properties": {
-							"application": {
-								"$ref": "#/components/schemas/Application"
-							},
-							"application_id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"commit_hash": {
-								"type": "string"
-							},
-							"container_id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"container_image": {
-								"type": "string"
-							},
-							"container_name": {
-								"type": "string"
-							},
-							"container_status": {
-								"type": "string"
-							},
-							"created_at": {
-								"format": "date-time",
-								"type": "string"
-							},
-							"id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"image_s3_key": {
-								"type": "string"
-							},
-							"image_size": {
-								"format": "int64",
-								"type": "integer"
-							},
-							"logs": {
-								"items": {
-									"$ref": "#/components/schemas/ApplicationLogs"
-								},
-								"type": "array"
-							},
-							"status": {
-								"nullable": true,
-								"properties": {
-									"application_deployment": {
-										"$ref": "#/components/schemas/ApplicationDeployment"
-									},
-									"application_deployment_id": {
-										"format": "uuid",
-										"type": "string"
-									},
-									"created_at": {
-										"format": "date-time",
-										"type": "string"
-									},
-									"id": {
-										"format": "uuid",
-										"type": "string"
-									},
-									"status": {
-										"type": "string"
-									},
-									"updated_at": {
-										"format": "date-time",
-										"type": "string"
-									}
-								},
-								"type": "object"
-							},
-							"updated_at": {
-								"format": "date-time",
-								"type": "string"
-							}
-						},
-						"type": "object"
+						"$ref": "#/components/schemas/ApplicationDeployment"
 					},
 					"application_deployment_id": {
 						"format": "uuid",
@@ -7559,6 +7480,44 @@
 				},
 				"type": "object"
 			},
+			"HostExecRequest": {
+				"description": "HostExecRequest schema",
+				"properties": {
+					"command": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"command"
+				],
+				"type": "object"
+			},
+			"HostExecResponse": {
+				"description": "HostExecResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"exit_code": {
+								"type": "integer"
+							},
+							"stderr": {
+								"type": "string"
+							},
+							"stdout": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"IndexCodebaseResponse": {
 				"description": "IndexCodebaseResponse schema",
 				"properties": {
@@ -13991,6 +13950,243 @@
 							},
 							"success": {
 								"type": "boolean"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"SystemStatsResponse": {
+				"description": "SystemStatsResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"architecture": {
+								"type": "string"
+							},
+							"cpu": {
+								"properties": {
+									"overall": {
+										"format": "double",
+										"type": "number"
+									},
+									"per_core": {
+										"items": {
+											"properties": {
+												"core_id": {
+													"type": "integer"
+												},
+												"usage": {
+													"format": "double",
+													"type": "number"
+												}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									}
+								},
+								"type": "object"
+							},
+							"cpu_cores": {
+								"type": "integer"
+							},
+							"cpu_info": {
+								"type": "string"
+							},
+							"disk": {
+								"properties": {
+									"allMounts": {
+										"items": {
+											"properties": {
+												"avail": {
+													"type": "string"
+												},
+												"capacity": {
+													"type": "string"
+												},
+												"filesystem": {
+													"type": "string"
+												},
+												"mountPoint": {
+													"type": "string"
+												},
+												"size": {
+													"type": "string"
+												},
+												"used": {
+													"type": "string"
+												}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"available": {
+										"format": "double",
+										"type": "number"
+									},
+									"mountPoint": {
+										"type": "string"
+									},
+									"percentage": {
+										"format": "double",
+										"type": "number"
+									},
+									"total": {
+										"format": "double",
+										"type": "number"
+									},
+									"used": {
+										"format": "double",
+										"type": "number"
+									}
+								},
+								"type": "object"
+							},
+							"hostname": {
+								"type": "string"
+							},
+							"kernel_version": {
+								"type": "string"
+							},
+							"load": {
+								"properties": {
+									"fifteenMin": {
+										"format": "double",
+										"type": "number"
+									},
+									"fiveMin": {
+										"format": "double",
+										"type": "number"
+									},
+									"oneMin": {
+										"format": "double",
+										"type": "number"
+									},
+									"uptime": {
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"memory": {
+								"properties": {
+									"percentage": {
+										"format": "double",
+										"type": "number"
+									},
+									"rawInfo": {
+										"type": "string"
+									},
+									"total": {
+										"format": "double",
+										"type": "number"
+									},
+									"used": {
+										"format": "double",
+										"type": "number"
+									}
+								},
+								"type": "object"
+							},
+							"network": {
+								"properties": {
+									"downloadSpeed": {
+										"format": "double",
+										"type": "number"
+									},
+									"interfaces": {
+										"items": {
+											"properties": {
+												"bytesRecv": {
+													"maximum": 18446744073709552000,
+													"minimum": 0,
+													"type": "integer"
+												},
+												"bytesSent": {
+													"maximum": 18446744073709552000,
+													"minimum": 0,
+													"type": "integer"
+												},
+												"dropIn": {
+													"maximum": 18446744073709552000,
+													"minimum": 0,
+													"type": "integer"
+												},
+												"dropOut": {
+													"maximum": 18446744073709552000,
+													"minimum": 0,
+													"type": "integer"
+												},
+												"errorIn": {
+													"maximum": 18446744073709552000,
+													"minimum": 0,
+													"type": "integer"
+												},
+												"errorOut": {
+													"maximum": 18446744073709552000,
+													"minimum": 0,
+													"type": "integer"
+												},
+												"name": {
+													"type": "string"
+												},
+												"packetsRecv": {
+													"maximum": 18446744073709552000,
+													"minimum": 0,
+													"type": "integer"
+												},
+												"packetsSent": {
+													"maximum": 18446744073709552000,
+													"minimum": 0,
+													"type": "integer"
+												}
+											},
+											"type": "object"
+										},
+										"type": "array"
+									},
+									"totalBytesRecv": {
+										"maximum": 18446744073709552000,
+										"minimum": 0,
+										"type": "integer"
+									},
+									"totalBytesSent": {
+										"maximum": 18446744073709552000,
+										"minimum": 0,
+										"type": "integer"
+									},
+									"totalPacketsRecv": {
+										"maximum": 18446744073709552000,
+										"minimum": 0,
+										"type": "integer"
+									},
+									"totalPacketsSent": {
+										"maximum": 18446744073709552000,
+										"minimum": 0,
+										"type": "integer"
+									},
+									"uploadSpeed": {
+										"format": "double",
+										"type": "number"
+									}
+								},
+								"type": "object"
+							},
+							"os_type": {
+								"type": "string"
+							},
+							"timestamp": {
+								"format": "date-time",
+								"type": "string"
 							}
 						},
 						"type": "object"
@@ -24806,6 +25002,220 @@
 				]
 			}
 		},
+		"/api/v1/machine/exec": {
+			"post": {
+				"description": "Execute a command on the host machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "executeACommandOnTheHostMachine",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"command": "string"
+							},
+							"schema": {
+								"$ref": "#/components/schemas/HostExecRequest"
+							}
+						}
+					},
+					"description": "Request body for types.HostExecRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/HostExecResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/HostExecResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Execute a command on the host machine",
+				"tags": [
+					"exec",
+					"api/v1/machine"
+				]
+			}
+		},
+		"/api/v1/machine/stats": {
+			"get": {
+				"description": "Get machine system stats.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getMachineSystemStats",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SystemStatsResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SystemStatsResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get machine system stats",
+				"tags": [
+					"stats",
+					"api/v1/machine"
+				]
+			}
+		},
 		"/api/v1/notification/preferences": {
 			"get": {
 				"description": "Get notification preferences.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
@@ -28194,6 +28604,9 @@
 			"name": "api/v1/live"
 		},
 		{
+			"name": "api/v1/machine"
+		},
+		{
 			"name": "api/v1/notification"
 		},
 		{
@@ -28258,6 +28671,9 @@
 		},
 		{
 			"name": "domains"
+		},
+		{
+			"name": "exec"
 		},
 		{
 			"name": "execution"
