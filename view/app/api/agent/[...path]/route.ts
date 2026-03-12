@@ -13,11 +13,13 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
   }
 
   const { path } = await params;
-  const segments = path[0] === 'api' ? path.slice(1) : path;
-  const targetPath = segments.join('/');
+  const targetPath = path.join('/');
   const base = new URL(AGENT_URL);
   const url = new URL(base.toString());
-  url.pathname = `${base.pathname.replace(/\/+$/, '')}/${targetPath}`;
+  const basePath = base.pathname.replace(/\/+$/, '');
+  const normalizedTargetPath =
+    basePath.endsWith('/api') && targetPath.startsWith('api/') ? targetPath.slice(4) : targetPath;
+  url.pathname = `${basePath}/${normalizedTargetPath}`;
   req.nextUrl.searchParams.forEach((value, key) => {
     url.searchParams.set(key, value);
   });
@@ -25,10 +27,14 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
   const headers = new Headers();
   const authorization = req.headers.get('authorization');
   const contentType = req.headers.get('content-type');
+  const cookie = req.headers.get('cookie');
+  const accept = req.headers.get('accept');
   const orgId = req.headers.get('x-organization-id');
   const appId = req.headers.get('x-application-id');
   if (authorization) headers.set('Authorization', authorization);
   if (contentType) headers.set('Content-Type', contentType);
+  if (cookie) headers.set('Cookie', cookie);
+  if (accept) headers.set('Accept', accept);
   if (orgId) headers.set('X-Organization-Id', orgId);
   if (appId) headers.set('X-Application-Id', appId);
 
