@@ -1,17 +1,30 @@
 # Workflow: Build and Push Docker Containers
 # Description: Builds and pushes Docker images for the API and Web UI whenever a version tag is pushed or a release is published.
 # Why: Provides reproducible, versioned container images for deployments.
-# Note: AMD64 and ARM64 builds run in parallel for faster builds, then merged into multi-platform manifests.
+# Note: AMD64 and ARM64 builds run on native runners (no QEMU emulation) for faster builds, then merged into multi-platform manifests.
 
 name: Package Manager
 
 on:
   push:
     tags:
-      - 'v*'  # Trigger on version tag push
+      - 'v*'
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      skip-api:
+        description: 'Skip API builds (use when only View changed)'
+        type: boolean
+        default: false
+      skip-view:
+        description: 'Skip View builds (use when only API changed)'
+        type: boolean
+        default: false
+      skip-arm64:
+        description: 'Skip ARM64 builds (amd64 only, fastest option)'
+        type: boolean
+        default: false
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,10 +38,10 @@ env:
   NEXT_PUBLIC_PORT: 7443
 
 jobs:
-  # Build API images for each architecture in parallel
+  # Build API images — native runners per architecture, no QEMU
   build-api:
-    runs-on: ubuntu-latest
-    # Allow ARM64 builds to fail without failing the workflow
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip-api) }}
+    runs-on: ${{ matrix.runner }}
     continue-on-error: ${{ matrix.platform == 'linux/arm64' }}
     permissions:
       contents: read
@@ -36,9 +49,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
+        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.skip-arm64 && '[{"platform":"linux/amd64","runner":"ubuntu-latest"}]' || '[{"platform":"linux/amd64","runner":"ubuntu-latest"},{"platform":"linux/arm64","runner":"ubuntu-24.04-arm64"}]') }}
 
     steps:
       - name: Prepare platform pair
@@ -54,9 +65,6 @@ jobs:
 
       - name: Create .env file
         run: cp .env.sample api/.env
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -80,7 +88,7 @@ jobs:
 
       - name: Build and push API image by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./api
           platforms: ${{ matrix.platform }}
@@ -106,10 +114,10 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  # Build View images for each architecture in parallel
+  # Build View images — native runners per architecture, no QEMU
   build-view:
-    runs-on: ubuntu-latest
-    # Allow ARM64 builds to fail without failing the workflow
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip-view) }}
+    runs-on: ${{ matrix.runner }}
     continue-on-error: ${{ matrix.platform == 'linux/arm64' }}
     permissions:
       contents: read
@@ -117,9 +125,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux/amd64
-          - linux/arm64
+        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.skip-arm64 && '[{"platform":"linux/amd64","runner":"ubuntu-latest"}]' || '[{"platform":"linux/amd64","runner":"ubuntu-latest"},{"platform":"linux/arm64","runner":"ubuntu-24.04-arm64"}]') }}
 
     steps:
       - name: Prepare platform pair
@@ -135,9 +141,6 @@ jobs:
 
       - name: Create .env file
         run: cp .env.sample view/.env
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -161,7 +164,7 @@ jobs:
 
       - name: Build and push View image by digest
         id: build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: ./view
           platforms: ${{ matrix.platform }}
@@ -187,12 +190,57 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
+  # Build View (multi-zone variant) — amd64 only, shares deps cache with regular view build
+  build-view-multizone:
+    if: ${{ !(github.event_name == 'workflow_dispatch' && inputs.skip-view) }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
+
+      - name: Create .env file
+        run: cp .env.sample view/.env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push View (multi-zone)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./view
+          platforms: linux/amd64
+          build-args: |
+            NEXT_PUBLIC_PORT=${{ env.NEXT_PUBLIC_PORT }}
+            BASE_PATH=/view
+            ASSET_PREFIX=/view-static
+          cache-from: |
+            type=gha,scope=view-multizone
+            type=gha,scope=view-linux-amd64
+          cache-to: type=gha,mode=max,scope=view-multizone
+          provenance: false
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}:multizone
+
   # Merge API digests into multi-platform manifest
   merge-api:
     runs-on: ubuntu-latest
     needs: build-api
-    # Run even if ARM64 build failed (as long as not cancelled)
-    if: always() && !cancelled()
+    if: always() && !cancelled() && needs.build-api.result != 'skipped'
     permissions:
       contents: read
       packages: write
@@ -253,55 +301,11 @@ jobs:
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.API_IMAGE }}:${{ steps.meta-api.outputs.version }}
 
-  # Build View ( multi-zone variant) — amd64 only
-  build-view-multizone:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          ssh-key: ${{ secrets.DEPLOY_KEY }}
-
-      - name: Create .env file
-        run: cp .env.sample view/.env
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push View (multi-zone)
-        uses: docker/build-push-action@v5
-        with:
-          context: ./view
-          platforms: linux/amd64
-          build-args: |
-            NEXT_PUBLIC_PORT=${{ env.NEXT_PUBLIC_PORT }}
-            BASE_PATH=/view
-            ASSET_PREFIX=/view-static
-          cache-from: type=gha,scope=view-multizone
-          cache-to: type=gha,mode=max,scope=view-multizone
-          provenance: false
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}:multizone
-
   # Merge View digests into multi-platform manifest
   merge-view:
     runs-on: ubuntu-latest
     needs: build-view
-    # Run even if ARM64 build failed (as long as not cancelled)
-    if: always() && !cancelled()
+    if: always() && !cancelled() && needs.build-view.result != 'skipped'
     permissions:
       contents: read
       packages: write
