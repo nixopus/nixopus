@@ -31,6 +31,16 @@
       "domains": "Domains",
       "repositories": "Repositories"
     },
+    "model": {
+      "label": "Model",
+      "select": "Select model"
+    },
+    "usage": {
+      "tokens": "tokens",
+      "inputTokens": "input",
+      "outputTokens": "output",
+      "credits": "credits"
+    },
     "toolApproval": {
       "title": "Tool approval required",
       "approve": "Approve",

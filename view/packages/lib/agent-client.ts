@@ -101,10 +101,11 @@ async function agentFetch(
   path: string,
   body: Record<string, unknown>,
   headers: Record<string, string>,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  queryParams?: Record<string, string>
 ): Promise<Response> {
   const baseUrl = await getAgentBaseUrl().catch(() => '');
-  const url = baseUrl
+  let url = baseUrl
     ? (() => {
         const normalizedBase = baseUrl.replace(/\/$/, '');
         return normalizedBase.endsWith('/api')
@@ -112,6 +113,12 @@ async function agentFetch(
           : `${normalizedBase}/api${path}`;
       })()
     : `${AGENT_PROXY_BASE_PATH}/api${path}`;
+
+  if (queryParams) {
+    const params = new URLSearchParams(queryParams);
+    url += `?${params.toString()}`;
+  }
+
   const reqHeaders: Record<string, string> = {
     'Content-Type': 'application/json'
   };
@@ -145,8 +152,10 @@ export async function* streamAgent(
   threadId: string,
   resourceId: string,
   headers: Record<string, string>,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  model?: string
 ): AsyncGenerator<StreamChunk> {
+  const query = model ? { model } : undefined;
   const response = await agentFetch(
     `/agents/${AGENT_ID}/stream`,
     {
@@ -154,7 +163,8 @@ export async function* streamAgent(
       memory: { thread: threadId, resource: resourceId }
     },
     headers,
-    signal
+    signal,
+    query
   );
 
   yield* readSseStream(response.body!, signal);

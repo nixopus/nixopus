@@ -24,6 +24,14 @@ export type MessagePart =
       status: 'running' | 'done';
     };
 
+export interface TokenUsage {
+  promptTokens: number;
+  completionTokens: number;
+  totalTokens: number;
+  costUsd?: number;
+  durationMs?: number;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -32,6 +40,7 @@ export interface ChatMessage {
   timestamp: Date;
   contexts?: ChatContext[];
   kind?: 'status';
+  usage?: TokenUsage;
 }
 
 interface UseAgentChatOptions {
@@ -39,6 +48,7 @@ interface UseAgentChatOptions {
   resourceId?: string;
   contexts?: ChatContext[];
   autoRunTools?: boolean;
+  model?: string;
   onFirstMessage?: (content: string) => void;
   waitForThread?: (id: string) => Promise<void>;
 }
@@ -155,6 +165,27 @@ function extractMessageParts(content: unknown): { text: string; parts: MessagePa
   return { text, parts };
 }
 
+export interface AgentQuestionFieldOption {
+  label: string;
+  value: string;
+}
+
+export interface AgentQuestionField {
+  name: string;
+  label: string;
+  type: 'text' | 'password' | 'select' | 'toggle' | 'textarea';
+  required?: boolean;
+  placeholder?: string;
+  defaultValue?: string;
+  options?: AgentQuestionFieldOption[];
+}
+
+export interface AgentQuestion {
+  title: string;
+  description?: string;
+  fields: AgentQuestionField[];
+}
+
 export interface PendingToolApproval {
   runId: string;
   toolCallId: string;
@@ -174,6 +205,7 @@ export function useAgentChat({
   resourceId,
   contexts = [],
   autoRunTools = false,
+  model,
   onFirstMessage,
   waitForThread
 }: UseAgentChatOptions) {
@@ -182,6 +214,7 @@ export function useAgentChat({
   const [isStreaming, setIsStreaming] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [pendingToolApproval, setPendingToolApproval] = useState<PendingToolApproval | null>(null);
+  const [activeQuestion, setActiveQuestion] = useState<AgentQuestion | null>(null);
   const [omStatus, setOmStatus] = useState<OmStatus | null>(null);
   const omStatusRef = useRef<OmStatus | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -190,6 +223,7 @@ export function useAgentChat({
   const pendingApprovalRef = useRef(false);
   const needsStepSeparatorRef = useRef(false);
   const needsNewTextPartRef = useRef(false);
+  const firstTextDeltaTimeRef = useRef<number | null>(null);
 
   const token = useAppSelector((state) => state.auth.token);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
@@ -274,6 +308,67 @@ export function useAgentChat({
     };
   }, [threadId, resourceId, token, organizationId, isAgentEnabled, waitForThread]);
 
+  const extractUsageFromPayload = useCallback((payload: unknown): TokenUsage | null => {
+    if (!payload || typeof payload !== 'object') return null;
+    const p = payload as Record<string, unknown>;
+
+    const output = p.output as Record<string, unknown> | undefined;
+    const outputUsage = output?.usage as Record<string, unknown> | undefined;
+
+    const metadata = p.metadata as Record<string, unknown> | undefined;
+    const providerMeta = metadata?.providerMetadata as Record<string, unknown> | undefined;
+    const orMeta = providerMeta?.openrouter as Record<string, unknown> | undefined;
+    const orUsage = orMeta?.usage as Record<string, unknown> | undefined;
+
+    const usage = outputUsage ?? orUsage;
+    if (!usage) return null;
+
+    const prompt = (usage.promptTokens as number) ?? (usage.inputTokens as number) ?? undefined;
+    const completion =
+      (usage.completionTokens as number) ?? (usage.outputTokens as number) ?? undefined;
+
+    if (typeof prompt !== 'number' && typeof completion !== 'number') return null;
+
+    const promptTokens = prompt ?? 0;
+    const completionTokens = completion ?? 0;
+    const costUsd = typeof orUsage?.cost === 'number' ? (orUsage.cost as number) : undefined;
+
+    return {
+      promptTokens,
+      completionTokens,
+      totalTokens:
+        typeof (usage.totalTokens as number) === 'number'
+          ? (usage.totalTokens as number)
+          : promptTokens + completionTokens,
+      costUsd
+    };
+  }, []);
+
+  const accumulateUsage = useCallback((messageId: string, usage: TokenUsage) => {
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (m.id !== messageId) return m;
+        const existing = m.usage;
+        if (existing) {
+          const costUsd =
+            existing.costUsd != null || usage.costUsd != null
+              ? (existing.costUsd ?? 0) + (usage.costUsd ?? 0)
+              : undefined;
+          return {
+            ...m,
+            usage: {
+              promptTokens: existing.promptTokens + usage.promptTokens,
+              completionTokens: existing.completionTokens + usage.completionTokens,
+              totalTokens: existing.totalTokens + usage.totalTokens,
+              costUsd
+            }
+          };
+        }
+        return { ...m, usage };
+      })
+    );
+  }, []);
+
   const handleChunk = useCallback(
     (
       chunk: StreamChunk,
@@ -288,6 +383,9 @@ export function useAgentChat({
       }
 
       if (chunk.type === 'text-delta') {
+        if (firstTextDeltaTimeRef.current === null) {
+          firstTextDeltaTimeRef.current = Date.now();
+        }
         const text = chunk.payload?.text as string | undefined;
         if (text) {
           const insertSep = needsStepSeparatorRef.current;
@@ -319,7 +417,16 @@ export function useAgentChat({
         }
       }
 
-      if (chunk.type === 'text-end' || chunk.type === 'step-finish') {
+      if (chunk.type === 'step-finish') {
+        needsStepSeparatorRef.current = true;
+        needsNewTextPartRef.current = true;
+        const stepUsage = extractUsageFromPayload(chunk.payload);
+        if (stepUsage) {
+          accumulateUsage(assistantMessageId, stepUsage);
+        }
+      }
+
+      if (chunk.type === 'text-end') {
         needsStepSeparatorRef.current = true;
         needsNewTextPartRef.current = true;
       }
@@ -364,8 +471,27 @@ export function useAgentChat({
       }
 
       if (chunk.type === 'tool-result') {
-        const p = chunk.payload as { toolCallId?: string } | undefined;
+        const p = chunk.payload as
+          | {
+              toolCallId?: string;
+              toolName?: string;
+              result?: { title?: string; description?: string; fields?: AgentQuestionField[] };
+            }
+          | undefined;
         const tcId = p?.toolCallId;
+
+        if (
+          (p?.toolName === 'ask_user' || p?.toolName === 'askUser') &&
+          p?.result &&
+          Array.isArray(p.result.fields)
+        ) {
+          setActiveQuestion({
+            title: p.result.title ?? 'Input Required',
+            description: p.result.description,
+            fields: p.result.fields
+          });
+        }
+
         if (tcId) {
           needsNewTextPartRef.current = true;
           setMessages((prev) =>
@@ -383,24 +509,32 @@ export function useAgentChat({
       }
 
       if (chunk.type === 'finish' && chunk.payload) {
-        const finishReason = (chunk.payload as { finishReason?: string }).finishReason;
-        const suspendPayload = (
-          chunk.payload as {
-            suspendPayload?: {
-              toolCallId?: string;
-              runId?: string;
-              toolName?: string;
-              args?: unknown;
-            };
+        const finishPayload = chunk.payload as Record<string, unknown>;
+
+        setMessages((prev) => {
+          const msg = prev.find((m) => m.id === assistantMessageId);
+          if (!msg?.usage) {
+            const finishUsage = extractUsageFromPayload(finishPayload);
+            if (finishUsage) {
+              return prev.map((m) =>
+                m.id === assistantMessageId ? { ...m, usage: finishUsage } : m
+              );
+            }
           }
-        ).suspendPayload;
-        if (finishReason === 'suspended' && suspendPayload) {
+          return prev;
+        });
+
+        const finishReason = finishPayload.finishReason as string | undefined;
+        const sp = finishPayload.suspendPayload as
+          | { toolCallId?: string; runId?: string; toolName?: string; args?: unknown }
+          | undefined;
+        if (finishReason === 'suspended' && sp) {
           pendingApprovalRef.current = true;
           setPendingToolApproval({
-            runId: suspendPayload.runId ?? '',
-            toolCallId: suspendPayload.toolCallId ?? '',
-            toolName: (suspendPayload.toolName as string) ?? 'tool',
-            args: suspendPayload.args ?? {}
+            runId: sp.runId ?? '',
+            toolCallId: sp.toolCallId ?? '',
+            toolName: (sp.toolName as string) ?? 'tool',
+            args: sp.args ?? {}
           });
         }
       }
@@ -458,7 +592,7 @@ export function useAgentChat({
         }
       }
     },
-    []
+    [extractUsageFromPayload, accumulateUsage]
   );
 
   const streamResponse = useCallback(
@@ -470,6 +604,7 @@ export function useAgentChat({
       const abortController = new AbortController();
       abortRef.current = abortController;
       const runIdRef = { current: '' };
+      firstTextDeltaTimeRef.current = null;
 
       const assistantMessageId = crypto.randomUUID();
       setMessages((prev) => [
@@ -484,7 +619,8 @@ export function useAgentChat({
           threadId,
           resourceId || threadId,
           headers,
-          abortController.signal
+          abortController.signal,
+          model
         );
 
         for await (const chunk of stream) {
@@ -510,26 +646,31 @@ export function useAgentChat({
         abortRef.current = null;
         needsStepSeparatorRef.current = false;
         needsNewTextPartRef.current = false;
+        const durationMs = firstTextDeltaTimeRef.current
+          ? Date.now() - firstTextDeltaTimeRef.current
+          : undefined;
+        firstTextDeltaTimeRef.current = null;
         setMessages((prev) =>
           prev.map((m) => {
-            if (m.id !== assistantMessageId || !m.parts) return m;
-            const hasRunning = m.parts.some(
-              (p) => p.type === 'tool-call' && p.status === 'running'
-            );
-            if (!hasRunning) return m;
-            return {
-              ...m,
-              parts: m.parts.map((p) =>
-                p.type === 'tool-call' && p.status === 'running'
-                  ? { ...p, status: 'done' as const }
-                  : p
-              )
-            };
+            if (m.id !== assistantMessageId) return m;
+            const parts = m.parts?.some((p) => p.type === 'tool-call' && p.status === 'running')
+              ? m.parts.map((p) =>
+                  p.type === 'tool-call' && p.status === 'running'
+                    ? { ...p, status: 'done' as const }
+                    : p
+                )
+              : m.parts;
+            const usage = m.usage
+              ? { ...m.usage, durationMs }
+              : durationMs != null
+                ? { promptTokens: 0, completionTokens: 0, totalTokens: 0, durationMs }
+                : m.usage;
+            return { ...m, parts, usage };
           })
         );
       }
     },
-    [threadId, resourceId, token, organizationId, isAgentEnabled, contexts, handleChunk]
+    [threadId, resourceId, token, organizationId, isAgentEnabled, contexts, model, handleChunk]
   );
 
   const handleApproveToolCall = useCallback(async () => {
@@ -703,6 +844,33 @@ export function useAgentChat({
     setInputValue(e.target.value);
   }, []);
 
+  const submitQuestionResponse = useCallback(
+    (answers: Record<string, string>) => {
+      setActiveQuestion(null);
+      if (!threadId || isStreaming) return;
+
+      const formatted = Object.entries(answers)
+        .map(([key, value]) => `${key}: ${value}`)
+        .join('\n');
+      const content = `[user_response]\n${formatted}`;
+
+      const userMessage: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'user',
+        content,
+        timestamp: new Date()
+      };
+      setMessages((prev) => [...prev, userMessage]);
+      setIsStreaming(true);
+      streamResponse(content);
+    },
+    [threadId, isStreaming, streamResponse]
+  );
+
+  const dismissQuestion = useCallback(() => {
+    setActiveQuestion(null);
+  }, []);
+
   const stopStreaming = useCallback(() => {
     abortRef.current?.abort();
     setIsStreaming(false);
@@ -716,6 +884,7 @@ export function useAgentChat({
     isLoadingHistory,
     isAgentConfigured: isAgentEnabled,
     pendingToolApproval,
+    activeQuestion,
     omStatus,
     scrollRef,
     textareaRef,
@@ -725,6 +894,8 @@ export function useAgentChat({
     handleInputChange,
     handleApproveToolCall,
     handleDeclineToolCall,
+    submitQuestionResponse,
+    dismissQuestion,
     stopStreaming
   };
 }
