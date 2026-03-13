@@ -133,13 +133,13 @@ func GenerateDNSInstructions(domain, targetSubdomain, provider string) []types.D
 	instructions := []types.DNSInstruction{
 		{
 			RecordType:  "CNAME",
-			Name:        "*",
+			Name:        domain,
 			Value:       cnameValue,
-			Description: fmt.Sprintf("%s. Add a CNAME record pointing * to %s", description, cnameValue),
+			Description: fmt.Sprintf("%s. Add a CNAME record pointing %s to %s", description, domain, cnameValue),
 		},
 		{
 			RecordType:  "TXT",
-			Name:        "_nixopus-verify",
+			Name:        fmt.Sprintf("_nixopus-verify.%s", domain),
 			Value:       fmt.Sprintf("nixopus-domain-verify=%s", domain),
 			Description: fmt.Sprintf("%s. Add a TXT record for domain verification", description),
 		},
