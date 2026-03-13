@@ -28,16 +28,16 @@ const data = {
       resource: 'deploy'
     },
     {
-      title: 'navigation.dashboard',
-      url: '/charts',
-      icon: ChartColumnDecreasing,
-      resource: 'dashboard'
-    },
-    {
       title: 'navigation.chats',
       url: '/chats',
       icon: MessageSquare,
       resource: 'ai'
+    },
+    {
+      title: 'navigation.dashboard',
+      url: '/charts',
+      icon: ChartColumnDecreasing,
+      resource: 'dashboard'
     }
   ]
 };
