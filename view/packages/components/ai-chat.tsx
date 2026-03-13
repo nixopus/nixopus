@@ -47,8 +47,12 @@ import {
   Search,
   Check,
   ChevronRight,
+  ChevronDown,
   Copy,
-  Pencil
+  Pencil,
+  Zap,
+  Coins,
+  Timer
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
@@ -56,7 +60,10 @@ import {
   type ChatMessage,
   type MessagePart,
   type PendingToolApproval,
-  type OmStatus
+  type OmStatus,
+  type TokenUsage,
+  type AgentQuestion,
+  type AgentQuestionField
 } from '@/packages/hooks/ai/use-agent-chat';
 import { ContextWindowBar } from './context-window-bar';
 import { type ChatThread } from '@/packages/hooks/ai/use-chat-threads';
@@ -70,7 +77,8 @@ import {
   useThreadSidebarSearch,
   useChatMessagesScroll,
   useContextSearch,
-  formatTime
+  formatTime,
+  AVAILABLE_MODELS
 } from '@/packages/hooks/ai/use-chat-page';
 
 function NixopusIcon({ className }: { className?: string }) {
@@ -102,6 +110,13 @@ export function ChatPage() {
         onRenameThread={page.renameThread}
       />
       <div className="flex flex-1 flex-col min-w-0">
+        {page.activeQuestion && (
+          <AgentQuestionModal
+            question={page.activeQuestion}
+            onSubmit={page.submitQuestionResponse}
+            onDismiss={page.dismissQuestion}
+          />
+        )}
         {!page.isThreadsInitialized ? (
           <MessagesSkeleton />
         ) : page.activeThreadId ? (
@@ -129,6 +144,8 @@ export function ChatPage() {
               contextProviders={page.contextProviders}
               autoRunTools={page.autoRunTools}
               onAutoRunToolsChange={page.setAutoRunTools}
+              selectedModel={page.selectedModel}
+              onModelChange={page.setSelectedModel}
               onAddContext={page.addContext}
               onRemoveContext={page.removeContext}
               onSubmit={page.handleSubmit}
@@ -710,6 +727,66 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+function formatTokenCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+  return String(n);
+}
+
+function formatCost(usd: number): string {
+  if (usd < 0.0001) return '<$0.0001';
+  if (usd < 0.01) return `$${usd.toFixed(4)}`;
+  return `$${usd.toFixed(4)}`;
+}
+
+function formatDuration(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  const seconds = ms / 1000;
+  if (seconds < 60) return `${seconds.toFixed(1)}s`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.round(seconds % 60);
+  return `${minutes}m ${remainingSeconds}s`;
+}
+
+function TokenUsageDisplay({ usage }: { usage: TokenUsage }) {
+  const { t } = useTranslation();
+
+  return (
+    <div className="inline-flex items-center gap-3 mt-2 px-3 py-1.5 rounded-lg border border-border/40 bg-muted/30">
+      {usage.durationMs != null && (
+        <>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Timer className="size-3.5 text-emerald-500/70" />
+            <span className="font-medium tabular-nums">{formatDuration(usage.durationMs)}</span>
+          </div>
+          <div className="w-px h-3.5 bg-border/50" />
+        </>
+      )}
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Zap className="size-3.5 text-primary/70" />
+        <span className="font-medium tabular-nums">{formatTokenCount(usage.promptTokens)}</span>
+        <span className="text-muted-foreground/50">
+          {t('ai.usage.inputTokens' as Parameters<typeof t>[0])}
+        </span>
+        <span className="text-muted-foreground/30 mx-0.5">/</span>
+        <span className="font-medium tabular-nums">{formatTokenCount(usage.completionTokens)}</span>
+        <span className="text-muted-foreground/50">
+          {t('ai.usage.outputTokens' as Parameters<typeof t>[0])}
+        </span>
+      </div>
+      {usage.costUsd != null && (
+        <>
+          <div className="w-px h-3.5 bg-border/50" />
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Coins className="size-3.5 text-amber-500/70" />
+            <span className="font-medium tabular-nums">{formatCost(usage.costUsd)}</span>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 interface MessageBubbleProps {
   message: ChatMessage;
   isStreaming?: boolean;
@@ -770,6 +847,9 @@ function MessageBubble({
             <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
             <CopyButton text={message.content} />
           </div>
+          {isLastAssistantMessage && !isStreaming && message.usage && (
+            <TokenUsageDisplay usage={message.usage} />
+          )}
         </div>
       </div>
     );
@@ -839,6 +919,9 @@ function MessageBubble({
           <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
           {!isUser && <CopyButton text={message.content} />}
         </div>
+        {!isUser && isLastAssistantMessage && !isStreaming && message.usage && (
+          <TokenUsageDisplay usage={message.usage} />
+        )}
       </div>
     </div>
   );
@@ -975,6 +1058,8 @@ interface ChatInputProps {
   contextProviders: ContextProviderData[];
   autoRunTools: boolean;
   onAutoRunToolsChange: (value: boolean) => void;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
   onAddContext: (ctx: ChatContext) => void;
   onRemoveContext: (ctx: ChatContext) => void;
   onSubmit: (e?: React.FormEvent) => void;
@@ -991,6 +1076,8 @@ function ChatInput({
   contextProviders,
   autoRunTools,
   onAutoRunToolsChange,
+  selectedModel,
+  onModelChange,
   onAddContext,
   onRemoveContext,
   onSubmit,
@@ -999,6 +1086,8 @@ function ChatInput({
   onStop
 }: ChatInputProps) {
   const { t } = useTranslation();
+  const currentModelLabel =
+    AVAILABLE_MODELS.find((m) => m.id === selectedModel)?.label ?? selectedModel;
 
   return (
     <div className="shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-sm p-4">
@@ -1028,6 +1117,38 @@ function ChatInput({
               </span>
             );
           })}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted border border-border/50 transition-colors"
+              >
+                <Zap className="size-3" />
+                <span>{currentModelLabel}</span>
+                <ChevronDown className="size-3 opacity-50" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-52">
+              {AVAILABLE_MODELS.map((model) => (
+                <DropdownMenuItem
+                  key={model.id}
+                  onClick={() => onModelChange(model.id)}
+                  className={cn(
+                    'flex items-center gap-2',
+                    selectedModel === model.id && 'bg-primary/10'
+                  )}
+                >
+                  <Check
+                    className={cn(
+                      'size-3.5 shrink-0',
+                      selectedModel === model.id ? 'opacity-100 text-primary' : 'opacity-0'
+                    )}
+                  />
+                  <span>{model.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="flex items-center gap-1 rounded-md border border-border/50 p-0.5">
             <button
               type="button"
@@ -1115,6 +1236,157 @@ function ChatInput({
           )}
         </form>
         <p className="text-xs text-muted-foreground mt-3 text-center">{t('ai.input.hint')}</p>
+      </div>
+    </div>
+  );
+}
+
+interface QuestionFieldInputProps {
+  field: AgentQuestionField;
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function QuestionFieldInput({ field, value, onChange }: QuestionFieldInputProps) {
+  switch (field.type) {
+    case 'textarea':
+      return (
+        <Textarea
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={field.placeholder}
+          rows={3}
+          className="resize-y text-sm"
+        />
+      );
+    case 'select':
+      return (
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        >
+          <option value="">{field.placeholder || 'Select...'}</option>
+          {field.options?.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      );
+    case 'toggle':
+      return (
+        <button
+          type="button"
+          onClick={() => onChange(value === 'true' ? 'false' : 'true')}
+          className="flex items-center gap-2.5"
+        >
+          <div
+            className={cn(
+              'w-9 h-5 rounded-full relative transition-colors',
+              value === 'true' ? 'bg-primary' : 'bg-muted-foreground/30'
+            )}
+          >
+            <div
+              className={cn(
+                'absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform',
+                value === 'true' ? 'translate-x-[18px]' : 'translate-x-0.5'
+              )}
+            />
+          </div>
+          <span className="text-sm text-foreground">{value === 'true' ? 'Yes' : 'No'}</span>
+        </button>
+      );
+    default:
+      return (
+        <Input
+          type={field.type === 'password' ? 'password' : 'text'}
+          value={value}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => onChange(e.target.value)}
+          placeholder={field.placeholder}
+          className="text-sm"
+        />
+      );
+  }
+}
+
+interface AgentQuestionModalProps {
+  question: AgentQuestion;
+  onSubmit: (answers: Record<string, string>) => void;
+  onDismiss: () => void;
+}
+
+function AgentQuestionModal({ question, onSubmit, onDismiss }: AgentQuestionModalProps) {
+  const [values, setValues] = React.useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    for (const field of question.fields) {
+      initial[field.name] = field.defaultValue ?? (field.type === 'toggle' ? 'false' : '');
+    }
+    return initial;
+  });
+  const [errors, setErrors] = React.useState<Record<string, boolean>>({});
+
+  const handleChange = React.useCallback((name: string, value: string) => {
+    setValues((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: false }));
+  }, []);
+
+  const handleSubmit = React.useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const newErrors: Record<string, boolean> = {};
+      let hasErrors = false;
+      for (const field of question.fields) {
+        if (field.required && !values[field.name]?.trim()) {
+          newErrors[field.name] = true;
+          hasErrors = true;
+        }
+      }
+      if (hasErrors) {
+        setErrors(newErrors);
+        return;
+      }
+      onSubmit(values);
+    },
+    [question.fields, values, onSubmit]
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onDismiss} />
+      <div className="relative z-10 w-full max-w-md mx-4 rounded-xl overflow-hidden bg-background border border-border shadow-2xl">
+        <div className="px-5 pt-5 pb-3">
+          <h2 className="text-base font-semibold text-foreground">{question.title}</h2>
+          {question.description && (
+            <p className="mt-1 text-sm text-muted-foreground">{question.description}</p>
+          )}
+        </div>
+        <form onSubmit={handleSubmit} className="px-5 pb-5">
+          <div className="flex flex-col gap-4 max-h-[50vh] overflow-y-auto pr-1">
+            {question.fields.map((field) => (
+              <div key={field.name} className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-foreground">
+                  {field.label}
+                  {field.required && <span className="text-destructive ml-0.5">*</span>}
+                </label>
+                <QuestionFieldInput
+                  field={field}
+                  value={values[field.name] ?? ''}
+                  onChange={(v) => handleChange(field.name, v)}
+                />
+                {errors[field.name] && <span className="text-xs text-destructive">Required</span>}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-end gap-2 mt-5 pt-4 border-t border-border/50">
+            <Button type="button" variant="outline" size="sm" onClick={onDismiss}>
+              Cancel
+            </Button>
+            <Button type="submit" size="sm">
+              Submit
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

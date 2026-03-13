@@ -7,7 +7,9 @@ import {
   useAgentChat,
   type ChatMessage,
   type PendingToolApproval,
-  type OmStatus
+  type OmStatus,
+  type TokenUsage,
+  type AgentQuestion
 } from './use-agent-chat';
 import { useChatThreads, type ChatThread } from './use-chat-threads';
 import {
@@ -32,6 +34,18 @@ function useLocalStorageState(key: string, defaultValue: boolean) {
   return [value, setValue] as const;
 }
 
+export const AVAILABLE_MODELS = [
+  { id: 'openrouter/gpt-4o', label: 'GPT-4o' },
+  { id: 'openrouter/gpt-4o-mini', label: 'GPT-4o Mini' },
+  { id: 'openrouter/gpt-4.1', label: 'GPT-4.1' },
+  { id: 'openrouter/gpt-4.1-mini', label: 'GPT-4.1 Mini' },
+  { id: 'openrouter/gpt-4.1-nano', label: 'GPT-4.1 Nano' },
+  { id: 'openrouter/claude-sonnet-4-20250514', label: 'Claude Sonnet 4' },
+  { id: 'openrouter/claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet' }
+] as const;
+
+export type ModelId = (typeof AVAILABLE_MODELS)[number]['id'];
+
 export interface UseChatPageReturn {
   sidebarCollapsed: boolean;
   toggleSidebarCollapse: () => void;
@@ -40,6 +54,8 @@ export interface UseChatPageReturn {
   removeContext: (ctx: ChatContext) => void;
   autoRunTools: boolean;
   setAutoRunTools: (value: boolean) => void;
+  selectedModel: string;
+  setSelectedModel: (model: string) => void;
   contextProviders: ContextProviderData[];
   isAgentConfigured: boolean;
   handleNewChat: () => void;
@@ -59,6 +75,7 @@ export interface UseChatPageReturn {
   scrollRef: React.RefObject<HTMLDivElement | null>;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   pendingToolApproval: PendingToolApproval | null;
+  activeQuestion: AgentQuestion | null;
   omStatus: OmStatus | null;
   handleSubmit: (e?: React.FormEvent) => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
@@ -66,6 +83,8 @@ export interface UseChatPageReturn {
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleApproveToolCall: () => void;
   handleDeclineToolCall: () => void;
+  submitQuestionResponse: (answers: Record<string, string>) => void;
+  dismissQuestion: () => void;
   stopStreaming: () => void;
   setInputValue: (value: string) => void;
 }
@@ -81,8 +100,18 @@ export function useChatPage(): UseChatPageReturn {
   );
   const [selectedContexts, setSelectedContexts] = useState<ChatContext[]>([]);
   const [autoRunTools, setAutoRunTools] = useLocalStorageState('chat_auto_run_tools', false);
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('chat_selected_model') || AVAILABLE_MODELS[0].id;
+    }
+    return AVAILABLE_MODELS[0].id;
+  });
   const [pendingDeployPrompt, setPendingDeployPrompt] = useState<string | null>(null);
   const repoParamsHandledRef = useRef(false);
+
+  useEffect(() => {
+    localStorage.setItem('chat_selected_model', selectedModel);
+  }, [selectedModel]);
 
   const contextProviders = useChatContextProviders();
   const threads = useChatThreads();
@@ -91,6 +120,7 @@ export function useChatPage(): UseChatPageReturn {
     resourceId: threads.resourceId,
     contexts: selectedContexts,
     autoRunTools,
+    model: selectedModel,
     waitForThread: threads.waitForThread,
     onFirstMessage: (content) => {
       if (threads.activeThreadId) {
@@ -193,6 +223,8 @@ export function useChatPage(): UseChatPageReturn {
     removeContext,
     autoRunTools,
     setAutoRunTools,
+    selectedModel,
+    setSelectedModel,
     contextProviders,
     isAgentConfigured: chat.isAgentConfigured,
     handleNewChat,
@@ -212,6 +244,7 @@ export function useChatPage(): UseChatPageReturn {
     scrollRef: chat.scrollRef,
     textareaRef: chat.textareaRef,
     pendingToolApproval: chat.pendingToolApproval ?? null,
+    activeQuestion: chat.activeQuestion ?? null,
     omStatus: chat.omStatus ?? null,
     handleSubmit: chat.handleSubmit,
     handleKeyDown: chat.handleKeyDown,
@@ -219,6 +252,8 @@ export function useChatPage(): UseChatPageReturn {
     handleInputChange: chat.handleInputChange,
     handleApproveToolCall: chat.handleApproveToolCall,
     handleDeclineToolCall: chat.handleDeclineToolCall,
+    submitQuestionResponse: chat.submitQuestionResponse,
+    dismissQuestion: chat.dismissQuestion,
     stopStreaming: chat.stopStreaming,
     setInputValue: chat.setInputValue
   };
