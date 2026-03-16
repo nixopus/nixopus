@@ -381,6 +381,14 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterMachineRoutes(machineGroup, machineController)
 
+	machineBillingGroup := fuego.Group(server, apiV1.Path+"/machine")
+	router.applyMiddleware(machineBillingGroup, MiddlewareConfig{
+		RBAC:         false,
+		Audit:        true,
+		ResourceName: "machine",
+	})
+	router.RegisterMachineBillingRoutes(machineBillingGroup, machineController)
+
 	// Trail routes
 	trailController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	trailGroup := fuego.Group(server, apiV1.Path+"/trail")

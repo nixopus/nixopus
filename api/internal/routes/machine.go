@@ -18,22 +18,25 @@ func (router *Router) RegisterMachineRoutes(machineGroup *fuego.Server, machineC
 		machineController.ExecCommand,
 		fuego.OptionSummary("Execute a command on the host machine"),
 	)
+}
+
+func (router *Router) RegisterMachineBillingRoutes(billingGroup *fuego.Server, machineController *machine_controller.MachineController) {
 	fuego.Get(
-		machineGroup,
+		billingGroup,
 		"/plans",
 		machineController.ListMachinePlans,
 		fuego.OptionSummary("List available machine plans"),
 		fuego.OptionDescription("Returns all active machine plans with pricing, specs, and tier information."),
 	)
 	fuego.Post(
-		machineGroup,
+		billingGroup,
 		"/plan/select",
 		machineController.SelectMachinePlan,
 		fuego.OptionSummary("Select a machine plan"),
 		fuego.OptionDescription("Select a machine plan for the organization. Deducts the monthly cost from the wallet immediately. Requires sufficient wallet balance."),
 	)
 	fuego.Get(
-		machineGroup,
+		billingGroup,
 		"/billing",
 		machineController.GetMachineBilling,
 		fuego.OptionSummary("Get machine billing status"),
