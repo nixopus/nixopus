@@ -83,6 +83,8 @@ func main() {
 	}
 	schedulers.HealthCheck.Start()
 	log.Println("Health check scheduler started successfully")
+	schedulers.Billing.Start()
+	log.Println("Billing scheduler started successfully")
 
 	router.SetupRoutes()
 
@@ -95,6 +97,7 @@ func main() {
 		queue.Close()
 		schedulers.Main.Stop()
 		schedulers.HealthCheck.Stop()
+		schedulers.Billing.Stop()
 		os.Exit(0)
 	}()
 	log.Printf("Server starting on port %s", config.AppConfig.Server.Port)

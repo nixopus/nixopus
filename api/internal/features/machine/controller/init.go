@@ -8,16 +8,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	"github.com/raghavyuva/nixopus-api/internal/features/machine/service"
+	billing_storage "github.com/raghavyuva/nixopus-api/internal/features/machine/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/machine/types"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 type MachineController struct {
-	store   *shared_storage.Store
-	service *service.MachineService
-	ctx     context.Context
-	logger  logger.Logger
+	store          *shared_storage.Store
+	service        *service.MachineService
+	billingService *service.BillingService
+	ctx            context.Context
+	logger         logger.Logger
 }
 
 func NewMachineController(
@@ -25,11 +27,13 @@ func NewMachineController(
 	ctx context.Context,
 	l logger.Logger,
 ) *MachineController {
+	bs := billing_storage.NewBillingStorage(store.DB, ctx)
 	return &MachineController{
-		store:   store,
-		service: service.NewMachineService(store, ctx, l),
-		ctx:     ctx,
-		logger:  l,
+		store:          store,
+		service:        service.NewMachineService(store, ctx, l),
+		billingService: service.NewBillingService(bs),
+		ctx:            ctx,
+		logger:         l,
 	}
 }
 

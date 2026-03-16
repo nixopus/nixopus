@@ -14,31 +14,31 @@ import (
 type Schedulers struct {
 	Main        *Scheduler
 	HealthCheck *HealthCheckScheduler
+	Billing     *BillingScheduler
 }
 
 // InitSchedulers creates and configures all schedulers
 func InitSchedulers(store *shared_storage.Store, ctx context.Context) *Schedulers {
 	l := logger.NewLogger()
 
-	// Initialize main scheduler
 	sched := NewScheduler(store.DB, ctx, l, DefaultSchedulerConfig())
 
-	// Register cleanup jobs
 	sched.RegisterJob(cleanup.NewDeploymentLogsCleanupJob(store.DB, l))
 	sched.RegisterJob(cleanup.NewAuditLogsCleanupJob(store.DB, l))
 	sched.RegisterJob(cleanup.NewExtensionLogsCleanupJob(store.DB, l))
 
-	// Register container maintenance jobs
 	sched.RegisterJob(container.NewPruneImagesJob(l))
 	sched.RegisterJob(container.NewPruneBuildCacheJob(l))
 
-	// Initialize health check scheduler (SocketServer will be set later from routes)
 	healthCheckStorage := healthcheck_storage.HealthCheckStorage{DB: store.DB, Ctx: ctx}
 	healthCheckService := healthcheck_service.NewHealthCheckService(store, ctx, l, &healthCheckStorage)
 	healthCheckScheduler := NewHealthCheckScheduler(healthCheckService, l, ctx)
 
+	billingScheduler := NewBillingScheduler(store.DB, ctx, l)
+
 	return &Schedulers{
 		Main:        sched,
 		HealthCheck: healthCheckScheduler,
+		Billing:     billingScheduler,
 	}
 }

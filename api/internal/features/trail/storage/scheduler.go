@@ -39,14 +39,23 @@ func (s *TrailStorage) SelectBestServer(vcpus, memMB, diskGB int) (string, error
 		ColumnExpr("isr.max_vcpus").
 		ColumnExpr("isr.max_memory_mb").
 		ColumnExpr("isr.max_disk_gb").
-		ColumnExpr("COALESCE(SUM(upd.vcpu_count), 0) AS used_vcpus").
-		ColumnExpr("COALESCE(SUM(upd.memory_mb), 0) AS used_mem").
-		ColumnExpr("COALESCE(SUM(upd.disk_size_gb), 0) AS used_disk").
+		ColumnExpr("COALESCE(SUM(upd.vcpu_count), 0) + COALESCE(pv.pool_vcpus, 0) AS used_vcpus").
+		ColumnExpr("COALESCE(SUM(upd.memory_mb), 0) + COALESCE(pv.pool_mem, 0) AS used_mem").
+		ColumnExpr("COALESCE(SUM(upd.disk_size_gb), 0) + COALESCE(pv.pool_disk, 0) AS used_disk").
 		Join(`LEFT JOIN user_provision_details AS upd ON upd.server_id = isr.id`+
 			` AND EXISTS (SELECT 1 FROM "user" u WHERE u.id = upd.user_id AND u.provision_status IN (?))`,
 			bun.In(activeProvisionStatuses)).
+		Join(`LEFT JOIN (`+
+			`SELECT vp.server_id, `+
+			`SUM(vp.vcpu_count) AS pool_vcpus, `+
+			`SUM(vp.memory_mb) AS pool_mem, `+
+			`SUM(vp.disk_size_gb) AS pool_disk `+
+			`FROM vm_pool AS vp `+
+			`WHERE vp.status IN ('warm', 'claiming') `+
+			`GROUP BY vp.server_id`+
+			`) AS pv ON pv.server_id = isr.id`).
 		Where("isr.status = ?", "active").
-		GroupExpr("isr.id").
+		GroupExpr("isr.id, pv.pool_vcpus, pv.pool_mem, pv.pool_disk").
 		Scan(s.Ctx, &candidates)
 
 	if err != nil {
