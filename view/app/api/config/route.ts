@@ -21,7 +21,8 @@ export async function GET() {
     passwordLoginEnabled: process.env.PASSWORD_LOGIN_ENABLED !== 'false',
     agentConfigured: Boolean(process.env.AGENT_URL),
     agentUrl: process.env.AGENT_URL || '',
-    githubAppSlug: process.env.GITHUB_APP_SLUG || ''
+    githubAppSlug: process.env.GITHUB_APP_SLUG || '',
+    selfHosted: process.env.SELF_HOSTED === 'true' || false
   });
   response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
   return response;

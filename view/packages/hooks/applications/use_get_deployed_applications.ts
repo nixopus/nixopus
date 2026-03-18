@@ -12,6 +12,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import { setActiveConnectorId } from '@/redux/features/github-connector/githubConnectorSlice';
 import { useLabelFilter } from './use_label_filter';
+import { getSelfHosted } from '@/redux/conf';
 
 /**
  * Hook to get the deployed applications.
@@ -119,6 +120,11 @@ function useGetDeployedApplications() {
   const [inGitHubFlow, setInGitHubFlow] = useState(false);
   const [pendingConnectorId, setPendingConnectorId] = useState<string | null>(null);
   const processingInstallRef = useRef(false);
+  const [selfHosted, setSelfHosted] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    getSelfHosted().then(setSelfHosted);
+  }, []);
   const activeConnectorId = useAppSelector((state) => state.githubConnector.activeConnectorId);
   const code = searchParams.get('code');
   const installationId = searchParams.get('installation_id');
@@ -268,7 +274,8 @@ function useGetDeployedApplications() {
     router,
     showApplications,
     inGitHubFlow,
-    labelFilter
+    labelFilter,
+    selfHosted
   };
 }
 

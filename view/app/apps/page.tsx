@@ -10,8 +10,6 @@ import { SortSelect } from '@/components/ui/sort-selector';
 import { Application } from '@/redux/types/applications';
 import { Button } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
-import { FeatureNames } from '@/packages/types/feature-flags';
 import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
 import { TypographyH2, TypographyMuted } from '@nixopus/ui';
@@ -40,11 +38,11 @@ function page() {
     inGitHubFlow,
     showApplications,
     router,
-    labelFilter
+    labelFilter,
+    selfHosted
   } = useGetDeployedApplications();
-  const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();
 
-  if (isFeatureFlagsLoading) {
+  if (selfHosted === null) {
     return (
       <PageLayout maxWidth="full" padding="md" spacing="lg">
         <div className="flex items-center justify-between">
@@ -64,7 +62,7 @@ function page() {
     );
   }
 
-  const isManagedMode = !isFeatureEnabled(FeatureNames.FeatureSelfHosted);
+  const isManagedMode = !selfHosted;
 
   const isShowingGitHubSetup = isManagedMode
     ? !showApplications && !connectors?.length
