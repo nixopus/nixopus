@@ -20,7 +20,8 @@ export async function GET() {
     port: process.env.NEXT_PUBLIC_PORT || '7443',
     passwordLoginEnabled: process.env.PASSWORD_LOGIN_ENABLED !== 'false',
     agentConfigured: Boolean(process.env.AGENT_URL),
-    agentUrl: process.env.AGENT_URL || ''
+    agentUrl: process.env.AGENT_URL || '',
+    githubAppSlug: process.env.GITHUB_APP_SLUG || ''
   });
   response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
   return response;

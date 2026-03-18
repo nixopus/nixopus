@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Button } from '@nixopus/ui';
 import { Badge } from '@nixopus/ui';
@@ -19,12 +19,14 @@ import {
   AlertCircle,
   CheckCircle2,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 import { GitHubAppProps, GitHubAppCredentials, GithubConnector } from '@/redux/types/github';
 import { useGitHubAppSetup } from '@/packages/hooks/applications/use-github-app-setup';
 import { useGithubManifestFlow } from '@/packages/hooks/github/use_github_manifest_flow';
 import useGithubConnectorSettings from '@/packages/hooks/applications/use-github-connector-settings';
+import { getGithubAppSlug } from '@/redux/conf';
 
 const STEP_CONFIG = [
   {
@@ -67,16 +69,15 @@ const GitHubAppManifestComponent: React.FC<GitHubAppProps> = ({
   return <div className="flex flex-col items-center gap-4 w-full">{errorContent}</div>;
 };
 
-// ============================================================================
-// GitHub App Installer Component
-// ============================================================================
-
 interface GithubInstallProps {
   appSlug: string;
   organization?: string;
   callbackUrl: string;
   onSuccess?: () => void;
   onError?: (error: Error) => void;
+  title?: string;
+  description?: string;
+  buttonLabel?: string;
 }
 
 const GithubInstaller: React.FC<GithubInstallProps> = ({
@@ -84,7 +85,10 @@ const GithubInstaller: React.FC<GithubInstallProps> = ({
   organization,
   callbackUrl,
   onSuccess,
-  onError
+  onError,
+  title,
+  description,
+  buttonLabel
 }) => {
   const { t } = useTranslation();
 
@@ -106,12 +110,14 @@ const GithubInstaller: React.FC<GithubInstallProps> = ({
       <div className="text-center space-y-2">
         <div className="flex items-center justify-center gap-2">
           <Github size={24} />
-          <h3 className="text-lg font-semibold">{t('selfHost.githubInstaller.title')}</h3>
+          <h3 className="text-lg font-semibold">{title || t('selfHost.githubInstaller.title')}</h3>
         </div>
-        <p className="text-sm text-muted-foreground">{t('selfHost.githubInstaller.description')}</p>
+        <p className="text-sm text-muted-foreground">
+          {description || t('selfHost.githubInstaller.description')}
+        </p>
       </div>
       <Button className="w-full" onClick={handleConnectGithub} size="lg">
-        {t('selfHost.githubInstaller.connectButton')}
+        {buttonLabel || t('selfHost.githubInstaller.connectButton')}
       </Button>
       <p className="text-xs text-center text-muted-foreground/60">
         {t('selfHost.githubInstaller.terms')}
@@ -679,5 +685,75 @@ const GitHubAppSetup: React.FC<GitHubAppSetupProps> = ({ organization, GetGithub
   );
 };
 
+interface ManagedGitHubAppSetupProps {
+  organization?: string;
+}
+
+const ManagedGitHubAppSetup: React.FC<ManagedGitHubAppSetupProps> = ({ organization }) => {
+  const { t } = useTranslation();
+  const [appSlug, setAppSlug] = useState<string | null>(null);
+  const [isLoadingSlug, setIsLoadingSlug] = useState(true);
+
+  useEffect(() => {
+    getGithubAppSlug()
+      .then((slug) => {
+        setAppSlug(slug || null);
+        setIsLoadingSlug(false);
+      })
+      .catch(() => {
+        setIsLoadingSlug(false);
+      });
+  }, []);
+
+  if (isLoadingSlug) {
+    return (
+      <div className="flex flex-col items-center w-full max-w-md mx-auto p-4 space-y-6">
+        <div className="flex flex-col items-center gap-4 py-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-sm text-muted-foreground">
+            {t('selfHost.managedSetup.loading' as any)}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!appSlug) {
+    return (
+      <div className="flex flex-col items-center w-full max-w-md mx-auto p-4 space-y-6">
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{t('selfHost.managedSetup.error' as any)}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  const callbackUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/apps`;
+
+  return (
+    <div className="flex flex-col items-center w-full max-w-md mx-auto p-4 space-y-6">
+      <div className="flex flex-col items-center text-center space-y-4">
+        <div className="rounded-full bg-primary/10 p-4">
+          <Github size={48} className="text-primary" />
+        </div>
+      </div>
+      <GithubInstaller
+        appSlug={appSlug}
+        organization={organization}
+        callbackUrl={callbackUrl}
+        title={t('selfHost.managedSetup.title' as any)}
+        description={t('selfHost.managedSetup.description' as any)}
+        buttonLabel={t('selfHost.managedSetup.connectButton' as any)}
+      />
+    </div>
+  );
+};
+
 export default GitHubAppSetup;
-export { GitHubConnectorSettingsModal, GitHubAppManifestComponent, GithubInstaller };
+export {
+  GitHubConnectorSettingsModal,
+  GitHubAppManifestComponent,
+  GithubInstaller,
+  ManagedGitHubAppSetup
+};

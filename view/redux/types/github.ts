@@ -50,12 +50,13 @@ export interface GithubConnector {
 }
 
 export interface CreateGithubConnectorRequest {
-  app_id: string;
-  slug: string;
-  pem: string;
-  client_id: string;
-  client_secret: string;
-  webhook_secret: string;
+  app_id?: string;
+  slug?: string;
+  pem?: string;
+  client_id?: string;
+  client_secret?: string;
+  webhook_secret?: string;
+  installation_id?: string;
 }
 
 export interface UpdateGithubConnectorRequest {
