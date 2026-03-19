@@ -18,6 +18,34 @@ func (router *Router) RegisterMachineRoutes(machineGroup *fuego.Server, machineC
 		machineController.ExecCommand,
 		fuego.OptionSummary("Execute a command on the host machine"),
 	)
+	fuego.Get(
+		machineGroup,
+		"/status",
+		machineController.GetMachineStatus,
+		fuego.OptionSummary("Get machine lifecycle status"),
+		fuego.OptionDescription("Returns the current state of the provisioned machine instance (active, paused, etc)."),
+	)
+	fuego.Post(
+		machineGroup,
+		"/restart",
+		machineController.RestartMachine,
+		fuego.OptionSummary("Restart machine"),
+		fuego.OptionDescription("Restarts the provisioned machine instance."),
+	)
+	fuego.Post(
+		machineGroup,
+		"/pause",
+		machineController.PauseMachine,
+		fuego.OptionSummary("Pause machine"),
+		fuego.OptionDescription("Pauses the provisioned machine instance."),
+	)
+	fuego.Post(
+		machineGroup,
+		"/resume",
+		machineController.ResumeMachine,
+		fuego.OptionSummary("Resume machine"),
+		fuego.OptionDescription("Resumes a paused machine instance."),
+	)
 }
 
 func (router *Router) RegisterMachineBillingRoutes(billingGroup *fuego.Server, machineController *machine_controller.MachineController) {

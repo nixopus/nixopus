@@ -68,6 +68,7 @@ func main() {
 	queue.SetupProvisionQueue()
 	queue.SetupCustomDomainQueue()
 	queue.SetupResourceUpdateQueue()
+	queue.SetupMachineLifecycleQueue(ctx)
 
 	router := routes.NewRouter(app)
 
