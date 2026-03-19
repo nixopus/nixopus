@@ -228,6 +228,7 @@ func setupEnvVarMappings() {
 	viper.BindEnv("app.version", "APP_VERSION")
 	viper.BindEnv("app.logs_path", "LOGS_PATH")
 	viper.BindEnv("app.deploy_domain", "DEPLOY_DOMAIN")
+	viper.BindEnv("app.self_hosted", "SELF_HOSTED")
 
 	// GitHub App (shared credentials)
 	viper.BindEnv("github.app_id", "GITHUB_APP_ID")

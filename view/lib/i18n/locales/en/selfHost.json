@@ -503,6 +503,13 @@
       "connectButton": "Connect GitHub",
       "terms": "By connecting, you agree to our Terms of Service and Privacy Policy."
     },
+    "managedSetup": {
+      "title": "Connect Your GitHub Account",
+      "description": "Install the Nixopus GitHub App on your account or organization to connect your repositories.",
+      "connectButton": "Install GitHub App",
+      "loading": "Loading configuration...",
+      "error": "GitHub App is not configured. Please contact your administrator."
+    },
     "githubManifest": {
       "title": "Create GitHub App",
       "appName": {

@@ -97,6 +97,7 @@ type AppConfig struct {
 	Version      string `mapstructure:"version"`
 	LogsPath     string `mapstructure:"logs_path"`
 	DeployDomain string `mapstructure:"deploy_domain"` // Base domain for generated app URLs (e.g. nixopus.com)
+	SelfHosted   bool   `mapstructure:"self_hosted"`   // true for self-hosted installs, false for managed/cloud
 }
 
 type GitHubConfig struct {

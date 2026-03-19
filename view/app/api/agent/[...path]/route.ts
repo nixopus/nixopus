@@ -51,12 +51,26 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
 
   const upstream = await fetch(url.toString(), init);
 
+  const upstreamContentType = upstream.headers.get('Content-Type') || 'application/json';
+  const isStreaming =
+    upstreamContentType.includes('text/event-stream') ||
+    upstreamContentType.includes('text/plain') ||
+    upstreamContentType.includes('application/x-ndjson');
+
+  const responseHeaders: Record<string, string> = {
+    'Content-Type': isStreaming ? 'text/event-stream; charset=utf-8' : upstreamContentType,
+    'Cache-Control': 'no-cache, no-transform',
+    'X-Content-Type-Options': 'nosniff'
+  };
+
+  if (isStreaming) {
+    responseHeaders['Connection'] = 'keep-alive';
+    responseHeaders['X-Accel-Buffering'] = 'no';
+  }
+
   return new Response(upstream.body, {
     status: upstream.status,
-    headers: {
-      'Content-Type': upstream.headers.get('Content-Type') || 'application/json',
-      'Cache-Control': 'no-cache'
-    }
+    headers: responseHeaders
   });
 }
 

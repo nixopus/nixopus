@@ -85,3 +85,13 @@ export async function getAgentConfigured() {
   const { agentConfigured } = await fetchConfig();
   return agentConfigured;
 }
+
+export async function getGithubAppSlug() {
+  const { githubAppSlug } = await fetchConfig();
+  return githubAppSlug as string;
+}
+
+export async function getSelfHosted() {
+  const { selfHosted } = await fetchConfig();
+  return selfHosted as boolean;
+}

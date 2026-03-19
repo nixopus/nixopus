@@ -120,7 +120,8 @@ async function agentFetch(
   }
 
   const reqHeaders: Record<string, string> = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    Accept: 'text/event-stream'
   };
   if (headers['Authorization']) {
     reqHeaders['Authorization'] = headers['Authorization'];

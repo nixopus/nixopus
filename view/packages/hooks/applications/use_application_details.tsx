@@ -61,12 +61,7 @@ function useApplicationDetails() {
   const [currentPage, setCurrentPage] = useState(1);
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
-  const defaultTab =
-    searchParams.get('logs') === 'true'
-      ? 'logs'
-      : tabParam === 'workflows'
-        ? 'workflows'
-        : 'monitoring';
+  const defaultTab = searchParams.get('logs') === 'true' ? 'logs' : 'monitoring';
   const [activeTab, setActiveTab] = useState(defaultTab);
   const { message } = useApplicationWebSocket(applicationId);
 
@@ -177,12 +172,12 @@ function useApplicationDetails() {
           />
         )
       },
-      {
-        value: 'workflows',
-        label: t('selfHost.application.tabs.workflows'),
-        icon: Workflow,
-        content: <WorkflowsList applicationId={applicationId} />
-      },
+      // {
+      //   value: 'workflows',
+      //   label: t('selfHost.application.tabs.workflows'),
+      //   icon: Workflow,
+      //   content: <WorkflowsList applicationId={applicationId} />
+      // },
       {
         value: 'resources',
         label: t('selfHost.application.tabs.resources'),
