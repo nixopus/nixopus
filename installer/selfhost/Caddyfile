@@ -12,6 +12,8 @@
     }
 
     handle {
-        reverse_proxy nixopus-view:7443
+        reverse_proxy nixopus-view:7443 {
+            flush_interval -1
+        }
     }
 }
