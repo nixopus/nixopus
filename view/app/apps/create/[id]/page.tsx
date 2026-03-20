@@ -13,7 +13,22 @@ function page() {
     <ResourceGuard
       resource="deploy"
       action="create"
-      loadingFallback={<Skeleton className="h-96" />}
+      loadingFallback={
+        <PageLayout
+          maxWidth="full"
+          padding="md"
+          spacing="lg"
+          className="justify-center items-center min-h-[80vh] flex-col flex w-full"
+        >
+          <div className="w-full max-w-2xl space-y-6">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-10 w-full rounded-md" />
+            <Skeleton className="h-10 w-32 rounded-md" />
+          </div>
+        </PageLayout>
+      }
     >
       <PageLayout
         maxWidth="full"
