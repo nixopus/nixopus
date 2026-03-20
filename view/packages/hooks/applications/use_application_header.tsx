@@ -114,6 +114,7 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
 
   const [isAddingLabel, setIsAddingLabel] = useState(false);
   const [newLabel, setNewLabel] = useState('');
+  const [cancelledDeploymentId, setCancelledDeploymentId] = useState<string | null>(null);
   const labelInputRef = useRef<HTMLInputElement>(null);
   const { requireSudo } = useSudoMode();
 
@@ -126,17 +127,20 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
   const latestDeployment = application?.deployments?.[0];
   const currentStatus = latestDeployment?.status?.status || application?.status?.status;
   const isDraft = currentStatus === 'draft';
+  const isCancelledLocally = cancelledDeploymentId === latestDeployment?.id;
   const isInProgress =
-    currentStatus === 'building' ||
-    currentStatus === 'cloning' ||
-    currentStatus === 'deploying' ||
-    currentStatus === 'started';
+    !isCancelledLocally &&
+    (currentStatus === 'building' ||
+      currentStatus === 'cloning' ||
+      currentStatus === 'deploying' ||
+      currentStatus === 'started');
   const statusConfig = getStatusConfig(currentStatus);
 
   const handleCancelDeployment = async () => {
     if (!latestDeployment?.id) return;
     try {
       await cancelDeployment({ deployment_id: latestDeployment.id }).unwrap();
+      setCancelledDeploymentId(latestDeployment.id);
       toast.success('Deployment cancellation initiated');
     } catch {
       toast.error('Failed to cancel deployment');
@@ -312,18 +316,32 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
 
     if (isInProgress) {
       return (
-        <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
-          <Button
-            variant="destructive"
-            size="sm"
-            disabled={isCancelling}
-            onClick={handleCancelDeployment}
-            className="gap-2"
-          >
-            <Square className="h-4 w-4" />
-            {isCancelling ? 'Cancelling...' : 'Cancel Build'}
-          </Button>
-        </AnyPermissionGuard>
+        <>
+          <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={isCancelling}
+              onClick={handleCancelDeployment}
+              className="gap-2"
+            >
+              <Square className="h-4 w-4" />
+              {isCancelling ? 'Cancelling...' : 'Cancel Build'}
+            </Button>
+          </AnyPermissionGuard>
+          <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>
+            <Button
+              variant="default"
+              size="sm"
+              disabled={isRedeploying}
+              onClick={() => handleRedeploy(false)}
+              className="gap-2"
+            >
+              <Rocket className="h-4 w-4" />
+              {t('selfHost.applicationDetails.header.actions.redeploy.button')}
+            </Button>
+          </AnyPermissionGuard>
+        </>
       );
     }
 
