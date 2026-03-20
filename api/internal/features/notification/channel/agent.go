@@ -125,6 +125,7 @@ func (a *AgentChannel) getToken() (string, error) {
 	params.Set("grant_type", "client_credentials")
 	params.Set("client_id", a.clientID)
 	params.Set("client_secret", a.clientSecret)
+	params.Set("resource", a.webhookURL)
 	req, err := http.NewRequest(http.MethodPost, a.tokenURL, bytes.NewBufferString(params.Encode()))
 	if err != nil {
 		return "", fmt.Errorf("failed to create token request: %w", err)

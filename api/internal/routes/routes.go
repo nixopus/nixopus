@@ -164,13 +164,13 @@ func (router *Router) initChannels() map[string]channel.Channel {
 		"discord": channel.NewDiscordChannel(db, ctx),
 	}
 
-	agentWebhookURL := os.Getenv("AGENT_WEBHOOK_URL")
-	agentTokenURL := os.Getenv("AUTH_TOKEN_URL")
-	agentClientID := os.Getenv("OAUTH_CLIENT_ID")
-	agentClientSecret := os.Getenv("OAUTH_CLIENT_SECRET")
+	agentCfg := config.AppConfig.AgentChannel
+	authURL := strings.TrimRight(config.AppConfig.BetterAuth.URL, "/")
 
-	if agentWebhookURL != "" && agentTokenURL != "" && agentClientID != "" && agentClientSecret != "" {
-		channels["agent"] = channel.NewAgentChannel(agentWebhookURL, agentTokenURL, agentClientID, agentClientSecret)
+	if agentCfg.URL != "" && authURL != "" && agentCfg.ClientID != "" && agentCfg.ClientSecret != "" {
+		webhookURL := strings.TrimRight(agentCfg.URL, "/") + "/api/webhooks/events"
+		tokenURL := authURL + "/api/auth/oauth2/token"
+		channels["agent"] = channel.NewAgentChannel(webhookURL, tokenURL, agentCfg.ClientID, agentCfg.ClientSecret)
 	}
 
 	return channels

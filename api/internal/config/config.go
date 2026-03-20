@@ -241,6 +241,11 @@ func setupEnvVarMappings() {
 	viper.BindEnv("betterauth.url", "AUTH_SERVICE_URL")
 	viper.BindEnv("betterauth.secret", "AUTH_SERVICE_SECRET")
 
+	// Agent channel (M2M webhook)
+	viper.BindEnv("agent_channel.url", "AGENT_URL")
+	viper.BindEnv("agent_channel.client_id", "OAUTH_CLIENT_ID")
+	viper.BindEnv("agent_channel.client_secret", "OAUTH_CLIENT_SECRET")
+
 	// S3 (optional, for image storage)
 	viper.BindEnv("s3.endpoint", "S3_ENDPOINT")
 	viper.BindEnv("s3.bucket", "S3_BUCKET")
