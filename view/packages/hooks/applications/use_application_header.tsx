@@ -127,8 +127,10 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
   const latestDeployment = application?.deployments?.[0];
   const currentStatus = latestDeployment?.status?.status || application?.status?.status;
   const isDraft = currentStatus === 'draft';
+  const canCancelDeployment = Boolean(latestDeployment?.id);
   const isCancelledLocally = cancelledDeploymentId === latestDeployment?.id;
   const isInProgress =
+    canCancelDeployment &&
     !isCancelledLocally &&
     (currentStatus === 'building' ||
       currentStatus === 'cloning' ||
@@ -141,9 +143,9 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
     try {
       await cancelDeployment({ deployment_id: latestDeployment.id }).unwrap();
       setCancelledDeploymentId(latestDeployment.id);
-      toast.success('Deployment cancellation initiated');
+      toast.success(t('selfHost.applicationDetails.header.actions.cancelDeployment.success'));
     } catch {
-      toast.error('Failed to cancel deployment');
+      toast.error(t('selfHost.applicationDetails.header.actions.cancelDeployment.error'));
     }
   };
 
@@ -326,7 +328,9 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
               className="gap-2"
             >
               <Square className="h-4 w-4" />
-              {isCancelling ? 'Cancelling...' : 'Cancel Build'}
+              {isCancelling
+                ? t('selfHost.applicationDetails.header.actions.cancelDeployment.cancelling')
+                : t('selfHost.applicationDetails.header.actions.cancelDeployment.button')}
             </Button>
           </AnyPermissionGuard>
           <AnyPermissionGuard permissions={['deploy:update']} loadingFallback={null}>

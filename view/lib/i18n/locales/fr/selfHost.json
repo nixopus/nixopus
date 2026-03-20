@@ -176,6 +176,12 @@
             "error": "Échec du re-déploiement de l'application",
             "permissionError": "Vous n'avez pas la permission de re-déployer les applications"
           },
+          "cancelDeployment": {
+            "button": "Cancel Build",
+            "cancelling": "Cancelling...",
+            "success": "Deployment cancellation initiated",
+            "error": "Failed to cancel deployment"
+          },
           "open": "Ouvrir l'application dans un nouvel onglet"
         }
       }

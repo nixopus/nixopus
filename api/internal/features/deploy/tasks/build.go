@@ -5,6 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/google/uuid"
 	"github.com/moby/term"
@@ -12,10 +18,6 @@ import (
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-	"io"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 type BuildConfig struct {
@@ -176,30 +178,25 @@ type remoteBuildReader struct {
 		Wait() error
 		Close() error
 	}
-	release func()
-	closed  bool
-	errored bool
-	ctx     context.Context
+	release   func()
+	closeOnce sync.Once
+	errored   bool
+	ctx       context.Context
 }
 
-// Close releases the SSH session and pool borrow. Safe to call multiple times.
+// Close releases the SSH session and pool borrow. Safe to call concurrently.
 func (r *remoteBuildReader) Close() {
-	if r.closed {
-		return
-	}
-	r.closed = true
-	if r.session != nil {
-		r.session.Close()
-	}
-	if r.release != nil {
-		r.release()
-	}
+	r.closeOnce.Do(func() {
+		if r.session != nil {
+			r.session.Close()
+		}
+		if r.release != nil {
+			r.release()
+		}
+	})
 }
 
 func (r *remoteBuildReader) Read(p []byte) (n int, err error) {
-	if r.closed {
-		return 0, io.EOF
-	}
 	if r.ctx != nil {
 		select {
 		case <-r.ctx.Done():
@@ -210,6 +207,10 @@ func (r *remoteBuildReader) Read(p []byte) (n int, err error) {
 	}
 	n, err = r.stdout.Read(p)
 	if err == io.EOF {
+		if r.ctx != nil && r.ctx.Err() != nil {
+			r.Close()
+			return 0, ErrBuildCancelled
+		}
 		waitErr := r.checkWait()
 		r.Close()
 		if waitErr != nil {

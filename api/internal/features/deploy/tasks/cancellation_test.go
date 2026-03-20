@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -83,7 +84,7 @@ func TestConcurrentCancellations(t *testing.T) {
 
 	for i := 0; i < n; i++ {
 		ctxs[i], cancels[i] = context.WithCancel(context.Background())
-		svc.RegisterCancellation(string(rune('A'+i)), cancels[i])
+		svc.RegisterCancellation(fmt.Sprintf("deployment-%d", i), cancels[i])
 	}
 
 	var wg sync.WaitGroup
@@ -91,7 +92,7 @@ func TestConcurrentCancellations(t *testing.T) {
 		wg.Add(1)
 		go func(idx int) {
 			defer wg.Done()
-			_ = svc.CancelDeployment(string(rune('A' + idx)))
+			_ = svc.CancelDeployment(fmt.Sprintf("deployment-%d", idx))
 		}(i)
 	}
 	wg.Wait()

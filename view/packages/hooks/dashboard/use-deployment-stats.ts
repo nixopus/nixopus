@@ -6,6 +6,7 @@ import { CHART_COLORS } from '@/packages/utils/dashboard';
 import type { ChartConfig } from '@/components/ui/chart';
 import { getDeploymentStatusColor } from '@/packages/utils/colors';
 import { GitBranch } from 'lucide-react';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 
 export interface DeploymentStats {
   total: number;
@@ -23,6 +24,8 @@ export interface PieDataItem {
 }
 
 export function useDeploymentStats(deploymentsData: ApplicationDeployment[]) {
+  const { t } = useTranslation();
+
   const calculateStats = React.useCallback((): DeploymentStats => {
     if (!deploymentsData || deploymentsData.length === 0) {
       return {
@@ -105,11 +108,11 @@ export function useDeploymentStats(deploymentsData: ApplicationDeployment[]) {
         color: CHART_COLORS.blue
       },
       cancelled: {
-        label: 'Cancelled',
+        label: t('dashboard.deploymentStats.cancelled'),
         color: '#f97316'
       }
     };
-  }, []);
+  }, [t]);
 
   const [activeStatus, setActiveStatus] = React.useState<string | null>(
     pieData.length > 0 ? pieData[0].status : null

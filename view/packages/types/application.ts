@@ -47,7 +47,7 @@ export interface DeploymentOverviewProps {
   totalDeployments: number;
   successfulDeployments: number;
   failedDeployments: number;
-  currentStatus?: string;
+  currentStatus?: Status;
 }
 
 export interface MonitorProps {

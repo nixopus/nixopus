@@ -333,6 +333,7 @@ var (
 	ErrPaymentRequired                  = errors.New("payment required: deployment limit reached, please upgrade your plan")
 	ErrDeploymentNotCancellable         = errors.New("deployment is not in a cancellable state")
 	ErrDeploymentNotRunning             = errors.New("deployment not found or not running on this instance")
+	ErrPermissionDenied                 = errors.New("permission denied")
 )
 
 const (
