@@ -12,6 +12,7 @@ import (
 	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 // OnLiveDevDeployedFunc is called when a live dev build completes and the container is healthy.
@@ -27,17 +28,19 @@ type TaskService struct {
 	Logger            logger.Logger
 	Github_service    *github_service.GithubConnectorService
 	Store             *shared_storage.Store
+	Notifier          shared_types.Notifier
 	OnLiveDevDeployed OnLiveDevDeployedFunc
 	OnLiveDevLog      OnLiveDevLogFunc
-	cancellations     sync.Map // deploymentID (string) -> context.CancelFunc
+	cancellations     sync.Map
 }
 
-func NewTaskService(storage storage.DeployRepository, logger logger.Logger, githubService *github_service.GithubConnectorService, store *shared_storage.Store) *TaskService {
+func NewTaskService(storage storage.DeployRepository, logger logger.Logger, githubService *github_service.GithubConnectorService, store *shared_storage.Store, notifier shared_types.Notifier) *TaskService {
 	return &TaskService{
 		Storage:           storage,
 		Logger:            logger,
 		Github_service:    githubService,
 		Store:             store,
+		Notifier:          notifier,
 		OnLiveDevDeployed: nil,
 	}
 }
@@ -106,4 +109,24 @@ type LiveDevConfig struct {
 	DockerfilePath string
 	InternalPort   int
 	Workdir        string
+}
+
+func (s *TaskService) emitDeployFailed(payload shared_types.TaskPayload, err error) {
+	if s.Notifier == nil {
+		return
+	}
+	s.Notifier.Emit(shared_types.NotificationEvent{
+		Type:           shared_types.EventDeployFailed,
+		UserID:         payload.Application.UserID.String(),
+		OrganizationID: payload.Application.OrganizationID.String(),
+		Data: map[string]interface{}{
+			"app_name":      payload.Application.Name,
+			"app_id":        payload.Application.ID.String(),
+			"error_message": err.Error(),
+			"deployment_id": payload.ApplicationDeployment.ID.String(),
+			"repository":    payload.Application.Repository,
+			"branch":        payload.Application.Branch,
+			"commit_hash":   payload.ApplicationDeployment.CommitHash,
+		},
+	})
 }

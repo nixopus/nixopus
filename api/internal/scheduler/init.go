@@ -32,7 +32,7 @@ func InitSchedulers(store *shared_storage.Store, ctx context.Context) *Scheduler
 
 	healthCheckStorage := healthcheck_storage.HealthCheckStorage{DB: store.DB, Ctx: ctx}
 	healthCheckService := healthcheck_service.NewHealthCheckService(store, ctx, l, &healthCheckStorage)
-	healthCheckScheduler := NewHealthCheckScheduler(healthCheckService, l, ctx)
+	healthCheckScheduler := NewHealthCheckScheduler(healthCheckService, l, ctx, nil)
 
 	billingScheduler := NewBillingScheduler(store.DB, ctx, l)
 

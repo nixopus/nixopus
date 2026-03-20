@@ -36,7 +36,7 @@ func NewLiveDeployController(store *storage.Store) *LiveDeployController {
 	deployStorage := deploy_storage.DeployStorage{DB: store.DB, Ctx: ctx}
 	githubConnectorStorage := github_connector_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx}
 	githubConnectorService := github_connector_service.NewGithubConnectorService(store, ctx, sharedLogger, &githubConnectorStorage)
-	taskService := deploy_tasks.NewTaskService(&deployStorage, sharedLogger, githubConnectorService, store)
+	taskService := deploy_tasks.NewTaskService(&deployStorage, sharedLogger, githubConnectorService, store, nil)
 	taskService.SetupCreateDeploymentQueue() // This also sets up LiveDevQueue via onceQueues
 	taskService.StartConsumers(ctx)
 

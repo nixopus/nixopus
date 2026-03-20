@@ -22,12 +22,14 @@ type HealthCheckScheduler struct {
 	running      bool
 	mu           sync.RWMutex
 	socketServer *realtime.SocketServer
+	notifier     shared_types.Notifier
 }
 
 func NewHealthCheckScheduler(
 	healthCheckService *healthcheck_service.HealthCheckService,
 	logger logger.Logger,
 	ctx context.Context,
+	notifier shared_types.Notifier,
 ) *HealthCheckScheduler {
 	return &HealthCheckScheduler{
 		service:      healthCheckService,
@@ -36,6 +38,7 @@ func NewHealthCheckScheduler(
 		stopChan:     make(chan struct{}),
 		running:      false,
 		socketServer: nil,
+		notifier:     notifier,
 	}
 }
 
@@ -44,6 +47,12 @@ func (s *HealthCheckScheduler) SetSocketServer(socketServer *realtime.SocketServ
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.socketServer = socketServer
+}
+
+func (s *HealthCheckScheduler) SetNotifier(notifier shared_types.Notifier) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.notifier = notifier
 }
 
 // Start begins the health check scheduler
@@ -131,7 +140,23 @@ func (s *HealthCheckScheduler) executeCheck(healthCheck *shared_types.HealthChec
 		s.logger.Log(logger.Error, "health check failed", "application_id: "+healthCheck.ApplicationID.String()+", status: "+status)
 	}
 
-	// Broadcast result via WebSocket
+	threshold := healthCheck.FailureThreshold
+	if threshold <= 0 {
+		threshold = 3
+	}
+	if healthCheck.ConsecutiveFails >= threshold && s.notifier != nil {
+		s.notifier.Emit(shared_types.NotificationEvent{
+			Type:           shared_types.EventHealthCheckCritical,
+			OrganizationID: healthCheck.OrganizationID.String(),
+			Data: map[string]interface{}{
+				"app_id":            healthCheck.ApplicationID.String(),
+				"endpoint":          healthCheck.Endpoint,
+				"consecutive_fails": healthCheck.ConsecutiveFails,
+				"error_message":     result.ErrorMessage,
+			},
+		})
+	}
+
 	s.broadcastHealthCheckResult(healthCheck, result)
 }
 

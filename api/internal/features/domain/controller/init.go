@@ -6,30 +6,30 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/domain/storage"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type DomainsController struct {
-	store        *shared_storage.Store
-	service      *service.DomainsService
-	ctx          context.Context
-	logger       logger.Logger
-	notification *notification.NotificationManager
+	store    *shared_storage.Store
+	service  *service.DomainsService
+	ctx      context.Context
+	logger   logger.Logger
+	notifier shared_types.Notifier
 }
 
 func NewDomainsController(
 	store *shared_storage.Store,
 	ctx context.Context,
 	l logger.Logger,
-	notificationManager *notification.NotificationManager,
+	notifier shared_types.Notifier,
 ) *DomainsController {
 	storage := storage.DomainStorage{DB: store.DB, Ctx: ctx}
 	return &DomainsController{
-		store:        store,
-		service:      service.NewDomainsService(store, ctx, l, &storage),
-		ctx:          ctx,
-		logger:       l,
-		notification: notificationManager,
+		store:    store,
+		service:  service.NewDomainsService(store, ctx, l, &storage),
+		ctx:      ctx,
+		logger:   l,
+		notifier: notifier,
 	}
 }

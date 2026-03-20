@@ -43,6 +43,7 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	sshManager, err := sshpkg.GetSSHManagerFromContext(b.Context)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Failed to get SSH manager: "+err.Error(), shared_types.Failed)
+		s.emitBuildFailed(b, err)
 		return "", fmt.Errorf("failed to get SSH manager: %w", err)
 	}
 
@@ -51,6 +52,7 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	sftpClient, err := utils.CreateSFTPClientWithRetry(sshManager)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Failed to create SFTP client: "+err.Error(), shared_types.Failed)
+		s.emitBuildFailed(b, err)
 		return "", fmt.Errorf("failed to create SFTP client: %w", err)
 	}
 	defer sftpClient.Close()
@@ -58,7 +60,9 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	info, err := sftpClient.Stat(buildContextPath)
 	if err != nil || !info.IsDir() {
 		b.TaskContext.LogAndUpdateStatus("Build context path does not exist: "+buildContextPath, shared_types.Failed)
-		return "", fmt.Errorf("build context path does not exist: %s", buildContextPath)
+		pathErr := fmt.Errorf("build context path does not exist: %s", buildContextPath)
+		s.emitBuildFailed(b, pathErr)
+		return "", pathErr
 	}
 	b.TaskContext.AddLog("Build context path verified on remote server")
 
@@ -72,7 +76,9 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	_, err = sftpClient.Stat(dockerfileFullPath)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Dockerfile not found at path: "+dockerfileFullPath, shared_types.Failed)
-		return "", fmt.Errorf("dockerfile not found at path: %s", dockerfileFullPath)
+		dfErr := fmt.Errorf("dockerfile not found at path: %s", dockerfileFullPath)
+		s.emitBuildFailed(b, dfErr)
+		return "", dfErr
 	}
 	b.TaskContext.AddLog("Dockerfile validation successful")
 
@@ -80,6 +86,7 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	buildOutput, err := s.createBuildContextArchiveFromRemote(b.Context, b, buildContextPath, dockerfile_path)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Failed to start remote build: "+err.Error(), shared_types.Failed)
+		s.emitBuildFailed(b, err)
 		return "", err
 	}
 	defer buildOutput.Close()
@@ -98,6 +105,7 @@ func (s *TaskService) BuildImage(b BuildConfig) (string, error) {
 	err = s.processBuildOutput(logReader)
 	if err != nil {
 		b.TaskContext.LogAndUpdateStatus("Failed to process build output: "+err.Error(), shared_types.Failed)
+		s.emitBuildFailed(b, err)
 		return "", err
 	}
 	b.TaskContext.AddLog("Build output processing completed")
@@ -369,4 +377,24 @@ func (r *LogReader) processJSONMessage(jsonMsg jsonmessage.JSONMessage) {
 		r.DeployService.Logger.Log(logger.Error, "Build error: "+jsonMsg.Error.Message, r.deployment_config.ID.String())
 		r.TaskContext.AddLog("Build error: " + jsonMsg.Error.Message)
 	}
+}
+
+func (s *TaskService) emitBuildFailed(b BuildConfig, err error) {
+	if s.Notifier == nil {
+		return
+	}
+	s.Notifier.Emit(shared_types.NotificationEvent{
+		Type:           shared_types.EventBuildFailed,
+		UserID:         b.Application.UserID.String(),
+		OrganizationID: b.Application.OrganizationID.String(),
+		Data: map[string]interface{}{
+			"app_name":      b.Application.Name,
+			"app_id":        b.Application.ID.String(),
+			"error_message": err.Error(),
+			"deployment_id": b.ApplicationDeployment.ID.String(),
+			"repository":    b.Application.Repository,
+			"branch":        b.Application.Branch,
+			"commit_hash":   b.ApplicationDeployment.CommitHash,
+		},
+	})
 }

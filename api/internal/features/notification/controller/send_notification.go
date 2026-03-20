@@ -31,7 +31,7 @@ func (c *NotificationController) SendNotification(f fuego.ContextWithBody[notifi
 		}
 	}
 
-	result := c.notification.SendDirectNotification(req, user.ID.String(), orgID.String())
+	result := c.dispatcher.SendDirect(req, user.ID.String(), orgID.String())
 
 	if !result.Success {
 		return &types.SendNotificationResponse{

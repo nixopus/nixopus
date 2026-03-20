@@ -39,6 +39,7 @@ func (s *TaskService) HandleReDeployDockerfileDeployment(ctx context.Context, Ta
 	})
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to resolve source: "+err.Error(), shared_types.Failed)
+		s.emitDeployFailed(TaskPayload, err)
 		return err
 	}
 
@@ -68,6 +69,7 @@ func (s *TaskService) HandleReDeployDockerfileDeployment(ctx context.Context, Ta
 			return ctx.Err()
 		}
 		taskCtx.LogAndUpdateStatus("Failed to build image: "+err.Error(), shared_types.Failed)
+		s.emitDeployFailed(TaskPayload, err)
 		return err
 	}
 
@@ -90,6 +92,7 @@ func (s *TaskService) HandleReDeployDockerfileDeployment(ctx context.Context, Ta
 	containerResult, err := s.AtomicUpdateContainer(orgCtx, TaskPayload, taskCtx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to update container: "+err.Error(), shared_types.Failed)
+		s.emitDeployFailed(TaskPayload, err)
 		return err
 	}
 
@@ -100,12 +103,14 @@ func (s *TaskService) HandleReDeployDockerfileDeployment(ctx context.Context, Ta
 		port, err := strconv.Atoi(containerResult.AvailablePort)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
+			s.emitDeployFailed(TaskPayload, err)
 			return err
 		}
 
 		upstreamHost, err := GetSSHHostForOrganization(ctx, TaskPayload.Application.OrganizationID)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to get SSH host: "+err.Error(), shared_types.Failed)
+			s.emitDeployFailed(TaskPayload, err)
 			return err
 		}
 
@@ -122,6 +127,7 @@ func (s *TaskService) HandleReDeployDockerfileDeployment(ctx context.Context, Ta
 
 		if err := caddy.AddDomainsAtomic(orgCtx, nil, &s.Logger, routes); err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to configure proxy: "+err.Error(), shared_types.Failed)
+			s.emitDeployFailed(TaskPayload, err)
 			s.cleanupServiceOnFailure(orgCtx, TaskPayload.Application.Name, taskCtx)
 			return err
 		}

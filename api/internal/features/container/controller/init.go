@@ -10,34 +10,32 @@ import (
 	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 type ContainerController struct {
-	store        *shared_storage.Store
-	ctx          context.Context
-	logger       logger.Logger
-	notification *notification.NotificationManager
+	store    *shared_storage.Store
+	ctx      context.Context
+	logger   logger.Logger
+	notifier shared_types.Notifier
 }
 
 func NewContainerController(
 	store *shared_storage.Store,
 	ctx context.Context,
 	l logger.Logger,
-	notificationManager *notification.NotificationManager,
+	notifier shared_types.Notifier,
 ) (*ContainerController, error) {
 	return &ContainerController{
-		store:        store,
-		ctx:          ctx,
-		logger:       l,
-		notification: notificationManager,
+		store:    store,
+		ctx:      ctx,
+		logger:   l,
+		notifier: notifier,
 	}, nil
 }
 
-// getDockerService retrieves docker service from request context
 func (c *ContainerController) getDockerService(ctx context.Context) (docker.DockerRepository, error) {
 	dockerService, err := docker.GetDockerServiceFromContext(ctx)
 	if err != nil {
@@ -70,7 +68,6 @@ func (c *ContainerController) isProtectedContainer(ctx context.Context, containe
 	return nil, false
 }
 
-// getOrganizationSettings retrieves organization settings with defaults
 func (c *ContainerController) getOrganizationSettings(r *http.Request) shared_types.OrganizationSettingsData {
 	orgID, err := utils.GetOrCreateOrganizationID(r.Context(), r, &shared_storage.App{Store: c.store, Ctx: c.ctx})
 	if err != nil || orgID == uuid.Nil {
