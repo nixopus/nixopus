@@ -65,7 +65,7 @@ function page() {
   const isManagedMode = !selfHosted;
 
   const isShowingGitHubSetup = isManagedMode
-    ? !showApplications && !connectors?.length
+    ? inGitHubFlow || (!showApplications && !connectors?.length)
     : inGitHubFlow || (!showApplications && !inGitHubFlow && !connectors?.length);
   const isShowingRepositories =
     !showApplications && !inGitHubFlow && connectors?.length && connectors.length > 0;
@@ -75,8 +75,10 @@ function page() {
       <AnyPermissionGuard permissions={['deploy:create']} loadingFallback={null}>
         {isManagedMode ? (
           <>
-            {!showApplications && !connectors?.length && <ManagedGitHubAppSetup />}
-            {!showApplications && connectors?.length && connectors.length > 0 && (
+            {(inGitHubFlow || (!showApplications && !connectors?.length)) && (
+              <ManagedGitHubAppSetup />
+            )}
+            {!inGitHubFlow && !showApplications && connectors?.length && connectors.length > 0 && (
               <ListRepositories />
             )}
           </>
