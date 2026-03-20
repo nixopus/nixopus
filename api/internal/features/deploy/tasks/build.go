@@ -152,12 +152,21 @@ func (s *TaskService) createBuildContextArchiveFromRemote(ctx context.Context, b
 		release()
 		return nil, fmt.Errorf("failed to start docker build: %w", err)
 	}
-	return &remoteBuildReader{
+	reader := &remoteBuildReader{
 		stdout:  stdout,
 		session: session,
 		release: release,
-	}, nil
+		ctx:     ctx,
+	}
+	go func() {
+		<-ctx.Done()
+		reader.Close()
+	}()
+	return reader, nil
 }
+
+// ErrBuildCancelled is returned when a build is cancelled by the user.
+var ErrBuildCancelled = fmt.Errorf("build cancelled by user")
 
 // remoteBuildReader streams docker build output and returns build failure as Read error when command exits non-zero.
 // Always call Close() when done (e.g. via defer) to release the pooled SSH connection borrow.
@@ -170,6 +179,7 @@ type remoteBuildReader struct {
 	release func()
 	closed  bool
 	errored bool
+	ctx     context.Context
 }
 
 // Close releases the SSH session and pool borrow. Safe to call multiple times.
@@ -190,6 +200,14 @@ func (r *remoteBuildReader) Read(p []byte) (n int, err error) {
 	if r.closed {
 		return 0, io.EOF
 	}
+	if r.ctx != nil {
+		select {
+		case <-r.ctx.Done():
+			r.Close()
+			return 0, ErrBuildCancelled
+		default:
+		}
+	}
 	n, err = r.stdout.Read(p)
 	if err == io.EOF {
 		waitErr := r.checkWait()
@@ -200,6 +218,10 @@ func (r *remoteBuildReader) Read(p []byte) (n int, err error) {
 		return n, io.EOF
 	}
 	if err != nil {
+		if r.ctx != nil && r.ctx.Err() != nil {
+			r.Close()
+			return n, ErrBuildCancelled
+		}
 		r.Close()
 	}
 	return n, err

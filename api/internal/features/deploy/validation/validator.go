@@ -48,6 +48,8 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return validateGetProjectFamilyRequest(*r)
 	case *types.AddApplicationToFamilyRequest:
 		return validateAddApplicationToFamilyRequest(r)
+	case *types.CancelDeploymentRequest:
+		return validateCancelDeploymentRequest(*r)
 	default:
 		return types.ErrInvalidRequestType
 	}
@@ -247,6 +249,13 @@ func validateAddApplicationToFamilyRequest(req *types.AddApplicationToFamilyRequ
 	}
 	if req.DockerfilePath == "" {
 		req.DockerfilePath = "Dockerfile"
+	}
+	return nil
+}
+
+func validateCancelDeploymentRequest(req types.CancelDeploymentRequest) error {
+	if req.DeploymentID == uuid.Nil {
+		return types.ErrMissingID
 	}
 	return nil
 }

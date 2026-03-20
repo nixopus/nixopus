@@ -44,6 +44,11 @@ func (s *TaskService) HandleReDeployDockerfileDeployment(ctx context.Context, Ta
 
 	taskCtx.LogAndUpdateStatus("Source resolved successfully", shared_types.Building)
 
+	if err := checkCancelled(ctx); err != nil {
+		taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
+		return err
+	}
+
 	// Add organization ID to context for docker service
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
 
@@ -58,7 +63,16 @@ func (s *TaskService) HandleReDeployDockerfileDeployment(ctx context.Context, Ta
 		Context:           orgCtx,
 	})
 	if err != nil {
+		if ctx.Err() != nil {
+			taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
+			return ctx.Err()
+		}
 		taskCtx.LogAndUpdateStatus("Failed to build image: "+err.Error(), shared_types.Failed)
+		return err
+	}
+
+	if err := checkCancelled(ctx); err != nil {
+		taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
 		return err
 	}
 
@@ -67,6 +81,11 @@ func (s *TaskService) HandleReDeployDockerfileDeployment(ctx context.Context, Ta
 	s.ExportAndRecordImage(orgCtx, TaskPayload, buildImageResult, taskCtx)
 
 	taskCtx.UpdateStatus(shared_types.Deploying)
+
+	if err := checkCancelled(ctx); err != nil {
+		taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
+		return err
+	}
 
 	containerResult, err := s.AtomicUpdateContainer(orgCtx, TaskPayload, taskCtx)
 	if err != nil {

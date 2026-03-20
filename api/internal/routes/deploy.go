@@ -110,6 +110,12 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 		deployController.HandleRestart,
 		fuego.OptionSummary("Restart deployment"),
 	)
+	fuego.Post(
+		applicationGroup,
+		"/cancel-deployment",
+		deployController.CancelDeployment,
+		fuego.OptionSummary("Cancel deployment"),
+	)
 	fuego.Get(
 		applicationGroup,
 		"/logs/{application_id}",

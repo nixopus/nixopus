@@ -258,6 +258,10 @@ type ComposeServicesResponse struct {
 	Data    []shared_types.ComposeService `json:"data"`
 }
 
+type CancelDeploymentRequest struct {
+	DeploymentID uuid.UUID `json:"deployment_id"`
+}
+
 type RecoverRequest struct {
 	ApplicationID *uuid.UUID `json:"application_id,omitempty"`
 }
@@ -327,6 +331,8 @@ var (
 	ErrDomainLimitReached               = errors.New("maximum of 5 domains per application reached")
 	ErrDomainAlreadyExists              = errors.New("domain already exists for this application")
 	ErrPaymentRequired                  = errors.New("payment required: deployment limit reached, please upgrade your plan")
+	ErrDeploymentNotCancellable         = errors.New("deployment is not in a cancellable state")
+	ErrDeploymentNotRunning             = errors.New("deployment not found or not running on this instance")
 )
 
 const (
