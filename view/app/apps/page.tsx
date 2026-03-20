@@ -42,7 +42,7 @@ function page() {
     selfHosted
   } = useGetDeployedApplications();
 
-  if (selfHosted === null) {
+  if (selfHosted === null || isLoadingApplications || isLoading) {
     return (
       <PageLayout maxWidth="full" padding="md" spacing="lg">
         <div className="flex items-center justify-between">
