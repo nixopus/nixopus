@@ -121,16 +121,26 @@ function useGetDeployedApplications() {
   const [pendingConnectorId, setPendingConnectorId] = useState<string | null>(null);
   const processingInstallRef = useRef(false);
   const [selfHosted, setSelfHosted] = useState<boolean | null>(null);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   useEffect(() => {
     getSelfHosted().then(setSelfHosted);
   }, []);
+
+  useEffect(() => {
+    if (!isLoadingApplications) {
+      setHasLoadedOnce(true);
+    }
+  }, [isLoadingApplications]);
+
   const activeConnectorId = useAppSelector((state) => state.githubConnector.activeConnectorId);
   const code = searchParams.get('code');
   const installationId = searchParams.get('installation_id');
   const githubSetup = searchParams.get('github_setup');
   const connectorIdParam = searchParams.get('connector_id');
-  const showApplications = paginatedApplications?.length > 0 || isLoadingApplications;
+  const showApplications = hasLoadedOnce
+    ? paginatedApplications?.length > 0
+    : isLoadingApplications;
 
   useEffect(() => {
     if (code || githubSetup === 'true') {

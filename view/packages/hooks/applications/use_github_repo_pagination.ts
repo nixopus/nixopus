@@ -101,8 +101,11 @@ function useGithubRepoPagination() {
     []
   );
 
+  const [navigatingRepoId, setNavigatingRepoId] = useState<string | null>(null);
+
   const onSelectRepository = (repositoryId: string) => {
     setSelectedRepository(repositoryId);
+    setNavigatingRepoId(repositoryId);
     const repo = paginatedApplications?.find(
       (r: GithubRepository) => r.id.toString() === repositoryId
     );
@@ -119,6 +122,8 @@ function useGithubRepoPagination() {
         ...(repo.html_url && { repo_html_url: repo.html_url })
       });
       router.push(`/chats?${params.toString()}`);
+    } else {
+      setNavigatingRepoId(null);
     }
   };
 
@@ -139,7 +144,8 @@ function useGithubRepoPagination() {
     isLoading,
     isFetching,
     isSearching,
-    onSelectRepository
+    onSelectRepository,
+    navigatingRepoId
   };
 }
 

@@ -90,6 +90,18 @@
       "notConnected": "ಯಂತ್ರಕ್ಕೆ ಸಂಪರ್ಕಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
       "troubleshoot": "ಸಮಸ್ಯೆ ಪರಿಹಾರ",
       "contactSupport": "ಬೆಂಬಲವನ್ನು ಸಂಪರ್ಕಿಸಿ"
+    },
+    "deploymentStats": {
+      "title": "Deployment Stats",
+      "noData": "No deployment data available",
+      "total": "Total",
+      "successRate": "Success Rate",
+      "deployed": "Deployed",
+      "failed": "Failed",
+      "inProgress": "In Progress",
+      "cancelled": "Cancelled",
+      "count": "Count",
+      "status": "Status"
     }
   }
 }

@@ -134,6 +134,10 @@ func GetDeployApplicationLogsURL(applicationID string) string {
 	return baseURL + "/deploy/application/logs/" + applicationID
 }
 
+func GetDeployApplicationCancelURL() string {
+	return baseURL + "/deploy/application/cancel-deployment"
+}
+
 func GetCreateOrganizationURL() string {
 	return baseURL + "/organizations"
 }

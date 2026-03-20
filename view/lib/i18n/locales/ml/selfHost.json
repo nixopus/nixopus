@@ -195,6 +195,12 @@
             "error": "പുനർഡിപ്ലോയ് പരാജയം",
             "permissionError": "പുനർഡിപ്ലോയ് ചെയ്യാൻ അനുവാദമില്ല"
           },
+          "cancelDeployment": {
+            "button": "Cancel Build",
+            "cancelling": "Cancelling...",
+            "success": "Deployment cancellation initiated",
+            "error": "Failed to cancel deployment"
+          },
           "open": "പുതിയ ടാബിൽ തുറക്കുക"
         }
       }

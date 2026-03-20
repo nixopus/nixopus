@@ -414,7 +414,8 @@ export function StatBlock({ value, label, sublabel, color, pulse }: StatBlockPro
     red: 'text-red-500',
     amber: 'text-amber-500',
     blue: 'text-blue-500',
-    purple: 'text-purple-500'
+    purple: 'text-purple-500',
+    orange: 'text-orange-500'
   };
 
   return (

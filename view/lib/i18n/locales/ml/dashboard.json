@@ -90,6 +90,18 @@
       "notConnected": "മെഷീനിലേക്ക് കണക്റ്റ് ചെയ്യാൻ കഴിയുന്നില്ല.",
       "troubleshoot": "പ്രശ്നനിർദ്ധാരണം",
       "contactSupport": "സപ്പോർട്ട് ബന്ധപ്പെടുക"
+    },
+    "deploymentStats": {
+      "title": "Deployment Stats",
+      "noData": "No deployment data available",
+      "total": "Total",
+      "successRate": "Success Rate",
+      "deployed": "Deployed",
+      "failed": "Failed",
+      "inProgress": "In Progress",
+      "cancelled": "Cancelled",
+      "count": "Count",
+      "status": "Status"
     }
   }
 }

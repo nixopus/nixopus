@@ -883,41 +883,7 @@
 						"type": "string"
 					},
 					"compose_service": {
-						"nullable": true,
-						"properties": {
-							"application": {
-								"$ref": "#/components/schemas/Application"
-							},
-							"application_id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"created_at": {
-								"format": "date-time",
-								"type": "string"
-							},
-							"domains": {
-								"items": {
-									"$ref": "#/components/schemas/ApplicationDomain"
-								},
-								"type": "array"
-							},
-							"id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"port": {
-								"type": "integer"
-							},
-							"service_name": {
-								"type": "string"
-							},
-							"updated_at": {
-								"format": "date-time",
-								"type": "string"
-							}
-						},
-						"type": "object"
+						"$ref": "#/components/schemas/ComposeService"
 					},
 					"compose_service_id": {
 						"format": "uuid",
@@ -1858,6 +1824,16 @@
 				},
 				"type": "object"
 			},
+			"CancelDeploymentRequest": {
+				"description": "CancelDeploymentRequest schema",
+				"properties": {
+					"deployment_id": {
+						"format": "uuid",
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"CategoriesResponse": {
 				"description": "CategoriesResponse schema",
 				"properties": {
@@ -1892,8 +1868,41 @@
 					},
 					"domains": {
 						"items": {
-							"$ref": "#/components/schemas/ApplicationDomain"
+							"nullable": true,
+							"properties": {
+								"application": {
+									"$ref": "#/components/schemas/Application"
+								},
+								"application_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"compose_service": {
+									"$ref": "#/components/schemas/ComposeService"
+								},
+								"compose_service_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"domain": {
+									"type": "string"
+								},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"port": {
+									"nullable": true,
+									"type": "integer"
+								}
+							},
+							"type": "object"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"id": {
@@ -18042,6 +18051,119 @@
 				]
 			}
 		},
+		"/api/v1/deploy/application/cancel-deployment": {
+			"post": {
+				"description": "Cancel deployment.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "cancelDeployment",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"deployment_id": "00000000-0000-0000-0000-000000000000"
+							},
+							"schema": {
+								"$ref": "#/components/schemas/CancelDeploymentRequest"
+							}
+						}
+					},
+					"description": "Request body for types.CancelDeploymentRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MessageResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MessageResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Cancel deployment",
+				"tags": [
+					"cancel-deployment",
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
 		"/api/v1/deploy/application/compose-services": {
 			"get": {
 				"description": "List compose services.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
@@ -29623,6 +29745,9 @@
 		},
 		{
 			"name": "by-extension-id"
+		},
+		{
+			"name": "cancel-deployment"
 		},
 		{
 			"name": "categories"

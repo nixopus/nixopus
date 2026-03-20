@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, AlertCircle, Loader2, Clock } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2, Clock, Ban } from 'lucide-react';
 
 export interface ThemeColors {
   [key: string]: {
@@ -97,6 +97,8 @@ export function getDeploymentStatusIcon(status?: string): React.ReactElement {
       return <CheckCircle2 className="h-4 w-4 text-primary" />;
     case 'failed':
       return <AlertCircle className="h-4 w-4 text-destructive" />;
+    case 'cancelled':
+      return <Ban className="h-4 w-4 text-orange-500" />;
     case 'in_progress':
     case 'building':
     case 'deploying':
@@ -114,6 +116,8 @@ export function getDeploymentStatusColor(status?: string): string {
       return 'bg-primary';
     case 'failed':
       return 'bg-destructive';
+    case 'cancelled':
+      return 'bg-orange-500';
     case 'in_progress':
     case 'building':
     case 'deploying':
@@ -131,6 +135,8 @@ export function getDeploymentStatusBadgeClasses(status?: string): string {
       return 'bg-primary/10 text-primary';
     case 'failed':
       return 'bg-destructive/10 text-destructive';
+    case 'cancelled':
+      return 'bg-orange-500/10 text-orange-500';
     case 'in_progress':
     case 'building':
     case 'deploying':
