@@ -1,25 +1,34 @@
 import { useMemo } from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
+import { Status } from '@/redux/types/applications';
 
 interface UseDeploymentOverviewProps {
   totalDeployments: number;
   successfulDeployments: number;
   failedDeployments: number;
-  currentStatus?: string;
+  currentStatus?: Status;
 }
 
-const getStatusColor = (status?: string): 'emerald' | 'red' | 'amber' | 'blue' | 'purple' => {
+const getStatusColor = (
+  status?: Status
+): 'emerald' | 'red' | 'amber' | 'blue' | 'purple' | 'orange' => {
   switch (status) {
     case 'deployed':
+    case 'running':
+    case 'started':
       return 'emerald';
     case 'failed':
       return 'red';
+    case 'cancelled':
+      return 'orange';
     case 'building':
       return 'amber';
     case 'deploying':
       return 'blue';
     case 'cloning':
       return 'purple';
+    case 'draft':
+    case 'stopped':
     default:
       return 'amber';
   }

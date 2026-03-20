@@ -177,6 +177,12 @@
             "error": "ಅಪ್ಲಿಕೇಶನ್ ಅನ್ನು ಮರು-ನಿಯೋಜಿಸಲು ವಿಫಲವಾಗಿದೆ",
             "permissionError": "ಅಪ್ಲಿಕೇಶನ್‌ಗಳನ್ನು ಮರು-ನಿಯೋಜಿಸಲು ನಿಮಗೆ ಅನುಮತಿ ಇಲ್ಲ"
           },
+          "cancelDeployment": {
+            "button": "Cancel Build",
+            "cancelling": "Cancelling...",
+            "success": "Deployment cancellation initiated",
+            "error": "Failed to cancel deployment"
+          },
           "open": "ಹೊಸ ಟ್ಯಾಬ್‌ನಲ್ಲಿ ಅಪ್ಲಿಕೇಶನ್ ತೆರೆಯಿರಿ"
         }
       }

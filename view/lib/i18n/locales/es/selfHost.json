@@ -176,6 +176,12 @@
             "error": "Error al re-desplegar la aplicación",
             "permissionError": "No tienes permiso para re-desplegar aplicaciones"
           },
+          "cancelDeployment": {
+            "button": "Cancel Build",
+            "cancelling": "Cancelling...",
+            "success": "Deployment cancellation initiated",
+            "error": "Failed to cancel deployment"
+          },
           "open": "Abrir aplicación en nueva pestaña"
         }
       }

@@ -3,10 +3,12 @@ package tasks
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
 	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
+	deploy_types "github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
 	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
 	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
@@ -27,6 +29,7 @@ type TaskService struct {
 	Store             *shared_storage.Store
 	OnLiveDevDeployed OnLiveDevDeployedFunc
 	OnLiveDevLog      OnLiveDevLogFunc
+	cancellations     sync.Map // deploymentID (string) -> context.CancelFunc
 }
 
 func NewTaskService(storage storage.DeployRepository, logger logger.Logger, githubService *github_service.GithubConnectorService, store *shared_storage.Store) *TaskService {
@@ -48,6 +51,35 @@ func (s *TaskService) SetOnLiveDevDeployed(fn OnLiveDevDeployedFunc) {
 // Streams logs directly to WebSocket client (does not rely on PostgreSQL live_dev_logs trigger).
 func (s *TaskService) SetOnLiveDevLog(fn OnLiveDevLogFunc) {
 	s.OnLiveDevLog = fn
+}
+
+func (s *TaskService) RegisterCancellation(deploymentID string, cancel context.CancelFunc) {
+	s.cancellations.Store(deploymentID, cancel)
+}
+
+func (s *TaskService) DeregisterCancellation(deploymentID string) {
+	s.cancellations.Delete(deploymentID)
+}
+
+func (s *TaskService) CancelDeployment(deploymentID string) error {
+	val, ok := s.cancellations.LoadAndDelete(deploymentID)
+	if !ok {
+		return deploy_types.ErrDeploymentNotRunning
+	}
+	cancel := val.(context.CancelFunc)
+	cancel()
+	return nil
+}
+
+// checkCancelled is a non-blocking check for context cancellation.
+// Returns ctx.Err() if cancelled, nil otherwise.
+func checkCancelled(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+		return nil
+	}
 }
 
 // getDockerService retrieves docker service from context (organization-aware)

@@ -61,6 +61,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:       TASK_CREATE_DEPLOYMENT,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
+				deploymentID := data.ApplicationDeployment.ID.String()
+				ctx, cancel := context.WithCancel(ctx)
+				defer cancel()
+				t.RegisterCancellation(deploymentID, cancel)
+				defer t.DeregisterCancellation(deploymentID)
+
 				t.Logger.Log(logger.Info, "starting create deployment", data.CorrelationID)
 				if err := t.BuildPack(ctx, data); err != nil {
 					t.Logger.Log(logger.Error, "create deployment failed: "+err.Error(), data.CorrelationID)
@@ -86,6 +92,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:       TASK_UPDATE_DEPLOYMENT,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
+				deploymentID := data.ApplicationDeployment.ID.String()
+				ctx, cancel := context.WithCancel(ctx)
+				defer cancel()
+				t.RegisterCancellation(deploymentID, cancel)
+				defer t.DeregisterCancellation(deploymentID)
+
 				t.Logger.Log(logger.Info, "starting update deployment", data.CorrelationID)
 				return t.HandleUpdateDeployment(ctx, data)
 			},
@@ -106,6 +118,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:       TASK_REDEPLOYMENT,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
+				deploymentID := data.ApplicationDeployment.ID.String()
+				ctx, cancel := context.WithCancel(ctx)
+				defer cancel()
+				t.RegisterCancellation(deploymentID, cancel)
+				defer t.DeregisterCancellation(deploymentID)
+
 				t.Logger.Log(logger.Info, "starting redeploy", data.CorrelationID)
 				return t.HandleReDeploy(ctx, data)
 			},
@@ -188,8 +206,14 @@ func (t *TaskService) BuildPack(ctx context.Context, d shared_types.TaskPayload)
 		if err != nil {
 			return err
 		}
+		if err := checkCancelled(ctx); err != nil {
+			return err
+		}
 		err = t.HandleCreateDockerfileDeployment(ctx, d)
 		if err != nil {
+			return err
+		}
+		if err := checkCancelled(ctx); err != nil {
 			return err
 		}
 		err = t.PostRunCommands(ctx, d)

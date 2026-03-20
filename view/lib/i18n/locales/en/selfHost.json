@@ -332,6 +332,12 @@
             "error": "Failed to redeploy application",
             "permissionError": "You do not have permission to redeploy applications"
           },
+          "cancelDeployment": {
+            "button": "Cancel Build",
+            "cancelling": "Cancelling...",
+            "success": "Deployment cancellation initiated",
+            "error": "Failed to cancel deployment"
+          },
           "open": "Open application in new tab"
         }
       }

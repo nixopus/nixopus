@@ -179,14 +179,21 @@ func (router *Router) SetupRoutes() {
 	server := router.createServer(PORT)
 	apiV1 := api.NewVersion(api.CurrentVersion)
 
+	// Create a single deploy controller shared across public and protected routes
+	// so that the in-memory cancellation registry is the same instance.
+	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
+	if err != nil {
+		log.Fatalf("Failed to create deploy controller: %v", err)
+	}
+
 	// Register public routes (no auth required)
-	router.registerPublicRoutes(server, apiV1, notificationManager)
+	router.registerPublicRoutes(server, apiV1, notificationManager, deployController)
 
 	// Apply authentication middleware
 	router.setupAuthentication(server)
 
 	// Register protected routes
-	router.registerProtectedRoutes(server, apiV1, notificationManager)
+	router.registerProtectedRoutes(server, apiV1, notificationManager, deployController)
 
 	log.Printf("Server starting on port %s", PORT)
 	log.Printf("Swagger UI available at: http://localhost:%s/swagger/", PORT)
@@ -200,16 +207,12 @@ func (router *Router) SetupRoutes() {
 }
 
 // registerPublicRoutes registers routes that don't require authentication
-func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Version, notificationManager *notification.NotificationManager) {
+func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Version, notificationManager *notification.NotificationManager, deployController *deploy.DeployController) {
 	// Health routes
 	healthGroup := fuego.Group(server, apiV1.Path+"/health")
 	router.RegisterHealthRoutes(healthGroup)
 
 	// Webhook routes
-	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
-	if err != nil {
-		log.Fatalf("Failed to create deploy controller: %v", err)
-	}
 	webhookGroup := fuego.Group(server, apiV1.Path+"/webhook")
 	fuego.Post(
 		webhookGroup,
@@ -235,7 +238,7 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 }
 
 // registerProtectedRoutes registers routes that require authentication
-func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Version, notificationManager *notification.NotificationManager) {
+func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Version, notificationManager *notification.NotificationManager, deployController *deploy.DeployController) {
 	// Authenticated auth routes (CLI init requires authentication)
 	authController := router.createAuthController(notificationManager)
 	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth")
@@ -291,10 +294,6 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterFileManagerRoutes(fileManagerGroup, fileManagerController)
 
 	// Deploy routes
-	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, notificationManager)
-	if err != nil {
-		log.Fatalf("Failed to create deploy controller: %v", err)
-	}
 	deployGroup := fuego.Group(server, apiV1.Path+"/deploy")
 	router.applyMiddleware(deployGroup, MiddlewareConfig{
 		RBAC:         true,

@@ -19,6 +19,8 @@ const getStatusConfig = (statusValue?: string): StatusConfig => {
       return { bg: 'bg-emerald-500/10', dot: 'bg-emerald-500', pulse: true, label: 'Running' };
     case 'failed':
       return { bg: 'bg-red-500/10', dot: 'bg-red-500', pulse: false, label: 'Failed' };
+    case 'cancelled':
+      return { bg: 'bg-orange-500/10', dot: 'bg-orange-500', pulse: false, label: 'Cancelled' };
     case 'building':
     case 'deploying':
     case 'cloning':
@@ -49,6 +51,7 @@ const getEnvironmentStyles = (environment: string): string => {
 const getStatusTextColor = (status?: string): string => {
   if (status === 'deployed' || status === 'running') return 'text-emerald-500';
   if (status === 'failed') return 'text-red-500';
+  if (status === 'cancelled') return 'text-orange-500';
   if (status === 'draft') return 'text-blue-500';
   if (
     status === 'building' ||
@@ -84,7 +87,12 @@ export function useApplicationItem(application: Application) {
   }, [domains]);
 
   const latestDeployment = deployments?.[0];
-  const currentStatus = latestDeployment?.status?.status || status?.status;
+  const latestStatus = latestDeployment?.status?.status || status?.status;
+  const currentStatus =
+    latestStatus === 'cancelled' || latestStatus === 'failed'
+      ? (deployments?.find((d) => d.status?.status === 'deployed' || d.status?.status === 'running')
+          ?.status?.status ?? latestStatus)
+      : latestStatus;
 
   const statusConfig = useMemo(() => getStatusConfig(currentStatus), [currentStatus]);
 

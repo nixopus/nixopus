@@ -5,6 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/google/uuid"
 	"github.com/moby/term"
@@ -12,10 +18,6 @@ import (
 	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
 	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/raghavyuva/nixopus-api/internal/utils"
-	"io"
-	"os"
-	"path/filepath"
-	"strings"
 )
 
 type BuildConfig struct {
@@ -152,12 +154,21 @@ func (s *TaskService) createBuildContextArchiveFromRemote(ctx context.Context, b
 		release()
 		return nil, fmt.Errorf("failed to start docker build: %w", err)
 	}
-	return &remoteBuildReader{
+	reader := &remoteBuildReader{
 		stdout:  stdout,
 		session: session,
 		release: release,
-	}, nil
+		ctx:     ctx,
+	}
+	go func() {
+		<-ctx.Done()
+		reader.Close()
+	}()
+	return reader, nil
 }
+
+// ErrBuildCancelled is returned when a build is cancelled by the user.
+var ErrBuildCancelled = fmt.Errorf("build cancelled by user")
 
 // remoteBuildReader streams docker build output and returns build failure as Read error when command exits non-zero.
 // Always call Close() when done (e.g. via defer) to release the pooled SSH connection borrow.
@@ -167,31 +178,39 @@ type remoteBuildReader struct {
 		Wait() error
 		Close() error
 	}
-	release func()
-	closed  bool
-	errored bool
+	release   func()
+	closeOnce sync.Once
+	errored   bool
+	ctx       context.Context
 }
 
-// Close releases the SSH session and pool borrow. Safe to call multiple times.
+// Close releases the SSH session and pool borrow. Safe to call concurrently.
 func (r *remoteBuildReader) Close() {
-	if r.closed {
-		return
-	}
-	r.closed = true
-	if r.session != nil {
-		r.session.Close()
-	}
-	if r.release != nil {
-		r.release()
-	}
+	r.closeOnce.Do(func() {
+		if r.session != nil {
+			r.session.Close()
+		}
+		if r.release != nil {
+			r.release()
+		}
+	})
 }
 
 func (r *remoteBuildReader) Read(p []byte) (n int, err error) {
-	if r.closed {
-		return 0, io.EOF
+	if r.ctx != nil {
+		select {
+		case <-r.ctx.Done():
+			r.Close()
+			return 0, ErrBuildCancelled
+		default:
+		}
 	}
 	n, err = r.stdout.Read(p)
 	if err == io.EOF {
+		if r.ctx != nil && r.ctx.Err() != nil {
+			r.Close()
+			return 0, ErrBuildCancelled
+		}
 		waitErr := r.checkWait()
 		r.Close()
 		if waitErr != nil {
@@ -200,6 +219,10 @@ func (r *remoteBuildReader) Read(p []byte) (n int, err error) {
 		return n, io.EOF
 	}
 	if err != nil {
+		if r.ctx != nil && r.ctx.Err() != nil {
+			r.Close()
+			return n, ErrBuildCancelled
+		}
 		r.Close()
 	}
 	return n, err
