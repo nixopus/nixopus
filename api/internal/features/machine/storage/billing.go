@@ -227,7 +227,7 @@ func (s *BillingStorage) GetDueBillings(ctx context.Context) ([]BillingWithPlan,
 		Join("INNER JOIN machine_plans AS mp ON omb.machine_plan_id = mp.id").
 		Where("omb.status = ?", types.MachineBillingStatusActive).
 		Where("omb.current_period_end <= NOW()").
-		Scan(ctx)
+		Scan(ctx, &rows)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get due billings: %w", err)
 	}
@@ -242,7 +242,7 @@ func (s *BillingStorage) GetGraceBillings(ctx context.Context) ([]BillingWithPla
 		ColumnExpr("mp.id AS mp__id, mp.tier AS mp__tier, mp.name AS mp__name, mp.ram_mb AS mp__ram_mb, mp.vcpu AS mp__vcpu, mp.storage_mb AS mp__storage_mb, mp.monthly_cost_cents AS mp__monthly_cost_cents").
 		Join("INNER JOIN machine_plans AS mp ON omb.machine_plan_id = mp.id").
 		Where("omb.status = ?", types.MachineBillingStatusGracePeriod).
-		Scan(ctx)
+		Scan(ctx, &rows)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get grace billings: %w", err)
 	}

@@ -102,14 +102,16 @@ func mapLifecycleError(l logger.Logger, err error, orgID uuid.UUID, action strin
 	case errors.Is(err, types.ErrMachineNotProvisioned):
 		return fuego.NotFoundError{Detail: err.Error()}
 	case errors.Is(err, types.ErrMachineOperationTimeout):
-		return fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusGatewayTimeout}
+		return fuego.HTTPError{Detail: "machine operation timed out, please try again", Status: http.StatusGatewayTimeout}
 	case errors.Is(err, types.ErrMachineOperationLocked):
-		return fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusConflict}
-	case errors.Is(err, types.ErrMachineNotRunning),
-		errors.Is(err, types.ErrMachineAlreadyPaused),
-		errors.Is(err, types.ErrMachineNotPaused):
-		return fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusUnprocessableEntity}
+		return fuego.HTTPError{Detail: "another operation is already in progress", Status: http.StatusConflict}
+	case errors.Is(err, types.ErrMachineNotRunning):
+		return fuego.HTTPError{Detail: "machine is not currently running", Status: http.StatusUnprocessableEntity}
+	case errors.Is(err, types.ErrMachineAlreadyPaused):
+		return fuego.HTTPError{Detail: "machine is already paused", Status: http.StatusUnprocessableEntity}
+	case errors.Is(err, types.ErrMachineNotPaused):
+		return fuego.HTTPError{Detail: "machine is not paused", Status: http.StatusUnprocessableEntity}
 	default:
-		return fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
+		return fuego.HTTPError{Detail: "machine " + action + " failed, please try again later", Status: http.StatusInternalServerError}
 	}
 }
