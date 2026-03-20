@@ -8,12 +8,16 @@ interface UseDeploymentOverviewProps {
   currentStatus?: string;
 }
 
-const getStatusColor = (status?: string): 'emerald' | 'red' | 'amber' | 'blue' | 'purple' => {
+const getStatusColor = (
+  status?: string
+): 'emerald' | 'red' | 'amber' | 'blue' | 'purple' | 'orange' => {
   switch (status) {
     case 'deployed':
       return 'emerald';
     case 'failed':
       return 'red';
+    case 'cancelled':
+      return 'orange';
     case 'building':
       return 'amber';
     case 'deploying':

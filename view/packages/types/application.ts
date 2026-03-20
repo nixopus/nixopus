@@ -15,7 +15,7 @@ export interface StatBlockProps {
   value: string | number;
   label: string;
   sublabel?: string;
-  color?: 'emerald' | 'red' | 'amber' | 'blue' | 'purple';
+  color?: 'emerald' | 'red' | 'amber' | 'blue' | 'purple' | 'orange';
   pulse?: boolean;
 }
 

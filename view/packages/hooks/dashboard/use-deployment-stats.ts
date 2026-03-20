@@ -12,6 +12,7 @@ export interface DeploymentStats {
   deployed: number;
   failed: number;
   inProgress: number;
+  cancelled: number;
   successRate: number;
 }
 
@@ -29,6 +30,7 @@ export function useDeploymentStats(deploymentsData: ApplicationDeployment[]) {
         deployed: 0,
         failed: 0,
         inProgress: 0,
+        cancelled: 0,
         successRate: 0
       };
     }
@@ -43,6 +45,9 @@ export function useDeploymentStats(deploymentsData: ApplicationDeployment[]) {
       const status = d.status?.status?.toLowerCase() || '';
       return status === 'in_progress' || status === 'building' || status === 'deploying';
     }).length;
+    const cancelled = deploymentsData.filter(
+      (d) => d.status?.status?.toLowerCase() === 'cancelled'
+    ).length;
 
     const total = deploymentsData.length;
     const completed = deployed + failed;
@@ -53,6 +58,7 @@ export function useDeploymentStats(deploymentsData: ApplicationDeployment[]) {
       deployed,
       failed,
       inProgress,
+      cancelled,
       successRate: Math.round(successRate)
     };
   }, [deploymentsData]);
@@ -75,6 +81,11 @@ export function useDeploymentStats(deploymentsData: ApplicationDeployment[]) {
         status: 'inProgress',
         count: stats.inProgress,
         fill: 'var(--color-inProgress)'
+      },
+      {
+        status: 'cancelled',
+        count: stats.cancelled,
+        fill: 'var(--color-cancelled)'
       }
     ].filter((item) => item.count > 0);
   }, [stats]);
@@ -92,6 +103,10 @@ export function useDeploymentStats(deploymentsData: ApplicationDeployment[]) {
       inProgress: {
         label: 'In Progress',
         color: CHART_COLORS.blue
+      },
+      cancelled: {
+        label: 'Cancelled',
+        color: '#f97316'
       }
     };
   }, []);
