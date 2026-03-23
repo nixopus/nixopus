@@ -26,11 +26,4 @@ func (router *Router) RegisterAuthProtectedRoutes(authGroup *fuego.Server, authC
 		authController.HandleBootstrap,
 		fuego.OptionSummary("Get bootstrap session data"),
 	)
-	// CLI init endpoint - requires authentication and creates a draft project
-	fuego.Post(
-		authGroup,
-		"/cli/init",
-		authController.HandleCLIInit,
-		fuego.OptionSummary("Initialize CLI session"),
-	)
 }

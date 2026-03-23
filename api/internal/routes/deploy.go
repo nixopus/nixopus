@@ -189,11 +189,4 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 		deployController.HandleRecover,
 		fuego.OptionSummary("Recover application"),
 	)
-	fuego.Post(
-		applicationGroup,
-		"/index",
-		deployController.IndexCodebase,
-		fuego.OptionSummary("Index application codebase"),
-		fuego.OptionQuery("application_id", "Application ID", fuego.ParamRequired()),
-	)
 }

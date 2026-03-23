@@ -833,41 +833,8 @@
 					},
 					"logs": {
 						"items": {
-							"nullable": true,
-							"properties": {
-								"application": {
-									"$ref": "#/components/schemas/Application"
-								},
-								"application_deployment": {
-									"$ref": "#/components/schemas/ApplicationDeployment"
-								},
-								"application_deployment_id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"application_id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"created_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"log": {
-									"type": "string"
-								},
-								"updated_at": {
-									"format": "date-time",
-									"type": "string"
-								}
-							},
-							"type": "object"
+							"$ref": "#/components/schemas/ApplicationLogs"
 						},
-						"nullable": true,
 						"type": "array"
 					},
 					"status": {
@@ -916,41 +883,7 @@
 						"type": "string"
 					},
 					"compose_service": {
-						"nullable": true,
-						"properties": {
-							"application": {
-								"$ref": "#/components/schemas/Application"
-							},
-							"application_id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"created_at": {
-								"format": "date-time",
-								"type": "string"
-							},
-							"domains": {
-								"items": {
-									"$ref": "#/components/schemas/ApplicationDomain"
-								},
-								"type": "array"
-							},
-							"id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"port": {
-								"type": "integer"
-							},
-							"service_name": {
-								"type": "string"
-							},
-							"updated_at": {
-								"format": "date-time",
-								"type": "string"
-							}
-						},
-						"type": "object"
+						"$ref": "#/components/schemas/ComposeService"
 					},
 					"compose_service_id": {
 						"format": "uuid",
@@ -981,7 +914,86 @@
 						"$ref": "#/components/schemas/Application"
 					},
 					"application_deployment": {
-						"$ref": "#/components/schemas/ApplicationDeployment"
+						"nullable": true,
+						"properties": {
+							"application": {
+								"$ref": "#/components/schemas/Application"
+							},
+							"application_id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"commit_hash": {
+								"type": "string"
+							},
+							"container_id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"container_image": {
+								"type": "string"
+							},
+							"container_name": {
+								"type": "string"
+							},
+							"container_status": {
+								"type": "string"
+							},
+							"created_at": {
+								"format": "date-time",
+								"type": "string"
+							},
+							"id": {
+								"format": "uuid",
+								"type": "string"
+							},
+							"image_s3_key": {
+								"type": "string"
+							},
+							"image_size": {
+								"format": "int64",
+								"type": "integer"
+							},
+							"logs": {
+								"items": {
+									"$ref": "#/components/schemas/ApplicationLogs"
+								},
+								"type": "array"
+							},
+							"status": {
+								"nullable": true,
+								"properties": {
+									"application_deployment": {
+										"$ref": "#/components/schemas/ApplicationDeployment"
+									},
+									"application_deployment_id": {
+										"format": "uuid",
+										"type": "string"
+									},
+									"created_at": {
+										"format": "date-time",
+										"type": "string"
+									},
+									"id": {
+										"format": "uuid",
+										"type": "string"
+									},
+									"status": {
+										"type": "string"
+									},
+									"updated_at": {
+										"format": "date-time",
+										"type": "string"
+									}
+								},
+								"type": "object"
+							},
+							"updated_at": {
+								"format": "date-time",
+								"type": "string"
+							}
+						},
+						"type": "object"
 					},
 					"application_deployment_id": {
 						"format": "uuid",
@@ -1752,66 +1764,6 @@
 				},
 				"type": "object"
 			},
-			"CLIInitRequest": {
-				"description": "CLIInitRequest schema",
-				"properties": {
-					"branch": {
-						"nullable": true,
-						"type": "string"
-					},
-					"domains": {
-						"items": {
-							"nullable": true,
-							"type": "string"
-						},
-						"nullable": true,
-						"type": "array"
-					},
-					"environment_variables": {
-						"additionalProperties": {
-							"nullable": true,
-							"type": "string"
-						},
-						"nullable": true,
-						"type": "object"
-					},
-					"name": {
-						"type": "string"
-					},
-					"repository": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"CLIInitResponse": {
-				"description": "CLIInitResponse schema",
-				"properties": {
-					"deploy_domain": {
-						"nullable": true,
-						"type": "string"
-					},
-					"domain": {
-						"nullable": true,
-						"type": "string"
-					},
-					"family_id": {
-						"format": "uuid",
-						"type": "string"
-					},
-					"message": {
-						"type": "string"
-					},
-					"project_id": {
-						"format": "uuid",
-						"type": "string"
-					},
-					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
 			"CancelDeploymentRequest": {
 				"description": "CancelDeploymentRequest schema",
 				"properties": {
@@ -1856,41 +1808,8 @@
 					},
 					"domains": {
 						"items": {
-							"nullable": true,
-							"properties": {
-								"application": {
-									"$ref": "#/components/schemas/Application"
-								},
-								"application_id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"compose_service": {
-									"$ref": "#/components/schemas/ComposeService"
-								},
-								"compose_service_id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"created_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"domain": {
-									"type": "string"
-								},
-								"id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"port": {
-									"nullable": true,
-									"type": "integer"
-								}
-							},
-							"type": "object"
+							"$ref": "#/components/schemas/ApplicationDomain"
 						},
-						"nullable": true,
 						"type": "array"
 					},
 					"id": {
@@ -7566,29 +7485,6 @@
 				},
 				"type": "object"
 			},
-			"IndexCodebaseResponse": {
-				"description": "IndexCodebaseResponse schema",
-				"properties": {
-					"data": {
-						"properties": {
-							"indexed": {
-								"type": "integer"
-							},
-							"skipped": {
-								"type": "integer"
-							}
-						},
-						"type": "object"
-					},
-					"message": {
-						"type": "string"
-					},
-					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
 			"IsFeatureEnabledResponse": {
 				"description": "IsFeatureEnabledResponse schema",
 				"properties": {
@@ -12884,29 +12780,6 @@
 				},
 				"type": "object"
 			},
-			"PauseRequest": {
-				"description": "PauseRequest schema",
-				"properties": {
-					"application_id": {
-						"format": "uuid",
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"PauseResponse": {
-				"description": "PauseResponse schema",
-				"properties": {
-					"message": {
-						"nullable": true,
-						"type": "string"
-					},
-					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
 			"PreferencesResponse": {
 				"description": "PreferencesResponse schema",
 				"properties": {
@@ -16110,130 +15983,6 @@
 				]
 			}
 		},
-		"/api/v1/auth/cli/init": {
-			"post": {
-				"description": "Initialize CLI session.\n\nAuth: Required (bearer token).\nScope: No organization scope required.\nSide effects: May mutate server state.",
-				"operationId": "initializeCLISession",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"example": {
-								"branch": "string",
-								"domains": [],
-								"environment_variables": {},
-								"name": "string",
-								"repository": "string"
-							},
-							"schema": {
-								"$ref": "#/components/schemas/CLIInitRequest"
-							}
-						}
-					},
-					"description": "Request body for auth.CLIInitRequest",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"deploy_domain": "string",
-									"domain": "string",
-									"family_id": "00000000-0000-0000-0000-000000000000",
-									"message": "string",
-									"project_id": "00000000-0000-0000-0000-000000000000",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/CLIInitResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"deploy_domain": "string",
-									"domain": "string",
-									"family_id": "00000000-0000-0000-0000-000000000000",
-									"message": "string",
-									"project_id": "00000000-0000-0000-0000-000000000000",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/CLIInitResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Initialize CLI session",
-				"tags": [
-					"cli",
-					"api/v1/auth"
-				]
-			}
-		},
 		"/api/v1/auth/is-admin-registered": {
 			"get": {
 				"description": "Check admin registration.\n\nAuth: Public endpoint.\nScope: No organization scope required.\nSide effects: Read-only operation.",
@@ -18919,117 +18668,6 @@
 				"summary": "Add application domain",
 				"tags": [
 					"domains",
-					"api/v1/deploy",
-					"application"
-				]
-			}
-		},
-		"/api/v1/deploy/application/index": {
-			"post": {
-				"description": "Index application codebase.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "indexApplicationCodebase",
-				"parameters": [
-					{
-						"description": "Application ID",
-						"in": "query",
-						"name": "application_id",
-						"required": true,
-						"schema": {
-							"format": "uuid",
-							"type": "string"
-						}
-					},
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/IndexCodebaseResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/IndexCodebaseResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Index application codebase",
-				"tags": [
-					"index",
 					"api/v1/deploy",
 					"application"
 				]
@@ -25253,135 +24891,6 @@
 				]
 			}
 		},
-		"/api/v1/live/pause": {
-			"post": {
-				"description": "Pause live deploy service.\n\nAuth: Public endpoint.\nScope: No organization scope required.\nSide effects: May mutate server state.",
-				"operationId": "pauseLiveDeployService",
-				"parameters": [
-					{
-						"description": "Application ID",
-						"in": "query",
-						"name": "application_id",
-						"schema": {
-							"format": "uuid",
-							"type": "string"
-						}
-					},
-					{
-						"description": "Session token",
-						"in": "query",
-						"name": "token",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"example": {
-								"application_id": "00000000-0000-0000-0000-000000000000"
-							},
-							"schema": {
-								"$ref": "#/components/schemas/PauseRequest"
-							}
-						}
-					},
-					"description": "Request body for routes.PauseRequest",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/PauseResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/PauseResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Pause live deploy service",
-				"tags": [
-					"pause",
-					"api/v1/live"
-				]
-			}
-		},
 		"/api/v1/machine/billing": {
 			"get": {
 				"description": "Get machine billing status.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
@@ -29693,9 +29202,6 @@
 			"name": "api/v1/healthcheck"
 		},
 		{
-			"name": "api/v1/live"
-		},
-		{
 			"name": "api/v1/machine"
 		},
 		{
@@ -29744,9 +29250,6 @@
 			"name": "check"
 		},
 		{
-			"name": "cli"
-		},
-		{
 			"name": "compose-services"
 		},
 		{
@@ -29781,9 +29284,6 @@
 		},
 		{
 			"name": "images"
-		},
-		{
-			"name": "index"
 		},
 		{
 			"name": "is-admin-registered"

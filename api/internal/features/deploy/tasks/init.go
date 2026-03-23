@@ -168,29 +168,6 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 				return t.HandleRestart(ctx, data)
 			},
 		})
-
-		LiveDevQueue = queue.RegisterQueue(&taskq.QueueOptions{
-			Name:                QUEUE_LIVE_DEV,
-			ConsumerIdleTimeout: 10 * time.Minute,
-			MinNumWorker:        4,
-			MaxNumWorker:        16,
-			ReservationSize:     1,
-			ReservationTimeout:  15 * time.Minute,
-			WaitTimeout:         5 * time.Second,
-			BufferSize:          64,
-		})
-
-		TaskLiveDev = taskq.RegisterTask(&taskq.TaskOptions{
-			Name:       TASK_LIVE_DEV,
-			RetryLimit: 1,
-			Handler: func(ctx context.Context, config LiveDevConfig) error {
-				if err := t.HandleBuildFirstLiveDev(ctx, config); err != nil {
-					t.Logger.Log(logger.Error, "live dev deployment failed: "+err.Error(), config.ApplicationID.String())
-					return err
-				}
-				return nil
-			},
-		})
 	})
 }
 

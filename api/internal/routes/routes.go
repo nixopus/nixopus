@@ -229,7 +229,6 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 	)
 
 	router.RegisterWebSocketRoutes(server, deployController, router.schedulers.HealthCheck)
-	router.RegisterLiveDeployRoutes(server, apiV1)
 
 	trailInternalController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	trailInternalGroup := fuego.Group(server, apiV1.Path+"/trail")
