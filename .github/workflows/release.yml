@@ -82,3 +82,8 @@ jobs:
           message: |
             - New pre-release published: **${{ steps.changelog.outputs.tag }}**
             - https://github.com/${{ github.repository }}/releases/tag/${{ steps.changelog.outputs.tag }}
+
+  deploy-docs:
+    needs: create-release
+    uses: ./.github/workflows/docs.yml
+    secrets: inherit

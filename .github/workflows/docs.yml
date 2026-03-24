@@ -5,6 +5,7 @@
 name: Docs Build & Deploy
 
 on:
+  workflow_call:
   workflow_dispatch:
 
 permissions:
