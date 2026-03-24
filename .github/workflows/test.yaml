@@ -20,7 +20,7 @@ on:
   workflow_call:
     secrets:
       DEPLOY_KEY:
-        required: true
+        required: false
   workflow_dispatch:
 
 concurrency:
@@ -35,7 +35,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ssh-key: ${{ secrets.DEPLOY_KEY }}
+          ssh-key: ${{ secrets.DEPLOY_KEY || '' }}
 
       - uses: actions/setup-go@v5
         with:
