@@ -3,6 +3,11 @@ services:
     image: postgres:14-alpine
     container_name: nixopus-db
     restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       POSTGRES_USER: nixopus
       POSTGRES_PASSWORD: ${DB_PASSWORD}

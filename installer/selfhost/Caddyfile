@@ -1,3 +1,7 @@
+{
+    admin 0.0.0.0:2019
+}
+
 {$SITE_ADDRESS} {
     handle /api/v1/* {
         reverse_proxy nixopus-api:8443
