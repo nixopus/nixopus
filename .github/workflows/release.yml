@@ -87,3 +87,8 @@ jobs:
     needs: create-release
     uses: ./.github/workflows/docs.yml
     secrets: inherit
+
+  sync-api-client:
+    needs: create-release
+    uses: ./.github/workflows/api-client-sync.yml
+    secrets: inherit

@@ -5,6 +5,7 @@
 name: Trigger API Client Sync
 
 on:
+  workflow_call:
   workflow_dispatch:
 
 jobs:
