@@ -20,7 +20,13 @@ func TestIsAdminRegistered(t *testing.T) {
 			name: "Successfully check if admin is registered",
 			setup: func() *testutils.TestSetup {
 				setup := testutils.NewTestSetup()
-				setup.CreateTestUserAndOrg()
+				user, _, err := setup.CreateTestUserAndOrg()
+				if err != nil {
+					t.Fatalf("failed to create test user and org: %v", err)
+				}
+				if err := setup.SeedCredentialAccount(user.ID.String()); err != nil {
+					t.Fatalf("failed to seed credential account: %v", err)
+				}
 				return setup
 			},
 			expectedStatus:          http.StatusOK,

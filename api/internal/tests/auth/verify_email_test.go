@@ -1,7 +1,7 @@
 package auth
 
 // DEPRECATED: These tests are for the old custom auth flow.
-// Authentication is now handled by SuperTokens.
+// Authentication is now handled by Better Auth.
 // These integration tests also have a fundamental issue: they create users
 // in the test database but make HTTP calls to a server using a different database.
 

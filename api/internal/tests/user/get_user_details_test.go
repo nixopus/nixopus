@@ -11,9 +11,9 @@ import (
 
 func TestGetUserDetails(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	userID := auth.User.ID.String()

@@ -11,9 +11,9 @@ import (
 
 func TestGetApplicationByID(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -48,8 +48,8 @@ func TestGetApplicationByID(t *testing.T) {
 			cookies:        cookies,
 			organizationID: "",
 			applicationID:  "123e4567-e89b-12d3-a456-426614174000",
-			expectedStatus: http.StatusBadRequest,
-			description:    "Should return 400 when organization ID is not provided",
+			expectedStatus: http.StatusNotFound,
+			description:    "Session provides org but app doesn't exist",
 		},
 		{
 			name:           "Get application by ID with invalid application ID",
@@ -64,8 +64,8 @@ func TestGetApplicationByID(t *testing.T) {
 			cookies:        cookies,
 			organizationID: orgID,
 			applicationID:  "123e4567-e89b-12d3-a456-426614174000",
-			expectedStatus: http.StatusInternalServerError,
-			description:    "Should return 500 when application doesn't exist",
+			expectedStatus: http.StatusNotFound,
+			description:    "Should return 404 when application doesn't exist",
 		},
 	}
 

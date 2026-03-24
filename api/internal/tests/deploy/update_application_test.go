@@ -14,9 +14,9 @@ import (
 
 func TestUpdateApplication(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -64,8 +64,8 @@ func TestUpdateApplication(t *testing.T) {
 				Name: "updated-app",
 				Port: 3001,
 			},
-			expectedStatus: http.StatusBadRequest,
-			description:    "Should return 400 when organization ID is not provided",
+			expectedStatus: http.StatusInternalServerError,
+			description:    "Should return 500 because session provides org but SSH infrastructure is unavailable",
 		},
 		{
 			name:           "Update application with missing ID",

@@ -11,9 +11,9 @@ import (
 
 func TestGetApplicationDeployments(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -49,7 +49,7 @@ func TestGetApplicationDeployments(t *testing.T) {
 			organizationID: "",
 			applicationID:  "123e4567-e89b-12d3-a456-426614174000",
 			expectedStatus: http.StatusBadRequest,
-			description:    "Should return 400 when organization ID is not provided",
+			description:    "Session provides org but application doesn't exist",
 		},
 		{
 			name:           "Get application deployments with invalid application ID",
@@ -108,9 +108,9 @@ func TestGetApplicationDeployments(t *testing.T) {
 
 func TestGetApplicationDeploymentsSuccess(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID

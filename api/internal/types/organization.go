@@ -38,13 +38,12 @@ type Organization struct {
 }
 
 type OrganizationUsers struct {
-	bun.BaseModel  `bun:"table:organization_users,alias:ou" swaggerignore:"true"`
-	ID             uuid.UUID  `json:"id" bun:"id,pk,type:uuid"`
-	UserID         uuid.UUID  `json:"user_id" bun:"user_id,notnull,type:uuid"`
-	OrganizationID uuid.UUID  `json:"organization_id" bun:"organization_id,notnull,type:uuid"`
-	CreatedAt      time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
-	UpdatedAt      time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
-	DeletedAt      *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
+	bun.BaseModel  `bun:"table:member,alias:ou" swaggerignore:"true"`
+	ID             uuid.UUID `json:"id" bun:"id,pk,type:uuid"`
+	UserID         uuid.UUID `json:"user_id" bun:"user_id,notnull,type:uuid"`
+	OrganizationID uuid.UUID `json:"organization_id" bun:"organization_id,notnull,type:uuid"`
+	Role           string    `json:"role" bun:"role,notnull,default:'member'"`
+	CreatedAt      time.Time `json:"created_at" bun:"created_at,notnull"`
 
 	User         *User         `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
 	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`

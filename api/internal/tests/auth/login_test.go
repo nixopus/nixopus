@@ -1,6 +1,6 @@
 package auth
 
-// Deprecated: Makes use of supertokens authentication
+// Deprecated: Needs rewrite for Better Auth
 // import (
 // 	"net/http"
 // 	"testing"

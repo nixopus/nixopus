@@ -11,9 +11,9 @@ import (
 
 func TestGetDeploymentLogs(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -49,8 +49,8 @@ func TestGetDeploymentLogs(t *testing.T) {
 			cookies:        cookies,
 			organizationID: "",
 			deploymentID:   testDeploymentID,
-			expectedStatus: http.StatusBadRequest,
-			description:    "Should return 400 when organization ID is not provided",
+			expectedStatus: http.StatusOK,
+			description:    "Should return 200 with empty logs when session provides org and X-Organization-ID is omitted",
 		},
 		{
 			name:           "Get deployment logs with invalid deployment ID format",
@@ -109,9 +109,9 @@ func TestGetDeploymentLogs(t *testing.T) {
 
 func TestGetDeploymentLogsSuccess(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID

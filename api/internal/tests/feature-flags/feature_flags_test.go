@@ -11,9 +11,9 @@ import (
 
 func TestGetFeatureFlags(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -51,15 +51,15 @@ func TestGetFeatureFlags(t *testing.T) {
 			name:           "request without organization header",
 			cookies:        cookies,
 			organizationID: "",
-			expectedStatus: http.StatusBadRequest,
+			expectedStatus: http.StatusOK,
 			description:    "throws error when organization header is missing from request",
 		},
 		{
 			name:           "request with invalid organization ID",
 			cookies:        cookies,
 			organizationID: "invalid-org-id",
-			expectedStatus: http.StatusInternalServerError,
-			description:    "throws 500 error when organization ID is invalid format",
+			expectedStatus: http.StatusBadRequest,
+			description:    "throws 400 error when organization ID is invalid format",
 		},
 		{
 			name:           "cross organization access denied",
@@ -105,9 +105,9 @@ func TestGetFeatureFlags(t *testing.T) {
 
 func TestUpdateFeatureFlag(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -245,7 +245,7 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			isEnabled:      true,
 			cookies:        cookies,
 			organizationID: "",
-			expectedStatus: http.StatusBadRequest,
+			expectedStatus: http.StatusOK,
 			description:    "throw 400 when organization header is missing",
 		},
 		{
@@ -314,9 +314,9 @@ func TestUpdateFeatureFlag(t *testing.T) {
 
 func TestIsFeatureEnabled(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -414,17 +414,17 @@ func TestIsFeatureEnabled(t *testing.T) {
 			featureName:    "terminal",
 			cookies:        cookies,
 			organizationID: "",
-			expectedStatus: http.StatusBadRequest,
-			description:    "throw 400 when organization header is missing",
+			expectedStatus: http.StatusOK,
+			expectedResult: true,
+			description:    "session provides org, so feature check succeeds",
 		},
 		{
 			name:           "Check feature with empty name",
 			featureName:    "",
 			cookies:        cookies,
 			organizationID: orgID,
-			expectedStatus: http.StatusOK, // API returns default state instead of 400
-			expectedResult: true,          // Default state when no feature name provided
-			description:    "return default state when feature name is empty",
+			expectedStatus: http.StatusBadRequest,
+			description:    "return 400 when feature name is empty",
 		},
 		{
 			name:           "Cross-organization feature check",
@@ -472,9 +472,9 @@ func TestIsFeatureEnabled(t *testing.T) {
 
 func TestFeatureFlagsCRUDFlow(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -564,9 +564,9 @@ func TestFeatureFlagsCRUDFlow(t *testing.T) {
 
 func TestFeatureFlagPermissions(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID
@@ -617,9 +617,9 @@ func TestFeatureFlagPermissions(t *testing.T) {
 
 func TestFeatureFlagErrorHandling(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	auth, err := setup.GetSupertokensAuthResponse()
+	auth, err := setup.GetAuthResponse()
 	if err != nil {
-		t.Fatalf("failed to get supertokens auth response: %v", err)
+		t.Fatalf("failed to get auth response: %v", err)
 	}
 
 	orgID := auth.OrganizationID

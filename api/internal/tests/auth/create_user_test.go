@@ -1,6 +1,6 @@
 package auth
 
-// DEPRECATED : user is created through supertokens authentication
+// DEPRECATED: user is created through Better Auth
 // import (
 // 	"net/http"
 // 	"testing"

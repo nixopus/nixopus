@@ -357,6 +357,10 @@ func TestConfigurationValidation(t *testing.T) {
 			CORS: types.CORSConfig{
 				AllowedOrigin: "http://localhost:3000",
 			},
+			BetterAuth: types.BetterAuthConfig{
+				URL:    "http://localhost:3000/api/auth",
+				Secret: "test-secret",
+			},
 		}
 
 		err := validateConfig(validConfig)

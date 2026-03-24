@@ -149,7 +149,7 @@ func TestGetGithubRepositoryBranches(t *testing.T) {
 			},
 			expectedBranches: nil,
 			expectedError:    true,
-			expectedErrorMsg: "Failed to get installation token",
+			expectedErrorMsg: "authentication failed",
 		},
 		{
 			name:           "GitHub API error for branches",

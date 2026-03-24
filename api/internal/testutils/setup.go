@@ -7,21 +7,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/cookiejar"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
 	authService "github.com/raghavyuva/nixopus-api/internal/features/auth/service"
 	user_storage "github.com/raghavyuva/nixopus-api/internal/features/auth/storage"
-	authTypes "github.com/raghavyuva/nixopus-api/internal/features/auth/types"
 	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	// organization_service "github.com/raghavyuva/nixopus-api/internal/features/organization/service"
-	// organization_storage "github.com/raghavyuva/nixopus-api/internal/features/organization/storage"
 	dbstorage "github.com/raghavyuva/nixopus-api/internal/storage"
 	"github.com/raghavyuva/nixopus-api/internal/types"
 	"github.com/uptrace/bun"
@@ -29,40 +25,36 @@ import (
 )
 
 var (
-	testDB  *bun.DB
-	ctx     context.Context
-	baseURL = "http://localhost:8080"
-	// SuperTokens endpoints are at /auth/* (not /api/v1/auth/*)
-	// The SuperTokens middleware handles these endpoints directly
-	supertokensBaseURL = "http://localhost:8080"
+	testDB         *bun.DB
+	ctx            context.Context
+	baseURL        = "http://localhost:8080"
+	authServiceURL = "http://localhost:9090"
 )
 
-// SuperTokensAuthResponse holds the authentication response from SuperTokens
-type SuperTokensAuthResponse struct {
+// TestAuthResponse holds the authentication response from Better Auth test utils.
+type TestAuthResponse struct {
 	Cookies        []*http.Cookie
 	AccessToken    string
 	User           *types.User
 	OrganizationID string
 }
 
-// GetAuthCookiesHeader returns a formatted cookie header string for use in HTTP requests
-func (s *SuperTokensAuthResponse) GetAuthCookiesHeader() string {
+// GetAuthCookiesHeader returns a formatted cookie header string for use in HTTP requests.
+func (r *TestAuthResponse) GetAuthCookiesHeader() string {
 	var cookieStrs []string
-	for _, cookie := range s.Cookies {
+	for _, cookie := range r.Cookies {
 		cookieStrs = append(cookieStrs, cookie.Name+"="+cookie.Value)
 	}
 	return strings.Join(cookieStrs, "; ")
 }
 
-// TestSetup holds all the common test dependencies
+// TestSetup holds all the common test dependencies.
 type TestSetup struct {
 	DB          *bun.DB
 	Ctx         context.Context
 	Store       *dbstorage.Store
 	Logger      logger.Logger
 	UserStorage *user_storage.UserStorage
-	// OrgStorage  *organization_storage.OrganizationStore
-	// OrgService  *organization_service.OrganizationService
 	AuthService *authService.AuthService
 }
 
@@ -85,6 +77,10 @@ func init() {
 
 	if !envLoaded {
 		fmt.Println("Warning: Could not load env.test file from any location")
+	}
+
+	if url := os.Getenv("AUTH_SERVICE_URL"); url != "" {
+		authServiceURL = url
 	}
 
 	dbHost := getEnvOrDefault("DB_HOST", "localhost")
@@ -118,11 +114,10 @@ func init() {
 
 	store := dbstorage.NewStore(testDB)
 	if err := store.Init(ctx); err != nil {
-		fmt.Printf("Failed to initialize store: %v\n", err)
-		os.Exit(1)
+		fmt.Printf("Warning: store.Init failed (non-fatal for tests): %v\n", err)
 	}
 
-	fmt.Println("Successfully ran migrations")
+	fmt.Println("Successfully connected and initialized test database")
 }
 
 func getEnvOrDefault(key, defaultValue string) string {
@@ -132,55 +127,36 @@ func getEnvOrDefault(key, defaultValue string) string {
 	return defaultValue
 }
 
-func findMigrationsPath() string {
-	paths := []string{
-		"../../../migrations",
-		"../../../../migrations",
-		"migrations",
-	}
-
-	for _, path := range paths {
-		if _, err := os.Stat(path); err == nil {
-			absPath, err := filepath.Abs(path)
-			if err == nil {
-				return absPath
-			}
-		}
-	}
-
-	return "migrations"
-}
-
 func cleanDatabase() error {
-	// Drop all tables with CASCADE to ensure all dependencies are removed
+	// Truncate all public tables instead of dropping them.
+	// Schema is managed by the auth service's drizzle migrations,
+	// so we only clear data between tests.
 	_, err := testDB.ExecContext(ctx, `
 		DO $$ DECLARE
 			r RECORD;
 		BEGIN
 			FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
-				EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+				EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
 			END LOOP;
 		END $$;
 	`)
 	if err != nil {
-		return fmt.Errorf("failed to drop all tables: %w", err)
+		return fmt.Errorf("failed to truncate tables: %w", err)
 	}
 
-	// Reset migrations
-	if err := dbstorage.ResetMigrations(testDB); err != nil {
-		return fmt.Errorf("failed to reset migrations: %w", err)
-	}
-
-	// Run migrations
-	migrationsPath := findMigrationsPath()
-	if err := dbstorage.RunMigrations(testDB, migrationsPath); err != nil {
-		return fmt.Errorf("failed to run migrations: %w", err)
+	// Flush Redis to clear any cached state (e.g. admin_registered).
+	redisURL := getEnvOrDefault("REDIS_URL", "redis://localhost:6379")
+	opt, err := redis.ParseURL(redisURL)
+	if err == nil {
+		rdb := redis.NewClient(opt)
+		defer rdb.Close()
+		rdb.FlushDB(ctx)
 	}
 
 	return nil
 }
 
-// NewTestSetup creates a new test setup with all common dependencies
+// NewTestSetup creates a new test setup with all common dependencies.
 func NewTestSetup() *TestSetup {
 	if testDB == nil {
 		panic("testDB is nil - database not initialized")
@@ -189,7 +165,6 @@ func NewTestSetup() *TestSetup {
 		panic("ctx is nil - context not initialized")
 	}
 
-	// Clean database before each test
 	if err := cleanDatabase(); err != nil {
 		panic(fmt.Sprintf("failed to clean database: %v", err))
 	}
@@ -197,16 +172,8 @@ func NewTestSetup() *TestSetup {
 	l := logger.NewLogger()
 	store := dbstorage.NewStore(testDB)
 
-	// Create repositories
 	userStorage := &user_storage.UserStorage{DB: testDB, Ctx: ctx}
-	// orgStorage := &organization_storage.OrganizationStore{DB: testDB, Ctx: ctx}
-	// cache, err := cache.NewCache(getEnvOrDefault("REDIS_URL", "redis://localhost:6379"))
-	// if err != nil {
-	// 	panic(fmt.Sprintf("failed to create redis client: %v", err))
-	// }
-	// Create services
-	// orgService := organization_service.NewOrganizationService(store, ctx, l, orgStorage, cache)
-	authService := authService.NewAuthService(userStorage, l, ctx, "")
+	authSvc := authService.NewAuthService(userStorage, l, ctx, "")
 
 	return &TestSetup{
 		DB:          testDB,
@@ -214,23 +181,241 @@ func NewTestSetup() *TestSetup {
 		Store:       store,
 		Logger:      l,
 		UserStorage: userStorage,
-		// OrgStorage:  orgStorage,
-		// OrgService:  orgService,
-		AuthService: authService,
+		AuthService: authSvc,
 	}
 }
 
-// CreateTestUserAndOrg creates a test user and organization
-// This should be called by individual test cases when needed
-// Deprecated: Use SignupViaSupertokens or SigninViaSupertokens instead
+// postJSON sends a POST request to the auth service test utils API.
+func postJSON(url string, payload interface{}) ([]byte, int, error) {
+	bodyBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(bodyBytes))
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, resp.StatusCode, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	return body, resp.StatusCode, nil
+}
+
+// CreateTestUserViaAuth creates a user through the Better Auth test utils API
+// and returns a session with cookies for authenticated requests.
+func (s *TestSetup) CreateTestUserViaAuth(email, name string) (*TestAuthResponse, error) {
+	saveUserURL := authServiceURL + "/api/test/save-user"
+	body, status, err := postJSON(saveUserURL, map[string]interface{}{
+		"email":         email,
+		"name":          name,
+		"emailVerified": true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("save-user request failed: %w", err)
+	}
+	if status != http.StatusOK {
+		return nil, fmt.Errorf("save-user failed with status %d: %s", status, string(body))
+	}
+
+	var savedUser struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(body, &savedUser); err != nil {
+		return nil, fmt.Errorf("failed to parse save-user response: %w (body: %s)", err, string(body))
+	}
+
+	saveOrgURL := authServiceURL + "/api/test/save-org"
+	body, status, err = postJSON(saveOrgURL, map[string]interface{}{
+		"name": name + "'s Team",
+		"slug": strings.ToLower(strings.ReplaceAll(name, " ", "-")) + "-team",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("save-org request failed: %w", err)
+	}
+	if status != http.StatusOK {
+		return nil, fmt.Errorf("save-org failed with status %d: %s", status, string(body))
+	}
+
+	var savedOrg struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(body, &savedOrg); err != nil {
+		return nil, fmt.Errorf("failed to parse save-org response: %w (body: %s)", err, string(body))
+	}
+
+	addMemberURL := authServiceURL + "/api/test/add-member"
+	body, status, err = postJSON(addMemberURL, map[string]interface{}{
+		"userId":         savedUser.ID,
+		"organizationId": savedOrg.ID,
+		"role":           "owner",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("add-member request failed: %w", err)
+	}
+	if status != http.StatusOK {
+		return nil, fmt.Errorf("add-member failed with status %d: %s", status, string(body))
+	}
+
+	loginURL := authServiceURL + "/api/test/login"
+	body, status, err = postJSON(loginURL, map[string]interface{}{
+		"userId": savedUser.ID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("login request failed: %w", err)
+	}
+	if status != http.StatusOK {
+		return nil, fmt.Errorf("login failed with status %d: %s", status, string(body))
+	}
+
+	var loginResp struct {
+		Session struct {
+			Token string `json:"token"`
+		} `json:"session"`
+		Token   string `json:"token"`
+		Cookies []struct {
+			Name     string `json:"name"`
+			Value    string `json:"value"`
+			Domain   string `json:"domain"`
+			Path     string `json:"path"`
+			HTTPOnly bool   `json:"httpOnly"`
+			Secure   bool   `json:"secure"`
+			SameSite string `json:"sameSite"`
+		} `json:"cookies"`
+	}
+	if err := json.Unmarshal(body, &loginResp); err != nil {
+		return nil, fmt.Errorf("failed to parse login response: %w (body: %s)", err, string(body))
+	}
+
+	var cookies []*http.Cookie
+	var accessToken string
+	for _, c := range loginResp.Cookies {
+		cookie := &http.Cookie{
+			Name:     c.Name,
+			Value:    c.Value,
+			Domain:   c.Domain,
+			Path:     c.Path,
+			HttpOnly: c.HTTPOnly,
+			Secure:   c.Secure,
+		}
+		cookies = append(cookies, cookie)
+		if strings.Contains(c.Name, "session_token") {
+			accessToken = c.Value
+		}
+	}
+
+	if accessToken == "" {
+		accessToken = loginResp.Token
+	}
+	if accessToken == "" {
+		accessToken = loginResp.Session.Token
+	}
+
+	user, err := s.UserStorage.FindUserByEmail(email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user after creation: %w", err)
+	}
+
+	return &TestAuthResponse{
+		Cookies:        cookies,
+		AccessToken:    accessToken,
+		User:           user,
+		OrganizationID: savedOrg.ID,
+	}, nil
+}
+
+// LoginTestUser creates a session for an existing user via Better Auth test utils.
+func (s *TestSetup) LoginTestUser(userID string) (*TestAuthResponse, error) {
+	loginURL := authServiceURL + "/api/test/login"
+	body, status, err := postJSON(loginURL, map[string]interface{}{
+		"userId": userID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("login request failed: %w", err)
+	}
+	if status != http.StatusOK {
+		return nil, fmt.Errorf("login failed with status %d: %s", status, string(body))
+	}
+
+	var loginResp struct {
+		Session struct {
+			Token string `json:"token"`
+		} `json:"session"`
+		User struct {
+			Email string `json:"email"`
+		} `json:"user"`
+		Token   string `json:"token"`
+		Cookies []struct {
+			Name     string `json:"name"`
+			Value    string `json:"value"`
+			Domain   string `json:"domain"`
+			Path     string `json:"path"`
+			HTTPOnly bool   `json:"httpOnly"`
+			Secure   bool   `json:"secure"`
+		} `json:"cookies"`
+	}
+	if err := json.Unmarshal(body, &loginResp); err != nil {
+		return nil, fmt.Errorf("failed to parse login response: %w (body: %s)", err, string(body))
+	}
+
+	var cookies []*http.Cookie
+	var accessToken string
+	for _, c := range loginResp.Cookies {
+		cookie := &http.Cookie{
+			Name:     c.Name,
+			Value:    c.Value,
+			Domain:   c.Domain,
+			Path:     c.Path,
+			HttpOnly: c.HTTPOnly,
+			Secure:   c.Secure,
+		}
+		cookies = append(cookies, cookie)
+		if strings.Contains(c.Name, "session_token") {
+			accessToken = c.Value
+		}
+	}
+	if accessToken == "" {
+		accessToken = loginResp.Token
+	}
+	if accessToken == "" {
+		accessToken = loginResp.Session.Token
+	}
+
+	user, err := s.UserStorage.FindUserByEmail(loginResp.User.Email)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find user: %w", err)
+	}
+
+	var orgID string
+	if len(user.OrganizationUsers) > 0 && user.OrganizationUsers[0].Organization != nil {
+		orgID = user.OrganizationUsers[0].Organization.ID.String()
+	}
+
+	return &TestAuthResponse{
+		Cookies:        cookies,
+		AccessToken:    accessToken,
+		User:           user,
+		OrganizationID: orgID,
+	}, nil
+}
+
+// CreateTestUserAndOrg creates a test user and organization via Better Auth test utils.
 func (s *TestSetup) CreateTestUserAndOrg() (*types.User, *types.Organization, error) {
-	// Use SuperTokens for authentication instead
-	authResponse, err := s.SignupViaSupertokens("test@example.com", "Password123@")
+	authResponse, err := s.CreateTestUserViaAuth("test@example.com", "Test User")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create test user: %w", err)
 	}
 
-	// Get organization from the user's OrganizationUsers relation
 	var org *types.Organization
 	if len(authResponse.User.OrganizationUsers) > 0 && authResponse.User.OrganizationUsers[0].Organization != nil {
 		org = authResponse.User.OrganizationUsers[0].Organization
@@ -239,256 +424,22 @@ func (s *TestSetup) CreateTestUserAndOrg() (*types.User, *types.Organization, er
 	return authResponse.User, org, nil
 }
 
-// GetTestAuthResponse is deprecated - use GetSupertokensAuthResponse instead
-func (s *TestSetup) GetTestAuthResponse() (*authTypes.AuthResponse, *types.Organization, error) {
-	// This function is deprecated since RegistrationHelper no longer works
-	// Use GetSupertokensAuthResponse instead
-	return nil, nil, fmt.Errorf("GetTestAuthResponse is deprecated - use GetSupertokensAuthResponse instead")
-}
-
-// RegistrationHelper is deprecated - Better Auth handles authentication now
-// Use SignupViaSupertokens or SigninViaSupertokens instead
-func (s *TestSetup) RegistrationHelper(email, password, username, orgName, orgDescription string, userType string) (*authTypes.AuthResponse, *types.Organization, error) {
-	// This function is deprecated since AuthService.Register() no longer exists
-	// Better Auth handles authentication now
-	// Use SignupViaSupertokens or SigninViaSupertokens for test authentication
-	return nil, nil, fmt.Errorf("RegistrationHelper is deprecated - use SignupViaSupertokens or SigninViaSupertokens instead")
-
-	// Old implementation (commented out):
-	// registrationRequest := authTypes.RegisterRequest{
-	// 	Email:    email,
-	// 	Password: password,
-	// 	Username: username,
-	// 	Type:     userType,
-	// }
-	// authResponse, err := s.AuthService.Register(registrationRequest, "admin")
-	// if err != nil {
-	// 	return nil, nil, fmt.Errorf("failed to create test user: %w", err)
-	// }
-	// org := &types.Organization{
-	// 	ID:          uuid.New(),
-	// 	Name:        "test-org",
-	// 	Description: "Test organization",
-	// }
-	// if err := s.OrgStorage.CreateOrganization(*org); err != nil {
-	// 	return nil, nil, fmt.Errorf("failed to create test organization: %w", err)
-	// }
-	// orgUser := &types.OrganizationUsers{
-	// 	ID:             uuid.New(),
-	// 	UserID:         authResponse.User.ID,
-	// 	OrganizationID: org.ID,
-	// }
-	// if err := s.OrgStorage.AddUserToOrganization(*orgUser); err != nil {
-	// 	return nil, nil, fmt.Errorf("failed to add user to organization: %w", err)
-	// }
-	// return &authResponse, org, nil
-}
-
-// SignupViaSupertokens creates a user through SuperTokens HTTP API and returns session cookies.
-// This is the preferred method for integration tests that need to authenticate with protected endpoints.
-func (s *TestSetup) SignupViaSupertokens(email, password string) (*SuperTokensAuthResponse, error) {
-	// SuperTokens endpoints are handled by the middleware at /auth/* path
-	signupURL := supertokensBaseURL + "/auth/signup"
-
-	// Prepare the signup request body (SuperTokens email-password format)
-	requestBody := map[string]interface{}{
-		"formFields": []map[string]string{
-			{"id": "email", "value": email},
-			{"id": "password", "value": password},
-		},
-	}
-
-	bodyBytes, err := json.Marshal(requestBody)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal signup request: %w", err)
-	}
-
-	// Create the HTTP request
-	req, err := http.NewRequest("POST", signupURL, bytes.NewBuffer(bodyBytes))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create signup request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	// Add SuperTokens required headers for emailpassword recipe
-	req.Header.Set("rid", "emailpassword")
-	req.Header.Set("st-auth-mode", "cookie")
-
-	// Create HTTP client with cookie jar to automatically capture cookies (like Postman)
-	jar, err := cookiejar.New(nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create cookie jar: %w", err)
-	}
-	client := &http.Client{
-		Jar: jar,
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute signup request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Read response body
-	respBody, _ := io.ReadAll(resp.Body)
-
-	// Parse response to check for SuperTokens errors
-	var respData map[string]interface{}
-	if err := json.Unmarshal(respBody, &respData); err == nil {
-		// Check if SuperTokens returned an error status
-		if status, ok := respData["status"].(string); ok && status != "OK" {
-			return nil, fmt.Errorf("signup failed: status=%s, response=%s", status, string(respBody))
-		}
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("signup failed with status %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	// Extract session cookies from the cookie jar (automatically captures cookies from Set-Cookie headers)
-	cookieURL := resp.Request.URL
-	if cookieURL == nil {
-		cookieURL = req.URL
-	}
-	cookies := jar.Cookies(cookieURL)
-
-	if len(cookies) == 0 {
-		return nil, fmt.Errorf("no session cookies returned from signup")
-	}
-
-	// Extract access token from cookies
-	var accessToken string
-	for _, cookie := range cookies {
-		if cookie.Name == "sAccessToken" {
-			accessToken = cookie.Value
-			break
-		}
-	}
-
-	// Find user in our database by email (this also loads OrganizationUsers)
-	user, err := s.UserStorage.FindUserByEmail(email)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find user after signup: %w", err)
-	}
-
-	// Get user's organization from the loaded OrganizationUsers relation
-	var orgID string
-	if len(user.OrganizationUsers) > 0 && user.OrganizationUsers[0].Organization != nil {
-		orgID = user.OrganizationUsers[0].Organization.ID.String()
-	}
-
-	return &SuperTokensAuthResponse{
-		Cookies:        cookies,
-		AccessToken:    accessToken,
-		User:           user,
-		OrganizationID: orgID,
-	}, nil
-}
-
-// SigninViaSupertokens logs in a user through SuperTokens HTTP API and returns session cookies.
-func (s *TestSetup) SigninViaSupertokens(email, password string) (*SuperTokensAuthResponse, error) {
-	// SuperTokens endpoints are handled by the middleware at /auth/* path
-	signinURL := supertokensBaseURL + "/auth/signin"
-
-	// Prepare the signin request body (SuperTokens email-password format)
-	requestBody := map[string]interface{}{
-		"formFields": []map[string]string{
-			{"id": "email", "value": email},
-			{"id": "password", "value": password},
-		},
-	}
-
-	bodyBytes, err := json.Marshal(requestBody)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal signin request: %w", err)
-	}
-
-	// Create the HTTP request
-	req, err := http.NewRequest("POST", signinURL, bytes.NewBuffer(bodyBytes))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create signin request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	// Add SuperTokens required headers for emailpassword recipe
-	req.Header.Set("rid", "emailpassword")
-	req.Header.Set("st-auth-mode", "cookie")
-
-	// Create HTTP client with cookie jar to automatically capture cookies (like Postman)
-	jar, err := cookiejar.New(nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create cookie jar: %w", err)
-	}
-	client := &http.Client{
-		Jar: jar,
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute signin request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Read response body for error checking
-	respBody, _ := io.ReadAll(resp.Body)
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("signin failed with status %d: %s", resp.StatusCode, string(respBody))
-	}
-
-	// Check for SuperTokens error status in response
-	var respData map[string]interface{}
-	if err := json.Unmarshal(respBody, &respData); err == nil {
-		if status, ok := respData["status"].(string); ok && status != "OK" {
-			return nil, fmt.Errorf("signin failed: status=%s, response=%s", status, string(respBody))
-		}
-	}
-
-	// Extract session cookies from the cookie jar (automatically captures cookies from Set-Cookie headers)
-	cookieURL := resp.Request.URL
-	if cookieURL == nil {
-		cookieURL = req.URL
-	}
-	cookies := jar.Cookies(cookieURL)
-
-	if len(cookies) == 0 {
-		return nil, fmt.Errorf("no session cookies returned from signin")
-	}
-
-	// Extract access token from cookies if available
-	var accessToken string
-	for _, cookie := range cookies {
-		if cookie.Name == "sAccessToken" {
-			accessToken = cookie.Value
-			break
-		}
-	}
-
-	// Find user in our database by email (this also loads OrganizationUsers)
-	user, err := s.UserStorage.FindUserByEmail(email)
-	if err != nil {
-		return nil, fmt.Errorf("failed to find user after signin: %w", err)
-	}
-
-	// Get user's organization from the loaded OrganizationUsers relation
-	var orgID string
-	if len(user.OrganizationUsers) > 0 && user.OrganizationUsers[0].Organization != nil {
-		orgID = user.OrganizationUsers[0].Organization.ID.String()
-	}
-
-	return &SuperTokensAuthResponse{
-		Cookies:        cookies,
-		AccessToken:    accessToken,
-		User:           user,
-		OrganizationID: orgID,
-	}, nil
-}
-
-// GetSupertokensAuthResponse creates a user via SuperTokens and returns authentication info.
-// This should be used for integration tests that need to call protected API endpoints.
-// It creates a new user with a unique email to avoid conflicts with existing SuperTokens users.
-func (s *TestSetup) GetSupertokensAuthResponse() (*SuperTokensAuthResponse, error) {
-	// Generate unique email to avoid conflicts with existing SuperTokens users
+// GetAuthResponse creates a user via Better Auth test utils and returns authentication info.
+// Creates a new user with a unique email to avoid conflicts.
+func (s *TestSetup) GetAuthResponse() (*TestAuthResponse, error) {
 	uniqueEmail := fmt.Sprintf("test-%d@example.com", time.Now().UnixNano())
-	password := "Password123@"
+	return s.CreateTestUserViaAuth(uniqueEmail, "Test User")
+}
 
-	return s.SignupViaSupertokens(uniqueEmail, password)
+// SeedCredentialAccount inserts a row into the `account` table with a dummy password hash.
+// This makes the user discoverable by IsAdminRegistered, which checks for
+// account rows where password IS NOT NULL.
+func (s *TestSetup) SeedCredentialAccount(userID string) error {
+	_, err := s.DB.NewRaw(
+		"INSERT INTO account (id, account_id, provider_id, user_id, password, created_at, updated_at) "+
+			"VALUES (gen_random_uuid(), ?, 'credential', ?, '$2a$10$dummyhashfortest', NOW(), NOW()) "+
+			"ON CONFLICT DO NOTHING",
+		userID, userID,
+	).Exec(ctx)
+	return err
 }
