@@ -8,11 +8,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  tests:
+    uses: ./.github/workflows/test.yaml
+    secrets:
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+
+  security:
+    uses: ./.github/workflows/security.yml
+
   create-release:
+    needs: [tests, security]
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      released: ${{ steps.changelog.outputs.skipped == 'false' }}
+      tag: ${{ steps.changelog.outputs.tag }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
@@ -77,3 +89,18 @@ jobs:
           message: |
             - New pre-release published: **${{ steps.changelog.outputs.tag }}**
             - https://github.com/${{ github.repository }}/releases/tag/${{ steps.changelog.outputs.tag }}
+
+  deploy-docs:
+    needs: create-release
+    if: ${{ needs.create-release.outputs.released == 'true' }}
+    uses: ./.github/workflows/docs.yml
+    secrets:
+      POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+      POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+
+  sync-api-client:
+    needs: create-release
+    if: ${{ needs.create-release.outputs.released == 'true' }}
+    uses: ./.github/workflows/api-client-sync.yml
+    secrets:
+      API_CLIENT_REPO_TOKEN: ${{ secrets.API_CLIENT_REPO_TOKEN }}

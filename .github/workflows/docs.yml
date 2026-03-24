@@ -5,6 +5,12 @@
 name: Docs Build & Deploy
 
 on:
+  workflow_call:
+    secrets:
+      POSTHOG_API_KEY:
+        required: false
+      POSTHOG_HOST:
+        required: false
   workflow_dispatch:
 
 permissions:
