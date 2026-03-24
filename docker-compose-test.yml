@@ -12,7 +12,7 @@ services:
       - POSTGRES_PASSWORD=${TEST_DB_PASSWORD:-nixopus}
       - POSTGRES_DB=${TEST_DB_NAME:-nixopus_test}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nixopus -d nixopus_test"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -34,7 +34,7 @@ services:
       - nixopus-test-network
 
   nixopus-test-auth:
-    image: ghcr.io/nixopus/auth:latest
+    image: ${NIXOPUS_AUTH_IMAGE:-ghcr.io/nixopus/auth:latest}
     container_name: nixopus-test-auth
     ports:
       - "9090:9090"
@@ -43,7 +43,7 @@ services:
       nixopus-test-db:
         condition: service_healthy
     environment:
-      - DATABASE_URL=postgresql://nixopus:nixopus@nixopus-test-db:5432/nixopus_test
+      - DATABASE_URL=postgresql://${TEST_DB_USERNAME:-nixopus}:${TEST_DB_PASSWORD:-nixopus}@nixopus-test-db:5432/${TEST_DB_NAME:-nixopus_test}
       - PORT=9090
       - NODE_ENV=test
       - BETTER_AUTH_SECRET=test-secret-for-ci

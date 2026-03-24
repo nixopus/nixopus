@@ -62,14 +62,20 @@ jobs:
           ./bin/nixopus-api &
           echo $! > /tmp/api-server.pid
 
+          api_ready=0
           for i in {1..15}; do
             if curl -sf http://localhost:8080/api/v1/health >/dev/null 2>&1; then
               echo "API server is ready"
+              api_ready=1
               break
             fi
             echo "Waiting for API server... attempt $i"
             sleep 2
           done
+          if [ "$api_ready" -ne 1 ]; then
+            echo "API server failed to become ready"
+            exit 1
+          fi
 
       - name: Run tests
         working-directory: api
