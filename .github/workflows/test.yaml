@@ -17,6 +17,7 @@ on:
       - 'api/**'
       - 'docker-compose-test.yml'
       - '.github/workflows/test.yaml'
+  workflow_call:
   workflow_dispatch:
 
 concurrency:
