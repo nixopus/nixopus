@@ -10,7 +10,8 @@ on:
 jobs:
   tests:
     uses: ./.github/workflows/test.yaml
-    secrets: inherit
+    secrets:
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
 
   create-release:
     needs: tests
@@ -18,6 +19,9 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    outputs:
+      released: ${{ steps.changelog.outputs.skipped == 'false' }}
+      tag: ${{ steps.changelog.outputs.tag }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v6
@@ -85,10 +89,15 @@ jobs:
 
   deploy-docs:
     needs: create-release
+    if: ${{ needs.create-release.outputs.released == 'true' }}
     uses: ./.github/workflows/docs.yml
-    secrets: inherit
+    secrets:
+      POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
+      POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
 
   sync-api-client:
     needs: create-release
+    if: ${{ needs.create-release.outputs.released == 'true' }}
     uses: ./.github/workflows/api-client-sync.yml
-    secrets: inherit
+    secrets:
+      API_CLIENT_REPO_TOKEN: ${{ secrets.API_CLIENT_REPO_TOKEN }}

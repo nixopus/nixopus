@@ -18,6 +18,9 @@ on:
       - 'docker-compose-test.yml'
       - '.github/workflows/test.yaml'
   workflow_call:
+    secrets:
+      DEPLOY_KEY:
+        required: true
   workflow_dispatch:
 
 concurrency:

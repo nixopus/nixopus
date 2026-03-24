@@ -42,8 +42,11 @@ services:
     depends_on:
       nixopus-test-db:
         condition: service_healthy
+      nixopus-test-redis:
+        condition: service_healthy
     environment:
       - DATABASE_URL=postgresql://${TEST_DB_USERNAME:-nixopus}:${TEST_DB_PASSWORD:-nixopus}@nixopus-test-db:5432/${TEST_DB_NAME:-nixopus_test}
+      - REDIS_URL=redis://nixopus-test-redis:6379
       - PORT=9090
       - NODE_ENV=test
       - BETTER_AUTH_SECRET=test-secret-for-ci
