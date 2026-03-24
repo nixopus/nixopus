@@ -5,6 +5,11 @@
 name: Security Scan
 
 on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+  workflow_call:
   workflow_dispatch:
 
 jobs:
@@ -33,4 +38,4 @@ jobs:
       - name: Run TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
-          args: --regex --entropy=False 
+          extra_args: --results=verified,unverified
