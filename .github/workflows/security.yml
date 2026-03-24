@@ -33,4 +33,4 @@ jobs:
       - name: Run TruffleHog
         uses: trufflesecurity/trufflehog@main
         with:
-          args: --regex --entropy=False 
+          extra_args: --only-verified
