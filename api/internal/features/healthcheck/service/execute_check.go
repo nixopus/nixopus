@@ -9,9 +9,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // buildHealthCheckURL constructs the URL for a health check request.

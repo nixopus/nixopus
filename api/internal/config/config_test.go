@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

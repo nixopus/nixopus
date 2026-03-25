@@ -6,9 +6,9 @@ import (
 
 	. "github.com/Eun/go-hit"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/tests"
-	"github.com/raghavyuva/nixopus-api/internal/testutils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/tests"
+	"github.com/nixopus/nixopus/api/internal/testutils"
 )
 
 func TestCancelDeployment(t *testing.T) {

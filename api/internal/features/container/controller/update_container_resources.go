@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/container/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/container/types"
+	"github.com/nixopus/nixopus/api/internal/features/container/service"
+	"github.com/nixopus/nixopus/api/internal/features/container/types"
 )
 
 // UpdateContainerResources updates the resource limits (memory, swap, CPU) of a running container.

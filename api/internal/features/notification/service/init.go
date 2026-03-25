@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/storage"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/notification/storage"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 type NotificationService struct {

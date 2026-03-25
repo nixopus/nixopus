@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
+	"github.com/nixopus/nixopus/api/internal/types"
 )
 
 type userModule struct{}

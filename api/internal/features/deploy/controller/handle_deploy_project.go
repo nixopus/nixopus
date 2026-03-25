@@ -5,9 +5,9 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 // HandleDeployProject triggers deployment of an existing project (application) that was saved as a draft.

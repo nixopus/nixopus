@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/queue"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 const (

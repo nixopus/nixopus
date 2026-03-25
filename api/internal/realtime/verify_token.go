@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	betterauth "github.com/nixopus/nixopus/api/internal/features/auth"
+	"github.com/nixopus/nixopus/api/internal/types"
 )
 
 // verifyToken verifies the Better Auth session token and returns the user and organization ID if the token is valid.

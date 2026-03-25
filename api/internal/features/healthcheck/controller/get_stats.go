@@ -5,10 +5,10 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	healthcheck_service "github.com/raghavyuva/nixopus-api/internal/features/healthcheck/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	healthcheck_service "github.com/nixopus/nixopus/api/internal/features/healthcheck/service"
+	"github.com/nixopus/nixopus/api/internal/features/healthcheck/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *HealthCheckController) GetHealthCheckStats(f fuego.ContextNoBody) (*types.HealthCheckStatsResponse, error) {

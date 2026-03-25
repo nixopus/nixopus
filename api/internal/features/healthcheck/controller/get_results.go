@@ -6,9 +6,9 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/healthcheck/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/healthcheck/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *HealthCheckController) GetHealthCheckResults(f fuego.ContextNoBody) (*types.HealthCheckResultsResponse, error) {

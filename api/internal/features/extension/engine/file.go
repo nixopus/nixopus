@@ -8,9 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/pkg/sftp"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	"github.com/raghavyuva/nixopus-api/internal/types"
 )
 
 type fileModule struct{}

@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/dashboard"
+	"github.com/nixopus/nixopus/api/internal/features/dashboard"
 )
 
 type SystemStatsResponse struct {

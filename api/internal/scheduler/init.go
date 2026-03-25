@@ -3,12 +3,12 @@ package scheduler
 import (
 	"context"
 
-	healthcheck_service "github.com/raghavyuva/nixopus-api/internal/features/healthcheck/service"
-	healthcheck_storage "github.com/raghavyuva/nixopus-api/internal/features/healthcheck/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/scheduler/cleanup"
-	"github.com/raghavyuva/nixopus-api/internal/scheduler/container"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	healthcheck_service "github.com/nixopus/nixopus/api/internal/features/healthcheck/service"
+	healthcheck_storage "github.com/nixopus/nixopus/api/internal/features/healthcheck/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/scheduler/cleanup"
+	"github.com/nixopus/nixopus/api/internal/scheduler/container"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 type Schedulers struct {

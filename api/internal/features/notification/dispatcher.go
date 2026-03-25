@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/channel"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/helpers/preferences"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/tasks"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/notification/channel"
+	"github.com/nixopus/nixopus/api/internal/features/notification/helpers/preferences"
+	"github.com/nixopus/nixopus/api/internal/features/notification/tasks"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 

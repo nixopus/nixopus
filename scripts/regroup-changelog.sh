@@ -6,7 +6,7 @@ set -euo pipefail
 
 INPUT="${1:-CHANGELOG.md}"
 OUTPUT="${2:-$INPUT}"
-REPO_URL="https://github.com/raghavyuva/nixopus"
+REPO_URL="https://github.com/nixopus/nixopus"
 
 awk -v repo_url="$REPO_URL" '
 BEGIN {

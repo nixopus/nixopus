@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	machine_controller "github.com/raghavyuva/nixopus-api/internal/features/machine/controller"
+	machine_controller "github.com/nixopus/nixopus/api/internal/features/machine/controller"
 )
 
 func (router *Router) RegisterMachineRoutes(machineGroup *fuego.Server, machineController *machine_controller.MachineController) {

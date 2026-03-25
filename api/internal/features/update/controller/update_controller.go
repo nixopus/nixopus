@@ -7,12 +7,12 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/update/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/update/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/update/service"
+	"github.com/nixopus/nixopus/api/internal/features/update/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type UpdateController struct {

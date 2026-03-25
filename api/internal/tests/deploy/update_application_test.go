@@ -6,10 +6,10 @@ import (
 
 	. "github.com/Eun/go-hit"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/tests"
-	"github.com/raghavyuva/nixopus-api/internal/testutils"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/tests"
+	"github.com/nixopus/nixopus/api/internal/testutils"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func TestUpdateApplication(t *testing.T) {

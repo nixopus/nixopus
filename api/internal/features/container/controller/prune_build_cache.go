@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/container/service"
-	container_types "github.com/raghavyuva/nixopus-api/internal/features/container/types"
+	"github.com/nixopus/nixopus/api/internal/features/container/service"
+	container_types "github.com/nixopus/nixopus/api/internal/features/container/types"
 )
 
 type PruneBuildCacheRequest struct {

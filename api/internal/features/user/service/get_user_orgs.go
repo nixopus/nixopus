@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
+	"github.com/nixopus/nixopus/api/internal/features/user/types"
 )
 
 // GetUserOrganizations retrieves the organizations for a given user.

@@ -4,9 +4,9 @@ import (
 	"errors"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/trail/types"
 )
 
 func (c *TrailController) UpgradeResources(f fuego.ContextWithBody[types.UpgradeResourcesRequest]) (*types.UpgradeResourcesResponse, error) {

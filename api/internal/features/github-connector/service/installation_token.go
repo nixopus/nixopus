@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (c *GithubConnectorService) getInstallationToken(jwt string, installation_id string) (string, error) {

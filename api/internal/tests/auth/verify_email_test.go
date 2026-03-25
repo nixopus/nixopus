@@ -10,8 +10,8 @@ package auth
 // 	"testing"
 //
 // 	. "github.com/Eun/go-hit"
-// 	"github.com/raghavyuva/nixopus-api/internal/tests"
-// 	"github.com/raghavyuva/nixopus-api/internal/testutils"
+// 	"github.com/nixopus/nixopus/api/internal/tests"
+// 	"github.com/nixopus/nixopus/api/internal/testutils"
 // )
 //
 // func TestSendVerificationEmail(t *testing.T) {

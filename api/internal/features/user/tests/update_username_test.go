@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/user/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/user/service"
+	"github.com/nixopus/nixopus/api/internal/features/user/types"
 	"github.com/stretchr/testify/mock"
 
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func TestUpdateUsername(t *testing.T) {

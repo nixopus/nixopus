@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"gopkg.in/yaml.v3"
 )
 

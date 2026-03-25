@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	trail "github.com/raghavyuva/nixopus-api/internal/features/trail/controller"
+	trail "github.com/nixopus/nixopus/api/internal/features/trail/controller"
 )
 
 func (router *Router) RegisterTrailRoutes(group *fuego.Server, controller *trail.TrailController) {

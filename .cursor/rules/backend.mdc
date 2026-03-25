@@ -119,13 +119,13 @@ import (
     "context"
     "net/http"
 
-    "github.com/raghavyuva/nixopus-api/internal/features/[domain]/service"
-    "github.com/raghavyuva/nixopus-api/internal/features/[domain]/storage"
-    "github.com/raghavyuva/nixopus-api/internal/features/[domain]/validation"
-    "github.com/raghavyuva/nixopus-api/internal/features/logger"
-    "github.com/raghavyuva/nixopus-api/internal/features/notification"
-    shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-    shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+    "github.com/nixopus/nixopus/api/internal/features/[domain]/service"
+    "github.com/nixopus/nixopus/api/internal/features/[domain]/storage"
+    "github.com/nixopus/nixopus/api/internal/features/[domain]/validation"
+    "github.com/nixopus/nixopus/api/internal/features/logger"
+    "github.com/nixopus/nixopus/api/internal/features/notification"
+    shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+    shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type DomainController struct {
@@ -258,9 +258,9 @@ package service
 import (
     "context"
 
-    "github.com/raghavyuva/nixopus-api/internal/features/[domain]/storage"
-    "github.com/raghavyuva/nixopus-api/internal/features/logger"
-    shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+    "github.com/nixopus/nixopus/api/internal/features/[domain]/storage"
+    "github.com/nixopus/nixopus/api/internal/features/logger"
+    shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 type DomainService struct {
@@ -312,7 +312,7 @@ package storage
 
 import (
     "context"
-    shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+    shared_types "github.com/nixopus/nixopus/api/internal/types"
     "github.com/uptrace/bun"
 )
 
@@ -389,7 +389,7 @@ func (s *DomainStorage) DeleteItem(itemID, userID string) error {
 package validation
 
 import (
-    "github.com/raghavyuva/nixopus-api/internal/features/[domain]/types"
+    "github.com/nixopus/nixopus/api/internal/features/[domain]/types"
 )
 
 // DomainRepository interface for validation dependencies
@@ -489,7 +489,7 @@ package routes
 
 import (
     "github.com/go-fuego/fuego"
-    domainController "github.com/raghavyuva/nixopus-api/internal/features/[domain]/controller"
+    domainController "github.com/nixopus/nixopus/api/internal/features/[domain]/controller"
 )
 
 func (router *Router) RegisterDomainRoutes(
@@ -679,10 +679,10 @@ var ErrItemNotFound = errors.New("item not found")
 ### Import Aliases
 ```go
 import (
-    shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-    shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-    "github.com/raghavyuva/nixopus-api/internal/utils"
-    "github.com/raghavyuva/nixopus-api/internal/features/logger"
+    shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+    shared_types "github.com/nixopus/nixopus/api/internal/types"
+    "github.com/nixopus/nixopus/api/internal/utils"
+    "github.com/nixopus/nixopus/api/internal/features/logger"
 )
 ```
 

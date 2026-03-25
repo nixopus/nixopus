@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/machine/types"
+	"github.com/nixopus/nixopus/api/internal/features/machine/types"
 	"github.com/uptrace/bun"
 )
 

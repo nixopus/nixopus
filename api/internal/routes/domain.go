@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	domain "github.com/raghavyuva/nixopus-api/internal/features/domain/controller"
+	domain "github.com/nixopus/nixopus/api/internal/features/domain/controller"
 )
 
 func (router *Router) RegisterDomainRoutes(domainGroup *fuego.Server, domainController *domain.DomainsController) {

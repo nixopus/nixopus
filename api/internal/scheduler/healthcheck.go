@@ -6,10 +6,10 @@ import (
 	"sync"
 	"time"
 
-	healthcheck_service "github.com/raghavyuva/nixopus-api/internal/features/healthcheck/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/realtime"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	healthcheck_service "github.com/nixopus/nixopus/api/internal/features/healthcheck/service"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/realtime"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type HealthCheckScheduler struct {

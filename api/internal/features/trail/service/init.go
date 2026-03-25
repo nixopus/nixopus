@@ -8,13 +8,13 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/trail/storage"
+	"github.com/nixopus/nixopus/api/internal/features/trail/types"
+	"github.com/nixopus/nixopus/api/internal/queue"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // TrailService handles business logic for trail provisioning.

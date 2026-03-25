@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	extension "github.com/raghavyuva/nixopus-api/internal/features/extension/controller"
+	extension "github.com/nixopus/nixopus/api/internal/features/extension/controller"
 )
 
 // RegisterExtensionRoutes registers extension routes

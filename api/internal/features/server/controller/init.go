@@ -3,10 +3,10 @@ package controller
 import (
 	"context"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/server/service"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/server/service"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type ServerController struct {

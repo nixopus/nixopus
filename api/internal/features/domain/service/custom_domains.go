@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/validation"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/domain/types"
+	"github.com/nixopus/nixopus/api/internal/features/domain/validation"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/queue"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (s *DomainsService) AddCustomDomain(ctx context.Context, userID, orgID uuid.UUID, name string) (*shared_types.Domain, []types.DNSInstruction, string, error) {

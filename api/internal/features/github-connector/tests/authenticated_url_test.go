@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/service"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 func TestCreateAuthenticatedRepoURL(t *testing.T) {

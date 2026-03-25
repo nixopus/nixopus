@@ -7,17 +7,17 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/validation"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/service"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/storage"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/tasks"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/validation"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/utils"
 
-	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
-	github_storage "github.com/raghavyuva/nixopus-api/internal/features/github-connector/storage"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	github_service "github.com/nixopus/nixopus/api/internal/features/github-connector/service"
+	github_storage "github.com/nixopus/nixopus/api/internal/features/github-connector/storage"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type DeployController struct {

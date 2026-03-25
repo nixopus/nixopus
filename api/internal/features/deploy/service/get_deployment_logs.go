@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (s *DeployService) GetDeploymentLogs(ctx context.Context, deploymentID string, page, pageSize int, level string, startTime, endTime time.Time, searchTerm string) ([]shared_types.ApplicationLogs, int64, error) {

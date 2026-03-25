@@ -1,6 +1,6 @@
 package notification
 
-import shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+import shared_types "github.com/nixopus/nixopus/api/internal/types"
 
 // preferenceMapping maps event types to the preference category + type
 // that controls whether the user wants this notification.

@@ -13,14 +13,14 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	_ "github.com/raghavyuva/nixopus-api/internal/log"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
-	"github.com/raghavyuva/nixopus-api/internal/redisclient"
-	"github.com/raghavyuva/nixopus-api/internal/routes"
-	"github.com/raghavyuva/nixopus-api/internal/scheduler"
-	"github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	_ "github.com/nixopus/nixopus/api/internal/log"
+	"github.com/nixopus/nixopus/api/internal/queue"
+	"github.com/nixopus/nixopus/api/internal/redisclient"
+	"github.com/nixopus/nixopus/api/internal/routes"
+	"github.com/nixopus/nixopus/api/internal/scheduler"
+	"github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/vmihailenco/taskq/v3"
 )
 

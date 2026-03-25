@@ -4,9 +4,9 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/notification"
+	"github.com/nixopus/nixopus/api/internal/features/notification/controller/types"
 )
 
 func (c *NotificationController) DeleteSmtp(f fuego.ContextWithBody[notification.DeleteSMTPConfigRequest]) (*types.MessageResponse, error) {

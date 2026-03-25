@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/queue"
+	"github.com/nixopus/nixopus/api/internal/queue"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

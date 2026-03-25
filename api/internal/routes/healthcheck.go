@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	healthcheckController "github.com/raghavyuva/nixopus-api/internal/features/healthcheck/controller"
+	healthcheckController "github.com/nixopus/nixopus/api/internal/features/healthcheck/controller"
 )
 
 func (router *Router) RegisterHealthCheckRoutes(

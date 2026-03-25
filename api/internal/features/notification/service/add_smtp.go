@@ -2,8 +2,8 @@ package service
 
 import (
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/notification"
 )
 
 // AddSmtp adds a new SMTP configuration to the database.

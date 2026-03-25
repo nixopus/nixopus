@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/types"
 )
 
 // GetUser retrieves the current user from the request context.

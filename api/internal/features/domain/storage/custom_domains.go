@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/domain/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (s *DomainStorage) CreateCustomDomain(domain *shared_types.Domain) error {

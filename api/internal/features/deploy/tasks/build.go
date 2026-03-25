@@ -14,10 +14,10 @@ import (
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/google/uuid"
 	"github.com/moby/term"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	sshpkg "github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type BuildConfig struct {

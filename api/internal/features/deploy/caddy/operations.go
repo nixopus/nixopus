@@ -9,9 +9,9 @@ import (
 
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
 	"github.com/raghavyuva/caddygo"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
 )
 
 // DomainRoute represents a domain-to-upstream mapping extracted from Caddy config.

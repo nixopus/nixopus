@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/machine/types"
+	"github.com/nixopus/nixopus/api/internal/features/machine/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

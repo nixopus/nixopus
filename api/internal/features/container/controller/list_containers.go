@@ -9,9 +9,9 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/go-fuego/fuego"
-	containertypes "github.com/raghavyuva/nixopus-api/internal/features/container/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	containertypes "github.com/nixopus/nixopus/api/internal/features/container/types"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*containertypes.ListContainersResponse, error) {

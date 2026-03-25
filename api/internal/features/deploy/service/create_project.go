@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/tasks"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/tasks"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // CreateProject creates a new application without triggering deployment.

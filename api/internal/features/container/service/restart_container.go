@@ -2,9 +2,9 @@ package service
 
 import (
 	"github.com/docker/docker/api/types/container"
-	container_types "github.com/raghavyuva/nixopus-api/internal/features/container/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	container_types "github.com/nixopus/nixopus/api/internal/features/container/types"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 // RestartContainerOptions contains options for restarting a container

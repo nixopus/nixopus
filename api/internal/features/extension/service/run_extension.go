@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
+	"github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (s *ExtensionService) StartRun(ctx context.Context, extensionID string, variableValues map[string]interface{}) (*types.ExtensionExecution, error) {

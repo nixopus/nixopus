@@ -11,7 +11,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/google/uuid"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // GetRunningTaskContainerID finds the container ID for the running task of a Swarm service.

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 // replaceVars substitutes tokens like {{ varName }} in the input string

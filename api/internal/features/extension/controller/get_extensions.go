@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/extension/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (c *ExtensionsController) GetExtensions(ctx fuego.ContextNoBody) (*types.ListExtensionsResponse, error) {

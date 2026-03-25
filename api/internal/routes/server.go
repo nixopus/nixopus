@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	server_controller "github.com/raghavyuva/nixopus-api/internal/features/server/controller"
+	server_controller "github.com/nixopus/nixopus/api/internal/features/server/controller"
 )
 
 // RegisterServerRoutes registers server management routes

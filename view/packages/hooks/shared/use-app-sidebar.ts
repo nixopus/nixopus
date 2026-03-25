@@ -101,7 +101,7 @@ export function useAppSidebar() {
   };
 
   const handleSponsor = () => {
-    window.open('https://github.com/sponsors/raghavyuva', '_blank');
+    window.open('https://github.com/sponsors/nixopus', '_blank');
   };
 
   const getClientInfo = () => {
@@ -168,7 +168,7 @@ If applicable, add screenshots to help explain your problem.
 Add any other context about the problem here.`;
 
     const encodedBody = encodeURIComponent(issueBody);
-    const url = `https://github.com/raghavyuva/nixopus/issues/new?template=bug_report.md&body=${encodedBody}`;
+    const url = `https://github.com/nixopus/nixopus/issues/new?template=bug_report.md&body=${encodedBody}`;
     window.open(url, '_blank');
   };
 

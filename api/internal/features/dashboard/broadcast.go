@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 // send writes a single message to this monitor's WebSocket connection.

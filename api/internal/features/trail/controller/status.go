@@ -3,9 +3,9 @@ package controller
 import (
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/trail/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 // GetStatus handles GET /api/v1/trail/status/{sessionId}

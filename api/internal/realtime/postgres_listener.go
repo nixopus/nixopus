@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/types"
 )
 
 type PostgresListener struct {

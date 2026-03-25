@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/file-manager/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/file-manager/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 func (c *FileManagerController) UploadFile(f fuego.ContextNoBody) (*types.MessageResponse, error) {

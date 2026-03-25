@@ -7,10 +7,10 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/controller/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/notification"
+	"github.com/nixopus/nixopus/api/internal/features/notification/controller/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *NotificationController) UpdatePreference(f fuego.ContextWithBody[notification.UpdatePreferenceRequest]) (*types.MessageResponse, error) {

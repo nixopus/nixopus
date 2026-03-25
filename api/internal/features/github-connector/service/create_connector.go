@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // CreateConnector creates a new GitHub connector for the given user.

@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/nixopus/nixopus/api/internal/utils"
 	"github.com/pkg/sftp"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
 )
 
 // createAuthenticatedRepoURL creates an authenticated URL for repository access

@@ -1,4 +1,4 @@
-module github.com/raghavyuva/nixopus-api
+module github.com/nixopus/nixopus/api
 
 go 1.25.0
 

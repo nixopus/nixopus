@@ -40,7 +40,7 @@ services:
       start_period: 30s
 
   nixopus-api:
-    image: ${NIXOPUS_API_IMAGE:-ghcr.io/raghavyuva/nixopus-api:latest}
+    image: ${NIXOPUS_API_IMAGE:-ghcr.io/nixopus/nixopus-api:latest}
     container_name: nixopus-api
     restart: unless-stopped
     logging:
@@ -87,7 +87,7 @@ services:
       start_period: 30s
 
   nixopus-view:
-    image: ${NIXOPUS_VIEW_IMAGE:-ghcr.io/raghavyuva/nixopus-view:latest}
+    image: ${NIXOPUS_VIEW_IMAGE:-ghcr.io/nixopus/nixopus-view:latest}
     container_name: nixopus-view
     restart: unless-stopped
     logging:

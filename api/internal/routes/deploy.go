@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	deploy "github.com/raghavyuva/nixopus-api/internal/features/deploy/controller"
+	deploy "github.com/nixopus/nixopus/api/internal/features/deploy/controller"
 )
 
 // RegisterDeployRoutes registers deployment routes

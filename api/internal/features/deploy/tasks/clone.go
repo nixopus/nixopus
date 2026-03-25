@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
-	github_service "github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	github_service "github.com/nixopus/nixopus/api/internal/features/github-connector/service"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type CloneConfig struct {

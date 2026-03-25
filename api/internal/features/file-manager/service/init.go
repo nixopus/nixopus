@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 type FileManagerService struct {

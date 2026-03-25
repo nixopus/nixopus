@@ -5,9 +5,9 @@ import (
 
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
-	container_types "github.com/raghavyuva/nixopus-api/internal/features/container/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	container_types "github.com/nixopus/nixopus/api/internal/features/container/types"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 // ListImagesOptions contains options for listing images

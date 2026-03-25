@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/parser"
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/extension/parser"
+	"github.com/nixopus/nixopus/api/internal/features/extension/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/types"
 )
 
 type ExtensionService struct {

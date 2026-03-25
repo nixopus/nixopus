@@ -7,9 +7,9 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/server/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/server/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *ServerController) ListServers(f fuego.ContextNoBody) (*types.ListServersResponse, error) {

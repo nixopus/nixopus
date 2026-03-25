@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/utils"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.ContextWithBody[types.UpdateGithubConnectorRequest]) (*types.MessageResponse, error) {

@@ -11,9 +11,9 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
-	"github.com/raghavyuva/nixopus-api/internal/secrets"
-	"github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/secrets"
+	"github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/spf13/viper"
 )
 

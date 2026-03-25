@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/auth"
-	"github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/auth"
+	"github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 

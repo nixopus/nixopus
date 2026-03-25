@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/caddy"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (t *TaskService) CreateDeploymentTask(deployment *types.CreateDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {

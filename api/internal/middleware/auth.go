@@ -9,11 +9,11 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/cache"
-	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
-	"github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/cache"
+	betterauth "github.com/nixopus/nixopus/api/internal/features/auth"
+	"github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 // AuthMiddleware is a middleware that checks if the request has a valid

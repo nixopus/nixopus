@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func TestCancelledStatusExists(t *testing.T) {

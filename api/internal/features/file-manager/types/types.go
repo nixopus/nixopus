@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/raghavyuva/nixopus-api/internal/features/file-manager/service"
+	"github.com/nixopus/nixopus/api/internal/features/file-manager/service"
 )
 
 // MessageResponse is a generic response with just status and message

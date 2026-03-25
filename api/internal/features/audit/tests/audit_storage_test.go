@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/audit/storage"
-	"github.com/raghavyuva/nixopus-api/internal/testutils"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/audit/storage"
+	"github.com/nixopus/nixopus/api/internal/testutils"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/stretchr/testify/assert"
 )
 

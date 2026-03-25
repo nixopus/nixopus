@@ -7,7 +7,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 	"github.com/go-fuego/fuego"
-	container_types "github.com/raghavyuva/nixopus-api/internal/features/container/types"
+	container_types "github.com/nixopus/nixopus/api/internal/features/container/types"
 )
 
 type ListImagesRequest struct {

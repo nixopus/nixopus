@@ -8,13 +8,13 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/caddy"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/caddy"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 // AddApplicationDomainRequest represents a request to add a domain to an application

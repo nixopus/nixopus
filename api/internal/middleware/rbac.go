@@ -11,11 +11,11 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/cache"
-	betterauth "github.com/raghavyuva/nixopus-api/internal/features/auth"
-	appStorage "github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/cache"
+	betterauth "github.com/nixopus/nixopus/api/internal/features/auth"
+	appStorage "github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 // rbacCache is a package-level cache instance for RBAC permissions

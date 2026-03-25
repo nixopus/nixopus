@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (s *SocketServer) readLoop(conn *websocket.Conn) {

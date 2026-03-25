@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/gorilla/websocket"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/types"
 )
 
 // handleSubscribe handles the subscription to a topic.

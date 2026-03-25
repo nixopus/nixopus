@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	auth_types "github.com/raghavyuva/nixopus-api/internal/features/auth/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	auth_types "github.com/nixopus/nixopus/api/internal/features/auth/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/uptrace/bun"
 )
 

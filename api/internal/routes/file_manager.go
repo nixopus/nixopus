@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	file_manager "github.com/raghavyuva/nixopus-api/internal/features/file-manager/controller"
+	file_manager "github.com/nixopus/nixopus/api/internal/features/file-manager/controller"
 )
 
 // RegisterFileManagerRoutes registers file manager routes

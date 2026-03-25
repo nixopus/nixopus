@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 const (

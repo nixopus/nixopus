@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 

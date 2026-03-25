@@ -12,12 +12,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	"github.com/raghavyuva/nixopus-api/internal/features/update/types"
-	"github.com/raghavyuva/nixopus-api/internal/storage"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
+	"github.com/nixopus/nixopus/api/internal/features/update/types"
+	"github.com/nixopus/nixopus/api/internal/storage"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 const (
@@ -216,7 +216,7 @@ func (s *UpdateService) fetchLatestVersion() (string, error) {
 	branch := s.getBranch()
 	s.logger.Log(logger.Info, "Fetching latest version", fmt.Sprintf("Using branch: %s", branch))
 
-	url := fmt.Sprintf("https://raw.githubusercontent.com/raghavyuva/nixopus/refs/heads/%s/version.txt", branch)
+	url := fmt.Sprintf("https://raw.githubusercontent.com/nixopus/nixopus/refs/heads/%s/version.txt", branch)
 	s.logger.Log(logger.Info, "Constructed version URL", url)
 
 	resp, err := http.Get(url)

@@ -3,9 +3,9 @@ package controller
 import (
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *DeployController) IsNameAlreadyTaken(w http.ResponseWriter, r *http.Request) {

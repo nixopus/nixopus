@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	auth "github.com/raghavyuva/nixopus-api/internal/features/auth/controller"
+	auth "github.com/nixopus/nixopus/api/internal/features/auth/controller"
 )
 
 // RegisterAuthRoutes registers public authentication routes

@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	audit_storage "github.com/raghavyuva/nixopus-api/internal/features/audit/storage"
-	audit_types "github.com/raghavyuva/nixopus-api/internal/features/audit/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/types"
+	audit_storage "github.com/nixopus/nixopus/api/internal/features/audit/storage"
+	audit_types "github.com/nixopus/nixopus/api/internal/features/audit/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 

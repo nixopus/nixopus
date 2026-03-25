@@ -4,13 +4,13 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/validation"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/service"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/storage"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/validation"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type GithubConnectorController struct {

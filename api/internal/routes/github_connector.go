@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	githubConnector "github.com/raghavyuva/nixopus-api/internal/features/github-connector/controller"
+	githubConnector "github.com/nixopus/nixopus/api/internal/features/github-connector/controller"
 )
 
 // RegisterGithubConnectorRoutes registers GitHub connector routes

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/config"
 )
 
 // BaseHTTPClient provides a reusable HTTP client for making requests

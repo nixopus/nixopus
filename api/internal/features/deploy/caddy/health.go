@@ -9,9 +9,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/melbahja/goph"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/vmihailenco/taskq/v3"
 )
 

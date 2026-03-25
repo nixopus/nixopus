@@ -12,8 +12,8 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
 
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	"github.com/raghavyuva/nixopus-api/internal/fixtures/loader"
+	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/fixtures/loader"
 )
 
 func main() {

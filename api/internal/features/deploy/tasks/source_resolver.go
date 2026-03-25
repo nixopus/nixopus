@@ -8,11 +8,11 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/nixopus/nixopus/api/internal/config"
+	s3store "github.com/nixopus/nixopus/api/internal/features/deploy/s3"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 	"github.com/pkg/sftp"
-	"github.com/raghavyuva/nixopus-api/internal/config"
-	s3store "github.com/raghavyuva/nixopus-api/internal/features/deploy/s3"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
 	"golang.org/x/sync/errgroup"
 )
 

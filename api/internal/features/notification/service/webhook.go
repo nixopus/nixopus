@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
+	"github.com/nixopus/nixopus/api/internal/features/notification"
 
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (s *NotificationService) CreateWebhookConfig(ctx context.Context, req *notification.CreateWebhookConfigRequest, userID uuid.UUID, organizationID uuid.UUID) (*shared_types.WebhookConfig, error) {

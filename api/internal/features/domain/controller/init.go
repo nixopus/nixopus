@@ -3,11 +3,11 @@ package controller
 import (
 	"context"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/domain/service"
+	"github.com/nixopus/nixopus/api/internal/features/domain/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type DomainsController struct {

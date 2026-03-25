@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/user/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/user/validation"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/user/types"
+	"github.com/nixopus/nixopus/api/internal/features/user/validation"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func TestValidateUpdateUserNameRequest(t *testing.T) {

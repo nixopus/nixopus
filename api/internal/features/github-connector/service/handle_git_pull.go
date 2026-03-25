@@ -3,7 +3,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 func (s *GithubConnectorService) handleGitPullWithClient(gitClient GitClient, authenticatedURL, clonePath string, userID string) error {

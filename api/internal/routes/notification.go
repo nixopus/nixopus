@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	notificationController "github.com/raghavyuva/nixopus-api/internal/features/notification/controller"
+	notificationController "github.com/nixopus/nixopus/api/internal/features/notification/controller"
 )
 
 // RegisterNotificationRoutes registers notification routes

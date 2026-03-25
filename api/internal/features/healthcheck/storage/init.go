@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type HealthCheckStorage struct {

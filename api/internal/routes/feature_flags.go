@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	feature_flags_controller "github.com/raghavyuva/nixopus-api/internal/features/feature-flags/controller"
+	feature_flags_controller "github.com/nixopus/nixopus/api/internal/features/feature-flags/controller"
 )
 
 // RegisterFeatureFlagRoutes registers feature flag routes

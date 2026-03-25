@@ -7,7 +7,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/domain/types"
+	"github.com/nixopus/nixopus/api/internal/features/domain/types"
 )
 
 var nsProviderMap = map[string]string{

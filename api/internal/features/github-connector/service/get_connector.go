@@ -1,7 +1,7 @@
 package service
 
 import (
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 // GetConnector retrieves a GitHub connector by its unique identifier.

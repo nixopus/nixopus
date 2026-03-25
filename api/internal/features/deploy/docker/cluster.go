@@ -10,8 +10,8 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/api/types/volume"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func (s *DockerService) InitCluster() error {

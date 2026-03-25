@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/github-connector/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/service"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 func TestUpdateGithubConnectorRequest_NoConnectorsFound(t *testing.T) {

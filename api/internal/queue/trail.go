@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	trail_types "github.com/raghavyuva/nixopus-api/internal/features/trail/types"
+	trail_types "github.com/nixopus/nixopus/api/internal/features/trail/types"
 	"github.com/vmihailenco/taskq/v3"
 )
 

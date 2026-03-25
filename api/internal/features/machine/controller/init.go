@@ -6,13 +6,13 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/machine/service"
-	billing_storage "github.com/raghavyuva/nixopus-api/internal/features/machine/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/machine/types"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/machine/service"
+	billing_storage "github.com/nixopus/nixopus/api/internal/features/machine/storage"
+	"github.com/nixopus/nixopus/api/internal/features/machine/types"
+	"github.com/nixopus/nixopus/api/internal/queue"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type MachineController struct {

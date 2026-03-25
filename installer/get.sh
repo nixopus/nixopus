@@ -4,7 +4,7 @@ set -euo pipefail
 NIXOPUS_VERSION="0.2.0"
 NIXOPUS_HOME="${NIXOPUS_HOME:-/opt/nixopus}"
 TELEMETRY_URL="${NIXOPUS_TELEMETRY_URL:-https://nixopus-api.nixopus.com/api/cli/installations}"
-REPO_RAW="${NIXOPUS_REPO_RAW:-https://raw.githubusercontent.com/raghavyuva/nixopus/master/installer}"
+REPO_RAW="${NIXOPUS_REPO_RAW:-https://raw.githubusercontent.com/nixopus/nixopus/master/installer}"
 INSTALL_START=$(date +%s)
 
 RED='\033[0;31m'

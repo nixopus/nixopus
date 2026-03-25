@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/channel"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/notification/channel"
+	"github.com/nixopus/nixopus/api/internal/queue"
 	"github.com/vmihailenco/taskq/v3"
 )
 

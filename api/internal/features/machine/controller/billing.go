@@ -3,8 +3,8 @@ package controller
 import (
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/machine/types"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/machine/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 func (c *MachineController) ListMachinePlans(f fuego.ContextNoBody) (*types.ListPlansResponse, error) {

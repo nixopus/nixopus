@@ -5,13 +5,13 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/cache"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/validation"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/cache"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/trail/service"
+	"github.com/nixopus/nixopus/api/internal/features/trail/storage"
+	"github.com/nixopus/nixopus/api/internal/features/trail/types"
+	"github.com/nixopus/nixopus/api/internal/features/trail/validation"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 // TrailController handles HTTP requests for trail provisioning.

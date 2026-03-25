@@ -6,12 +6,12 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/notification/validation"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/notification"
+	"github.com/nixopus/nixopus/api/internal/features/notification/service"
+	"github.com/nixopus/nixopus/api/internal/features/notification/storage"
+	"github.com/nixopus/nixopus/api/internal/features/notification/validation"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 type NotificationController struct {

@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/trail/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/trail/types"
 )
 
 // ProvisionTrail handles the business logic for provisioning a new trail instance.

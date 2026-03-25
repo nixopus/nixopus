@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/extension/validation"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
-	"github.com/raghavyuva/nixopus-api/internal/utils"
+	"github.com/nixopus/nixopus/api/internal/features/extension/service"
+	"github.com/nixopus/nixopus/api/internal/features/extension/storage"
+	"github.com/nixopus/nixopus/api/internal/features/extension/validation"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type ExtensionsController struct {

@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	user "github.com/raghavyuva/nixopus-api/internal/features/user/controller"
+	user "github.com/nixopus/nixopus/api/internal/features/user/controller"
 )
 
 // RegisterUserRoutes registers user-related routes

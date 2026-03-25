@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/machine/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/machine/types"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
+	"github.com/nixopus/nixopus/api/internal/features/machine/storage"
+	"github.com/nixopus/nixopus/api/internal/features/machine/types"
+	"github.com/nixopus/nixopus/api/internal/queue"
 )
 
 type BillingService struct {

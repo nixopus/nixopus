@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 
-	types "github.com/raghavyuva/nixopus-api/internal/features/deploy/types"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
-	shared_types "github.com/raghavyuva/nixopus-api/internal/types"
+	types "github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/queue"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/vmihailenco/taskq/v3"
 )
 

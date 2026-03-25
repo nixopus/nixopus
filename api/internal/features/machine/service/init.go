@@ -6,11 +6,11 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/dashboard"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/machine/types"
-	sshpkg "github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/features/dashboard"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/machine/types"
+	sshpkg "github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 	cryptossh "golang.org/x/crypto/ssh"
 )
 

@@ -7,10 +7,10 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/machine/service"
-	"github.com/raghavyuva/nixopus-api/internal/features/machine/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/machine/types"
-	"github.com/raghavyuva/nixopus-api/internal/queue"
+	"github.com/nixopus/nixopus/api/internal/features/machine/service"
+	"github.com/nixopus/nixopus/api/internal/features/machine/storage"
+	"github.com/nixopus/nixopus/api/internal/features/machine/types"
+	"github.com/nixopus/nixopus/api/internal/queue"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

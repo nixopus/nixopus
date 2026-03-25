@@ -2,7 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
-	container "github.com/raghavyuva/nixopus-api/internal/features/container/controller"
+	container "github.com/nixopus/nixopus/api/internal/features/container/controller"
 )
 
 // RegisterContainerRoutes registers container management routes

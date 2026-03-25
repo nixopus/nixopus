@@ -4,11 +4,11 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
-	"github.com/raghavyuva/nixopus-api/internal/features/server/storage"
-	"github.com/raghavyuva/nixopus-api/internal/features/server/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/ssh"
-	shared_storage "github.com/raghavyuva/nixopus-api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/server/storage"
+	"github.com/nixopus/nixopus/api/internal/features/server/types"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 type ServerService struct {

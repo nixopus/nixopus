@@ -6,9 +6,9 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
-	container_types "github.com/raghavyuva/nixopus-api/internal/features/container/types"
-	"github.com/raghavyuva/nixopus-api/internal/features/deploy/docker"
-	"github.com/raghavyuva/nixopus-api/internal/features/logger"
+	container_types "github.com/nixopus/nixopus/api/internal/features/container/types"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 // ListContainers retrieves a paginated, filtered, and sorted list of containers

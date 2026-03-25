@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/raghavyuva/nixopus-api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/config"
 )
 
 // CorsMiddleware sets the necessary CORS headers for the response. If the request
