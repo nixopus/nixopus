@@ -139,6 +139,9 @@ func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHMan
 	if len(sshClient.PrivateKey) == 0 && len(sshClient.Password) == 0 {
 		return nil, fmt.Errorf("SSH config for organization %s has no credentials: private key and password are both empty - please configure an SSH key or password in server settings", orgIDStr)
 	}
+	if len(sshClient.PrivateKey) > 0 && !strings.HasPrefix(sshClient.PrivateKey, "-----BEGIN") {
+		return nil, fmt.Errorf("SSH private key for organization %s is not a valid PEM key (got %q...) - the key may have been stored as a file path instead of its contents; re-register or update the SSH key in server settings", orgIDStr, sshClient.PrivateKey[:min(len(sshClient.PrivateKey), 40)])
+	}
 
 	manager := NewSSHManager()
 	manager.clients["default"] = sshClient

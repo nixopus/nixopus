@@ -8,6 +8,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       PORT: "9090"
       HOST: "0.0.0.0"
@@ -20,7 +22,7 @@ services:
       AUTH_SECURE_COOKIES: "${AUTH_SECURE_COOKIES:-false}"
       SELF_HOSTED: "true"
       ADMIN_EMAIL: "${ADMIN_EMAIL:-}"
-      NIXOPUS_API_URL: "http://nixopus-api:8443"
+      API_URL: "http://nixopus-api:8443"
       SECRET_MANAGER_ENABLED: "false"
       PASSWORD_LOGIN_ENABLED: "true"
       SSH_HOST: "${SSH_HOST}"

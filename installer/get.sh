@@ -377,12 +377,12 @@ setup_ssh() {
     local key_path="$NIXOPUS_HOME/ssh/id_rsa"
     if [ -f "$key_path" ]; then
         chmod 755 "$NIXOPUS_HOME/ssh"
-        chmod 600 "$key_path"
+        chmod 644 "$key_path"
         log_ok "SSH key exists"
     else
         ssh-keygen -t rsa -b 4096 -f "$key_path" -N "" -q
         chmod 755 "$NIXOPUS_HOME/ssh"
-        chmod 600 "$key_path"
+        chmod 644 "$key_path"
         chmod 644 "$key_path.pub"
         log_ok "SSH key generated"
     fi
