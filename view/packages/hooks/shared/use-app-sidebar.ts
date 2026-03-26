@@ -16,8 +16,10 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, ChartColumnDecreasing, MessageSquare } from 'lucide-react';
+import { Layers, ChartColumnDecreasing, MessageSquare, Puzzle } from 'lucide-react';
 import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
+import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
+import { FeatureNames } from '@/packages/types/feature-flags';
 
 const data = {
   navMain: [
@@ -32,6 +34,12 @@ const data = {
       url: '/chats',
       icon: MessageSquare,
       resource: 'ai'
+    },
+    {
+      title: 'navigation.integrations',
+      url: '/integrations',
+      icon: Puzzle,
+      resource: 'notification'
     },
     {
       title: 'navigation.dashboard',
@@ -50,6 +58,7 @@ export function useAppSidebar() {
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const dispatch = useAppDispatch();
   const { canAccessResource } = useRBAC();
+  const { isFeatureEnabled } = useFeatureFlags();
   const pathname = usePathname();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const { closeSettings } = useSettingsModal();
@@ -210,6 +219,13 @@ Add any other context about the problem here.`;
         .filter((item) => {
           if (!item.resource) return false;
 
+          if (
+            item.resource === 'notification' &&
+            !isFeatureEnabled(FeatureNames.FeatureNotifications)
+          ) {
+            return false;
+          }
+
           if ('items' in item && item.items && Array.isArray(item.items)) {
             const filteredSubItems = item.items.filter(
               (subItem: { resource?: string }) =>
@@ -240,7 +256,7 @@ Add any other context about the problem here.`;
 
           return baseItem;
         }),
-    [data.navMain, hasAnyPermission, t]
+    [data.navMain, hasAnyPermission, t, isFeatureEnabled]
   );
 
   useEffect(() => {
