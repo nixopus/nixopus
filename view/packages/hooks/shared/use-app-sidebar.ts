@@ -37,7 +37,7 @@ const data = {
       title: 'navigation.integrations',
       url: '/integrations',
       icon: Puzzle,
-      resource: 'settings'
+      resource: 'notification'
     },
     {
       title: 'navigation.dashboard',
