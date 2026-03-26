@@ -11,6 +11,7 @@
     "domains": "Domains",
     "update": "Update",
     "containers": "Containers",
-    "chats": "Chats"
+    "chats": "Chats",
+    "integrations": "Integrations"
   }
 }

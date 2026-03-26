@@ -1,0 +1,30 @@
+{
+  "integrations": {
+    "title": "Integrations",
+    "subtitle": "Manage your notification and workflow integrations.",
+    "configure": "Configure",
+    "status": {
+      "connected": "Connected",
+      "configured": "Configured",
+      "notSetUp": "Not set up"
+    },
+    "categories": {
+      "email": "Email",
+      "messaging": "Messaging"
+    },
+    "smtp": { "name": "Email (SMTP)" },
+    "slack": { "name": "Slack" },
+    "discord": { "name": "Discord" },
+    "modal": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure you want to remove this integration?",
+      "deleteConfirmButton": "Confirm Delete"
+    },
+    "accessDenied": {
+      "title": "Access Denied",
+      "description": "You don't have permission to view integrations."
+    }
+  }
+}
