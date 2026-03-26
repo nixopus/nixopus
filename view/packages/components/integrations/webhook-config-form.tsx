@@ -25,7 +25,13 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-interface DiscordConfigFormProps {
+const WEBHOOK_PLACEHOLDER: Record<'slack' | 'discord', string> = {
+  slack: 'https://hooks.slack.com/services/...',
+  discord: 'https://discord.com/api/webhooks/...'
+};
+
+interface WebhookConfigFormProps {
+  type: 'slack' | 'discord';
   config: WebhookConfig | null;
   onSave: (data: { webhook_url: string; is_active: boolean }) => Promise<void>;
   onDelete: (type: string) => Promise<void>;
@@ -34,14 +40,15 @@ interface DiscordConfigFormProps {
   isLoading?: boolean;
 }
 
-export function DiscordConfigForm({
+export function WebhookConfigForm({
+  type,
   config,
   onSave,
   onDelete,
   onClose,
   canDelete,
   isLoading
-}: DiscordConfigFormProps) {
+}: WebhookConfigFormProps) {
   const { t } = useTranslation();
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -57,7 +64,7 @@ export function DiscordConfigForm({
     if (config) {
       form.reset({ webhook_url: config.webhook_url || '', is_active: config.is_active });
     }
-  }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [config, form]);
 
   if (confirmDelete) {
     return (
@@ -72,8 +79,12 @@ export function DiscordConfigForm({
           <Button
             variant="destructive"
             onClick={async () => {
-              await onDelete('discord');
-              onClose();
+              try {
+                await onDelete(type);
+                onClose();
+              } catch {
+                // error already toasted, modal stays open
+              }
             }}
             disabled={isLoading}
           >
@@ -88,8 +99,12 @@ export function DiscordConfigForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(async (data) => {
-          await onSave(data);
-          onClose();
+          try {
+            await onSave(data);
+            onClose();
+          } catch {
+            // error already toasted, modal stays open
+          }
         })}
         className="space-y-4"
       >
@@ -98,9 +113,9 @@ export function DiscordConfigForm({
           name="webhook_url"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Webhook URL</FormLabel>
+              <FormLabel>{t('integrations.modal.webhookUrl' as any)}</FormLabel>
               <FormControl>
-                <Input {...field} placeholder="https://discord.com/api/webhooks/..." />
+                <Input {...field} placeholder={WEBHOOK_PLACEHOLDER[type]} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -111,7 +126,7 @@ export function DiscordConfigForm({
           name="is_active"
           render={({ field }) => (
             <FormItem className="flex items-center justify-between">
-              <FormLabel>Active</FormLabel>
+              <FormLabel>{t('integrations.modal.active' as any)}</FormLabel>
               <FormControl>
                 <Switch checked={field.value} onCheckedChange={field.onChange} />
               </FormControl>

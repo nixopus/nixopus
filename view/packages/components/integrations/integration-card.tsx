@@ -2,10 +2,7 @@
 
 import React from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { Button } from '@nixopus/ui';
-import { Badge } from '@nixopus/ui';
-import { Skeleton } from '@nixopus/ui';
-import { Card, CardContent, CardHeader } from '@nixopus/ui';
+import { Button, Badge, Skeleton, Card, CardContent, CardHeader } from '@nixopus/ui';
 import type { IntegrationDefinition } from '@/packages/hooks/integrations/use-integrations';
 import type { SMTPConfig, WebhookConfig } from '@/redux/types/notification';
 

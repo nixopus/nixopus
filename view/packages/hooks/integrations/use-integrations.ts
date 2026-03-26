@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Slack, Hash } from 'lucide-react';
+import { Mail, Slack, MessageSquare } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useAppSelector } from '@/redux/hooks';
 import {
@@ -25,7 +25,12 @@ export interface IntegrationDefinition {
 export const INTEGRATIONS: IntegrationDefinition[] = [
   { id: 'smtp', nameKey: 'integrations.smtp.name', category: 'email', icon: Mail },
   { id: 'slack', nameKey: 'integrations.slack.name', category: 'messaging', icon: Slack },
-  { id: 'discord', nameKey: 'integrations.discord.name', category: 'messaging', icon: Hash }
+  {
+    id: 'discord',
+    nameKey: 'integrations.discord.name',
+    category: 'messaging',
+    icon: MessageSquare
+  }
 ];
 
 const is404 = (err: unknown): boolean =>

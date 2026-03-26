@@ -70,7 +70,7 @@ export function SmtpConfigForm({
         smtp_from_name: config.from_name || ''
       });
     }
-  }, [config]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [config, form]);
 
   const fields: { name: keyof SMTPFormData; isPassword?: boolean }[] = [
     { name: 'smtp_host' },
@@ -94,8 +94,12 @@ export function SmtpConfigForm({
           <Button
             variant="destructive"
             onClick={async () => {
-              await onDelete(config!.id);
-              onClose();
+              try {
+                await onDelete(config!.id);
+                onClose();
+              } catch {
+                // error already handled
+              }
             }}
             disabled={isLoading}
           >
@@ -110,8 +114,12 @@ export function SmtpConfigForm({
     <Form {...form}>
       <form
         onSubmit={form.handleSubmit(async (data) => {
-          await onSave(data);
-          onClose();
+          try {
+            await onSave(data);
+            onClose();
+          } catch {
+            // error already handled
+          }
         })}
         className="space-y-4"
       >

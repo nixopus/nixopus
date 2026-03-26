@@ -4,8 +4,7 @@ import React from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nixopus/ui';
 import { SmtpConfigForm } from './smtp-config-form';
-import { SlackConfigForm } from './slack-config-form';
-import { DiscordConfigForm } from './discord-config-form';
+import { WebhookConfigForm } from './webhook-config-form';
 import type { IntegrationDefinition } from '@/packages/hooks/integrations/use-integrations';
 import type { SMTPConfig, WebhookConfig, SMTPFormData } from '@/redux/types/notification';
 
@@ -52,7 +51,8 @@ export function IntegrationConfigModal({
         );
       case 'slack':
         return (
-          <SlackConfigForm
+          <WebhookConfigForm
+            type="slack"
             config={config as WebhookConfig | null}
             onSave={(data) => onSaveWebhook(data, 'slack')}
             onDelete={onDeleteWebhook}
@@ -63,7 +63,8 @@ export function IntegrationConfigModal({
         );
       case 'discord':
         return (
-          <DiscordConfigForm
+          <WebhookConfigForm
+            type="discord"
             config={config as WebhookConfig | null}
             onSave={(data) => onSaveWebhook(data, 'discord')}
             onDelete={onDeleteWebhook}
@@ -72,6 +73,8 @@ export function IntegrationConfigModal({
             isLoading={isLoading}
           />
         );
+      default:
+        return null;
     }
   };
 

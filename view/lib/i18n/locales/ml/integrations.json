@@ -20,7 +20,9 @@
       "cancel": "Cancel",
       "delete": "Delete",
       "deleteConfirm": "Are you sure you want to remove this integration?",
-      "deleteConfirmButton": "Confirm Delete"
+      "deleteConfirmButton": "Confirm Delete",
+      "webhookUrl": "Webhook URL",
+      "active": "Active"
     },
     "accessDenied": {
       "title": "Access Denied",
