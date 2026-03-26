@@ -51,6 +51,7 @@ export function WebhookConfigForm({
 }: WebhookConfigFormProps) {
   const { t } = useTranslation();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -73,22 +74,25 @@ export function WebhookConfigForm({
           {t('integrations.modal.deleteConfirm' as any)}
         </p>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setConfirmDelete(false)}>
+          <Button variant="outline" onClick={() => setConfirmDelete(false)} disabled={isDeleting}>
             {t('integrations.modal.cancel' as any)}
           </Button>
           <Button
             variant="destructive"
             onClick={async () => {
               try {
+                setIsDeleting(true);
                 await onDelete(type);
                 onClose();
               } catch {
                 // error already toasted, modal stays open
+              } finally {
+                setIsDeleting(false);
               }
             }}
-            disabled={isLoading}
+            disabled={isDeleting}
           >
-            {t('integrations.modal.deleteConfirmButton' as any)}
+            {isDeleting ? '...' : t('integrations.modal.deleteConfirmButton' as any)}
           </Button>
         </div>
       </div>

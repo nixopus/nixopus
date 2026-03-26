@@ -46,6 +46,7 @@ export function SmtpConfigForm({
 }: SmtpConfigFormProps) {
   const { t } = useTranslation();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const form = useForm<SMTPFormData>({
     resolver: zodResolver(smtpSchema),
@@ -88,22 +89,25 @@ export function SmtpConfigForm({
           {t('integrations.modal.deleteConfirm' as any)}
         </p>
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setConfirmDelete(false)}>
+          <Button variant="outline" onClick={() => setConfirmDelete(false)} disabled={isDeleting}>
             {t('integrations.modal.cancel' as any)}
           </Button>
           <Button
             variant="destructive"
             onClick={async () => {
               try {
+                setIsDeleting(true);
                 await onDelete(config!.id);
                 onClose();
               } catch {
                 // error already handled
+              } finally {
+                setIsDeleting(false);
               }
             }}
-            disabled={isLoading}
+            disabled={isDeleting}
           >
-            {t('integrations.modal.deleteConfirmButton' as any)}
+            {isDeleting ? '...' : t('integrations.modal.deleteConfirmButton' as any)}
           </Button>
         </div>
       </div>

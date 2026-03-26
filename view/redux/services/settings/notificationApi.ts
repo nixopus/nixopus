@@ -54,7 +54,7 @@ export const notificationApi = createApi({
       query: (data) => ({
         url: USER_NOTIFICATION_SETTINGS.DELETE_SMTP,
         method: 'DELETE',
-        params: data
+        body: { id: data.id }
       }),
       invalidatesTags: [{ type: 'Notification', id: 'LIST' }]
     }),
@@ -112,7 +112,7 @@ export const notificationApi = createApi({
       query: (data) => ({
         url: USER_NOTIFICATION_SETTINGS.DELETE_WEBHOOK,
         method: 'DELETE',
-        params: data
+        body: { type: data.type }
       }),
       invalidatesTags: [{ type: 'Notification', id: 'LIST' }]
     })

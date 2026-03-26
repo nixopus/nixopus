@@ -34,16 +34,16 @@ const data = {
       resource: 'ai'
     },
     {
-      title: 'navigation.integrations',
-      url: '/integrations',
-      icon: Puzzle,
-      resource: 'notification'
-    },
-    {
       title: 'navigation.dashboard',
       url: '/charts',
       icon: ChartColumnDecreasing,
       resource: 'dashboard'
+    },
+    {
+      title: 'navigation.integrations',
+      url: '/integrations',
+      icon: Puzzle,
+      resource: 'notification'
     }
   ]
 };

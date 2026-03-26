@@ -675,11 +675,6 @@
 											"format": "date-time",
 											"type": "string"
 										},
-										"deleted_at": {
-											"format": "date-time",
-											"nullable": true,
-											"type": "string"
-										},
 										"id": {
 											"format": "uuid",
 											"type": "string"
@@ -716,8 +711,7 @@
 											"format": "uuid",
 											"type": "string"
 										},
-										"updated_at": {
-											"format": "date-time",
+										"role": {
 											"type": "string"
 										},
 										"user": {
@@ -767,10 +761,6 @@
 							},
 							"provision_status": {
 								"nullable": true,
-								"type": "string"
-							},
-							"supertokens_user_id": {
-								"format": "uuid",
 								"type": "string"
 							},
 							"updated_at": {
@@ -833,8 +823,41 @@
 					},
 					"logs": {
 						"items": {
-							"$ref": "#/components/schemas/ApplicationLogs"
+							"nullable": true,
+							"properties": {
+								"application": {
+									"$ref": "#/components/schemas/Application"
+								},
+								"application_deployment": {
+									"$ref": "#/components/schemas/ApplicationDeployment"
+								},
+								"application_deployment_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"application_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"log": {
+									"type": "string"
+								},
+								"updated_at": {
+									"format": "date-time",
+									"type": "string"
+								}
+							},
+							"type": "object"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"status": {
@@ -914,86 +937,7 @@
 						"$ref": "#/components/schemas/Application"
 					},
 					"application_deployment": {
-						"nullable": true,
-						"properties": {
-							"application": {
-								"$ref": "#/components/schemas/Application"
-							},
-							"application_id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"commit_hash": {
-								"type": "string"
-							},
-							"container_id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"container_image": {
-								"type": "string"
-							},
-							"container_name": {
-								"type": "string"
-							},
-							"container_status": {
-								"type": "string"
-							},
-							"created_at": {
-								"format": "date-time",
-								"type": "string"
-							},
-							"id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"image_s3_key": {
-								"type": "string"
-							},
-							"image_size": {
-								"format": "int64",
-								"type": "integer"
-							},
-							"logs": {
-								"items": {
-									"$ref": "#/components/schemas/ApplicationLogs"
-								},
-								"type": "array"
-							},
-							"status": {
-								"nullable": true,
-								"properties": {
-									"application_deployment": {
-										"$ref": "#/components/schemas/ApplicationDeployment"
-									},
-									"application_deployment_id": {
-										"format": "uuid",
-										"type": "string"
-									},
-									"created_at": {
-										"format": "date-time",
-										"type": "string"
-									},
-									"id": {
-										"format": "uuid",
-										"type": "string"
-									},
-									"status": {
-										"type": "string"
-									},
-									"updated_at": {
-										"format": "date-time",
-										"type": "string"
-									}
-								},
-								"type": "object"
-							},
-							"updated_at": {
-								"format": "date-time",
-								"type": "string"
-							}
-						},
-						"type": "object"
+						"$ref": "#/components/schemas/ApplicationDeployment"
 					},
 					"application_deployment_id": {
 						"format": "uuid",
@@ -1580,11 +1524,6 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"deleted_at": {
-													"format": "date-time",
-													"nullable": true,
-													"type": "string"
-												},
 												"id": {
 													"format": "uuid",
 													"type": "string"
@@ -1621,8 +1560,7 @@
 													"format": "uuid",
 													"type": "string"
 												},
-												"updated_at": {
-													"format": "date-time",
+												"role": {
 													"type": "string"
 												},
 												"user": {
@@ -1672,10 +1610,6 @@
 									},
 									"provision_status": {
 										"nullable": true,
-										"type": "string"
-									},
-									"supertokens_user_id": {
-										"format": "uuid",
 										"type": "string"
 									},
 									"updated_at": {
@@ -1808,8 +1742,41 @@
 					},
 					"domains": {
 						"items": {
-							"$ref": "#/components/schemas/ApplicationDomain"
+							"nullable": true,
+							"properties": {
+								"application": {
+									"$ref": "#/components/schemas/Application"
+								},
+								"application_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"compose_service": {
+									"$ref": "#/components/schemas/ComposeService"
+								},
+								"compose_service_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"created_at": {
+									"format": "date-time",
+									"type": "string"
+								},
+								"domain": {
+									"type": "string"
+								},
+								"id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"port": {
+									"nullable": true,
+									"type": "integer"
+								}
+							},
+							"type": "object"
 						},
+						"nullable": true,
 						"type": "array"
 					},
 					"id": {
@@ -2291,11 +2258,6 @@
 																"format": "date-time",
 																"type": "string"
 															},
-															"deleted_at": {
-																"format": "date-time",
-																"nullable": true,
-																"type": "string"
-															},
 															"id": {
 																"format": "uuid",
 																"type": "string"
@@ -2332,8 +2294,7 @@
 																"format": "uuid",
 																"type": "string"
 															},
-															"updated_at": {
-																"format": "date-time",
+															"role": {
 																"type": "string"
 															},
 															"user": {
@@ -2383,10 +2344,6 @@
 												},
 												"provision_status": {
 													"nullable": true,
-													"type": "string"
-												},
-												"supertokens_user_id": {
-													"format": "uuid",
 													"type": "string"
 												},
 												"updated_at": {
@@ -2841,11 +2798,6 @@
 																			"format": "date-time",
 																			"type": "string"
 																		},
-																		"deleted_at": {
-																			"format": "date-time",
-																			"nullable": true,
-																			"type": "string"
-																		},
 																		"id": {
 																			"format": "uuid",
 																			"type": "string"
@@ -2882,8 +2834,7 @@
 																			"format": "uuid",
 																			"type": "string"
 																		},
-																		"updated_at": {
-																			"format": "date-time",
+																		"role": {
 																			"type": "string"
 																		},
 																		"user": {
@@ -2933,10 +2884,6 @@
 															},
 															"provision_status": {
 																"nullable": true,
-																"type": "string"
-															},
-															"supertokens_user_id": {
-																"format": "uuid",
 																"type": "string"
 															},
 															"updated_at": {
@@ -4029,11 +3976,6 @@
 															"format": "date-time",
 															"type": "string"
 														},
-														"deleted_at": {
-															"format": "date-time",
-															"nullable": true,
-															"type": "string"
-														},
 														"id": {
 															"format": "uuid",
 															"type": "string"
@@ -4070,8 +4012,7 @@
 															"format": "uuid",
 															"type": "string"
 														},
-														"updated_at": {
-															"format": "date-time",
+														"role": {
 															"type": "string"
 														},
 														"user": {
@@ -4121,10 +4062,6 @@
 											},
 											"provision_status": {
 												"nullable": true,
-												"type": "string"
-											},
-											"supertokens_user_id": {
-												"format": "uuid",
 												"type": "string"
 											},
 											"updated_at": {
@@ -4516,11 +4453,6 @@
 																		"format": "date-time",
 																		"type": "string"
 																	},
-																	"deleted_at": {
-																		"format": "date-time",
-																		"nullable": true,
-																		"type": "string"
-																	},
 																	"id": {
 																		"format": "uuid",
 																		"type": "string"
@@ -4557,8 +4489,7 @@
 																		"format": "uuid",
 																		"type": "string"
 																	},
-																	"updated_at": {
-																		"format": "date-time",
+																	"role": {
 																		"type": "string"
 																	},
 																	"user": {
@@ -4608,10 +4539,6 @@
 														},
 														"provision_status": {
 															"nullable": true,
-															"type": "string"
-														},
-														"supertokens_user_id": {
-															"format": "uuid",
 															"type": "string"
 														},
 														"updated_at": {
@@ -6369,11 +6296,6 @@
 															"format": "date-time",
 															"type": "string"
 														},
-														"deleted_at": {
-															"format": "date-time",
-															"nullable": true,
-															"type": "string"
-														},
 														"id": {
 															"format": "uuid",
 															"type": "string"
@@ -6410,8 +6332,7 @@
 															"format": "uuid",
 															"type": "string"
 														},
-														"updated_at": {
-															"format": "date-time",
+														"role": {
 															"type": "string"
 														},
 														"user": {
@@ -6461,10 +6382,6 @@
 											},
 											"provision_status": {
 												"nullable": true,
-												"type": "string"
-											},
-											"supertokens_user_id": {
-												"format": "uuid",
 												"type": "string"
 											},
 											"updated_at": {
@@ -7159,11 +7076,6 @@
 																		"format": "date-time",
 																		"type": "string"
 																	},
-																	"deleted_at": {
-																		"format": "date-time",
-																		"nullable": true,
-																		"type": "string"
-																	},
 																	"id": {
 																		"format": "uuid",
 																		"type": "string"
@@ -7200,8 +7112,7 @@
 																		"format": "uuid",
 																		"type": "string"
 																	},
-																	"updated_at": {
-																		"format": "date-time",
+																	"role": {
 																		"type": "string"
 																	},
 																	"user": {
@@ -7251,10 +7162,6 @@
 														},
 														"provision_status": {
 															"nullable": true,
-															"type": "string"
-														},
-														"supertokens_user_id": {
-															"format": "uuid",
 															"type": "string"
 														},
 														"updated_at": {
@@ -8105,11 +8012,6 @@
 																"format": "date-time",
 																"type": "string"
 															},
-															"deleted_at": {
-																"format": "date-time",
-																"nullable": true,
-																"type": "string"
-															},
 															"id": {
 																"format": "uuid",
 																"type": "string"
@@ -8146,8 +8048,7 @@
 																"format": "uuid",
 																"type": "string"
 															},
-															"updated_at": {
-																"format": "date-time",
+															"role": {
 																"type": "string"
 															},
 															"user": {
@@ -8197,10 +8098,6 @@
 												},
 												"provision_status": {
 													"nullable": true,
-													"type": "string"
-												},
-												"supertokens_user_id": {
-													"format": "uuid",
 													"type": "string"
 												},
 												"updated_at": {
@@ -9156,11 +9053,6 @@
 																		"format": "date-time",
 																		"type": "string"
 																	},
-																	"deleted_at": {
-																		"format": "date-time",
-																		"nullable": true,
-																		"type": "string"
-																	},
 																	"id": {
 																		"format": "uuid",
 																		"type": "string"
@@ -9197,8 +9089,7 @@
 																		"format": "uuid",
 																		"type": "string"
 																	},
-																	"updated_at": {
-																		"format": "date-time",
+																	"role": {
 																		"type": "string"
 																	},
 																	"user": {
@@ -9248,10 +9139,6 @@
 														},
 														"provision_status": {
 															"nullable": true,
-															"type": "string"
-														},
-														"supertokens_user_id": {
-															"format": "uuid",
 															"type": "string"
 														},
 														"updated_at": {
@@ -9643,11 +9530,6 @@
 																					"format": "date-time",
 																					"type": "string"
 																				},
-																				"deleted_at": {
-																					"format": "date-time",
-																					"nullable": true,
-																					"type": "string"
-																				},
 																				"id": {
 																					"format": "uuid",
 																					"type": "string"
@@ -9684,8 +9566,7 @@
 																					"format": "uuid",
 																					"type": "string"
 																				},
-																				"updated_at": {
-																					"format": "date-time",
+																				"role": {
 																					"type": "string"
 																				},
 																				"user": {
@@ -9735,10 +9616,6 @@
 																	},
 																	"provision_status": {
 																		"nullable": true,
-																		"type": "string"
-																	},
-																	"supertokens_user_id": {
-																		"format": "uuid",
 																		"type": "string"
 																	},
 																	"updated_at": {
@@ -11360,11 +11237,6 @@
 																		"format": "date-time",
 																		"type": "string"
 																	},
-																	"deleted_at": {
-																		"format": "date-time",
-																		"nullable": true,
-																		"type": "string"
-																	},
 																	"id": {
 																		"format": "uuid",
 																		"type": "string"
@@ -11401,8 +11273,7 @@
 																		"format": "uuid",
 																		"type": "string"
 																	},
-																	"updated_at": {
-																		"format": "date-time",
+																	"role": {
 																		"type": "string"
 																	},
 																	"user": {
@@ -11452,10 +11323,6 @@
 														},
 														"provision_status": {
 															"nullable": true,
-															"type": "string"
-														},
-														"supertokens_user_id": {
-															"format": "uuid",
 															"type": "string"
 														},
 														"updated_at": {
@@ -11946,11 +11813,6 @@
 																		"format": "date-time",
 																		"type": "string"
 																	},
-																	"deleted_at": {
-																		"format": "date-time",
-																		"nullable": true,
-																		"type": "string"
-																	},
 																	"id": {
 																		"format": "uuid",
 																		"type": "string"
@@ -11987,8 +11849,7 @@
 																		"format": "uuid",
 																		"type": "string"
 																	},
-																	"updated_at": {
-																		"format": "date-time",
+																	"role": {
 																		"type": "string"
 																	},
 																	"user": {
@@ -12038,10 +11899,6 @@
 														},
 														"provision_status": {
 															"nullable": true,
-															"type": "string"
-														},
-														"supertokens_user_id": {
-															"format": "uuid",
 															"type": "string"
 														},
 														"updated_at": {
@@ -12398,11 +12255,6 @@
 																				"format": "date-time",
 																				"type": "string"
 																			},
-																			"deleted_at": {
-																				"format": "date-time",
-																				"nullable": true,
-																				"type": "string"
-																			},
 																			"id": {
 																				"format": "uuid",
 																				"type": "string"
@@ -12439,8 +12291,7 @@
 																				"format": "uuid",
 																				"type": "string"
 																			},
-																			"updated_at": {
-																				"format": "date-time",
+																			"role": {
 																				"type": "string"
 																			},
 																			"user": {
@@ -12490,10 +12341,6 @@
 																},
 																"provision_status": {
 																	"nullable": true,
-																	"type": "string"
-																},
-																"supertokens_user_id": {
-																	"format": "uuid",
 																	"type": "string"
 																},
 																"updated_at": {
@@ -13478,11 +13325,6 @@
 																"format": "date-time",
 																"type": "string"
 															},
-															"deleted_at": {
-																"format": "date-time",
-																"nullable": true,
-																"type": "string"
-															},
 															"id": {
 																"format": "uuid",
 																"type": "string"
@@ -13519,8 +13361,7 @@
 																"format": "uuid",
 																"type": "string"
 															},
-															"updated_at": {
-																"format": "date-time",
+															"role": {
 																"type": "string"
 															},
 															"user": {
@@ -13570,10 +13411,6 @@
 												},
 												"provision_status": {
 													"nullable": true,
-													"type": "string"
-												},
-												"supertokens_user_id": {
-													"format": "uuid",
 													"type": "string"
 												},
 												"updated_at": {
@@ -14898,11 +14735,6 @@
 									"format": "date-time",
 									"type": "string"
 								},
-								"deleted_at": {
-									"format": "date-time",
-									"nullable": true,
-									"type": "string"
-								},
 								"id": {
 									"format": "uuid",
 									"type": "string"
@@ -14939,8 +14771,7 @@
 									"format": "uuid",
 									"type": "string"
 								},
-								"updated_at": {
-									"format": "date-time",
+								"role": {
 									"type": "string"
 								},
 								"user": {
@@ -14990,10 +14821,6 @@
 					},
 					"provision_status": {
 						"nullable": true,
-						"type": "string"
-					},
-					"supertokens_user_id": {
-						"format": "uuid",
 						"type": "string"
 					},
 					"updated_at": {
@@ -15172,11 +14999,6 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"deleted_at": {
-													"format": "date-time",
-													"nullable": true,
-													"type": "string"
-												},
 												"id": {
 													"format": "uuid",
 													"type": "string"
@@ -15213,8 +15035,7 @@
 													"format": "uuid",
 													"type": "string"
 												},
-												"updated_at": {
-													"format": "date-time",
+												"role": {
 													"type": "string"
 												},
 												"user": {
@@ -15264,10 +15085,6 @@
 									},
 									"provision_status": {
 										"nullable": true,
-										"type": "string"
-									},
-									"supertokens_user_id": {
-										"format": "uuid",
 										"type": "string"
 									},
 									"updated_at": {
@@ -15340,11 +15157,6 @@
 											"format": "date-time",
 											"type": "string"
 										},
-										"deleted_at": {
-											"format": "date-time",
-											"nullable": true,
-											"type": "string"
-										},
 										"id": {
 											"format": "uuid",
 											"type": "string"
@@ -15381,8 +15193,7 @@
 											"format": "uuid",
 											"type": "string"
 										},
-										"updated_at": {
-											"format": "date-time",
+										"role": {
 											"type": "string"
 										},
 										"user": {
@@ -15432,10 +15243,6 @@
 							},
 							"provision_status": {
 								"nullable": true,
-								"type": "string"
-							},
-							"supertokens_user_id": {
-								"format": "uuid",
 								"type": "string"
 							},
 							"updated_at": {
@@ -15536,11 +15343,6 @@
 													"format": "date-time",
 													"type": "string"
 												},
-												"deleted_at": {
-													"format": "date-time",
-													"nullable": true,
-													"type": "string"
-												},
 												"id": {
 													"format": "uuid",
 													"type": "string"
@@ -15577,8 +15379,7 @@
 													"format": "uuid",
 													"type": "string"
 												},
-												"updated_at": {
-													"format": "date-time",
+												"role": {
 													"type": "string"
 												},
 												"user": {
@@ -15628,10 +15429,6 @@
 									},
 									"provision_status": {
 										"nullable": true,
-										"type": "string"
-									},
-									"supertokens_user_id": {
-										"format": "uuid",
 										"type": "string"
 									},
 									"updated_at": {

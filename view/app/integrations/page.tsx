@@ -3,7 +3,6 @@
 import React from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { ResourceGuard } from '@/packages/components/rbac';
-import { Skeleton } from '@nixopus/ui';
 import { TypographyH2, TypographyMuted } from '@nixopus/ui';
 import { IntegrationsPage } from '@/packages/components/integrations';
 
@@ -24,7 +23,7 @@ export default function Page() {
     <ResourceGuard
       resource="notification"
       action="read"
-      loadingFallback={<Skeleton className="h-full w-full" />}
+      loadingFallback={null}
       fallback={<AccessDenied />}
     >
       <IntegrationsPage />

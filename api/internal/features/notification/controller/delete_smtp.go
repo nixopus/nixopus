@@ -10,24 +10,16 @@ import (
 )
 
 func (c *NotificationController) DeleteSmtp(f fuego.ContextWithBody[notification.DeleteSMTPConfigRequest]) (*types.MessageResponse, error) {
-	SMTPConfigs, err := f.Body()
-
-	if err != nil {
-		return nil, fuego.BadRequestError{
-			Detail: err.Error(),
-			Err:    err,
-		}
-	}
-
 	w, r := f.Response(), f.Request()
 
+	var SMTPConfigs notification.DeleteSMTPConfigRequest
 	if !c.parseAndValidate(w, r, &SMTPConfigs) {
 		return nil, fuego.BadRequestError{
 			Detail: "validation failed",
 		}
 	}
 
-	err = c.service.DeleteSmtp(SMTPConfigs.ID.String())
+	err := c.service.DeleteSmtp(SMTPConfigs.ID.String())
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

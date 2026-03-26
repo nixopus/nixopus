@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Mail, Slack, MessageSquare } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import type React from 'react';
+import { Mail } from 'lucide-react';
+import { SlackIcon } from '@/packages/components/icons/slack-icon';
+import { DiscordIcon } from '@/packages/components/icons/discord-icon';
 import { useAppSelector } from '@/redux/hooks';
 import {
   useGetSMTPConfigurationsQuery,
@@ -19,17 +21,17 @@ export interface IntegrationDefinition {
   id: IntegrationId;
   nameKey: string;
   category: IntegrationCategory;
-  icon: LucideIcon;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 export const INTEGRATIONS: IntegrationDefinition[] = [
   { id: 'smtp', nameKey: 'integrations.smtp.name', category: 'email', icon: Mail },
-  { id: 'slack', nameKey: 'integrations.slack.name', category: 'messaging', icon: Slack },
+  { id: 'slack', nameKey: 'integrations.slack.name', category: 'messaging', icon: SlackIcon },
   {
     id: 'discord',
     nameKey: 'integrations.discord.name',
     category: 'messaging',
-    icon: MessageSquare
+    icon: DiscordIcon
   }
 ];
 
