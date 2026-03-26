@@ -95,3 +95,13 @@ export async function getSelfHosted() {
   const { selfHosted } = await fetchConfig();
   return selfHosted as boolean;
 }
+
+export async function getPostHogKey() {
+  const c = await fetchConfig();
+  return (c?.posthogKey || '') as string;
+}
+
+export async function getPostHogHost() {
+  const c = await fetchConfig();
+  return (c?.posthogHost || '') as string;
+}

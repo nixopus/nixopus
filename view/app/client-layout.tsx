@@ -18,6 +18,7 @@ import { SettingsModalProvider } from '@/packages/hooks/shared/use-settings-moda
 import AppLayout from '@/packages/layouts/layout';
 import { SettingsModal } from '@/packages/components/settings';
 import { SudoModeProvider } from '@/packages/hooks/security/use-sudo-mode';
+import { CSPostHogProvider } from '@/packages/components/analytics/posthog-provider';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@nixopus/ui';
@@ -96,7 +97,9 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <ChildrenWrapper>{children}</ChildrenWrapper>
+        <CSPostHogProvider>
+          <ChildrenWrapper>{children}</ChildrenWrapper>
+        </CSPostHogProvider>
       </PersistGate>
     </Provider>
   );

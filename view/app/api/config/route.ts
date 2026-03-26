@@ -22,7 +22,9 @@ export async function GET() {
     agentConfigured: Boolean(process.env.AGENT_URL),
     agentUrl: process.env.AGENT_URL || '',
     githubAppSlug: process.env.GITHUB_APP_SLUG || '',
-    selfHosted: process.env.SELF_HOSTED === 'true' || false
+    selfHosted: process.env.SELF_HOSTED === 'true' || false,
+    posthogKey: process.env.POSTHOG_KEY || '',
+    posthogHost: process.env.POSTHOG_HOST || ''
   });
   response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
   return response;
