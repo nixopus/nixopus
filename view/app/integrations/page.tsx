@@ -6,8 +6,6 @@ import { ResourceGuard } from '@/packages/components/rbac';
 import { Skeleton } from '@nixopus/ui';
 import { TypographyH2, TypographyMuted } from '@nixopus/ui';
 import { IntegrationsPage } from '@/packages/components/integrations';
-import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
-import { FeatureNames } from '@/packages/types/feature-flags';
 
 function AccessDenied() {
   const { t } = useTranslation();
@@ -22,10 +20,6 @@ function AccessDenied() {
 }
 
 export default function Page() {
-  const { isFeatureEnabled } = useFeatureFlags();
-  if (!isFeatureEnabled(FeatureNames.FeatureNotifications)) {
-    return <AccessDenied />;
-  }
   return (
     <ResourceGuard
       resource="notification"
