@@ -67,3 +67,7 @@ cli/nixopus.spec
 
 **/.DS_Store
 api/nixopus-api
+
+# Superpowers brainstorming & specs
+.superpowers/
+docs/superpowers/
