@@ -104,6 +104,7 @@ services:
       AUTH_SERVICE_URL: "http://nixopus-auth:9090"
       NEXT_PUBLIC_PORT: "7443"
       PASSWORD_LOGIN_ENABLED: "true"
+      SELF_HOSTED: "true"
     networks:
       - nixopus-network
     depends_on:
