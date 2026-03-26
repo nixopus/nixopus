@@ -66,7 +66,7 @@ func (s NotificationStorage) UpdateSmtp(config *notification.UpdateSMTPConfigReq
 // from the database, and returns an error if the database operation fails.
 func (s NotificationStorage) DeleteSmtp(ID string) error {
 	var config shared_types.SMTPConfigs
-	_, err := s.DB.NewDelete().Model(config).Where("id = ?", ID).Exec(s.Ctx)
+	_, err := s.DB.NewDelete().Model(&config).Where("id = ?", ID).Exec(s.Ctx)
 	return err
 }
 

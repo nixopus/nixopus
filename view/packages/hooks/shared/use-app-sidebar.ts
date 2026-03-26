@@ -16,7 +16,7 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, ChartColumnDecreasing, MessageSquare } from 'lucide-react';
+import { Layers, ChartColumnDecreasing, MessageSquare, Puzzle } from 'lucide-react';
 import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 
 const data = {
@@ -38,6 +38,12 @@ const data = {
       url: '/charts',
       icon: ChartColumnDecreasing,
       resource: 'dashboard'
+    },
+    {
+      title: 'navigation.integrations',
+      url: '/integrations',
+      icon: Puzzle,
+      resource: 'notification'
     }
   ]
 };
