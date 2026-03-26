@@ -74,7 +74,7 @@ export function useIntegrations() {
   const slackError = is404(slackRawError) ? null : (slackRawError ?? null);
   const discordError = is404(discordRawError) ? null : (discordRawError ?? null);
 
-  const isLoading = smtpLoading || slackLoading || discordLoading;
+  const isLoading = smtpLoading || slackLoading || discordLoading || notificationSettings.isLoading;
 
   const getConfigForIntegration = (id: IntegrationId): SMTPConfig | WebhookConfig | null => {
     if (id === 'smtp') return smtpConfig ?? null;
