@@ -44,7 +44,7 @@ function page() {
 
   if (selfHosted === null || isLoadingApplications || isLoading) {
     return (
-      <PageLayout maxWidth="full" padding="md" spacing="lg">
+      <PageLayout maxWidth="7xl" padding="md" spacing="lg">
         <div className="flex items-center justify-between">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-9 w-32 rounded-md" />
@@ -114,7 +114,7 @@ function page() {
         </div>
       }
     >
-      <PageLayout maxWidth="full" padding="md" spacing="lg">
+      <PageLayout maxWidth="7xl" padding="md" spacing="lg">
         {!isShowingGitHubSetup && (
           <MainPageHeader
             label={

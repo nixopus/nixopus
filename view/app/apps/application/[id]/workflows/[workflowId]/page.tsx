@@ -52,7 +52,7 @@ export default function WorkflowEditorPage() {
         action="read"
         loadingFallback={<Skeleton className="h-96" />}
       >
-        <PageLayout maxWidth="full" padding="md" spacing="lg">
+        <PageLayout maxWidth="7xl" padding="md" spacing="lg">
           <div className="flex h-full w-full items-center justify-center py-24">
             <div className="text-center max-w-md space-y-4 px-4">
               <div className="flex items-center justify-center size-16 rounded-2xl bg-muted mx-auto">
@@ -83,7 +83,7 @@ export default function WorkflowEditorPage() {
         action="read"
         loadingFallback={<Skeleton className="h-96" />}
       >
-        <PageLayout maxWidth="full" padding="md" spacing="lg">
+        <PageLayout maxWidth="7xl" padding="md" spacing="lg">
           <div className="flex flex-col items-center justify-center py-24 gap-3">
             <AlertCircle className="h-8 w-8 text-destructive" />
             <p className="text-sm text-destructive">{error}</p>

@@ -21,7 +21,7 @@ export default function ActivitiesPage() {
   const { t } = useTranslation();
 
   return (
-    <PageLayout maxWidth="full" padding="md" spacing="lg">
+    <PageLayout maxWidth="7xl" padding="md" spacing="lg">
       <ActivityList title={t('activities.list.title')} showFilters={true} pageSize={20} />
     </PageLayout>
   );

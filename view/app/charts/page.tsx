@@ -47,7 +47,7 @@ function DashboardPage() {
 
   if (isFeatureFlagsLoading) {
     return (
-      <PageLayout maxWidth="full" padding="md" spacing="lg">
+      <PageLayout maxWidth="7xl" padding="md" spacing="lg">
         <Skeleton className="h-8 w-40" />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SystemInfoCardSkeleton />
@@ -69,7 +69,7 @@ function DashboardPage() {
 
   return (
     <ResourceGuard resource="dashboard" action="read">
-      <PageLayout maxWidth="full" padding="md" spacing="lg">
+      <PageLayout maxWidth="7xl" padding="md" spacing="lg">
         <MainPageHeader
           label={t('dashboard.title')}
           highlightLabel={false}

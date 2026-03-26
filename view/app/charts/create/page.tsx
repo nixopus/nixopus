@@ -15,7 +15,7 @@ function page() {
       resource="deploy"
       action="create"
       loadingFallback={
-        <PageLayout maxWidth="full" padding="md" spacing="lg">
+        <PageLayout maxWidth="7xl" padding="md" spacing="lg">
           <Skeleton className="h-8 w-48" />
           <div className="flex items-center justify-between gap-4 flex-wrap mb-4">
             <Skeleton className="h-10 w-[280px] rounded-md" />
@@ -28,7 +28,7 @@ function page() {
         </PageLayout>
       }
     >
-      <PageLayout maxWidth="full" padding="md" spacing="lg">
+      <PageLayout maxWidth="7xl" padding="md" spacing="lg">
         <MainPageHeader label="Repository" highlightLabel={false} />
         <ListRepositories />
       </PageLayout>

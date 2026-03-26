@@ -15,7 +15,7 @@ function page() {
       action="create"
       loadingFallback={
         <PageLayout
-          maxWidth="full"
+          maxWidth="7xl"
           padding="md"
           spacing="lg"
           className="justify-center items-center min-h-[80vh] flex-col flex w-full"
@@ -31,7 +31,7 @@ function page() {
       }
     >
       <PageLayout
-        maxWidth="full"
+        maxWidth="7xl"
         padding="md"
         spacing="lg"
         className="justify-center items-center min-h-[80vh] flex-col flex w-full"

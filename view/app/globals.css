@@ -246,11 +246,7 @@
   }
 
   .card {
-    @apply bg-card border border-border rounded-lg;
-    box-shadow:
-      0 1px 3px 0 rgb(0 0 0 / 0.04),
-      0 1px 2px -1px rgb(0 0 0 / 0.04),
-      0 0 0 1px rgb(0 0 0 / 0.02);
+    @apply bg-card border border-border/45 rounded-xl shadow-sm;
   }
 
   .dark .card-premium {
@@ -278,7 +274,7 @@
   }
 
   .card-elevated {
-    @apply bg-card rounded-lg border border-border;
+    @apply bg-card rounded-xl border border-border/45;
     box-shadow:
       0 4px 6px -1px rgb(0 0 0 / 0.05),
       0 2px 4px -2px rgb(0 0 0 / 0.05),
