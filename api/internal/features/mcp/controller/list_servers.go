@@ -2,9 +2,11 @@ package controller
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/go-fuego/fuego"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/mcp/storage"
 	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
@@ -17,22 +19,45 @@ func (c *MCPController) ListServers(f fuego.ContextNoBody) (*Response, error) {
 	}
 
 	orgID := utils.GetOrganizationID(r)
+	q := r.URL.Query()
 
-	servers, err := c.service.ListServers(orgID, false)
+	page, _ := strconv.Atoi(q.Get("page"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(q.Get("limit"))
+	if limit < 1 {
+		limit = 20
+	}
+
+	params := storage.ListServersParams{
+		Q:       q.Get("q"),
+		SortBy:  q.Get("sort_by"),
+		SortDir: q.Get("sort_dir"),
+		Page:    page,
+		Limit:   limit,
+	}
+
+	servers, totalCount, err := c.service.ListServers(orgID, params)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 
-	responses := make([]*MCPServerResponse, len(servers))
+	items := make([]*MCPServerResponse, len(servers))
 	for i := range servers {
-		responses[i] = toResponse(&servers[i])
+		items[i] = toResponse(&servers[i])
 	}
 
 	return &Response{
 		Status:  "success",
 		Message: "MCP servers fetched successfully",
-		Data:    responses,
+		Data: PaginatedData[*MCPServerResponse]{
+			Items:      items,
+			TotalCount: totalCount,
+			Page:       page,
+			PageSize:   limit,
+		},
 	}, nil
 }
 
@@ -46,7 +71,7 @@ func (c *MCPController) ListServersInternal(f fuego.ContextNoBody) (*Response, e
 
 	orgID := utils.GetOrganizationID(r)
 
-	servers, err := c.service.ListServers(orgID, true)
+	servers, _, err := c.service.ListServers(orgID, storage.ListServersParams{EnabledOnly: true})
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
