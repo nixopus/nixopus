@@ -482,3 +482,80 @@
       permission_id: "{{ $.Permission.read_domain.ID }}"
       created_at: "{{ now }}"
       updated_at: "{{ now }}" 
+
+    - _id: owner_create_mcp
+      id: "{{ uuid }}"
+      role_id: "{{ $.Role.owner.ID }}"
+      permission_id: "{{ $.Permission.create_mcp.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: owner_read_mcp
+      id: "{{ uuid }}"
+      role_id: "{{ $.Role.owner.ID }}"
+      permission_id: "{{ $.Permission.read_mcp.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: owner_update_mcp
+      id: "{{ uuid }}"
+      role_id: "{{ $.Role.owner.ID }}"
+      permission_id: "{{ $.Permission.update_mcp.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: owner_delete_mcp
+      id: "{{ uuid }}"
+      role_id: "{{ $.Role.owner.ID }}"
+      permission_id: "{{ $.Permission.delete_mcp.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: admin_create_mcp
+      id: "{{ uuid }}"
+      role_id: "{{ $.Role.admin.ID }}"
+      permission_id: "{{ $.Permission.create_mcp.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: admin_read_mcp
+      id: "{{ uuid }}"
+      role_id: "{{ $.Role.admin.ID }}"
+      permission_id: "{{ $.Permission.read_mcp.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: admin_update_mcp
+      id: "{{ uuid }}"
+      role_id: "{{ $.Role.admin.ID }}"
+      permission_id: "{{ $.Permission.update_mcp.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: admin_delete_mcp
+      id: "{{ uuid }}"
+      role_id: "{{ $.Role.admin.ID }}"
+      permission_id: "{{ $.Permission.delete_mcp.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: member_read_mcp
+      id: "{{ uuid }}"
+      role_id: "{{ $.Role.member.ID }}"
+      permission_id: "{{ $.Permission.read_mcp.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: member_update_mcp
+      id: "{{ uuid }}"
+      role_id: "{{ $.Role.member.ID }}"
+      permission_id: "{{ $.Permission.update_mcp.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: viewer_read_mcp
+      id: "{{ uuid }}"
+      role_id: "{{ $.Role.viewer.ID }}"
+      permission_id: "{{ $.Permission.read_mcp.ID }}"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
