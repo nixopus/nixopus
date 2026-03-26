@@ -33,6 +33,7 @@ import (
 	notificationController "github.com/nixopus/nixopus/api/internal/features/notification/controller"
 	server_controller "github.com/nixopus/nixopus/api/internal/features/server/controller"
 	trail "github.com/nixopus/nixopus/api/internal/features/trail/controller"
+	mcpController "github.com/nixopus/nixopus/api/internal/features/mcp/controller"
 	"github.com/nixopus/nixopus/api/internal/openapi"
 
 	update "github.com/nixopus/nixopus/api/internal/features/update/controller"
@@ -381,6 +382,16 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		ResourceName: "trail",
 	})
 	router.RegisterTrailRoutes(trailGroup, trailController)
+
+	mcpCtrl := mcpController.NewMCPController(router.app.Store, router.app.Ctx, router.logger)
+	mcpGroup := fuego.Group(server, apiV1.Path+"/mcp")
+	router.applyMiddleware(mcpGroup, MiddlewareConfig{
+		RBAC:         true,
+		FeatureFlag:  "mcp",
+		Audit:        true,
+		ResourceName: "mcp",
+	})
+	router.RegisterMCPRoutes(mcpGroup, mcpCtrl)
 }
 
 func (router *Router) createAuthController(dispatcher *notification.Dispatcher) *auth.AuthController {
