@@ -327,3 +327,35 @@
       resource: "domain"
       created_at: "{{ now }}"
       updated_at: "{{ now }}" 
+
+    - _id: create_mcp
+      id: "{{ uuid }}"
+      name: "create"
+      description: "Create MCP servers"
+      resource: "mcp"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: read_mcp
+      id: "{{ uuid }}"
+      name: "read"
+      description: "Read MCP server information"
+      resource: "mcp"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: update_mcp
+      id: "{{ uuid }}"
+      name: "update"
+      description: "Update MCP server information"
+      resource: "mcp"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: delete_mcp
+      id: "{{ uuid }}"
+      name: "delete"
+      description: "Delete MCP servers"
+      resource: "mcp"
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"

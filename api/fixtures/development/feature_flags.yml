@@ -143,3 +143,19 @@
       is_enabled: true
       created_at: "{{ now }}"
       updated_at: "{{ now }}" 
+
+    - _id: nixopus_mcp
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.nixopus_org.ID }}"
+      feature_name: "mcp"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"
+
+    - _id: demo_mcp
+      id: "{{ uuid }}"
+      organization_id: "{{ $.Organization.demo_org.ID }}"
+      feature_name: "mcp"
+      is_enabled: true
+      created_at: "{{ now }}"
+      updated_at: "{{ now }}"

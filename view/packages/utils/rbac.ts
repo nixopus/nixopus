@@ -18,6 +18,7 @@ export type Resource =
   | 'github-connector'
   | 'container'
   | 'terminal'
+  | 'mcp'
   | 'update'
   | 'extensions';
 

@@ -20,6 +20,7 @@ interface IntegrationConfigModalProps {
   onDeleteSMTP: (id: string) => Promise<void>;
   onDeleteWebhook: (type: string) => Promise<void>;
   canDelete: boolean;
+  canConfigure?: boolean;
   isLoading?: boolean;
 }
 
@@ -32,6 +33,7 @@ export function IntegrationConfigModal({
   onDeleteSMTP,
   onDeleteWebhook,
   canDelete,
+  canConfigure = true,
   isLoading
 }: IntegrationConfigModalProps) {
   const { t } = useTranslation();

@@ -10,11 +10,13 @@
     },
     "categories": {
       "email": "Email",
-      "messaging": "Messaging"
+      "messaging": "Messaging",
+      "tools": "Tools"
     },
     "smtp": { "name": "Email (SMTP)" },
     "slack": { "name": "Slack" },
     "discord": { "name": "Discord" },
+    "mcp": { "name": "MCP Servers" },
     "modal": {
       "save": "Save",
       "cancel": "Cancel",
