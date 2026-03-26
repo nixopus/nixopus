@@ -20,6 +20,7 @@ type MCPProvider struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	URL         string          `json:"-"` // resolved at serve time, never stored
+	Transport   string          `json:"-"` // "http" or "sse"
 	LogoURL     string          `json:"logo_url"`
 	Fields      []ProviderField `json:"fields"`
 }
@@ -30,6 +31,7 @@ var Catalog = []MCPProvider{
 		Name:        "Supabase",
 		Description: "Connect to your Supabase project via MCP",
 		URL:         "https://mcp.supabase.com/sse",
+		Transport:   "sse",
 		Fields: []ProviderField{
 			{Key: "access_token", Label: "Access Token", Required: true,
 				HeaderName: "Authorization", HeaderPrefix: "Bearer", Sensitive: true},
@@ -42,6 +44,7 @@ var Catalog = []MCPProvider{
 		Name:        "GitHub",
 		Description: "Access GitHub via MCP",
 		URL:         "https://api.githubcopilot.com/mcp/",
+		Transport:   "http",
 		Fields: []ProviderField{
 			{Key: "token", Label: "Personal Access Token", Required: true,
 				HeaderName: "Authorization", HeaderPrefix: "Bearer", Sensitive: true},
@@ -52,6 +55,7 @@ var Catalog = []MCPProvider{
 		Name:        "Custom",
 		Description: "Connect to any hosted MCP server",
 		URL:         "",
+		Transport:   "http",
 		Fields:      []ProviderField{},
 	},
 }

@@ -24,4 +24,5 @@ func (router *Router) RegisterMCPRoutes(mcpGroup *fuego.Server, controller *mcpC
 
 	internalGroup := fuego.Group(mcpGroup, "/internal")
 	fuego.Get(internalGroup, "/servers", controller.ListServersInternal, fuego.OptionSummary("Agent: list enabled servers with credentials"))
+	fuego.Get(internalGroup, "/tools", controller.ListTools, fuego.OptionSummary("Agent: discover tools from all enabled MCP servers"))
 }
