@@ -96,9 +96,7 @@ export function MCPCredentialForm({
             id={field.key}
             type={field.sensitive ? 'password' : 'text'}
             value={credentials[field.key] ?? ''}
-            onChange={(e) =>
-              setCredentials((prev) => ({ ...prev, [field.key]: e.target.value }))
-            }
+            onChange={(e) => setCredentials((prev) => ({ ...prev, [field.key]: e.target.value }))}
             placeholder={field.required ? 'Required' : 'Optional'}
           />
         </div>
@@ -116,7 +114,7 @@ export function MCPCredentialForm({
 
       <div className="flex gap-2 pt-2">
         <Button variant="outline" onClick={onBack} disabled={isSaving}>
-          Back
+          Cancel
         </Button>
         <Button variant="outline" onClick={handleTest} disabled={isTesting || isSaving}>
           {isTesting ? 'Testing…' : 'Test Connection'}

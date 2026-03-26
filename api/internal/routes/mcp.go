@@ -5,10 +5,15 @@ import (
 	mcpController "github.com/nixopus/nixopus/api/internal/features/mcp/controller"
 )
 
+// RegisterMCPPublicRoutes registers MCP routes that don't require authentication (e.g. provider icons).
+func (router *Router) RegisterMCPPublicRoutes(publicServer *fuego.Server, controller *mcpController.MCPController) {
+	iconGroup := fuego.Group(publicServer, "/catalog")
+	fuego.Get(iconGroup, "/{provider_id}/icon", controller.GetProviderIcon, fuego.OptionSummary("Get provider icon"))
+}
+
 func (router *Router) RegisterMCPRoutes(mcpGroup *fuego.Server, controller *mcpController.MCPController) {
 	catalogGroup := fuego.Group(mcpGroup, "/catalog")
 	fuego.Get(catalogGroup, "", controller.ListCatalog, fuego.OptionSummary("List MCP provider catalog"))
-	fuego.Get(catalogGroup, "/{provider_id}/icon", controller.GetProviderIcon, fuego.OptionSummary("Get provider icon"))
 
 	serversGroup := fuego.Group(mcpGroup, "/servers")
 	fuego.Get(serversGroup, "", controller.ListServers, fuego.OptionSummary("List org MCP servers"))

@@ -5,15 +5,12 @@ import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@nixopus/ui';
 import { SmtpConfigForm } from './smtp-config-form';
 import { WebhookConfigForm } from './webhook-config-form';
-import { MCPServerList } from './mcp-server-list';
 import type { IntegrationDefinition } from '@/packages/hooks/integrations/use-integrations';
 import type { SMTPConfig, WebhookConfig, SMTPFormData } from '@/redux/types/notification';
-import type { MCPServer } from '@/redux/types/mcp';
 
 interface IntegrationConfigModalProps {
   integration: IntegrationDefinition;
   config: SMTPConfig | WebhookConfig | null;
-  mcpServers?: MCPServer[];
   onClose: () => void;
   onSaveSMTP: (data: SMTPFormData) => Promise<void>;
   onSaveWebhook: (
@@ -30,7 +27,6 @@ interface IntegrationConfigModalProps {
 export function IntegrationConfigModal({
   integration,
   config,
-  mcpServers = [],
   onClose,
   onSaveSMTP,
   onSaveWebhook,
@@ -77,14 +73,6 @@ export function IntegrationConfigModal({
             onClose={onClose}
             canDelete={canDelete}
             isLoading={isLoading}
-          />
-        );
-      case 'mcp':
-        return (
-          <MCPServerList
-            servers={mcpServers}
-            canConfigure={canConfigure}
-            canDelete={canDelete}
           />
         );
       default:

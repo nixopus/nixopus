@@ -28,12 +28,12 @@ import (
 	healthcheck "github.com/nixopus/nixopus/api/internal/features/healthcheck/controller"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	machine_controller "github.com/nixopus/nixopus/api/internal/features/machine/controller"
+	mcpController "github.com/nixopus/nixopus/api/internal/features/mcp/controller"
 	"github.com/nixopus/nixopus/api/internal/features/notification"
 	"github.com/nixopus/nixopus/api/internal/features/notification/channel"
 	notificationController "github.com/nixopus/nixopus/api/internal/features/notification/controller"
 	server_controller "github.com/nixopus/nixopus/api/internal/features/server/controller"
 	trail "github.com/nixopus/nixopus/api/internal/features/trail/controller"
-	mcpController "github.com/nixopus/nixopus/api/internal/features/mcp/controller"
 	"github.com/nixopus/nixopus/api/internal/openapi"
 
 	update "github.com/nixopus/nixopus/api/internal/features/update/controller"
@@ -238,6 +238,10 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 	authController := router.createAuthController(dispatcher)
 	authGroup := fuego.Group(server, apiV1.Path+"/auth")
 	router.RegisterAuthRoutes(authGroup, authController)
+
+	mcpPublicCtrl := mcpController.NewMCPController(router.app.Store, router.app.Ctx, router.logger)
+	mcpPublicGroup := fuego.Group(server, apiV1.Path+"/mcp")
+	router.RegisterMCPPublicRoutes(mcpPublicGroup, mcpPublicCtrl)
 }
 
 // registerProtectedRoutes registers routes that require authentication
