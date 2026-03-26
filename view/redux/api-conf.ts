@@ -170,3 +170,12 @@ export enum HEALTHCHECKURLS {
   GET_HEALTH_CHECK_RESULTS = 'v1/healthcheck/results',
   GET_HEALTH_CHECK_STATS = 'v1/healthcheck/stats'
 }
+
+export enum MCP_SETTINGS {
+  LIST_CATALOG = 'v1/mcp/catalog',
+  LIST_SERVERS = 'v1/mcp/servers',
+  ADD_SERVER = 'v1/mcp/servers',
+  UPDATE_SERVER = 'v1/mcp/servers',
+  DELETE_SERVER = 'v1/mcp/servers',
+  TEST_SERVER = 'v1/mcp/servers/test'
+}
