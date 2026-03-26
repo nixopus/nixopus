@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	mcp "github.com/nixopus/nixopus/api/internal/features/mcp"
 	"github.com/nixopus/nixopus/api/internal/features/mcp/service"
 	"github.com/nixopus/nixopus/api/internal/features/mcp/storage"
-	"github.com/nixopus/nixopus/api/internal/features/logger"
 	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
@@ -92,4 +92,11 @@ func withLogoURL(p mcp.MCPProvider) catalogEntryWithLogo {
 		MCPProvider: p,
 		LogoURL:     fmt.Sprintf("/v1/mcp/catalog/%s/icon", p.ID),
 	}
+}
+
+type PaginatedData[T any] struct {
+	Items      []T `json:"items"`
+	TotalCount int `json:"total_count"`
+	Page       int `json:"page"`
+	PageSize   int `json:"page_size"`
 }
