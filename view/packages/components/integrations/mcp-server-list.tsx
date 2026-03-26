@@ -26,7 +26,8 @@ export function MCPServerList({ servers, canConfigure, canDelete }: Props) {
   const [selectedProvider, setSelectedProvider] = useState<MCPProvider | null>(null);
   const [editingServer, setEditingServer] = useState<MCPServer | null>(null);
 
-  const { data: catalog = [] } = useGetMCPCatalogQuery();
+  const { data: catalogResult } = useGetMCPCatalogQuery({});
+  const catalog = catalogResult?.items ?? [];
   const [addServer, { isLoading: isAdding }] = useAddMCPServerMutation();
   const [updateServer, { isLoading: isUpdating }] = useUpdateMCPServerMutation();
   const [deleteServer] = useDeleteMCPServerMutation();
@@ -116,12 +117,7 @@ export function MCPServerList({ servers, canConfigure, canDelete }: Props) {
               />
             )}
             {canConfigure && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => handleEdit(server)}
-                title="Edit"
-              >
+              <Button variant="ghost" size="icon" onClick={() => handleEdit(server)} title="Edit">
                 <Pencil className="h-4 w-4" />
               </Button>
             )}
