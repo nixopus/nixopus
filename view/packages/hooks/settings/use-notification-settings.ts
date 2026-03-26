@@ -5,6 +5,7 @@ import {
   useGetSMTPConfigurationsQuery,
   useUpdateNotificationPreferencesMutation,
   useUpdateSMTPConfigurationMutation,
+  useDeleteSMTPConfigurationMutation,
   useGetWebhookConfigQuery,
   useCreateWebhookConfigMutation,
   useUpdateWebhookConfigMutation,
@@ -50,6 +51,7 @@ function useNotificationSettings() {
   const [createWebhookConfig, { isLoading: isCreatingWebhook }] = useCreateWebhookConfigMutation();
   const [updateWebhookConfig, { isLoading: isUpdatingWebhook }] = useUpdateWebhookConfigMutation();
   const [deleteWebhookConfig] = useDeleteWebhookConfigMutation();
+  const [deleteSMTPConfiguration] = useDeleteSMTPConfigurationMutation();
 
   const handleCreateSMTPConfiguration = async (data: CreateSMTPConfigRequest) => {
     try {
@@ -93,6 +95,15 @@ function useNotificationSettings() {
       toast.success(t('settings.notifications.messages.webhookConfigDeleted'));
     } catch (error) {
       toast.error(t('settings.notifications.messages.webhookConfigFailed'));
+    }
+  };
+
+  const handleDeleteSMTPConfiguration = async (id: string) => {
+    try {
+      await deleteSMTPConfiguration({ id, organization_id: activeOrganization?.id || '' });
+      toast.success(t('settings.notifications.messages.email.success'));
+    } catch {
+      toast.error(t('settings.notifications.messages.email.error'));
     }
   };
 
@@ -195,6 +206,7 @@ function useNotificationSettings() {
     handleCreateWebhookConfig,
     handleUpdateWebhookConfig,
     handleDeleteWebhookConfig,
+    handleDeleteSMTPConfiguration,
     preferences,
     isLoading:
       isLoadingSMTP ||
