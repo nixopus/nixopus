@@ -27,7 +27,8 @@ export function IntegrationsPage() {
     handleDeleteWebhookConfig,
     handleDeleteSMTPConfiguration,
     slackConfig,
-    discordConfig
+    discordConfig,
+    mcpServers
   } = useIntegrations();
 
   const canConfigure =
@@ -70,6 +71,7 @@ export function IntegrationsPage() {
         <IntegrationConfigModal
           integration={selectedIntegration}
           config={getConfigForIntegration(selectedIntegration.id as IntegrationId)}
+          mcpServers={mcpServers}
           onClose={closeModal}
           onSaveSMTP={async (data: SMTPFormData) => {
             await handleOnSave(data);
@@ -78,6 +80,7 @@ export function IntegrationsPage() {
           onDeleteSMTP={handleDeleteSMTPConfiguration}
           onDeleteWebhook={handleDeleteWebhookConfig}
           canDelete={canDelete}
+          canConfigure={canConfigure}
           isLoading={isLoading}
         />
       )}

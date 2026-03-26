@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type React from 'react';
-import { Mail } from 'lucide-react';
+import { Mail, Server } from 'lucide-react';
 import { SlackIcon } from '@/packages/components/icons/slack-icon';
 import { DiscordIcon } from '@/packages/components/icons/discord-icon';
 import { useAppSelector } from '@/redux/hooks';
@@ -10,12 +10,14 @@ import {
   useGetSMTPConfigurationsQuery,
   useGetWebhookConfigQuery
 } from '@/redux/services/settings/notificationApi';
+import { useGetMCPServersQuery } from '@/redux/services/settings/mcpApi';
 import useNotificationSettings from '@/packages/hooks/settings/use-notification-settings';
 import type { SMTPConfig, WebhookConfig } from '@/redux/types/notification';
+import type { MCPServer } from '@/redux/types/mcp';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 
-export type IntegrationId = 'smtp' | 'slack' | 'discord';
-export type IntegrationCategory = 'email' | 'messaging';
+export type IntegrationId = 'smtp' | 'slack' | 'discord' | 'mcp';
+export type IntegrationCategory = 'email' | 'messaging' | 'tools';
 
 export interface IntegrationDefinition {
   id: IntegrationId;
@@ -32,7 +34,8 @@ export const INTEGRATIONS: IntegrationDefinition[] = [
     nameKey: 'integrations.discord.name',
     category: 'messaging',
     icon: DiscordIcon
-  }
+  },
+  { id: 'mcp', nameKey: 'integrations.mcp.name', category: 'tools', icon: Server }
 ];
 
 const is404 = (err: unknown): boolean =>
@@ -63,6 +66,10 @@ export function useIntegrations() {
     error: discordRawError
   } = useGetWebhookConfigQuery({ type: 'discord' }, { skip });
 
+  const { data: mcpServers = [], isLoading: mcpLoading } = useGetMCPServersQuery(undefined, {
+    skip
+  });
+
   const notificationSettings = useNotificationSettings();
 
   const [selectedIntegration, setSelectedIntegration] = useState<IntegrationDefinition | null>(
@@ -76,7 +83,8 @@ export function useIntegrations() {
   const slackError = is404(slackRawError) ? null : (slackRawError ?? null);
   const discordError = is404(discordRawError) ? null : (discordRawError ?? null);
 
-  const isLoading = smtpLoading || slackLoading || discordLoading || notificationSettings.isLoading;
+  const isLoading =
+    smtpLoading || slackLoading || discordLoading || mcpLoading || notificationSettings.isLoading;
 
   const getConfigForIntegration = (id: IntegrationId): SMTPConfig | WebhookConfig | null => {
     if (id === 'smtp') return smtpConfig ?? null;
@@ -90,6 +98,7 @@ export function useIntegrations() {
     smtpConfig: smtpConfig ?? null,
     slackConfig: slackConfig ?? null,
     discordConfig: discordConfig ?? null,
+    mcpServers,
     isLoading,
     smtpError,
     slackError,
