@@ -43,10 +43,26 @@ type TriggerBackupResponse struct {
 	RequestID string `json:"request_id"`
 }
 
+type BackupListParams struct {
+	Page      int    `json:"page"`
+	PageSize  int    `json:"page_size"`
+	Search    string `json:"search"`
+	SortBy    string `json:"sort_by"`
+	SortOrder string `json:"sort_order"`
+	Status    string `json:"status"`
+}
+
+type BackupListResponseData struct {
+	Backups    []MachineBackup `json:"backups"`
+	TotalCount int             `json:"total_count"`
+	Page       int             `json:"page"`
+	PageSize   int             `json:"page_size"`
+}
+
 type BackupListResponse struct {
-	Status  string          `json:"status"`
-	Message string          `json:"message"`
-	Data    []MachineBackup `json:"data"`
+	Status  string                 `json:"status"`
+	Message string                 `json:"message"`
+	Data    BackupListResponseData `json:"data"`
 }
 
 type BackupScheduleData struct {

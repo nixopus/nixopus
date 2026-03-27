@@ -59,6 +59,12 @@ func (router *Router) RegisterMachineRoutes(machineGroup *fuego.Server, machineC
 		machineController.ListBackups,
 		fuego.OptionSummary("List machine backups"),
 		fuego.OptionDescription("Returns the backup history for the organization's provisioned machine."),
+		fuego.OptionQueryInt("page", "Page number"),
+		fuego.OptionQueryInt("page_size", "Page size"),
+		fuego.OptionQuery("search", "Search by machine name"),
+		fuego.OptionQuery("sort_by", "Sort field (created_at, status, size_bytes)"),
+		fuego.OptionQuery("sort_order", "Sort order (asc, desc)"),
+		fuego.OptionQuery("status", "Filter by backup status"),
 	)
 	fuego.Get(
 		machineGroup,

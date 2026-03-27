@@ -61,8 +61,21 @@ func (s *BackupService) TriggerBackup(ctx context.Context, userID uuid.UUID, org
 	}, nil
 }
 
-func (s *BackupService) ListBackups(ctx context.Context, orgID uuid.UUID) (*types.BackupListResponse, error) {
-	backups, err := s.backupStore.ListByOrg(ctx, orgID)
+func (s *BackupService) ListBackups(ctx context.Context, orgID uuid.UUID, params types.BackupListParams) (*types.BackupListResponse, error) {
+	if params.Page <= 0 {
+		params.Page = 1
+	}
+	if params.PageSize <= 0 {
+		params.PageSize = 20
+	}
+	if params.SortBy == "" {
+		params.SortBy = "created_at"
+	}
+	if params.SortOrder == "" {
+		params.SortOrder = "desc"
+	}
+
+	backups, totalCount, err := s.backupStore.ListByOrg(ctx, orgID, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list backups: %w", err)
 	}
@@ -73,7 +86,12 @@ func (s *BackupService) ListBackups(ctx context.Context, orgID uuid.UUID) (*type
 	return &types.BackupListResponse{
 		Status:  "success",
 		Message: "Backups retrieved",
-		Data:    backups,
+		Data: types.BackupListResponseData{
+			Backups:    backups,
+			TotalCount: totalCount,
+			Page:       params.Page,
+			PageSize:   params.PageSize,
+		},
 	}, nil
 }
 

@@ -3,6 +3,8 @@ package controller
 import (
 	"errors"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
@@ -45,7 +47,31 @@ func (c *MachineController) ListBackups(f fuego.ContextNoBody) (*types.BackupLis
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.backupService.ListBackups(r.Context(), orgID)
+	var params types.BackupListParams
+	if v := f.QueryParam("page"); v != "" {
+		if page, err := strconv.Atoi(v); err == nil && page > 0 {
+			params.Page = page
+		}
+	}
+	if v := f.QueryParam("page_size"); v != "" {
+		if ps, err := strconv.Atoi(v); err == nil && ps > 0 {
+			params.PageSize = ps
+		}
+	}
+	if v := f.QueryParam("search"); v != "" {
+		params.Search = strings.TrimSpace(v)
+	}
+	if v := f.QueryParam("sort_by"); v != "" {
+		params.SortBy = strings.ToLower(strings.TrimSpace(v))
+	}
+	if v := f.QueryParam("sort_order"); v != "" {
+		params.SortOrder = strings.ToLower(strings.TrimSpace(v))
+	}
+	if v := f.QueryParam("status"); v != "" {
+		params.Status = strings.TrimSpace(v)
+	}
+
+	response, err := c.backupService.ListBackups(r.Context(), orgID, params)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), orgID.String())
 		return nil, fuego.HTTPError{Detail: "failed to list backups", Status: http.StatusInternalServerError}
