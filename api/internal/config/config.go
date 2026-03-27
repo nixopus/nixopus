@@ -301,6 +301,9 @@ func setupEnvVarMappings() {
 	viper.SetDefault("live.generated_dockerfile_name", "Dockerfile.nixopus.dev")
 	viper.SetDefault("live.max_indexable_size", 512000)
 	viper.SetDefault("live.check_origin", false)
+
+	// Timescale (metrics DB)
+	viper.BindEnv("timescale.url", "TIMESCALE_URL")
 }
 
 func parseDatabaseURL(db *types.DatabaseConfig) error {

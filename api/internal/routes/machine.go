@@ -80,6 +80,35 @@ func (router *Router) RegisterMachineRoutes(machineGroup *fuego.Server, machineC
 		fuego.OptionSummary("Update backup schedule"),
 		fuego.OptionDescription("Updates the automatic backup schedule (enable/disable, frequency, time)."),
 	)
+	fuego.Get(
+		machineGroup,
+		"/metrics",
+		machineController.GetMachineMetrics,
+		fuego.OptionSummary("Get machine metrics"),
+		fuego.OptionDescription("Returns time-series CPU, memory, and network metrics. Query params: from, to (RFC3339), limit."),
+		fuego.OptionQuery("from", "Start time RFC3339 (default: 1 hour ago)"),
+		fuego.OptionQuery("to", "End time RFC3339 (default: now)"),
+		fuego.OptionQuery("limit", "Max rows (default 500, max 1000)"),
+	)
+	fuego.Get(
+		machineGroup,
+		"/events",
+		machineController.GetMachineEvents,
+		fuego.OptionSummary("Get machine events"),
+		fuego.OptionDescription("Returns DoS and bandwidth breach events. Query params: from, to (RFC3339), limit."),
+		fuego.OptionQuery("from", "Start time RFC3339 (default: 1 hour ago)"),
+		fuego.OptionQuery("to", "End time RFC3339 (default: now)"),
+		fuego.OptionQuery("limit", "Max rows (default 200)"),
+	)
+	fuego.Get(
+		machineGroup,
+		"/metrics/summary",
+		machineController.GetMachineMetricsSummary,
+		fuego.OptionSummary("Get machine metrics summary"),
+		fuego.OptionDescription("Returns an LLM-friendly aggregate summary of machine health, traffic, and events."),
+		fuego.OptionQuery("from", "Start time RFC3339 (default: 1 hour ago)"),
+		fuego.OptionQuery("to", "End time RFC3339 (default: now)"),
+	)
 }
 
 func (router *Router) RegisterMachineBillingRoutes(billingGroup *fuego.Server, machineController *machine_controller.MachineController) {

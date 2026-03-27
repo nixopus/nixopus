@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/machine/service"
-	billing_storage "github.com/nixopus/nixopus/api/internal/features/machine/storage"
+	machine_storage "github.com/nixopus/nixopus/api/internal/features/machine/storage"
 	"github.com/nixopus/nixopus/api/internal/features/machine/types"
 	"github.com/nixopus/nixopus/api/internal/queue"
 	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
@@ -21,6 +21,7 @@ type MachineController struct {
 	billingService   *service.BillingService
 	lifecycleService *service.LifecycleService
 	backupService    *service.BackupService
+	metricsService   *service.MetricsService
 	ctx              context.Context
 	logger           logger.Logger
 }
@@ -29,15 +30,17 @@ func NewMachineController(
 	store *shared_storage.Store,
 	ctx context.Context,
 	l logger.Logger,
+	ts *machine_storage.TimescaleStore,
 ) *MachineController {
-	bs := billing_storage.NewBillingStorage(store.DB, ctx)
-	backupStore := billing_storage.NewBackupStorage(store.DB, ctx)
+	bs := machine_storage.NewBillingStorage(store.DB, ctx)
+	backupStore := machine_storage.NewBackupStorage(store.DB, ctx)
 	return &MachineController{
 		store:            store,
 		service:          service.NewMachineService(store, ctx, l),
 		billingService:   service.NewBillingService(bs),
 		lifecycleService: service.NewLifecycleService(bs, queue.ExecuteMachineLifecycle),
 		backupService:    service.NewBackupService(bs, backupStore, store.DB),
+		metricsService:   service.NewMetricsService(ts, store.DB),
 		ctx:              ctx,
 		logger:           l,
 	}
