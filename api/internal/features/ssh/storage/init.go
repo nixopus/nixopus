@@ -25,6 +25,7 @@ func (s *SSHKeyStorage) getDB() bun.IDB {
 // This enables mocking in tests.
 type SSHKeyRepository interface {
 	GetActiveSSHKeyByOrganizationID(orgID uuid.UUID) (*types.SSHKey, error)
+	GetDefaultSSHKeyByOrganizationID(orgID uuid.UUID) (*types.SSHKey, error)
 	GetSSHKeyByID(keyID uuid.UUID) (*types.SSHKey, error)
 	ListSSHKeysByOrganizationID(orgID uuid.UUID) ([]*types.SSHKey, error)
 }
@@ -42,6 +43,24 @@ func (s *SSHKeyStorage) GetActiveSSHKeyByOrganizationID(orgID uuid.UUID) (*types
 		Limit(1).
 		Scan(s.Ctx)
 
+	if err != nil {
+		return nil, err
+	}
+	return &sshKey, nil
+}
+
+// GetDefaultSSHKeyByOrganizationID retrieves the default active SSH key for an organization.
+// Returns sql.ErrNoRows if no key with is_default=TRUE and is_active=TRUE is found.
+func (s *SSHKeyStorage) GetDefaultSSHKeyByOrganizationID(orgID uuid.UUID) (*types.SSHKey, error) {
+	var sshKey types.SSHKey
+	err := s.getDB().NewSelect().
+		Model(&sshKey).
+		Where("organization_id = ?", orgID).
+		Where("is_default = ?", true).
+		Where("is_active = ?", true).
+		Where("deleted_at IS NULL").
+		Limit(1).
+		Scan(s.Ctx)
 	if err != nil {
 		return nil, err
 	}
