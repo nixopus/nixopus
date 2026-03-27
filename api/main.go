@@ -69,6 +69,7 @@ func main() {
 	queue.SetupCustomDomainQueue()
 	queue.SetupResourceUpdateQueue()
 	queue.SetupMachineLifecycleQueue(ctx)
+	queue.SetupMachineBackupQueue(ctx)
 
 	router := routes.NewRouter(app)
 
@@ -86,6 +87,8 @@ func main() {
 	log.Println("Health check scheduler started successfully")
 	schedulers.Billing.Start()
 	log.Println("Billing scheduler started successfully")
+	schedulers.Backup.Start()
+	log.Println("Backup scheduler started successfully")
 
 	router.SetupRoutes()
 
@@ -99,6 +102,7 @@ func main() {
 		schedulers.Main.Stop()
 		schedulers.HealthCheck.Stop()
 		schedulers.Billing.Stop()
+		schedulers.Backup.Stop()
 		os.Exit(0)
 	}()
 	log.Printf("Server starting on port %s", config.AppConfig.Server.Port)
