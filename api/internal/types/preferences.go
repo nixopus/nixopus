@@ -54,6 +54,13 @@ type OrganizationSettingsData struct {
 	AuditLogsRetentionDays       *int  `json:"audit_logs_retention_days,omitempty"`
 	ExtensionLogsCleanupEnabled  *bool `json:"extension_logs_cleanup_enabled,omitempty"`
 	ExtensionLogsRetentionDays   *int  `json:"extension_logs_retention_days,omitempty"`
+
+	// Backup schedule settings
+	BackupScheduleEnabled   *bool   `json:"backup_schedule_enabled,omitempty"`
+	BackupScheduleFrequency *string `json:"backup_schedule_frequency,omitempty"`
+	BackupScheduleHourUTC   *int    `json:"backup_schedule_hour_utc,omitempty"`
+	BackupScheduleDayOfWeek *int    `json:"backup_schedule_day_of_week,omitempty"`
+	BackupRetentionCount    *int    `json:"backup_retention_count,omitempty"`
 }
 
 // OrganizationSettings represents organization-level settings stored in the database
@@ -113,6 +120,13 @@ func DefaultOrganizationSettingsData() OrganizationSettingsData {
 	extensionLogsCleanupEnabled := true
 	extensionLogsRetentionDays := 30
 
+	// Backup schedule defaults (disabled by default, daily at 2am UTC, keep 7)
+	backupScheduleEnabled := false
+	backupScheduleFrequency := "daily"
+	backupScheduleHourUTC := 2
+	backupScheduleDayOfWeek := 0
+	backupRetentionCount := 7
+
 	return OrganizationSettingsData{
 		WebsocketReconnectAttempts:       5,
 		WebsocketReconnectInterval:       3000,
@@ -129,5 +143,10 @@ func DefaultOrganizationSettingsData() OrganizationSettingsData {
 		AuditLogsRetentionDays:           &auditLogsRetentionDays,
 		ExtensionLogsCleanupEnabled:      &extensionLogsCleanupEnabled,
 		ExtensionLogsRetentionDays:       &extensionLogsRetentionDays,
+		BackupScheduleEnabled:            &backupScheduleEnabled,
+		BackupScheduleFrequency:          &backupScheduleFrequency,
+		BackupScheduleHourUTC:            &backupScheduleHourUTC,
+		BackupScheduleDayOfWeek:          &backupScheduleDayOfWeek,
+		BackupRetentionCount:             &backupRetentionCount,
 	}
 }

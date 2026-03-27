@@ -20,6 +20,7 @@ type MachineController struct {
 	service          *service.MachineService
 	billingService   *service.BillingService
 	lifecycleService *service.LifecycleService
+	backupService    *service.BackupService
 	ctx              context.Context
 	logger           logger.Logger
 }
@@ -30,11 +31,13 @@ func NewMachineController(
 	l logger.Logger,
 ) *MachineController {
 	bs := billing_storage.NewBillingStorage(store.DB, ctx)
+	backupStore := billing_storage.NewBackupStorage(store.DB, ctx)
 	return &MachineController{
 		store:            store,
 		service:          service.NewMachineService(store, ctx, l),
 		billingService:   service.NewBillingService(bs),
 		lifecycleService: service.NewLifecycleService(bs, queue.ExecuteMachineLifecycle),
+		backupService:    service.NewBackupService(bs, backupStore, store.DB),
 		ctx:              ctx,
 		logger:           l,
 	}

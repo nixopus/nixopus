@@ -11,10 +11,15 @@ const replyChannelPrefix = "machine:reply:"
 
 type ReplyMultiplexer struct {
 	waiters sync.Map
+	prefix  string
 }
 
 func NewReplyMultiplexer() *ReplyMultiplexer {
-	return &ReplyMultiplexer{}
+	return &ReplyMultiplexer{prefix: replyChannelPrefix}
+}
+
+func NewReplyMultiplexerWithPrefix(prefix string) *ReplyMultiplexer {
+	return &ReplyMultiplexer{prefix: prefix}
 }
 
 func (m *ReplyMultiplexer) Start(ctx context.Context) {
@@ -24,7 +29,7 @@ func (m *ReplyMultiplexer) Start(ctx context.Context) {
 	}
 
 	go func() {
-		pubsub := redisClient.PSubscribe(ctx, replyChannelPrefix+"*")
+		pubsub := redisClient.PSubscribe(ctx, m.prefix+"*")
 		defer pubsub.Close()
 
 		ch := pubsub.Channel()
@@ -36,7 +41,7 @@ func (m *ReplyMultiplexer) Start(ctx context.Context) {
 				if !ok {
 					return
 				}
-				requestID := ExtractRequestIDFromChannel(msg.Channel)
+				requestID := extractIDFromChannel(msg.Channel, m.prefix)
 				if requestID != "" {
 					m.Dispatch(requestID, msg.Payload)
 				}
@@ -67,9 +72,13 @@ func (m *ReplyMultiplexer) Dispatch(requestID string, data string) {
 	}
 }
 
-func ExtractRequestIDFromChannel(channel string) string {
-	if !strings.HasPrefix(channel, replyChannelPrefix) {
+func extractIDFromChannel(channel string, prefix string) string {
+	if !strings.HasPrefix(channel, prefix) {
 		return ""
 	}
-	return strings.TrimPrefix(channel, replyChannelPrefix)
+	return strings.TrimPrefix(channel, prefix)
+}
+
+func ExtractRequestIDFromChannel(channel string) string {
+	return extractIDFromChannel(channel, replyChannelPrefix)
 }

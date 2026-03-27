@@ -198,6 +198,11 @@ func GetOrganizationSettings(ctx context.Context, db *bun.DB, orgID uuid.UUID) (
 		AuditLogsRetentionDays:           defaults.AuditLogsRetentionDays,
 		ExtensionLogsCleanupEnabled:      defaults.ExtensionLogsCleanupEnabled,
 		ExtensionLogsRetentionDays:       defaults.ExtensionLogsRetentionDays,
+		BackupScheduleEnabled:            defaults.BackupScheduleEnabled,
+		BackupScheduleFrequency:          defaults.BackupScheduleFrequency,
+		BackupScheduleHourUTC:            defaults.BackupScheduleHourUTC,
+		BackupScheduleDayOfWeek:          defaults.BackupScheduleDayOfWeek,
+		BackupRetentionCount:             defaults.BackupRetentionCount,
 	}
 
 	if settings.Settings.ContainerLogTailLines != nil {
@@ -232,6 +237,21 @@ func GetOrganizationSettings(ctx context.Context, db *bun.DB, orgID uuid.UUID) (
 	}
 	if settings.Settings.ExtensionLogsRetentionDays != nil {
 		result.ExtensionLogsRetentionDays = settings.Settings.ExtensionLogsRetentionDays
+	}
+	if settings.Settings.BackupScheduleEnabled != nil {
+		result.BackupScheduleEnabled = settings.Settings.BackupScheduleEnabled
+	}
+	if settings.Settings.BackupScheduleFrequency != nil {
+		result.BackupScheduleFrequency = settings.Settings.BackupScheduleFrequency
+	}
+	if settings.Settings.BackupScheduleHourUTC != nil {
+		result.BackupScheduleHourUTC = settings.Settings.BackupScheduleHourUTC
+	}
+	if settings.Settings.BackupScheduleDayOfWeek != nil {
+		result.BackupScheduleDayOfWeek = settings.Settings.BackupScheduleDayOfWeek
+	}
+	if settings.Settings.BackupRetentionCount != nil {
+		result.BackupRetentionCount = settings.Settings.BackupRetentionCount
 	}
 
 	return result, nil

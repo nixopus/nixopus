@@ -46,6 +46,34 @@ func (router *Router) RegisterMachineRoutes(machineGroup *fuego.Server, machineC
 		fuego.OptionSummary("Resume machine"),
 		fuego.OptionDescription("Resumes a paused machine instance."),
 	)
+	fuego.Post(
+		machineGroup,
+		"/backup",
+		machineController.TriggerBackup,
+		fuego.OptionSummary("Trigger machine backup"),
+		fuego.OptionDescription("Initiates an async backup of the provisioned machine (snapshot + S3 upload). Returns immediately; poll GET /machine/backups for status."),
+	)
+	fuego.Get(
+		machineGroup,
+		"/backups",
+		machineController.ListBackups,
+		fuego.OptionSummary("List machine backups"),
+		fuego.OptionDescription("Returns the backup history for the organization's provisioned machine."),
+	)
+	fuego.Get(
+		machineGroup,
+		"/backup/schedule",
+		machineController.GetBackupSchedule,
+		fuego.OptionSummary("Get backup schedule"),
+		fuego.OptionDescription("Returns the automatic backup schedule configuration for the organization."),
+	)
+	fuego.Put(
+		machineGroup,
+		"/backup/schedule",
+		machineController.UpdateBackupSchedule,
+		fuego.OptionSummary("Update backup schedule"),
+		fuego.OptionDescription("Updates the automatic backup schedule (enable/disable, frequency, time)."),
+	)
 }
 
 func (router *Router) RegisterMachineBillingRoutes(billingGroup *fuego.Server, machineController *machine_controller.MachineController) {

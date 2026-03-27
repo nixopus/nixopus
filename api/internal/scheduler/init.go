@@ -15,6 +15,7 @@ type Schedulers struct {
 	Main        *Scheduler
 	HealthCheck *HealthCheckScheduler
 	Billing     *BillingScheduler
+	Backup      *BackupScheduler
 }
 
 // InitSchedulers creates and configures all schedulers
@@ -35,10 +36,12 @@ func InitSchedulers(store *shared_storage.Store, ctx context.Context) *Scheduler
 	healthCheckScheduler := NewHealthCheckScheduler(healthCheckService, l, ctx, nil)
 
 	billingScheduler := NewBillingScheduler(store.DB, ctx, l)
+	backupScheduler := NewBackupScheduler(store.DB, ctx, l)
 
 	return &Schedulers{
 		Main:        sched,
 		HealthCheck: healthCheckScheduler,
 		Billing:     billingScheduler,
+		Backup:      backupScheduler,
 	}
 }
