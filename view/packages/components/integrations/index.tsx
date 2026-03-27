@@ -125,7 +125,7 @@ export function IntegrationsPage() {
   const catalogTotalPages = Math.ceil(catalogTotalCount / catalogPageSize);
 
   return (
-    <PageLayout maxWidth="full" padding="md" spacing="lg">
+    <PageLayout maxWidth="7xl" padding="md" spacing="lg">
       <MainPageHeader label={t('integrations.title' as any)} highlightLabel={false} />
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
