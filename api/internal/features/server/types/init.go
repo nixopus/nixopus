@@ -1,7 +1,14 @@
 package types
 
 import (
+	"errors"
+
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
+)
+
+var (
+	ErrServerNotFound = errors.New("server not found")
+	ErrServerInactive = errors.New("cannot set an inactive server as default")
 )
 
 // ServerListParams represents query parameters for listing servers
@@ -39,6 +46,13 @@ type ListServersResponse struct {
 	Status  string                  `json:"status"`
 	Message string                  `json:"message"`
 	Data    ListServersResponseData `json:"data"`
+}
+
+// SetDefaultServerResponse is the response for the set-default endpoint
+type SetDefaultServerResponse struct {
+	Status  string              `json:"status"`
+	Message string              `json:"message"`
+	Data    shared_types.SSHKey `json:"data"`
 }
 
 // SSHConnectionStatusResponse represents the SSH connection status

@@ -26,4 +26,16 @@ func (router *Router) RegisterServerRoutes(serverGroup *fuego.Server, serverCont
 		serverController.CheckSSHStatus,
 		fuego.OptionSummary("Get SSH connection status"),
 	)
+	fuego.Put(
+		serverGroup,
+		"/{id}/set-default",
+		serverController.SetDefaultServer,
+		fuego.OptionSummary("Set server as org default"),
+	)
+	fuego.Get(
+		serverGroup,
+		"/{id}/ssh/status",
+		serverController.CheckSSHStatusByID,
+		fuego.OptionSummary("Get SSH connection status for a specific server"),
+	)
 }

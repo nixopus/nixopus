@@ -428,6 +428,15 @@ func (m *SSHManager) Borrow(id string) (*goph.Client, func(), error) {
 	return client, release, nil
 }
 
+// IsNoDefaultServerError returns true when the error means the org has no default server configured.
+// Callers should map this to 503 Service Unavailable.
+func IsNoDefaultServerError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "no default server configured")
+}
+
 // IsClosedConnectionError checks if the error indicates a closed or stale network connection.
 // Aligned with SFTP pool detection: EOF, broken pipe, connection reset, etc.
 func IsClosedConnectionError(err error) bool {
