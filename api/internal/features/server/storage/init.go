@@ -27,6 +27,8 @@ func (s *ServerStorage) getDB() bun.IDB {
 // This enables mocking in tests.
 type ServerRepository interface {
 	ListServersByOrganizationID(orgID uuid.UUID, params types.ServerListParams) ([]types.ServerResponse, int, error)
+	SetDefaultServer(orgID uuid.UUID, serverID uuid.UUID) (*uuid.UUID, error)
+	GetServerByIDAndOrgID(serverID uuid.UUID, orgID uuid.UUID) (*shared_types.SSHKey, error)
 }
 
 // ListServersByOrganizationID retrieves all SSH keys (servers) for an organization
@@ -177,4 +179,87 @@ func (s *ServerStorage) ListServersByOrganizationID(orgID uuid.UUID, params type
 	}
 
 	return servers, totalCount, nil
+}
+
+// GetServerByIDAndOrgID retrieves a non-deleted SSH key that belongs to the given org.
+// Returns sql.ErrNoRows if not found or wrong org.
+func (s *ServerStorage) GetServerByIDAndOrgID(serverID uuid.UUID, orgID uuid.UUID) (*shared_types.SSHKey, error) {
+	var key shared_types.SSHKey
+	err := s.getDB().NewSelect().
+		Model(&key).
+		Where("id = ?", serverID).
+		Where("organization_id = ?", orgID).
+		Where("deleted_at IS NULL").
+		Scan(s.Ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &key, nil
+}
+
+// SetDefaultServer atomically designates serverID as the org's default server.
+// Returns the previous default's ID (nil if none existed).
+// Returns types.ErrServerNotFound if target not found/wrong org, types.ErrServerInactive if inactive.
+func (s *ServerStorage) SetDefaultServer(orgID uuid.UUID, serverID uuid.UUID) (*uuid.UUID, error) {
+	tx, err := s.DB.BeginTx(s.Ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Step 1: capture old default ID
+	var oldKey shared_types.SSHKey
+	var oldDefaultID *uuid.UUID
+	err = tx.NewSelect().
+		Model(&oldKey).
+		Column("id").
+		Where("organization_id = ?", orgID).
+		Where("is_default = ?", true).
+		Where("deleted_at IS NULL").
+		Scan(s.Ctx)
+	if err == nil {
+		id := oldKey.ID
+		oldDefaultID = &id
+	}
+
+	// Step 2: validate target server (must exist, be in org, and be active)
+	var target shared_types.SSHKey
+	err = tx.NewSelect().
+		Model(&target).
+		Column("id", "is_active").
+		Where("id = ?", serverID).
+		Where("organization_id = ?", orgID).
+		Where("deleted_at IS NULL").
+		Scan(s.Ctx)
+	if err != nil {
+		return nil, types.ErrServerNotFound
+	}
+	if !target.IsActive {
+		return nil, types.ErrServerInactive
+	}
+
+	// Step 3: clear existing default
+	_, err = tx.NewUpdate().
+		Model((*shared_types.SSHKey)(nil)).
+		Set("is_default = ?", false).
+		Set("updated_at = NOW()").
+		Where("organization_id = ?", orgID).
+		Where("is_default = ?", true).
+		Exec(s.Ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Step 4: set new default
+	_, err = tx.NewUpdate().
+		Model((*shared_types.SSHKey)(nil)).
+		Set("is_default = ?", true).
+		Set("updated_at = NOW()").
+		Where("id = ?", serverID).
+		Exec(s.Ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return oldDefaultID, tx.Commit()
 }
