@@ -33,10 +33,10 @@ func NewSSHKeyService(store *shared_storage.Store, ctx context.Context, l logger
 // and converts it to SSHConfig format ready for use with SSHManager.
 // Returns an error if no active SSH key is found for the organization.
 func (s *SSHKeyService) GetSSHConfigForOrganization(orgID uuid.UUID) (*types.SSHConfig, error) {
-	sshKey, err := s.storage.GetActiveSSHKeyByOrganizationID(orgID)
+	sshKey, err := s.storage.GetDefaultSSHKeyByOrganizationID(orgID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no active SSH key found for organization %s", orgID.String())
+			return nil, fmt.Errorf("no default server configured for organization %s", orgID.String())
 		}
 		s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH key for organization %s: %v", orgID.String(), err), "")
 		return nil, fmt.Errorf("failed to get SSH key for organization: %w", err)
@@ -73,6 +73,23 @@ func (s *SSHKeyService) GetSSHConfigForOrganization(orgID uuid.UUID) (*types.SSH
 	s.logger.Log(logger.Info, fmt.Sprintf("SSH config loaded for organization %s: host=%s, user=%s, port=%d, auth_method=%s, has_private_key=%v, has_password=%v", orgID.String(), host, user, port, authMethod, hasPrivateKey, hasPassword), "")
 
 	return config, nil
+}
+
+// GetSSHConfigForKey converts a specific SSHKey into SSHConfig format.
+// Used when the caller already has the SSHKey and needs SSH credentials.
+func (s *SSHKeyService) GetSSHConfigForKey(sshKey *types.SSHKey) (*types.SSHConfig, error) {
+	if sshKey == nil {
+		return nil, fmt.Errorf("ssh key is nil")
+	}
+	return &types.SSHConfig{
+		Host:                getStringValue(sshKey.Host),
+		ProxyHost:           getStringValue(sshKey.ProxyHost),
+		User:                getStringValue(sshKey.User),
+		Port:                getUintFromInt(sshKey.Port, 22),
+		PrivateKey:          getStringValue(sshKey.PrivateKeyEncrypted),
+		Password:            getStringValue(sshKey.PasswordEncrypted),
+		PrivateKeyProtected: "",
+	}, nil
 }
 
 // getStringValue safely extracts string value from pointer, returning empty string if nil
