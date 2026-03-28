@@ -3,6 +3,7 @@ package ssh
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -119,7 +120,7 @@ func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHMan
 	sshKeyStorage := sshstorage.SSHKeyStorage{DB: config.GlobalStore.DB, Ctx: ctx}
 	defaultKey, err := sshKeyStorage.GetDefaultSSHKeyByOrganizationID(orgID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("no default server configured for organization %s", orgID.String())
 		}
 		return nil, fmt.Errorf("failed to get default SSH key for organization %s: %w", orgID.String(), err)
@@ -134,6 +135,13 @@ func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHMan
 func GetSSHManagerForServer(ctx context.Context, orgID uuid.UUID, serverID uuid.UUID) (*SSHManager, error) {
 	if config.GlobalStore == nil {
 		return nil, fmt.Errorf("global store not initialized")
+	}
+
+	if orgID == uuid.Nil {
+		return nil, fmt.Errorf("orgID must not be nil")
+	}
+	if serverID == uuid.Nil {
+		return nil, fmt.Errorf("serverID must not be nil")
 	}
 
 	serverIDStr := serverID.String()
@@ -183,7 +191,9 @@ func GetSSHManagerForServer(ctx context.Context, orgID uuid.UUID, serverID uuid.
 	}
 
 	manager := NewSSHManager()
-	manager.clients["default"] = sshClient
+	if err := manager.AddClient("default", sshClient); err != nil {
+		return nil, fmt.Errorf("failed to register SSH client for server %s: %w", serverIDStr, err)
+	}
 
 	serverManagers[serverIDStr] = manager
 	orgToServerIDs[orgID.String()] = appendUnique(orgToServerIDs[orgID.String()], serverIDStr)
@@ -245,9 +255,11 @@ func InvalidateServerManagerCache(serverID uuid.UUID) {
 	}
 	delete(serverManagers, serverIDStr)
 
+	var foundOrgID string
 	for orgIDStr, ids := range orgToServerIDs {
 		for i, sid := range ids {
 			if sid == serverIDStr {
+				foundOrgID = orgIDStr
 				orgToServerIDs[orgIDStr] = append(ids[:i], ids[i+1:]...)
 				break
 			}
@@ -256,6 +268,11 @@ func InvalidateServerManagerCache(serverID uuid.UUID) {
 	serverManagersMu.Unlock()
 
 	mgr.Close()
+	if foundOrgID != "" {
+		if parsed, err := uuid.Parse(foundOrgID); err == nil {
+			fireInvalidateHooks(parsed)
+		}
+	}
 }
 
 // InvalidateAllSSHManagerCaches clears every cached manager. Useful at shutdown
