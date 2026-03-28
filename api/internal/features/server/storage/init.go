@@ -2,6 +2,8 @@ package storage
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/google/uuid"
@@ -217,6 +219,9 @@ func (s *ServerStorage) SetDefaultServer(orgID uuid.UUID, serverID uuid.UUID) (*
 		Where("is_default = ?", true).
 		Where("deleted_at IS NULL").
 		Scan(s.Ctx)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return nil, err
+	}
 	if err == nil {
 		id := oldKey.ID
 		oldDefaultID = &id
