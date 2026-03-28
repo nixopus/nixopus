@@ -78,6 +78,16 @@ export function useInstallGenerator() {
     if (isFeatureDisabled(feature)) return
 
     if (!feature.enabled) {
+      if (feature.id === 'apiDomain') {
+        const viewDomain = findFeature('viewDomain')
+        if (viewDomain && !viewDomain.enabled) viewDomain.enabled = true
+      }
+
+      if (feature.id === 'viewDomain') {
+        const apiDomain = findFeature('apiDomain')
+        if (apiDomain && !apiDomain.enabled) apiDomain.enabled = true
+      }
+
       if (feature.id === 'hostIp') {
         const apiDomain = findFeature('apiDomain')
         const viewDomain = findFeature('viewDomain')
