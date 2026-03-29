@@ -969,8 +969,8 @@ func (s *DeployStorage) GetApplicationServers(appID uuid.UUID) ([]shared_types.A
 	err := s.DB.NewSelect().
 		Model(&servers).
 		Relation("Server").
-		Where("as.application_id = ?", appID).
-		Order("as.is_primary DESC", "as.created_at ASC").
+		Where("aps.application_id = ?", appID).
+		Order("aps.is_primary DESC", "aps.created_at ASC").
 		Scan(s.Ctx)
 	return servers, err
 }

@@ -100,7 +100,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 				defer t.DeregisterCancellation(deploymentID)
 
 				t.Logger.Log(logger.Info, "starting update deployment", data.CorrelationID)
-				return t.HandleUpdateDeployment(ctx, data)
+				if err := t.HandleUpdateDeployment(ctx, data); err != nil {
+					t.Logger.Log(logger.Error, "update deployment failed: "+err.Error(), data.CorrelationID)
+					return err
+				}
+				t.Logger.Log(logger.Info, "update deployment completed", data.CorrelationID)
+				return nil
 			},
 		})
 
@@ -126,7 +131,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 				defer t.DeregisterCancellation(deploymentID)
 
 				t.Logger.Log(logger.Info, "starting redeploy", data.CorrelationID)
-				return t.HandleReDeploy(ctx, data)
+				if err := t.HandleReDeploy(ctx, data); err != nil {
+					t.Logger.Log(logger.Error, "redeploy failed: "+err.Error(), data.CorrelationID)
+					return err
+				}
+				t.Logger.Log(logger.Info, "redeploy completed", data.CorrelationID)
+				return nil
 			},
 		})
 
@@ -146,7 +156,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				t.Logger.Log(logger.Info, "starting rollback", data.CorrelationID)
-				return t.HandleRollback(ctx, data)
+				if err := t.HandleRollback(ctx, data); err != nil {
+					t.Logger.Log(logger.Error, "rollback failed: "+err.Error(), data.CorrelationID)
+					return err
+				}
+				t.Logger.Log(logger.Info, "rollback completed", data.CorrelationID)
+				return nil
 			},
 		})
 
@@ -166,7 +181,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
 				t.Logger.Log(logger.Info, "starting restart", data.CorrelationID)
-				return t.HandleRestart(ctx, data)
+				if err := t.HandleRestart(ctx, data); err != nil {
+					t.Logger.Log(logger.Error, "restart failed: "+err.Error(), data.CorrelationID)
+					return err
+				}
+				t.Logger.Log(logger.Info, "restart completed", data.CorrelationID)
+				return nil
 			},
 		})
 	})
