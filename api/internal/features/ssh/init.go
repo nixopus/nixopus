@@ -296,25 +296,16 @@ func InvalidateAllSSHManagerCaches() {
 // The organization ID should be set in context by the auth middleware via types.OrganizationIDKey.
 // Uses the global store set during config.Init().
 func GetSSHManagerFromContext(ctx context.Context) (*SSHManager, error) {
-	orgIDAny := ctx.Value(types.OrganizationIDKey)
-	if orgIDAny == nil {
-		return nil, fmt.Errorf("organization ID not found in context")
-	}
+	orgIDStr, _ := ctx.Value(types.OrganizationIDKey).(string)
+	orgID, _ := uuid.Parse(orgIDStr)
 
-	var orgID uuid.UUID
-	switch v := orgIDAny.(type) {
-	case string:
-		var err error
-		orgID, err = uuid.Parse(v)
-		if err != nil {
-			return nil, fmt.Errorf("invalid organization ID in context: %w", err)
+	serverIDStr, _ := ctx.Value(types.ServerIDKey).(string)
+	if serverIDStr != "" {
+		serverID, err := uuid.Parse(serverIDStr)
+		if err == nil && serverID != uuid.Nil {
+			return GetSSHManagerForServer(ctx, orgID, serverID)
 		}
-	case uuid.UUID:
-		orgID = v
-	default:
-		return nil, fmt.Errorf("unexpected organization ID type in context: %T", v)
 	}
-
 	return GetSSHManagerForOrganization(ctx, orgID)
 }
 
