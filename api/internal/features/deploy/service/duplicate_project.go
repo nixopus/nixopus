@@ -97,6 +97,27 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 		return shared_types.Application{}, err
 	}
 
+	routingStrategy := req.RoutingStrategy
+	if routingStrategy == "" {
+		routingStrategy = sourceProject.RoutingStrategy
+	}
+	newProject.RoutingStrategy = routingStrategy
+
+	if len(req.ServerIDs) > 0 {
+		if err := s.storage.SetApplicationServers(
+			newProject.ID,
+			req.ServerIDs,
+			req.PrimaryServerID,
+			routingStrategy,
+		); err != nil {
+			s.logger.Log(logger.Warning, "failed to set application servers for duplicate", err.Error())
+		}
+	} else {
+		if err := s.storage.CopyApplicationServers(sourceProject.ID, newProject.ID); err != nil {
+			s.logger.Log(logger.Warning, "failed to copy application servers to duplicate", err.Error())
+		}
+	}
+
 	// Create application status with draft status
 	appStatus := shared_types.ApplicationStatus{
 		ID:            uuid.New(),
@@ -303,6 +324,10 @@ func (s *DeployService) AddApplicationToFamily(req *types.AddApplicationToFamily
 	}
 
 	application.Status = &appStatus
+
+	if err := s.storage.EnsureApplicationServers(application.ID, organizationID); err != nil {
+		s.logger.Log(logger.Warning, "failed to ensure application servers for family app", err.Error())
+	}
 
 	// Add domains if provided
 	if len(req.Domains) > 0 {
