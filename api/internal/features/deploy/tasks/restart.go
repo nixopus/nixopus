@@ -39,8 +39,30 @@ func (t *TaskService) RestartDeployment(request *types.RestartDeploymentRequest,
 	return RestartQueue.Add(TaskRestart.WithArgs(context.Background(), payload))
 }
 
-// HandleRestart routes restart based on the application's BuildPack type
+// HandleRestart fans out restart across all configured servers (or org default for single-server apps).
 func (s *TaskService) HandleRestart(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	allServers, err := s.Storage.GetApplicationServers(TaskPayload.Application.ID)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve application servers: %w", err)
+	}
+	if len(allServers) == 0 {
+		return s.handleRestartSingle(ctx, TaskPayload)
+	}
+	servers := filterServers(allServers, TaskPayload.TargetServerIDs)
+	if len(servers) == 0 && len(TaskPayload.TargetServerIDs) > 0 {
+		return fmt.Errorf("none of the requested target servers are assigned to this application")
+	}
+	if len(servers) == 0 {
+		servers = allServers
+	}
+	if len(servers) == 1 {
+		return s.handleRestartSingle(ctx, TaskPayload)
+	}
+	return s.fanOut(ctx, TaskPayload, servers, s.handleRestartSingle)
+}
+
+// handleRestartSingle routes restart based on the application's BuildPack type.
+func (s *TaskService) handleRestartSingle(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	switch TaskPayload.Application.BuildPack {
 	case shared_types.DockerFile:
 		return s.HandleRestartDockerfileDeployment(ctx, TaskPayload)

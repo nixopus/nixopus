@@ -39,6 +39,8 @@ type Application struct {
 	ComposeServices      []*ComposeService        `json:"compose_services,omitempty" bun:"rel:has-many,join:id=application_id"`
 	IsLiveDeployment     bool                     `json:"is_live_deployment" bun:"is_live_deployment,notnull,default:false"`
 	Source               Source                   `json:"source" bun:"source,notnull,default:'github'"`
+	RoutingStrategy      RoutingStrategy          `json:"routing_strategy" bun:"routing_strategy,notnull,default:'single'"`
+	Servers              []*ApplicationServer     `json:"servers,omitempty" bun:"rel:has-many,join:id=application_id"`
 }
 
 type ApplicationDeployment struct {
@@ -57,6 +59,9 @@ type ApplicationDeployment struct {
 	ContainerStatus string                       `json:"container_status" bun:"container_status"`
 	ImageS3Key      string                       `json:"image_s3_key" bun:"image_s3_key,default:''"`
 	ImageSize       int64                        `json:"image_size" bun:"image_size,default:0"`
+	ServerID           *uuid.UUID              `json:"server_id,omitempty"            bun:"server_id,type:uuid"`
+	ParentDeploymentID *uuid.UUID              `json:"parent_deployment_id,omitempty" bun:"parent_deployment_id,type:uuid"`
+	Children           []*ApplicationDeployment `json:"children,omitempty"            bun:"rel:has-many,join:id=parent_deployment_id"`
 }
 
 type ApplicationStatus struct {
@@ -92,6 +97,16 @@ type ApplicationLogs struct {
 
 	ApplicationDeployment *ApplicationDeployment `json:"application_deployment,omitempty" bun:"rel:belongs-to,join:application_deployment_id=id"`
 	Application           *Application           `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+}
+
+type ApplicationServer struct {
+	bun.BaseModel `bun:"table:application_servers,alias:as" swaggerignore:"true"`
+	ID            uuid.UUID `json:"id"             bun:"id,pk,type:uuid"`
+	ApplicationID uuid.UUID `json:"application_id" bun:"application_id,notnull,type:uuid"`
+	ServerID      uuid.UUID `json:"server_id"      bun:"server_id,notnull,type:uuid"`
+	IsPrimary     bool      `json:"is_primary"     bun:"is_primary,notnull,default:false"`
+	CreatedAt     time.Time `json:"created_at"     bun:"created_at,notnull,default:current_timestamp"`
+	Server        *SSHKey   `json:"server,omitempty" bun:"rel:belongs-to,join:server_id=id"`
 }
 
 type ComposeService struct {
@@ -133,19 +148,29 @@ func (d *ApplicationDomain) ResolvePort() int {
 	return 0
 }
 
+type RoutingStrategy string
+
+const (
+	RoutingStrategySingle          RoutingStrategy = "single"
+	RoutingStrategyRoundRobin      RoutingStrategy = "round_robin"
+	RoutingStrategyPrimaryFailover RoutingStrategy = "primary_failover"
+	RoutingStrategyPerServerDomain RoutingStrategy = "per_server_domain"
+)
+
 type Status string
 
 const (
-	Draft     Status = "draft"
-	Started   Status = "started"
-	Running   Status = "running"
-	Stopped   Status = "stopped"
-	Failed    Status = "failed"
-	Cloning   Status = "cloning"
-	Building  Status = "building"
-	Deploying Status = "deploying"
-	Deployed  Status = "deployed"
-	Cancelled Status = "cancelled"
+	Draft          Status = "draft"
+	Started        Status = "started"
+	Running        Status = "running"
+	Stopped        Status = "stopped"
+	Failed         Status = "failed"
+	Cloning        Status = "cloning"
+	Building       Status = "building"
+	Deploying      Status = "deploying"
+	Deployed       Status = "deployed"
+	Cancelled      Status = "cancelled"
+	PartialFailure Status = "partial_failure"
 )
 
 type Environment string
