@@ -2,6 +2,7 @@ package tasks
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -177,10 +178,16 @@ func (t *TaskService) StartConsumers(ctx context.Context) error {
 
 func (t *TaskService) BuildPack(ctx context.Context, d shared_types.TaskPayload) error {
 	allServers, err := t.Storage.GetApplicationServers(d.Application.ID)
-	if err != nil || len(allServers) == 0 {
+	if err != nil {
+		return fmt.Errorf("failed to retrieve application servers: %w", err)
+	}
+	if len(allServers) == 0 {
 		return t.buildPackSingle(ctx, d)
 	}
 	servers := filterServers(allServers, d.TargetServerIDs)
+	if len(servers) == 0 && len(d.TargetServerIDs) > 0 {
+		return fmt.Errorf("none of the requested target servers are assigned to this application")
+	}
 	if len(servers) == 0 {
 		servers = allServers
 	}

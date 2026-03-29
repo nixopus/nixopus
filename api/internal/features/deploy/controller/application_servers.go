@@ -38,6 +38,13 @@ func (c *DeployController) GetApplicationServers(f fuego.ContextNoBody) (*types.
 		}
 	}
 
+	if _, err := c.storage.GetApplicationById(appID.String(), organizationID); err != nil {
+		c.logger.Log(logger.Error, "application not found or not authorized", err.Error())
+		return nil, fuego.NotFoundError{
+			Detail: "application not found",
+		}
+	}
+
 	servers, err := c.storage.GetApplicationServers(appID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
@@ -103,6 +110,13 @@ func (c *DeployController) SetApplicationServers(f fuego.ContextWithBody[types.S
 			return nil, fuego.BadRequestError{
 				Detail: "primary_server_id must be one of the provided server_ids",
 			}
+		}
+	}
+
+	if _, err := c.storage.GetApplicationById(data.ApplicationID.String(), organizationID); err != nil {
+		c.logger.Log(logger.Error, "application not found or not authorized", err.Error())
+		return nil, fuego.NotFoundError{
+			Detail: "application not found",
 		}
 	}
 

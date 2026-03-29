@@ -70,6 +70,7 @@ type DeployRepository interface {
 	SetApplicationServers(appID uuid.UUID, serverIDs []uuid.UUID, primaryServerID *uuid.UUID, routingStrategy shared_types.RoutingStrategy) error
 	EnsureApplicationServers(appID uuid.UUID, orgID uuid.UUID) error
 	CopyApplicationServers(srcAppID, dstAppID uuid.UUID) error
+	DeleteApplicationDeploymentByID(id uuid.UUID) error
 }
 
 func (s *DeployStorage) RunInTransaction(fn func(tx bun.Tx) error) error {
@@ -1071,4 +1072,13 @@ func (s *DeployStorage) CopyApplicationServers(srcAppID, dstAppID uuid.UUID) err
 		}
 		return nil
 	})
+}
+
+// DeleteApplicationDeploymentByID deletes a single application deployment row by its ID.
+func (s *DeployStorage) DeleteApplicationDeploymentByID(id uuid.UUID) error {
+	_, err := s.DB.NewDelete().
+		Model((*shared_types.ApplicationDeployment)(nil)).
+		Where("id = ?", id).
+		Exec(s.Ctx)
+	return err
 }

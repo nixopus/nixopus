@@ -42,7 +42,9 @@ func (t *TaskService) addChildDeployment(parentDep shared_types.ApplicationDeplo
 		UpdatedAt:               now,
 	}
 	if err := t.Storage.AddApplicationDeploymentStatus(initialStatus); err != nil {
-		return child, err
+		// Compensating delete to avoid orphaned deployment row
+		_ = t.Storage.DeleteApplicationDeploymentByID(child.ID)
+		return shared_types.ApplicationDeployment{}, err
 	}
 	child.Status = initialStatus
 	return child, nil
