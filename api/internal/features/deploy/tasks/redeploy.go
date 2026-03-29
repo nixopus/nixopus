@@ -11,8 +11,24 @@ import (
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
-// HandleReDeploy routes redeployment based on the application's BuildPack type
+// HandleReDeploy fans out redeployment across all configured servers (or org default for single-server apps).
 func (s *TaskService) HandleReDeploy(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	allServers, err := s.Storage.GetApplicationServers(TaskPayload.Application.ID)
+	if err != nil || len(allServers) == 0 {
+		return s.handleReDeploySingle(ctx, TaskPayload)
+	}
+	servers := filterServers(allServers, TaskPayload.TargetServerIDs)
+	if len(servers) == 0 {
+		servers = allServers
+	}
+	if len(servers) == 1 {
+		return s.handleReDeploySingle(ctx, TaskPayload)
+	}
+	return s.fanOut(ctx, TaskPayload, servers, s.handleReDeploySingle)
+}
+
+// handleReDeploySingle routes redeployment based on the application's BuildPack type.
+func (s *TaskService) handleReDeploySingle(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	switch TaskPayload.Application.BuildPack {
 	case shared_types.DockerFile:
 		return s.HandleReDeployDockerfileDeployment(ctx, TaskPayload)
