@@ -26,7 +26,7 @@ type SSHKey struct {
 	KeySize             *int       `json:"key_size,omitempty" bun:"key_size,default:4096"`
 	Fingerprint         *string    `json:"fingerprint,omitempty" bun:"fingerprint"`
 	AuthMethod          string     `json:"auth_method" bun:"auth_method,notnull,default:'key'"`
-	IsActive            bool       `json:"is_active" bun:"is_active,notnull,default:true"`
+	IsActive            bool       `json:"is_active" bun:"is_active,notnull"`
 	IsDefault           bool       `json:"is_default" bun:"is_default,notnull,default:false"`
 	LastUsedAt          *time.Time `json:"last_used_at,omitempty" bun:"last_used_at"`
 	CreatedAt           time.Time  `json:"created_at" bun:"created_at,notnull,default:now()"`
