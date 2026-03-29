@@ -46,10 +46,16 @@ func (t *TaskService) RollbackDeployment(request *types.RollbackDeploymentReques
 // HandleRollback fans out rollback across all configured servers (or org default for single-server apps).
 func (s *TaskService) HandleRollback(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	allServers, err := s.Storage.GetApplicationServers(TaskPayload.Application.ID)
-	if err != nil || len(allServers) == 0 {
+	if err != nil {
+		return fmt.Errorf("failed to retrieve application servers: %w", err)
+	}
+	if len(allServers) == 0 {
 		return s.handleRollbackSingle(ctx, TaskPayload)
 	}
 	servers := filterServers(allServers, TaskPayload.TargetServerIDs)
+	if len(servers) == 0 && len(TaskPayload.TargetServerIDs) > 0 {
+		return fmt.Errorf("none of the requested target servers are assigned to this application")
+	}
 	if len(servers) == 0 {
 		servers = allServers
 	}
