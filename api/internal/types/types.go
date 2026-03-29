@@ -143,6 +143,7 @@ const UserContextKey contextKey = "user"
 const AuthTokenKey ClientContext = "auth_token"
 const DBContextKey ClientContext = "db"
 const OrganizationIDKey contextKey = "organization_id"
+const ServerIDKey contextKey = "server_id"
 
 type AvailableActions string
 
