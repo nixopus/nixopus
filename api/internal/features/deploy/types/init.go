@@ -296,6 +296,7 @@ type IndexCodebaseResponseData struct {
 }
 
 var (
+	ErrAtLeastOneServerRequired         = errors.New("at least one server is required")
 	ErrS3NotConfigured                  = errors.New("S3 image storage is not configured")
 	ErrMissingID                        = errors.New("id is required")
 	ErrInvalidRequestType               = errors.New("invalid request type")

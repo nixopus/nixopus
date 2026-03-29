@@ -13,6 +13,7 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 
 	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	sshstorage "github.com/nixopus/nixopus/api/internal/features/ssh/storage"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
@@ -65,6 +66,10 @@ type DeployRepository interface {
 	GetComposeServiceByName(applicationID uuid.UUID, serviceName string) (*shared_types.ComposeService, error)
 	AddApplicationDomainWithService(applicationID uuid.UUID, domain string, composeServiceID *uuid.UUID, port *int) error
 	UpdateApplicationDomainService(applicationID uuid.UUID, domain string, composeServiceID *uuid.UUID, port *int) error
+	GetApplicationServers(appID uuid.UUID) ([]shared_types.ApplicationServer, error)
+	SetApplicationServers(appID uuid.UUID, serverIDs []uuid.UUID, primaryServerID *uuid.UUID, routingStrategy shared_types.RoutingStrategy) error
+	EnsureApplicationServers(appID uuid.UUID, orgID uuid.UUID) error
+	CopyApplicationServers(srcAppID, dstAppID uuid.UUID) error
 }
 
 func (s *DeployStorage) RunInTransaction(fn func(tx bun.Tx) error) error {
@@ -955,4 +960,115 @@ func (s *DeployStorage) AddApplicationDomainWithService(applicationID uuid.UUID,
 	}
 
 	return nil
+}
+
+// GetApplicationServers returns all servers assigned to an application, with SSH key details loaded.
+func (s *DeployStorage) GetApplicationServers(appID uuid.UUID) ([]shared_types.ApplicationServer, error) {
+	var servers []shared_types.ApplicationServer
+	err := s.DB.NewSelect().
+		Model(&servers).
+		Relation("Server").
+		Where("as.application_id = ?", appID).
+		Order("as.is_primary DESC", "as.created_at ASC").
+		Scan(s.Ctx)
+	return servers, err
+}
+
+// SetApplicationServers replaces the app's server assignment and updates routing strategy.
+// Runs in a transaction. Rejects empty serverIDs.
+func (s *DeployStorage) SetApplicationServers(appID uuid.UUID, serverIDs []uuid.UUID, primaryServerID *uuid.UUID, routingStrategy shared_types.RoutingStrategy) error {
+	if len(serverIDs) == 0 {
+		return types.ErrAtLeastOneServerRequired
+	}
+	return s.RunInTransaction(func(tx bun.Tx) error {
+		if _, err := tx.NewDelete().
+			TableExpr("application_servers").
+			Where("application_id = ?", appID).
+			Exec(s.Ctx); err != nil {
+			return err
+		}
+
+		now := time.Now()
+		for _, serverID := range serverIDs {
+			isPrimary := primaryServerID != nil && serverID == *primaryServerID
+			row := shared_types.ApplicationServer{
+				ID:            uuid.New(),
+				ApplicationID: appID,
+				ServerID:      serverID,
+				IsPrimary:     isPrimary,
+				CreatedAt:     now,
+			}
+			if _, err := tx.NewInsert().Model(&row).Exec(s.Ctx); err != nil {
+				return err
+			}
+		}
+
+		if routingStrategy != "" {
+			if _, err := tx.NewUpdate().
+				TableExpr("applications").
+				Set("routing_strategy = ?", routingStrategy).
+				Where("id = ?", appID).
+				Exec(s.Ctx); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// EnsureApplicationServers inserts the org's default server as primary if no application_servers rows exist yet.
+func (s *DeployStorage) EnsureApplicationServers(appID uuid.UUID, orgID uuid.UUID) error {
+	count, err := s.DB.NewSelect().
+		TableExpr("application_servers").
+		Where("application_id = ?", appID).
+		Count(s.Ctx)
+	if err != nil {
+		return err
+	}
+	if count > 0 {
+		return nil
+	}
+
+	sshStorage := sshstorage.SSHKeyStorage{DB: s.DB, Ctx: s.Ctx}
+	key, err := sshStorage.GetDefaultSSHKeyByOrganizationID(orgID)
+	if err != nil {
+		return fmt.Errorf("cannot find default server for org %s: %w", orgID, err)
+	}
+
+	row := shared_types.ApplicationServer{
+		ID:            uuid.New(),
+		ApplicationID: appID,
+		ServerID:      key.ID,
+		IsPrimary:     true,
+		CreatedAt:     time.Now(),
+	}
+	_, err = s.DB.NewInsert().Model(&row).Exec(s.Ctx)
+	return err
+}
+
+// CopyApplicationServers copies server assignments from one app to another with fresh IDs.
+func (s *DeployStorage) CopyApplicationServers(srcAppID, dstAppID uuid.UUID) error {
+	src, err := s.GetApplicationServers(srcAppID)
+	if err != nil {
+		return err
+	}
+	if len(src) == 0 {
+		return nil
+	}
+	return s.RunInTransaction(func(tx bun.Tx) error {
+		now := time.Now()
+		for _, srv := range src {
+			row := shared_types.ApplicationServer{
+				ID:            uuid.New(),
+				ApplicationID: dstAppID,
+				ServerID:      srv.ServerID,
+				IsPrimary:     srv.IsPrimary,
+				CreatedAt:     now,
+			}
+			if _, err := tx.NewInsert().Model(&row).Exec(s.Ctx); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
