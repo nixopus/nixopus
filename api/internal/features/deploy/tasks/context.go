@@ -168,6 +168,22 @@ func (c *ContextTask) PrepareCreateDeploymentContext() (shared_types.TaskPayload
 		return shared_types.TaskPayload{}, err
 	}
 
+	// Seed application_servers for this new app
+	if len(deployment.ServerIDs) > 0 {
+		if err := c.TaskService.Storage.SetApplicationServers(
+			application.ID,
+			deployment.ServerIDs,
+			deployment.PrimaryServerID,
+			deployment.RoutingStrategy,
+		); err != nil {
+			c.TaskService.Logger.Log(logger.Warning, "failed to set application servers", err.Error())
+		}
+	} else {
+		if err := c.TaskService.Storage.EnsureApplicationServers(application.ID, c.OrganizationId); err != nil {
+			c.TaskService.Logger.Log(logger.Warning, "failed to ensure application servers", err.Error())
+		}
+	}
+
 	// Add domains to application_domains table.
 	// For compose apps, extract domain names from ComposeDomains.
 	// Service linkage is deferred until compose services are discovered during deploy.
@@ -197,6 +213,7 @@ func (c *ContextTask) PrepareCreateDeploymentContext() (shared_types.TaskPayload
 		Application:           application,
 		ApplicationDeployment: applicationDeployment,
 		Status:                initialStatus,
+		TargetServerIDs:       deployment.TargetServerIDs,
 		UpdateOptions: shared_types.UpdateOptions{
 			Force:             false,
 			ForceWithoutCache: false,

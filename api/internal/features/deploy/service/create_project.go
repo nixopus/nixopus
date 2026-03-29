@@ -121,6 +121,21 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 		return shared_types.Application{}, err
 	}
 
+	if len(req.ServerIDs) > 0 {
+		if err := s.storage.SetApplicationServers(
+			application.ID,
+			req.ServerIDs,
+			req.PrimaryServerID,
+			req.RoutingStrategy,
+		); err != nil {
+			s.logger.Log(logger.Warning, "failed to set application servers", err.Error())
+		}
+	} else {
+		if err := s.storage.EnsureApplicationServers(application.ID, organizationID); err != nil {
+			s.logger.Log(logger.Warning, "failed to ensure application servers", err.Error())
+		}
+	}
+
 	if len(req.ComposeServices) > 0 {
 		if err := s.persistComposeServicesAndLinkDomains(application.ID, req.ComposeServices, req.ComposeDomains); err != nil {
 			s.logger.Log(logger.Error, "failed to persist compose services", err.Error())
