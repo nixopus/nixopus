@@ -43,9 +43,25 @@ func (t *TaskService) RollbackDeployment(request *types.RollbackDeploymentReques
 	return RollbackQueue.Add(TaskRollback.WithArgs(context.Background(), payload))
 }
 
-// HandleRollback performs rollback via S3 image restore when available,
-// falling back to Docker Swarm's native rollback otherwise.
+// HandleRollback fans out rollback across all configured servers (or org default for single-server apps).
 func (s *TaskService) HandleRollback(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
+	allServers, err := s.Storage.GetApplicationServers(TaskPayload.Application.ID)
+	if err != nil || len(allServers) == 0 {
+		return s.handleRollbackSingle(ctx, TaskPayload)
+	}
+	servers := filterServers(allServers, TaskPayload.TargetServerIDs)
+	if len(servers) == 0 {
+		servers = allServers
+	}
+	if len(servers) == 1 {
+		return s.handleRollbackSingle(ctx, TaskPayload)
+	}
+	return s.fanOut(ctx, TaskPayload, servers, s.handleRollbackSingle)
+}
+
+// handleRollbackSingle performs rollback via S3 image restore when available,
+// falling back to Docker Swarm's native rollback otherwise.
+func (s *TaskService) handleRollbackSingle(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	switch TaskPayload.Application.BuildPack {
 	case shared_types.DockerFile:
 		return s.HandleRollbackDockerfileDeployment(ctx, TaskPayload)

@@ -447,7 +447,7 @@ func (s *DeployStorage) GetPaginatedApplicationDeployments(applicationID uuid.UU
 
 	totalCount, err := s.DB.NewSelect().
 		Model((*shared_types.ApplicationDeployment)(nil)).
-		Where("application_id = ?", applicationID).
+		Where("application_id = ? AND parent_deployment_id IS NULL", applicationID).
 		Count(s.Ctx)
 
 	if err != nil {
@@ -457,7 +457,7 @@ func (s *DeployStorage) GetPaginatedApplicationDeployments(applicationID uuid.UU
 	err = s.DB.NewSelect().
 		Model(&deployments).
 		Relation("Status").
-		Where("application_id = ?", applicationID).
+		Where("application_id = ? AND parent_deployment_id IS NULL", applicationID).
 		Order("created_at DESC").
 		Limit(pageSize).
 		Offset(offset).

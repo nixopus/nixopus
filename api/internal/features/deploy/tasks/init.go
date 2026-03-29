@@ -176,37 +176,42 @@ func (t *TaskService) StartConsumers(ctx context.Context) error {
 }
 
 func (t *TaskService) BuildPack(ctx context.Context, d shared_types.TaskPayload) error {
-	var err error
+	allServers, err := t.Storage.GetApplicationServers(d.Application.ID)
+	if err != nil || len(allServers) == 0 {
+		return t.buildPackSingle(ctx, d)
+	}
+	servers := filterServers(allServers, d.TargetServerIDs)
+	if len(servers) == 0 {
+		servers = allServers
+	}
+	if len(servers) == 1 {
+		return t.buildPackSingle(ctx, d)
+	}
+	return t.fanOut(ctx, d, servers, t.buildPackSingle)
+}
+
+// buildPackSingle runs the build for the current context's server (or org default if no ServerIDKey).
+func (t *TaskService) buildPackSingle(ctx context.Context, d shared_types.TaskPayload) error {
 	switch d.Application.BuildPack {
 	case shared_types.DockerFile:
-		err = t.PrerunCommands(ctx, d)
-		if err != nil {
+		if err := t.PrerunCommands(ctx, d); err != nil {
 			return err
 		}
 		if err := checkCancelled(ctx); err != nil {
 			return err
 		}
-		err = t.HandleCreateDockerfileDeployment(ctx, d)
-		if err != nil {
+		if err := t.HandleCreateDockerfileDeployment(ctx, d); err != nil {
 			return err
 		}
 		if err := checkCancelled(ctx); err != nil {
 			return err
 		}
-		err = t.PostRunCommands(ctx, d)
-		if err != nil {
-			return err
-		}
+		return t.PostRunCommands(ctx, d)
 	case shared_types.DockerCompose:
-		err = t.HandleCreateDockerComposeDeployment(ctx, d)
+		return t.HandleCreateDockerComposeDeployment(ctx, d)
 	case shared_types.Static:
-		err = t.HandleCreateStaticDeployment(ctx, d)
+		return t.HandleCreateStaticDeployment(ctx, d)
 	default:
 		return types.ErrInvalidBuildPack
 	}
-
-	if err != nil {
-		return err
-	}
-	return nil
 }
