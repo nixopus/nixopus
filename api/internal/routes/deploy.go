@@ -189,4 +189,17 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 		deployController.HandleRecover,
 		fuego.OptionSummary("Recover application"),
 	)
+	fuego.Get(
+		applicationGroup,
+		"/servers",
+		deployController.GetApplicationServers,
+		fuego.OptionSummary("Get application servers"),
+		fuego.OptionQuery("id", "Application ID", fuego.ParamRequired()),
+	)
+	fuego.Put(
+		applicationGroup,
+		"/servers",
+		deployController.SetApplicationServers,
+		fuego.OptionSummary("Set application servers"),
+	)
 }
