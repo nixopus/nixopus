@@ -44,24 +44,24 @@ type Application struct {
 }
 
 type ApplicationDeployment struct {
-	bun.BaseModel   `bun:"table:application_deployment,alias:ad" swaggerignore:"true"`
-	ID              uuid.UUID                    `json:"id" bun:"id,pk,type:uuid"`
-	ApplicationID   uuid.UUID                    `json:"application_id" bun:"application_id,notnull,type:uuid"`
-	CreatedAt       time.Time                    `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
-	UpdatedAt       time.Time                    `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
-	CommitHash      string                       `json:"commit_hash" bun:"commit_hash"`
-	Application     *Application                 `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
-	Status          *ApplicationDeploymentStatus `json:"status,omitempty" bun:"rel:has-one,join:id=application_deployment_id"`
-	Logs            []*ApplicationLogs           `json:"logs,omitempty" bun:"rel:has-many,join:id=application_deployment_id"`
-	ContainerID     string                       `json:"container_id" bun:"container_id"`
-	ContainerName   string                       `json:"container_name" bun:"container_name"`
-	ContainerImage  string                       `json:"container_image" bun:"container_image"`
-	ContainerStatus string                       `json:"container_status" bun:"container_status"`
-	ImageS3Key      string                       `json:"image_s3_key" bun:"image_s3_key,default:''"`
-	ImageSize       int64                        `json:"image_size" bun:"image_size,default:0"`
-	ServerID           *uuid.UUID              `json:"server_id,omitempty"            bun:"server_id,type:uuid"`
-	ParentDeploymentID *uuid.UUID              `json:"parent_deployment_id,omitempty" bun:"parent_deployment_id,type:uuid"`
-	Children           []*ApplicationDeployment `json:"children,omitempty"            bun:"rel:has-many,join:id=parent_deployment_id"`
+	bun.BaseModel      `bun:"table:application_deployment,alias:ad" swaggerignore:"true"`
+	ID                 uuid.UUID                    `json:"id" bun:"id,pk,type:uuid"`
+	ApplicationID      uuid.UUID                    `json:"application_id" bun:"application_id,notnull,type:uuid"`
+	CreatedAt          time.Time                    `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt          time.Time                    `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
+	CommitHash         string                       `json:"commit_hash" bun:"commit_hash"`
+	Application        *Application                 `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+	Status             *ApplicationDeploymentStatus `json:"status,omitempty" bun:"rel:has-one,join:id=application_deployment_id"`
+	Logs               []*ApplicationLogs           `json:"logs,omitempty" bun:"rel:has-many,join:id=application_deployment_id"`
+	ContainerID        string                       `json:"container_id" bun:"container_id"`
+	ContainerName      string                       `json:"container_name" bun:"container_name"`
+	ContainerImage     string                       `json:"container_image" bun:"container_image"`
+	ContainerStatus    string                       `json:"container_status" bun:"container_status"`
+	ImageS3Key         string                       `json:"image_s3_key" bun:"image_s3_key,default:''"`
+	ImageSize          int64                        `json:"image_size" bun:"image_size,default:0"`
+	ServerID           *uuid.UUID                   `json:"server_id,omitempty"            bun:"server_id,type:uuid"`
+	ParentDeploymentID *uuid.UUID                   `json:"parent_deployment_id,omitempty" bun:"parent_deployment_id,type:uuid"`
+	Children           []*ApplicationDeployment     `json:"children,omitempty"            bun:"rel:has-many,join:id=parent_deployment_id"`
 }
 
 type ApplicationStatus struct {
@@ -100,7 +100,7 @@ type ApplicationLogs struct {
 }
 
 type ApplicationServer struct {
-	bun.BaseModel `bun:"table:application_servers,alias:as" swaggerignore:"true"`
+	bun.BaseModel `bun:"table:application_servers,alias:aps" swaggerignore:"true"`
 	ID            uuid.UUID `json:"id"             bun:"id,pk,type:uuid"`
 	ApplicationID uuid.UUID `json:"application_id" bun:"application_id,notnull,type:uuid"`
 	ServerID      uuid.UUID `json:"server_id"      bun:"server_id,notnull,type:uuid"`
