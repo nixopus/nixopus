@@ -279,6 +279,13 @@ type ComposeServicesResponse struct {
 	Data    []shared_types.ComposeService `json:"data"`
 }
 
+// ApplicationServersResponse is the typed response for application server assignment operations.
+type ApplicationServersResponse struct {
+	Status  string                           `json:"status"`
+	Message string                           `json:"message"`
+	Data    []shared_types.ApplicationServer `json:"data"`
+}
+
 type CancelDeploymentRequest struct {
 	DeploymentID uuid.UUID `json:"deployment_id"`
 }
