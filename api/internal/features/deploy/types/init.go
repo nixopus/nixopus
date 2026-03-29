@@ -31,41 +31,48 @@ type ComposeDomain struct {
 }
 
 type CreateDeploymentRequest struct {
-	Name                 string                   `json:"name"`
-	Domains              []string                 `json:"domains,omitempty"`
-	ComposeDomains       []ComposeDomain          `json:"compose_domains,omitempty"`
-	Environment          shared_types.Environment `json:"environment"`
-	BuildPack            shared_types.BuildPack   `json:"build_pack"`
-	Repository           string                   `json:"repository"`
-	Branch               string                   `json:"branch"`
-	PreRunCommand        string                   `json:"pre_run_command"`
-	PostRunCommand       string                   `json:"post_run_command"`
-	BuildVariables       map[string]string        `json:"build_variables"`
-	EnvironmentVariables map[string]string        `json:"environment_variables"`
-	Port                 int                      `json:"port"`
-	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
-	BasePath             string                   `json:"base_path,omitempty"`
-	Source               shared_types.Source      `json:"source,omitempty"`
+	Name                 string                          `json:"name"`
+	Domains              []string                        `json:"domains,omitempty"`
+	ComposeDomains       []ComposeDomain                 `json:"compose_domains,omitempty"`
+	Environment          shared_types.Environment        `json:"environment"`
+	BuildPack            shared_types.BuildPack          `json:"build_pack"`
+	Repository           string                          `json:"repository"`
+	Branch               string                          `json:"branch"`
+	PreRunCommand        string                          `json:"pre_run_command"`
+	PostRunCommand       string                          `json:"post_run_command"`
+	BuildVariables       map[string]string               `json:"build_variables"`
+	EnvironmentVariables map[string]string               `json:"environment_variables"`
+	Port                 int                             `json:"port"`
+	DockerfilePath       string                          `json:"dockerfile_path,omitempty"`
+	BasePath             string                          `json:"base_path,omitempty"`
+	Source               shared_types.Source             `json:"source,omitempty"`
+	ServerIDs            []uuid.UUID                     `json:"server_ids,omitempty"`
+	PrimaryServerID      *uuid.UUID                      `json:"primary_server_id,omitempty"`
+	RoutingStrategy      shared_types.RoutingStrategy    `json:"routing_strategy,omitempty"`
+	TargetServerIDs      []uuid.UUID                     `json:"target_server_ids,omitempty"`
 }
 
 // CreateProjectRequest is used to create a project (application) without triggering deployment.
 type CreateProjectRequest struct {
-	Name                 string                   `json:"name"`
-	Domains              []string                 `json:"domains,omitempty"`
-	ComposeDomains       []ComposeDomain          `json:"compose_domains,omitempty"`
-	ComposeServices      []PreviewComposeService  `json:"compose_services,omitempty"`
-	Environment          shared_types.Environment `json:"environment,omitempty"`
-	BuildPack            shared_types.BuildPack   `json:"build_pack,omitempty"`
-	Repository           string                   `json:"repository"`
-	Branch               string                   `json:"branch,omitempty"`
-	PreRunCommand        string                   `json:"pre_run_command,omitempty"`
-	PostRunCommand       string                   `json:"post_run_command,omitempty"`
-	BuildVariables       map[string]string        `json:"build_variables,omitempty"`
-	EnvironmentVariables map[string]string        `json:"environment_variables,omitempty"`
-	Port                 int                      `json:"port,omitempty"`
-	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
-	BasePath             string                   `json:"base_path,omitempty"`
-	Source               shared_types.Source      `json:"source,omitempty"`
+	Name                 string                       `json:"name"`
+	Domains              []string                     `json:"domains,omitempty"`
+	ComposeDomains       []ComposeDomain              `json:"compose_domains,omitempty"`
+	ComposeServices      []PreviewComposeService      `json:"compose_services,omitempty"`
+	Environment          shared_types.Environment     `json:"environment,omitempty"`
+	BuildPack            shared_types.BuildPack       `json:"build_pack,omitempty"`
+	Repository           string                       `json:"repository"`
+	Branch               string                       `json:"branch,omitempty"`
+	PreRunCommand        string                       `json:"pre_run_command,omitempty"`
+	PostRunCommand       string                       `json:"post_run_command,omitempty"`
+	BuildVariables       map[string]string            `json:"build_variables,omitempty"`
+	EnvironmentVariables map[string]string            `json:"environment_variables,omitempty"`
+	Port                 int                          `json:"port,omitempty"`
+	DockerfilePath       string                       `json:"dockerfile_path,omitempty"`
+	BasePath             string                       `json:"base_path,omitempty"`
+	Source               shared_types.Source          `json:"source,omitempty"`
+	ServerIDs            []uuid.UUID                  `json:"server_ids,omitempty"`
+	PrimaryServerID      *uuid.UUID                   `json:"primary_server_id,omitempty"`
+	RoutingStrategy      shared_types.RoutingStrategy `json:"routing_strategy,omitempty"`
 }
 
 type PreviewComposeRequest struct {
@@ -90,20 +97,21 @@ type DeployProjectRequest struct {
 }
 
 type UpdateDeploymentRequest struct {
-	Name                 string                   `json:"name,omitempty"`
-	Environment          shared_types.Environment `json:"environment,omitempty"`
-	BuildPack            shared_types.BuildPack   `json:"build_pack,omitempty"`
-	PreRunCommand        string                   `json:"pre_run_command,omitempty"`
-	PostRunCommand       string                   `json:"post_run_command,omitempty"`
-	BuildVariables       map[string]string        `json:"build_variables,omitempty"`
-	EnvironmentVariables map[string]string        `json:"environment_variables,omitempty"`
-	Port                 int                      `json:"port,omitempty"`
-	ID                   uuid.UUID                `json:"id,omitempty"`
-	Force                bool                     `json:"force,omitempty"`
-	DockerfilePath       string                   `json:"dockerfile_path,omitempty"`
-	BasePath             string                   `json:"base_path,omitempty"`
-	Domains              []string                 `json:"domains,omitempty"`
-	ComposeDomains       []ComposeDomain          `json:"compose_domains,omitempty"`
+	Name                 string                       `json:"name,omitempty"`
+	Environment          shared_types.Environment     `json:"environment,omitempty"`
+	BuildPack            shared_types.BuildPack       `json:"build_pack,omitempty"`
+	PreRunCommand        string                       `json:"pre_run_command,omitempty"`
+	PostRunCommand       string                       `json:"post_run_command,omitempty"`
+	BuildVariables       map[string]string            `json:"build_variables,omitempty"`
+	EnvironmentVariables map[string]string            `json:"environment_variables,omitempty"`
+	Port                 int                          `json:"port,omitempty"`
+	ID                   uuid.UUID                    `json:"id,omitempty"`
+	Force                bool                         `json:"force,omitempty"`
+	DockerfilePath       string                       `json:"dockerfile_path,omitempty"`
+	BasePath             string                       `json:"base_path,omitempty"`
+	Domains              []string                     `json:"domains,omitempty"`
+	ComposeDomains       []ComposeDomain              `json:"compose_domains,omitempty"`
+	RoutingStrategy      shared_types.RoutingStrategy `json:"routing_strategy,omitempty"`
 }
 
 type DeleteDeploymentRequest struct {
@@ -111,13 +119,15 @@ type DeleteDeploymentRequest struct {
 }
 
 type ReDeployApplicationRequest struct {
-	ID                uuid.UUID `json:"id"`
-	Force             bool      `json:"force"`
-	ForceWithoutCache bool      `json:"force_without_cache"`
+	ID                uuid.UUID   `json:"id"`
+	Force             bool        `json:"force"`
+	ForceWithoutCache bool        `json:"force_without_cache"`
+	TargetServerIDs   []uuid.UUID `json:"target_server_ids,omitempty"`
 }
 
 type RollbackDeploymentRequest struct {
-	ID uuid.UUID `json:"id"`
+	ID              uuid.UUID   `json:"id"`
+	TargetServerIDs []uuid.UUID `json:"target_server_ids,omitempty"`
 }
 
 type RestartDeploymentRequest struct {
@@ -126,15 +136,26 @@ type RestartDeploymentRequest struct {
 
 // DuplicateProjectRequest is used to create a duplicate of an existing project with a different environment.
 type DuplicateProjectRequest struct {
-	SourceProjectID uuid.UUID                `json:"source_project_id"`
-	Domains         []string                 `json:"domains,omitempty"`
-	Environment     shared_types.Environment `json:"environment"`
-	Branch          string                   `json:"branch,omitempty"`
+	SourceProjectID uuid.UUID                    `json:"source_project_id"`
+	Domains         []string                     `json:"domains,omitempty"`
+	Environment     shared_types.Environment     `json:"environment"`
+	Branch          string                       `json:"branch,omitempty"`
+	ServerIDs       []uuid.UUID                  `json:"server_ids,omitempty"`
+	PrimaryServerID *uuid.UUID                   `json:"primary_server_id,omitempty"`
+	RoutingStrategy shared_types.RoutingStrategy `json:"routing_strategy,omitempty"`
 }
 
 // GetProjectFamilyRequest is used to get all projects in a family.
 type GetProjectFamilyRequest struct {
 	FamilyID uuid.UUID `json:"family_id"`
+}
+
+// SetApplicationServersRequest is used to assign servers to an existing application.
+type SetApplicationServersRequest struct {
+	ApplicationID   uuid.UUID                    `json:"application_id"`
+	ServerIDs       []uuid.UUID                  `json:"server_ids"`
+	PrimaryServerID *uuid.UUID                   `json:"primary_server_id,omitempty"`
+	RoutingStrategy shared_types.RoutingStrategy `json:"routing_strategy,omitempty"`
 }
 
 // AddApplicationToFamilyRequest is used to add a new application to an existing family.
