@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppSelector } from '@/redux/hooks';
 import { authClient } from '@/packages/lib/auth-client';
 import { createAgentClient, AGENT_ID } from '@/packages/lib/agent-client';
+import { v4 as uuid } from 'uuid';
 
 export interface ChatThread {
   id: string;
@@ -117,7 +118,7 @@ export function useChatThreads() {
 
   const createThread = useCallback(
     (title?: string): ChatThread => {
-      const threadId = crypto.randomUUID();
+      const threadId = uuid();
       const now = new Date();
       const thread: ChatThread = {
         id: threadId,

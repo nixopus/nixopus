@@ -12,6 +12,7 @@ import {
   type StreamChunk
 } from '@/packages/lib/agent-client';
 import { type ChatContext, formatContextsForAgent } from './chat-context';
+import { v4 as uuid } from 'uuid';
 
 export type MessagePart =
   | { type: 'text'; content: string }
@@ -593,7 +594,7 @@ export function useAgentChat({
       const runIdRef = { current: '' };
       firstTextDeltaTimeRef.current = null;
 
-      const assistantMessageId = crypto.randomUUID();
+      const assistantMessageId = uuid();
       setMessages((prev) => [
         ...prev,
         { id: assistantMessageId, role: 'assistant', content: '', timestamp: new Date(), parts: [] }
@@ -771,7 +772,7 @@ export function useAgentChat({
 
       const content = inputValue.trim();
       const userMessage: ChatMessage = {
-        id: crypto.randomUUID(),
+        id: uuid(),
         role: 'user',
         content,
         timestamp: new Date(),
@@ -807,7 +808,7 @@ export function useAgentChat({
       if (!isStreaming && threadId) {
         setInputValue('');
         const userMessage: ChatMessage = {
-          id: crypto.randomUUID(),
+          id: uuid(),
           role: 'user',
           content: text,
           timestamp: new Date(),
@@ -842,7 +843,7 @@ export function useAgentChat({
       const content = `[user_response]\n${formatted}`;
 
       const userMessage: ChatMessage = {
-        id: crypto.randomUUID(),
+        id: uuid(),
         role: 'user',
         content,
         timestamp: new Date()

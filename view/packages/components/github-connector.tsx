@@ -8,6 +8,7 @@ import { Skeleton } from '@nixopus/ui';
 import { Alert, AlertDescription } from '@nixopus/ui';
 import { DialogWrapper, type DialogAction } from '@nixopus/ui';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
+import { v4 as uuid } from 'uuid';
 import { useSudoMode } from '@/packages/hooks/security/use-sudo-mode';
 import {
   Github,
@@ -98,7 +99,7 @@ const GithubInstaller: React.FC<GithubInstallProps> = ({
       ? `/organizations/${organization}/settings/apps/${appSlug}/installations/new`
       : `/apps/${appSlug}/installations/new`;
 
-    const stateParam = encodeURIComponent(crypto.randomUUID());
+    const stateParam = encodeURIComponent(uuid());
 
     const redirectUrl = `${baseUrl}${installPath}?state=${stateParam}&redirect_uri=${encodeURIComponent(callbackUrl)}`;
 
