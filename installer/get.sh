@@ -3,7 +3,7 @@ set -euo pipefail
 
 NIXOPUS_VERSION="0.3.0"
 NIXOPUS_HOME="${NIXOPUS_HOME:-/opt/nixopus}"
-TELEMETRY_URL="${NIXOPUS_TELEMETRY_URL:-https://nixopus-api.nixopus.com/api/cli/installations}"
+TELEMETRY_URL="${NIXOPUS_TELEMETRY_URL:-https://api.nixopus.com/api/v1/cli/telemetry}"
 REPO_RAW="${NIXOPUS_REPO_RAW:-https://raw.githubusercontent.com/nixopus/nixopus/master/installer}"
 INSTALL_START=$(date +%s)
 
@@ -969,6 +969,7 @@ MGMT
 send_telemetry() {
     local event="${1:-install_success}" error="${2:-}"
     [ "${NIXOPUS_TELEMETRY:-on}" = "off" ] && return 0
+    [ "${DO_NOT_TRACK:-0}" = "1" ] && return 0
 
     local duration=$(( $(date +%s) - INSTALL_START ))
     local payload="{\"event_type\":\"$event\",\"os\":\"${OS_ID:-unknown}\",\"arch\":\"${ARCH:-unknown}\",\"version\":\"$NIXOPUS_VERSION\",\"duration\":$duration"
@@ -1012,14 +1013,15 @@ show_complete() {
     fi
     echo -e "  ${DIM}Docs: https://docs.nixopus.com | Discord: https://discord.gg/skdcq39Wpv${NC}"
 
-    if [ "${NIXOPUS_TELEMETRY:-on}" != "off" ]; then
-        echo -e "  ${DIM}Anonymous telemetry enabled. Disable: NIXOPUS_TELEMETRY=off${NC}"
+    if [ "${NIXOPUS_TELEMETRY:-on}" != "off" ] && [ "${DO_NOT_TRACK:-0}" != "1" ]; then
+        echo -e "  ${DIM}Anonymous telemetry enabled. Disable: NIXOPUS_TELEMETRY=off or DO_NOT_TRACK=1${NC}"
     fi
     echo ""
 }
 
 main() {
     show_banner
+    send_telemetry "install_started" || true
 
     log_step 1 "Checking requirements"
     check_root

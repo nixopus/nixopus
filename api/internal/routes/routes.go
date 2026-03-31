@@ -34,6 +34,7 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/notification/channel"
 	notificationController "github.com/nixopus/nixopus/api/internal/features/notification/controller"
 	server_controller "github.com/nixopus/nixopus/api/internal/features/server/controller"
+	telemetry "github.com/nixopus/nixopus/api/internal/features/telemetry/controller"
 	trail "github.com/nixopus/nixopus/api/internal/features/trail/controller"
 	"github.com/nixopus/nixopus/api/internal/openapi"
 
@@ -243,6 +244,11 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 	mcpPublicCtrl := mcpController.NewMCPController(router.app.Store, router.app.Ctx, router.logger)
 	mcpPublicGroup := fuego.Group(server, apiV1.Path+"/mcp")
 	router.RegisterMCPPublicRoutes(mcpPublicGroup, mcpPublicCtrl)
+
+	telemetryCtrl := telemetry.NewTelemetryController(router.app.Store.DB, router.app.Ctx, router.logger)
+	telemetryGroup := fuego.Group(server, apiV1.Path+"/cli/telemetry")
+	fuego.Use(telemetryGroup, middleware.NewRateLimiterWithConfig(0.01, 3))
+	router.RegisterTelemetryRoutes(telemetryGroup, telemetryCtrl)
 }
 
 // registerProtectedRoutes registers routes that require authentication

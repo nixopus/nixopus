@@ -89,7 +89,8 @@ DOMAIN=panel.example.com ADMIN_EMAIL=admin@example.com curl -fsSL install.nixopu
 | `JWT_SECRET` | *(random)* | JWT signing secret |
 | `NIXOPUS_HOME` | `/opt/nixopus` | Installation directory |
 | `OPENROUTER_API_KEY` | *(empty — Ollama)* | OpenRouter API key for cloud LLM models. Leave blank to use Ollama (local). |
-| `NIXOPUS_TELEMETRY` | `on` | Set to `off` to disable anonymous telemetry |
+| `NIXOPUS_TELEMETRY` | `on` | Set to `off` to disable anonymous install telemetry |
+| `DO_NOT_TRACK` | `0` | Set to `1` to disable telemetry ([consented.dev](https://consented.dev)) |
 | `LOG_LEVEL` | `debug` | Log level |
 
 ## Ports
@@ -371,6 +372,32 @@ sudo cat /opt/nixopus/.env
 ```bash
 nixopus uninstall --purge
 curl -fsSL install.nixopus.com | sudo bash
+```
+
+## Telemetry
+
+The installer sends anonymous telemetry events to help us understand adoption and improve the install experience. **No personal data is collected** — only OS name, CPU architecture, installer version, and install duration.
+
+Three events are sent during installation:
+
+| Event | When |
+|---|---|
+| `install_started` | Installer begins |
+| `install_success` | Installation completes successfully |
+| `install_failure` | Installation fails (includes a 200-char error snippet) |
+
+IP addresses are hashed with a server-side salt before storage; raw IPs are never persisted.
+
+### Opting out
+
+Disable telemetry with either method before running the installer:
+
+```bash
+# Method 1
+export NIXOPUS_TELEMETRY=off
+
+# Method 2 (DO_NOT_TRACK standard)
+export DO_NOT_TRACK=1
 ```
 
 ## Contents
