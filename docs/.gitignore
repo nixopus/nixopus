@@ -1,7 +1,0 @@
-node_modules
-.cache
-dist
-.vitepress/dist/
-.vitepress/cache
-.env
-.env.local
