@@ -543,11 +543,14 @@ dc() { docker compose $(compose_files) --env-file "$NIXOPUS_HOME/.env" "$@"; }
 pull_ollama_model() {
     [ "${USE_OLLAMA:-false}" = true ] || return 0
     local model="llama3.2"
-    log_info "Pulling Ollama model '${model}' (this may take a few minutes on first install)..."
-    if docker exec nixopus-ollama ollama pull "$model" 2>&1 | tail -1; then
+    log_info "Downloading AI model '${model}' (~2 GB) — this may take several minutes..."
+    local pull_output
+    if pull_output=$(docker exec nixopus-ollama ollama pull "$model" 2>&1); then
+        echo "$pull_output" | tail -1
         log_ok "Model '${model}' ready"
     else
-        log_warn "Model pull failed — the agent will auto-download it on first request"
+        log_warn "Model download failed — the agent will auto-download it on first request"
+        log_warn "You can manually retry later: docker exec nixopus-ollama ollama pull $model"
     fi
 }
 
@@ -574,10 +577,24 @@ start_services() {
         fi
     fi
 
-    dc pull 2>/dev/null || true
+    log_info "Pulling container images (this may take several minutes on first install)..."
+    if [ "${USE_OLLAMA:-false}" = true ]; then
+        log_info "Ollama image is ~2 GB — please be patient on slower connections"
+    fi
+    dc pull 2>&1 | while IFS= read -r line; do
+        case "$line" in
+            *Pulling*|*Pull*complete*|*Downloaded*|*"Already exists"*|*Waiting*|*Extracting*|*Verifying*)
+                printf "\r  ${DIM}%s${NC}  " "$line"
+                ;;
+        esac
+    done || true
+    echo ""
+    log_ok "Images pulled"
+
+    log_info "Starting containers..."
     dc up -d --remove-orphans
 
-    log_info "Waiting for services to start..."
+    log_info "Waiting for services to become healthy..."
     local timeout=180 elapsed=0 interval=5
 
     while [ $elapsed -lt $timeout ]; do
