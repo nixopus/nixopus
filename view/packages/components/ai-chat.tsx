@@ -88,10 +88,6 @@ export function ChatPage() {
   const { t } = useTranslation();
   const page = useChatPage();
 
-  if (!page.isAgentConfigured) {
-    return <AgentDisabledState />;
-  }
-
   return (
     <div className="flex h-full w-full overflow-hidden">
       <ThreadSidebar
@@ -1389,29 +1385,6 @@ function MessagesSkeleton() {
             <Skeleton className="h-4 w-2/3" />
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function AgentDisabledState() {
-  return (
-    <div className="flex h-full w-full items-center justify-center">
-      <div className="text-center max-w-md space-y-4 px-4">
-        <div className="flex items-center justify-center size-16 rounded-2xl bg-muted mx-auto">
-          <Sparkles className="size-8 text-muted-foreground" />
-        </div>
-        <h3 className="text-lg font-semibold">AI Agent Not Configured</h3>
-        <p className="text-sm text-muted-foreground">
-          The AI-powered deployment assistant is not enabled on this instance. To get access, reach
-          out to us and we&apos;ll help you get set up.
-        </p>
-        <a
-          href="mailto:support@nixopus.com"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-        >
-          Contact support@nixopus.com
-        </a>
       </div>
     </div>
   );

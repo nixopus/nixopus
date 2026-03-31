@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAppSelector } from '@/redux/hooks';
-import { useAgentConfigured } from '@/packages/hooks/shared/use-config';
 import {
   listDynamicWorkflows,
   deleteDynamicWorkflow,
@@ -28,17 +27,11 @@ export function useWorkflows({ applicationId }: UseWorkflowsOptions) {
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const agentConfigured = useAgentConfigured() === true;
 
   const token = useAppSelector((state) => state.auth.token);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
 
   const fetchWorkflows = useCallback(async () => {
-    if (!agentConfigured) {
-      setIsLoading(false);
-      return;
-    }
-
     try {
       setIsLoading(true);
       setError(null);
@@ -62,7 +55,7 @@ export function useWorkflows({ applicationId }: UseWorkflowsOptions) {
     } finally {
       setIsLoading(false);
     }
-  }, [applicationId, token, activeOrg?.id, agentConfigured]);
+  }, [applicationId, token, activeOrg?.id]);
 
   useEffect(() => {
     fetchWorkflows();
@@ -90,8 +83,7 @@ export function useWorkflows({ applicationId }: UseWorkflowsOptions) {
     isDeleting,
     error,
     refetch: fetchWorkflows,
-    deleteWorkflow,
-    isConfigured: agentConfigured
+    deleteWorkflow
   };
 }
 
@@ -151,13 +143,12 @@ export function useWorkflowDetail({ workflowId, applicationId }: UseWorkflowDeta
   const [dynamicWorkflow, setDynamicWorkflow] = useState<DynamicWorkflowDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const agentConfigured = useAgentConfigured() === true;
 
   const token = useAppSelector((state) => state.auth.token);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
 
   const fetchDetail = useCallback(async () => {
-    if (!agentConfigured || workflowId === 'new') {
+    if (workflowId === 'new') {
       setIsLoading(false);
       return;
     }
@@ -181,7 +172,7 @@ export function useWorkflowDetail({ workflowId, applicationId }: UseWorkflowDeta
     } finally {
       setIsLoading(false);
     }
-  }, [workflowId, applicationId, token, activeOrg?.id, agentConfigured]);
+  }, [workflowId, applicationId, token, activeOrg?.id]);
 
   useEffect(() => {
     fetchDetail();
