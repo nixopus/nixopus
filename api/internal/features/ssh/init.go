@@ -120,10 +120,17 @@ func GetSSHManagerForOrganization(ctx context.Context, orgID uuid.UUID) (*SSHMan
 	sshKeyStorage := sshstorage.SSHKeyStorage{DB: config.GlobalStore.DB, Ctx: ctx}
 	defaultKey, err := sshKeyStorage.GetDefaultSSHKeyByOrganizationID(orgID)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, fmt.Errorf("no default server configured for organization %s", orgID.String())
+		if !errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("failed to get default SSH key for organization %s: %w", orgID.String(), err)
 		}
-		return nil, fmt.Errorf("failed to get default SSH key for organization %s: %w", orgID.String(), err)
+		defaultKey, err = sshKeyStorage.GetActiveSSHKeyByOrganizationID(orgID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, fmt.Errorf("no server configured for organization %s", orgID.String())
+			}
+			return nil, fmt.Errorf("failed to get SSH key for organization %s: %w", orgID.String(), err)
+		}
+		_ = sshKeyStorage.PromoteToDefault(defaultKey.ID)
 	}
 
 	return GetSSHManagerForServer(ctx, orgID, defaultKey.ID)

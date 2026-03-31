@@ -28,6 +28,7 @@ type SSHKeyRepository interface {
 	GetDefaultSSHKeyByOrganizationID(orgID uuid.UUID) (*types.SSHKey, error)
 	GetSSHKeyByID(keyID uuid.UUID) (*types.SSHKey, error)
 	ListSSHKeysByOrganizationID(orgID uuid.UUID) ([]*types.SSHKey, error)
+	PromoteToDefault(keyID uuid.UUID) error
 }
 
 // GetActiveSSHKeyByOrganizationID retrieves the most recent active SSH key for an organization.
@@ -81,6 +82,18 @@ func (s *SSHKeyStorage) GetSSHKeyByID(keyID uuid.UUID) (*types.SSHKey, error) {
 		return nil, err
 	}
 	return &sshKey, nil
+}
+
+// PromoteToDefault marks a single SSH key as is_default=true.
+func (s *SSHKeyStorage) PromoteToDefault(keyID uuid.UUID) error {
+	_, err := s.getDB().NewUpdate().
+		Model((*types.SSHKey)(nil)).
+		Set("is_default = ?", true).
+		Set("updated_at = now()").
+		Where("id = ?", keyID).
+		Where("deleted_at IS NULL").
+		Exec(s.Ctx)
+	return err
 }
 
 // ListSSHKeysByOrganizationID retrieves all SSH keys (including inactive) for an organization.
