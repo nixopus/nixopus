@@ -35,11 +35,20 @@ func NewSSHKeyService(store *shared_storage.Store, ctx context.Context, l logger
 func (s *SSHKeyService) GetSSHConfigForOrganization(orgID uuid.UUID) (*types.SSHConfig, error) {
 	sshKey, err := s.storage.GetDefaultSSHKeyByOrganizationID(orgID)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no default server configured for organization %s", orgID.String())
+		if err != sql.ErrNoRows {
+			s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH key for organization %s: %v", orgID.String(), err), "")
+			return nil, fmt.Errorf("failed to get SSH key for organization: %w", err)
 		}
-		s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH key for organization %s: %v", orgID.String(), err), "")
-		return nil, fmt.Errorf("failed to get SSH key for organization: %w", err)
+		sshKey, err = s.storage.GetActiveSSHKeyByOrganizationID(orgID)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				return nil, fmt.Errorf("no server configured for organization %s", orgID.String())
+			}
+			s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH key for organization %s: %v", orgID.String(), err), "")
+			return nil, fmt.Errorf("failed to get SSH key for organization: %w", err)
+		}
+		_ = s.storage.PromoteToDefault(sshKey.ID)
+		s.logger.Log(logger.Info, fmt.Sprintf("promoted SSH key %s as default for organization %s", sshKey.ID.String(), orgID.String()), "")
 	}
 
 	// Convert SSHKey to SSHConfig
