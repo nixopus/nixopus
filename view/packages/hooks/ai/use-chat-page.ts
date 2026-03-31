@@ -57,7 +57,6 @@ export interface UseChatPageReturn {
   selectedModel: string;
   setSelectedModel: (model: string) => void;
   contextProviders: ContextProviderData[];
-  isAgentConfigured: boolean;
   handleNewChat: () => void;
 
   threads: ChatThread[];
@@ -226,7 +225,6 @@ export function useChatPage(): UseChatPageReturn {
     selectedModel,
     setSelectedModel,
     contextProviders,
-    isAgentConfigured: chat.isAgentConfigured,
     handleNewChat,
 
     threads: threads.threads,

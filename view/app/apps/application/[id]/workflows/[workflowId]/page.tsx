@@ -7,15 +7,13 @@ import { useWorkflowDetail } from '@/packages/hooks/workflows';
 import { ResourceGuard } from '@/packages/components/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
 import { Skeleton } from '@nixopus/ui';
-import { AlertCircle, Sparkles } from 'lucide-react';
-import { useAgentConfigured } from '@/packages/hooks/shared/use-config';
+import { AlertCircle } from 'lucide-react';
 
 export default function WorkflowEditorPage() {
   const params = useParams();
   const applicationId = params.id as string;
   const workflowId = params.workflowId as string;
   const isNew = workflowId === 'new';
-  const agentConfigured = useAgentConfigured() === true;
   const { dynamicWorkflow, isLoading, error } = useWorkflowDetail({ workflowId, applicationId });
 
   const { nodes, edges, name, planningMessages, executionMessages, chatThreadId } = useMemo(() => {
@@ -44,37 +42,6 @@ export default function WorkflowEditorPage() {
       chatThreadId: undefined
     };
   }, [dynamicWorkflow]);
-
-  if (!agentConfigured) {
-    return (
-      <ResourceGuard
-        resource="deploy"
-        action="read"
-        loadingFallback={<Skeleton className="h-96" />}
-      >
-        <PageLayout maxWidth="7xl" padding="md" spacing="lg">
-          <div className="flex h-full w-full items-center justify-center py-24">
-            <div className="text-center max-w-md space-y-4 px-4">
-              <div className="flex items-center justify-center size-16 rounded-2xl bg-muted mx-auto">
-                <Sparkles className="size-8 text-muted-foreground" />
-              </div>
-              <h3 className="text-lg font-semibold">AI Agent Not Configured</h3>
-              <p className="text-sm text-muted-foreground">
-                The AI-powered deployment assistant is not enabled on this instance. To get access,
-                reach out to us and we&apos;ll help you get set up.
-              </p>
-              <a
-                href="mailto:support@nixopus.com"
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-              >
-                Contact support@nixopus.com
-              </a>
-            </div>
-          </div>
-        </PageLayout>
-      </ResourceGuard>
-    );
-  }
 
   if (error && !isNew) {
     return (

@@ -4,7 +4,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppSelector } from '@/redux/hooks';
 import { authClient } from '@/packages/lib/auth-client';
 import { createAgentClient, AGENT_ID } from '@/packages/lib/agent-client';
-import { useAgentConfigured } from '@/packages/hooks/shared/use-config';
 
 export interface ChatThread {
   id: string;
@@ -59,7 +58,6 @@ export function useChatThreads() {
   const authUser = useAppSelector((state) => state.auth.user);
   const resourceId = authUser?.id || 'default';
 
-  const agentConfigured = useAgentConfigured() === true;
   const headersRef = useRef<Record<string, string>>({});
   const threadCreationPromises = useRef<Map<string, Promise<void>>>(new Map());
 
@@ -70,11 +68,6 @@ export function useChatThreads() {
   }, [token, organizationId]);
 
   useEffect(() => {
-    if (!agentConfigured) {
-      setIsInitialized(true);
-      return;
-    }
-
     let cancelled = false;
 
     (async () => {
@@ -115,7 +108,7 @@ export function useChatThreads() {
     return () => {
       cancelled = true;
     };
-  }, [token, organizationId, resourceId, agentConfigured]);
+  }, [token, organizationId, resourceId]);
 
   const setActiveThreadId = useCallback((id: string | null) => {
     setActiveThreadIdState(id);
@@ -136,28 +129,26 @@ export function useChatThreads() {
       setThreads((prev) => [thread, ...prev]);
       setActiveThreadId(thread.id);
 
-      if (agentConfigured) {
-        const creationPromise = (async () => {
-          try {
-            const client = createAgentClient(headersRef.current);
-            await client.createMemoryThread({
-              threadId,
-              title: thread.title,
-              resourceId,
-              agentId: AGENT_ID
-            });
-          } catch {
-            // will be created automatically on first message
-          } finally {
-            threadCreationPromises.current.delete(threadId);
-          }
-        })();
-        threadCreationPromises.current.set(threadId, creationPromise);
-      }
+      const creationPromise = (async () => {
+        try {
+          const client = createAgentClient(headersRef.current);
+          await client.createMemoryThread({
+            threadId,
+            title: thread.title,
+            resourceId,
+            agentId: AGENT_ID
+          });
+        } catch {
+          // will be created automatically on first message
+        } finally {
+          threadCreationPromises.current.delete(threadId);
+        }
+      })();
+      threadCreationPromises.current.set(threadId, creationPromise);
 
       return thread;
     },
-    [resourceId, setActiveThreadId, agentConfigured]
+    [resourceId, setActiveThreadId]
   );
 
   const deleteThread = useCallback(
@@ -172,19 +163,17 @@ export function useChatThreads() {
         });
       }
 
-      if (agentConfigured) {
-        (async () => {
-          try {
-            const client = createAgentClient(headersRef.current);
-            const thread = client.getMemoryThread({ threadId: id, agentId: AGENT_ID });
-            await thread.delete();
-          } catch {
-            // ignore
-          }
-        })();
-      }
+      (async () => {
+        try {
+          const client = createAgentClient(headersRef.current);
+          const thread = client.getMemoryThread({ threadId: id, agentId: AGENT_ID });
+          await thread.delete();
+        } catch {
+          // ignore
+        }
+      })();
     },
-    [activeThreadId, setActiveThreadId, agentConfigured]
+    [activeThreadId, setActiveThreadId]
   );
 
   const updateThreadTitle = useCallback(
@@ -193,21 +182,19 @@ export function useChatThreads() {
         prev.map((t) => (t.id === id ? { ...t, title, updatedAt: new Date() } : t))
       );
 
-      if (agentConfigured) {
-        (async () => {
-          try {
-            const pending = threadCreationPromises.current.get(id);
-            if (pending) await pending;
-            const client = createAgentClient(headersRef.current);
-            const thread = client.getMemoryThread({ threadId: id, agentId: AGENT_ID });
-            await thread.update({ title, metadata: {}, resourceId });
-          } catch {
-            // ignore
-          }
-        })();
-      }
+      (async () => {
+        try {
+          const pending = threadCreationPromises.current.get(id);
+          if (pending) await pending;
+          const client = createAgentClient(headersRef.current);
+          const thread = client.getMemoryThread({ threadId: id, agentId: AGENT_ID });
+          await thread.update({ title, metadata: {}, resourceId });
+        } catch {
+          // ignore
+        }
+      })();
     },
-    [agentConfigured, resourceId]
+    [resourceId]
   );
 
   const touchThread = useCallback((id: string) => {

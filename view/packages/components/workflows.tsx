@@ -1125,33 +1125,11 @@ export function WorkflowEditor({
 export function WorkflowsList({ applicationId }: { applicationId: string }) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { workflows, isLoading, isDeleting, error, isConfigured, deleteWorkflow } = useWorkflows({
+  const { workflows, isLoading, isDeleting, error, deleteWorkflow } = useWorkflows({
     applicationId
   });
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name?: string } | null>(null);
   const { requireSudo } = useSudoMode();
-  if (!isConfigured) {
-    return (
-      <div className="flex h-full w-full items-center justify-center py-16">
-        <div className="text-center max-w-md space-y-4 px-4">
-          <div className="flex items-center justify-center size-16 rounded-2xl bg-muted mx-auto">
-            <Sparkles className="size-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-semibold">AI Agent Not Configured</h3>
-          <p className="text-sm text-muted-foreground">
-            The AI-powered deployment assistant is not enabled on this instance. To get access,
-            reach out to us and we&apos;ll help you get set up.
-          </p>
-          <a
-            href="mailto:support@nixopus.com"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-          >
-            Contact support@nixopus.com
-          </a>
-        </div>
-      </div>
-    );
-  }
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
