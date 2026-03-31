@@ -1,0 +1,5 @@
+:4090 {
+    respond /healthz `{"status":"ok"}` 200
+    respond /readyz `{"status":"ready","checks":{"database":{"ok":true}}}` 200
+    respond * `{"mock":"nixopus-agent"}` 200
+}

@@ -24,6 +24,8 @@ compose_files() {
     local args="-f $NIXOPUS_HOME/docker-compose.yml"
     [ "${USE_BUNDLED_DB:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.db.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.db.yml"
     [ "${USE_BUNDLED_REDIS:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.redis.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.redis.yml"
+    [ "${USE_AGENT:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.agent.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.agent.yml"
+    [ "${USE_OLLAMA:-false}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.ollama.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.ollama.yml"
     echo "$args"
 }
 
@@ -140,6 +142,15 @@ cmd_config() {
     echo "Redis URL:    $(echo "${REDIS_URL:-}" | sed 's|://[^@]*@|://****@|')"
     echo "Auth Secret:  $(redact "${AUTH_SERVICE_SECRET:-}")"
     echo "JWT Secret:   $(redact "${JWT_SECRET:-}")"
+    echo ""
+    echo "Agent:        ${USE_AGENT:-true}"
+    if [ "${USE_AGENT:-true}" = true ]; then
+        if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            echo "LLM:          OpenRouter ($(redact "${OPENROUTER_API_KEY}"))"
+        else
+            echo "LLM:          Ollama (local)"
+        fi
+    fi
 }
 
 cmd_domain() {

@@ -1,0 +1,31 @@
+services:
+  nixopus-ollama:
+    image: ollama/ollama:latest
+    container_name: nixopus-ollama
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    volumes:
+      - nixopus-ollama-data:/root/.ollama
+    networks:
+      - nixopus-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:11434/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Merge into agent service: wait for Ollama before starting
+  nixopus-agent:
+    depends_on:
+      nixopus-ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_BASE_URL: "${OLLAMA_BASE_URL:-http://nixopus-ollama:11434}"
+
+volumes:
+  nixopus-ollama-data:

@@ -15,6 +15,10 @@
         reverse_proxy nixopus-api:8443
     }
 
+    handle /agent/* {
+        reverse_proxy nixopus-agent:4090
+    }
+
     handle {
         reverse_proxy nixopus-view:7443 {
             flush_interval -1
