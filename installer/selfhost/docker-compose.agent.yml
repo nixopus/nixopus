@@ -1,0 +1,36 @@
+services:
+  nixopus-agent:
+    image: ${NIXOPUS_AGENT_IMAGE:-ghcr.io/nixopus/agent:latest}
+    container_name: nixopus-agent
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    environment:
+      PORT: "4090"
+      HOST: "0.0.0.0"
+      NODE_ENV: production
+      SELF_HOSTED: "true"
+      DATABASE_URL: "${DATABASE_URL}"
+      REDIS_URL: "${REDIS_URL}"
+      AUTH_SERVICE_URL: "http://nixopus-auth:9090"
+      API_URL: "http://nixopus-api:8443"
+      ALLOWED_ORIGIN: "${ALLOWED_ORIGIN}"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      AGENT_MODEL: "${AGENT_MODEL:-}"
+      AGENT_LIGHT_MODEL: "${AGENT_LIGHT_MODEL:-}"
+      SECRET_MANAGER_ENABLED: "false"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+    networks:
+      - nixopus-network
+    depends_on:
+      nixopus-auth:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4090/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s

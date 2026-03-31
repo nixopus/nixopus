@@ -33,7 +33,7 @@ log_skip() { echo -e "  ${YELLOW}SKIP${NC}  $1"; SKIPPED=$((SKIPPED + 1)); }
 
 build_mocks() {
     log_head "Building mock service images"
-    for svc in api auth view; do
+    for svc in api auth view agent; do
         docker build -q -t "nixopus-mock-$svc" \
             -f "$ROOT_DIR/test/mocks/Dockerfile" \
             "$ROOT_DIR/test/mocks/$svc/" >/dev/null
@@ -41,7 +41,7 @@ build_mocks() {
     done
 
     log "  ${DIM}Saving to $MOCKS_TAR...${NC}"
-    docker save nixopus-mock-api nixopus-mock-auth nixopus-mock-view \
+    docker save nixopus-mock-api nixopus-mock-auth nixopus-mock-view nixopus-mock-agent \
         | gzip > "$MOCKS_TAR"
     log_pass "Mocks saved ($(du -h "$MOCKS_TAR" | awk '{print $1}'))"
 }
@@ -83,7 +83,7 @@ cleanup() {
         label=$(echo "$distro" | tr ':/' '-')
         docker rm -f "nixopus-test-${label}" 2>/dev/null || true
     done
-    docker rm -f nixopus-db nixopus-redis nixopus-auth nixopus-api nixopus-view nixopus-caddy 2>/dev/null || true
+    docker rm -f nixopus-db nixopus-redis nixopus-auth nixopus-api nixopus-view nixopus-caddy nixopus-agent nixopus-ollama 2>/dev/null || true
     log "  Done"
 }
 

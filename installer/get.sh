@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-NIXOPUS_VERSION="0.2.0"
+NIXOPUS_VERSION="0.3.0"
 NIXOPUS_HOME="${NIXOPUS_HOME:-/opt/nixopus}"
 TELEMETRY_URL="${NIXOPUS_TELEMETRY_URL:-https://nixopus-api.nixopus.com/api/cli/installations}"
 REPO_RAW="${NIXOPUS_REPO_RAW:-https://raw.githubusercontent.com/nixopus/nixopus/master/installer}"
@@ -361,6 +361,22 @@ gather_config() {
     AUTH_SERVICE_SECRET="${AUTH_SERVICE_SECRET:-$(gen_secret)}"
     JWT_SECRET="${JWT_SECRET:-$(gen_secret)}"
 
+    # ── Agent / LLM configuration ──
+    USE_AGENT="${USE_AGENT:-true}"
+    if [ -t 0 ] && [ -z "${OPENROUTER_API_KEY:-}" ]; then
+        echo ""
+        echo -e "  ${BOLD}AI Agent${NC}"
+        echo -e "  ${DIM}The agent uses an LLM for deployments and diagnostics.${NC}"
+        echo -e "  ${DIM}Leave blank to use Ollama (local, no API key needed).${NC}"
+        prompt_if_tty OPENROUTER_API_KEY "OpenRouter API key (or blank for Ollama)" ""
+    fi
+
+    USE_OLLAMA=false
+    if [ -z "${OPENROUTER_API_KEY:-}" ]; then
+        USE_OLLAMA=true
+        OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://nixopus-ollama:11434}"
+    fi
+
     check_firewall
 
     log_ok "Configuration ready (${DOMAIN:-IP: $HOST_IP})"
@@ -444,6 +460,13 @@ ADMIN_EMAIL=${ADMIN_EMAIL:-}
 SELF_HOSTED=true
 NIXOPUS_TELEMETRY=${NIXOPUS_TELEMETRY:-on}
 LOG_LEVEL=${LOG_LEVEL:-debug}
+
+USE_AGENT=${USE_AGENT}
+OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+AGENT_MODEL=${AGENT_MODEL:-}
+AGENT_LIGHT_MODEL=${AGENT_LIGHT_MODEL:-}
+USE_OLLAMA=${USE_OLLAMA}
+OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
 EOF
     chmod 600 "$NIXOPUS_HOME/.env"
 }
@@ -454,10 +477,14 @@ copy_compose() {
         cp "$src/docker-compose.yml" "$NIXOPUS_HOME/"
         cp "$src/docker-compose.db.yml" "$NIXOPUS_HOME/"
         cp "$src/docker-compose.redis.yml" "$NIXOPUS_HOME/"
+        [ -f "$src/docker-compose.agent.yml" ] && cp "$src/docker-compose.agent.yml" "$NIXOPUS_HOME/"
+        [ -f "$src/docker-compose.ollama.yml" ] && cp "$src/docker-compose.ollama.yml" "$NIXOPUS_HOME/"
     else
         curl -fsSL "$REPO_RAW/selfhost/docker-compose.yml" -o "$NIXOPUS_HOME/docker-compose.yml"
         curl -fsSL "$REPO_RAW/selfhost/docker-compose.db.yml" -o "$NIXOPUS_HOME/docker-compose.db.yml"
         curl -fsSL "$REPO_RAW/selfhost/docker-compose.redis.yml" -o "$NIXOPUS_HOME/docker-compose.redis.yml"
+        curl -fsSL "$REPO_RAW/selfhost/docker-compose.agent.yml" -o "$NIXOPUS_HOME/docker-compose.agent.yml"
+        curl -fsSL "$REPO_RAW/selfhost/docker-compose.ollama.yml" -o "$NIXOPUS_HOME/docker-compose.ollama.yml"
     fi
 }
 
@@ -478,6 +505,10 @@ write_caddyfile() {
 
     handle /ws/* {
         reverse_proxy nixopus-api:8443
+    }
+
+    handle /agent/* {
+        reverse_proxy nixopus-agent:4090
     }
 
     handle {
@@ -502,10 +533,23 @@ compose_files() {
     local args="-f $NIXOPUS_HOME/docker-compose.yml"
     [ "$USE_BUNDLED_DB" = true ] && args="$args -f $NIXOPUS_HOME/docker-compose.db.yml"
     [ "$USE_BUNDLED_REDIS" = true ] && args="$args -f $NIXOPUS_HOME/docker-compose.redis.yml"
+    [ "${USE_AGENT:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.agent.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.agent.yml"
+    [ "${USE_OLLAMA:-false}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.ollama.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.ollama.yml"
     echo "$args"
 }
 
 dc() { docker compose $(compose_files) --env-file "$NIXOPUS_HOME/.env" "$@"; }
+
+pull_ollama_model() {
+    [ "${USE_OLLAMA:-false}" = true ] || return 0
+    local model="llama3.2"
+    log_info "Pulling Ollama model '${model}' (this may take a few minutes on first install)..."
+    if docker exec nixopus-ollama ollama pull "$model" 2>&1 | tail -1; then
+        log_ok "Model '${model}' ready"
+    else
+        log_warn "Model pull failed — the agent will auto-download it on first request"
+    fi
+}
 
 start_services() {
     cd "$NIXOPUS_HOME"
@@ -513,12 +557,21 @@ start_services() {
     local expected=4
     [ "$USE_BUNDLED_DB" = true ] && expected=$((expected + 1))
     [ "$USE_BUNDLED_REDIS" = true ] && expected=$((expected + 1))
+    [ "${USE_AGENT:-true}" = true ] && expected=$((expected + 1))
+    [ "${USE_OLLAMA:-false}" = true ] && expected=$((expected + 1))
 
     if [ "$USE_BUNDLED_DB" = false ]; then
         log_info "Using external database"
     fi
     if [ "$USE_BUNDLED_REDIS" = false ]; then
         log_info "Using external Redis"
+    fi
+    if [ "${USE_AGENT:-true}" = true ]; then
+        if [ "${USE_OLLAMA:-false}" = true ]; then
+            log_info "Agent enabled with Ollama (local LLM)"
+        else
+            log_info "Agent enabled with OpenRouter"
+        fi
     fi
 
     dc pull 2>/dev/null || true
@@ -533,6 +586,7 @@ start_services() {
 
         if [ "$healthy" -ge "$expected" ]; then
             log_ok "All services healthy"
+            pull_ollama_model
             return
         fi
 
@@ -577,6 +631,8 @@ compose_files() {
     local args="-f $NIXOPUS_HOME/docker-compose.yml"
     [ "${USE_BUNDLED_DB:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.db.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.db.yml"
     [ "${USE_BUNDLED_REDIS:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.redis.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.redis.yml"
+    [ "${USE_AGENT:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.agent.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.agent.yml"
+    [ "${USE_OLLAMA:-false}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.ollama.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.ollama.yml"
     echo "$args"
 }
 
@@ -693,6 +749,15 @@ cmd_config() {
     echo "Redis URL:    $(echo "${REDIS_URL:-}" | sed 's|://[^@]*@|://****@|')"
     echo "Auth Secret:  $(redact "${AUTH_SERVICE_SECRET:-}")"
     echo "JWT Secret:   $(redact "${JWT_SECRET:-}")"
+    echo ""
+    echo "Agent:        ${USE_AGENT:-true}"
+    if [ "${USE_AGENT:-true}" = true ]; then
+        if [ -n "${OPENROUTER_API_KEY:-}" ]; then
+            echo "LLM:          OpenRouter ($(redact "${OPENROUTER_API_KEY}"))"
+        else
+            echo "LLM:          Ollama (local)"
+        fi
+    fi
 }
 
 cmd_domain() {

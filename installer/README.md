@@ -88,6 +88,7 @@ DOMAIN=panel.example.com ADMIN_EMAIL=admin@example.com curl -fsSL install.nixopu
 | `AUTH_SERVICE_SECRET` | *(random)* | Auth service secret |
 | `JWT_SECRET` | *(random)* | JWT signing secret |
 | `NIXOPUS_HOME` | `/opt/nixopus` | Installation directory |
+| `OPENROUTER_API_KEY` | *(empty — Ollama)* | OpenRouter API key for cloud LLM models. Leave blank to use Ollama (local). |
 | `NIXOPUS_TELEMETRY` | `on` | Set to `off` to disable anonymous telemetry |
 | `LOG_LEVEL` | `debug` | Log level |
 
@@ -108,8 +109,10 @@ Internal services (Docker network only, not exposed to host):
 | `9090` | nixopus-auth |
 | `8443` | nixopus-api |
 | `7443` | nixopus-view |
+| `4090` | nixopus-agent |
 | `5432` | nixopus-db (bundled Postgres) |
 | `6379` | nixopus-redis (bundled Redis) |
+| `11434` | nixopus-ollama (when using local LLM) |
 
 The SSH port on your host (default `22`) must also be accessible from the Docker network — the API connects back to the host via SSH for deployments.
 
@@ -147,6 +150,38 @@ sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT && sudo iptables -A INPUT -p 
 
 If using custom ports, replace `80`/`443` with your values in all commands above.
 
+## AI Agent
+
+The installer includes an AI agent that assists with deployments, diagnostics, and infrastructure management. It runs as the `nixopus-agent` service.
+
+### LLM Provider
+
+During installation, you'll be prompted for an **OpenRouter API key**. This determines the LLM backend:
+
+- **Blank (default):** The agent runs with **Ollama** for fully local inference. An Ollama container is started automatically — no API keys or external services needed.
+- **API key provided:** The agent uses **OpenRouter** to access cloud models (Claude, GPT-4o, etc.).
+
+You can change the provider after installation:
+
+```bash
+# Switch to OpenRouter
+nixopus config set OPENROUTER_API_KEY=sk-or-v1-xxxxx
+nixopus config set USE_OLLAMA=false
+nixopus restart
+
+# Switch to Ollama
+nixopus config set OPENROUTER_API_KEY=
+nixopus config set USE_OLLAMA=true
+nixopus restart
+```
+
+### Resource requirements with Ollama
+
+When using Ollama (local LLM), the server needs additional resources:
+
+- **RAM:** 4 GB minimum (8 GB+ recommended for better models)
+- **Disk:** 5 GB+ additional for model weights
+
 ## HTTPS
 
 When you provide a `DOMAIN`, Caddy automatically obtains and renews TLS certificates from Let's Encrypt. For this to work:
@@ -168,7 +203,7 @@ sudo nixopus status
 | Command | Description |
 |---|---|
 | `nixopus status` | Show service health |
-| `nixopus logs [service]` | Tail logs (services: `nixopus-api`, `nixopus-auth`, `nixopus-view`, `nixopus-caddy`, `nixopus-db`, `nixopus-redis`) |
+| `nixopus logs [service]` | Tail logs (services: `nixopus-api`, `nixopus-auth`, `nixopus-view`, `nixopus-caddy`, `nixopus-agent`, `nixopus-ollama`, `nixopus-db`, `nixopus-redis`) |
 | `nixopus update` | Pull latest images and restart |
 | `nixopus restart [service]` | Restart all or a specific service |
 | `nixopus stop` | Stop all services |
@@ -342,5 +377,5 @@ curl -fsSL install.nixopus.com | sudo bash
 
 - `get.sh` - Installer script
 - `nixopus.sh` - Management CLI (installed to `/usr/local/bin/nixopus`)
-- `selfhost/` - Docker Compose files (base, db, redis overlays)
+- `selfhost/` - Docker Compose files (base, db, redis, agent, ollama overlays)
 - `test/` - Cross-distro test suite

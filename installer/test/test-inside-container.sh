@@ -72,6 +72,8 @@ run_installer() {
     NIXOPUS_API_IMAGE=nixopus-mock-api \
     NIXOPUS_AUTH_IMAGE=nixopus-mock-auth \
     NIXOPUS_VIEW_IMAGE=nixopus-mock-view \
+    NIXOPUS_AGENT_IMAGE=nixopus-mock-agent \
+    USE_OLLAMA=false \
     HOST_IP=127.0.0.1 \
     ADMIN_EMAIL=test@nixopus.dev \
     NIXOPUS_TELEMETRY=off \
@@ -99,6 +101,7 @@ verify() {
     check "docker-compose.yml exists"      "[ -f /opt/nixopus/docker-compose.yml ]"
     check "docker-compose.db.yml exists"   "[ -f /opt/nixopus/docker-compose.db.yml ]"
     check "docker-compose.redis.yml exists" "[ -f /opt/nixopus/docker-compose.redis.yml ]"
+    check "docker-compose.agent.yml exists" "[ -f /opt/nixopus/docker-compose.agent.yml ]"
     check "Caddyfile exists"               "[ -f /opt/nixopus/Caddyfile ]"
     check "SSH key exists"            "[ -f /opt/nixopus/ssh/id_rsa ]"
     check "SSH pubkey exists"         "[ -f /opt/nixopus/ssh/id_rsa.pub ]"
@@ -110,6 +113,7 @@ verify() {
     check "AUTH_SERVICE_SECRET set"   "grep -q '^AUTH_SERVICE_SECRET=.\{32,\}' /opt/nixopus/.env"
     check "JWT_SECRET set"            "grep -q '^JWT_SECRET=.\{32,\}' /opt/nixopus/.env"
     check "SELF_HOSTED=true"          "grep -q '^SELF_HOSTED=true' /opt/nixopus/.env"
+    check "USE_AGENT set"            "grep -q '^USE_AGENT=' /opt/nixopus/.env"
     check "SSH_HOST set"              "grep -q '^SSH_HOST=' /opt/nixopus/.env"
     check "SSH_PORT set"              "grep -q '^SSH_PORT=' /opt/nixopus/.env"
     check "SSH_USER set"              "grep -q '^SSH_USER=' /opt/nixopus/.env"
@@ -121,12 +125,14 @@ verify() {
     check "nixopus-api running"      "docker ps --format '{{.Names}}' | grep -q nixopus-api"
     check "nixopus-view running"     "docker ps --format '{{.Names}}' | grep -q nixopus-view"
     check "nixopus-caddy running"    "docker ps --format '{{.Names}}' | grep -q nixopus-caddy"
+    check "nixopus-agent running"   "docker ps --format '{{.Names}}' | grep -q nixopus-agent"
 
     sleep 10
 
     local http_port="${CADDY_HTTP_PORT:-80}"
-    check "API health"    "curl -sf http://127.0.0.1:${http_port}/api/v1/health | grep -q success"
-    check "View responds" "curl -sf http://127.0.0.1:${http_port}/ | grep -q Nixopus"
+    check "API health"     "curl -sf http://127.0.0.1:${http_port}/api/v1/health | grep -q success"
+    check "Agent health"   "curl -sf http://127.0.0.1:${http_port}/agent/healthz | grep -q ok"
+    check "View responds"  "curl -sf http://127.0.0.1:${http_port}/ | grep -q Nixopus"
 
     check "nixopus status runs"  "nixopus status"
     check "nixopus info runs"    "nixopus info"
