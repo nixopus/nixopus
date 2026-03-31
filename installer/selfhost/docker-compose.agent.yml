@@ -1,4 +1,8 @@
 services:
+  nixopus-view:
+    environment:
+      AGENT_URL: "http://nixopus-agent:4090"
+
   nixopus-agent:
     image: ${NIXOPUS_AGENT_IMAGE:-ghcr.io/nixopus/agent:latest}
     container_name: nixopus-agent
