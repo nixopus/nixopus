@@ -11,7 +11,6 @@ import {
   declineAgentToolCall,
   type StreamChunk
 } from '@/packages/lib/agent-client';
-import { useAgentConfigured } from '@/packages/hooks/shared/use-config';
 import { type ChatContext, formatContextsForAgent } from './chat-context';
 
 export type MessagePart =
@@ -229,8 +228,6 @@ export function useAgentChat({
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const organizationId = activeOrg?.id;
 
-  const isAgentEnabled = useAgentConfigured() === true;
-
   const scrollToBottom = useCallback(() => {
     if (scrollRef.current) {
       const el = scrollRef.current;
@@ -245,7 +242,7 @@ export function useAgentChat({
   }, [messages, scrollToBottom]);
 
   useEffect(() => {
-    if (!threadId || !isAgentEnabled) {
+    if (!threadId) {
       setMessages([]);
       return;
     }
@@ -306,7 +303,7 @@ export function useAgentChat({
     return () => {
       cancelled = true;
     };
-  }, [threadId, resourceId, token, organizationId, isAgentEnabled, waitForThread]);
+  }, [threadId, resourceId, token, organizationId, waitForThread]);
 
   const extractUsageFromPayload = useCallback((payload: unknown): TokenUsage | null => {
     if (!payload || typeof payload !== 'object') return null;
@@ -587,7 +584,7 @@ export function useAgentChat({
 
   const streamResponse = useCallback(
     async (userContent: string) => {
-      if (!isAgentEnabled || !threadId) return;
+      if (!threadId) return;
 
       const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
 
@@ -660,12 +657,12 @@ export function useAgentChat({
         );
       }
     },
-    [threadId, resourceId, token, organizationId, isAgentEnabled, contexts, model, handleChunk]
+    [threadId, resourceId, token, organizationId, contexts, model, handleChunk]
   );
 
   const handleApproveToolCall = useCallback(async () => {
     const pending = pendingToolApproval;
-    if (!pending || !isAgentEnabled) return;
+    if (!pending) return;
 
     setPendingToolApproval(null);
     pendingApprovalRef.current = false;
@@ -725,11 +722,11 @@ export function useAgentChat({
         );
       }
     }
-  }, [pendingToolApproval, isAgentEnabled, token, organizationId, messages, handleChunk]);
+  }, [pendingToolApproval, token, organizationId, messages, handleChunk]);
 
   const handleDeclineToolCall = useCallback(async () => {
     const pending = pendingToolApproval;
-    if (!pending || !isAgentEnabled) return;
+    if (!pending) return;
 
     setPendingToolApproval(null);
     pendingApprovalRef.current = false;
@@ -752,7 +749,7 @@ export function useAgentChat({
     } finally {
       setIsStreaming(false);
     }
-  }, [pendingToolApproval, isAgentEnabled, token, organizationId, messages]);
+  }, [pendingToolApproval, token, organizationId, messages]);
 
   const lastAutoApprovedRef = useRef<string | null>(null);
   useEffect(() => {
@@ -872,7 +869,6 @@ export function useAgentChat({
     setInputValue,
     isStreaming,
     isLoadingHistory,
-    isAgentConfigured: isAgentEnabled,
     pendingToolApproval,
     activeQuestion,
     omStatus,
