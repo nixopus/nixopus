@@ -25,9 +25,13 @@ async function getAgentBaseUrl(): Promise<string> {
         if (!res.ok) {
           throw new Error(`Failed to load config (${res.status})`);
         }
-        return res.json() as Promise<{ agentUrl?: unknown }>;
+        return res.json() as Promise<{ agentUrl?: unknown; selfHosted?: boolean }>;
       })
       .then((cfg) => {
+        if (cfg.selfHosted) {
+          cachedAgentBaseUrl = '';
+          return '';
+        }
         const agentUrl = typeof cfg.agentUrl === 'string' ? cfg.agentUrl : '';
         if (agentUrl) {
           cachedAgentBaseUrl = agentUrl;
