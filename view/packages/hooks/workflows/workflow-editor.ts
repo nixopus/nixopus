@@ -13,6 +13,7 @@ import {
 import { WORKFLOW_STREAMING_MESSAGES } from '@/packages/lib/workflow-utils';
 import { authClient } from '@/packages/lib/auth-client';
 import { createAgentClient } from '@/packages/lib/agent-client';
+import { v4 as uuid } from 'uuid';
 import type {
   WorkflowNode,
   WorkflowEdge,
@@ -214,7 +215,7 @@ export function useWorkflowPlanner({
   const token = useAppSelector((state) => state.auth.token);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
   const orgId = organizationId ?? activeOrg?.id ?? null;
-  const [draftSessionId] = useState(() => (workflowId === 'new' ? crypto.randomUUID() : null));
+  const [draftSessionId] = useState(() => (workflowId === 'new' ? uuid() : null));
   const resourceId = orgId && applicationId ? resourceIdFor(orgId, applicationId) : undefined;
   const threadId = applicationId
     ? resolveThreadId(workflowId, applicationId, chatThreadId, draftSessionId)
@@ -321,7 +322,7 @@ export function useWorkflowPlanner({
                   ? new Date(String(createdAtRaw))
                   : new Date();
             msgs.push({
-              id: msg.id ?? crypto.randomUUID(),
+              id: msg.id ?? uuid(),
               role,
               content: text,
               timestamp: createdAt,
@@ -372,13 +373,13 @@ export function useWorkflowPlanner({
       if (!content.trim() || isStreaming) return;
 
       const userMsg: PlannerMessage = {
-        id: crypto.randomUUID(),
+        id: uuid(),
         role: 'user',
         content: content.trim(),
         timestamp: new Date()
       };
 
-      const assistantId = crypto.randomUUID();
+      const assistantId = uuid();
       setMessages((prev) => [
         ...prev,
         userMsg,
