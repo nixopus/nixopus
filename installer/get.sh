@@ -375,6 +375,9 @@ gather_config() {
     if [ -z "${OPENROUTER_API_KEY:-}" ]; then
         USE_OLLAMA=true
         OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://nixopus-ollama:11434}"
+        # Default to the 1B variant (~1.3 GB) — 700 MB lighter than the 3B default.
+        # Users can override: OLLAMA_MODEL=llama3.2 bash get.sh
+        OLLAMA_MODEL="${OLLAMA_MODEL:-llama3.2:1b}"
     fi
 
     check_firewall
@@ -467,6 +470,8 @@ AGENT_MODEL=${AGENT_MODEL:-}
 AGENT_LIGHT_MODEL=${AGENT_LIGHT_MODEL:-}
 USE_OLLAMA=${USE_OLLAMA}
 OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:1b}
+OLLAMA_IMAGE=${OLLAMA_IMAGE:-ghcr.io/nixopus/ollama:llama3.2-1b}
 EOF
     chmod 600 "$NIXOPUS_HOME/.env"
 }
@@ -542,8 +547,14 @@ dc() { docker compose $(compose_files) --env-file "$NIXOPUS_HOME/.env" "$@"; }
 
 pull_ollama_model() {
     [ "${USE_OLLAMA:-false}" = true ] || return 0
-    local model="llama3.2"
-    log_info "Downloading AI model '${model}' (~2 GB) — this may take several minutes..."
+    local model="${OLLAMA_MODEL:-llama3.2:1b}"
+    # Read from .env if not set in environment
+    if [ -f "$NIXOPUS_HOME/.env" ]; then
+        local env_model
+        env_model=$(grep '^OLLAMA_MODEL=' "$NIXOPUS_HOME/.env" 2>/dev/null | cut -d= -f2-)
+        model="${env_model:-$model}"
+    fi
+    log_info "Downloading AI model '${model}' — this may take a few minutes..."
     local pull_output
     if pull_output=$(docker exec nixopus-ollama ollama pull "$model" 2>&1); then
         echo "$pull_output" | tail -1
@@ -552,6 +563,28 @@ pull_ollama_model() {
         log_warn "Model download failed — the agent will auto-download it on first request"
         log_warn "You can manually retry later: docker exec nixopus-ollama ollama pull $model"
     fi
+}
+
+# Background variant: starts the model pull in a subshell so the installer
+# can print the finish banner immediately. The model is still being fetched
+# while the user reads the summary; agent auto-downloads on first use anyway.
+pull_ollama_model_bg() {
+    [ "${USE_OLLAMA:-false}" = true ] || return 0
+    local model="${OLLAMA_MODEL:-llama3.2:1b}"
+    if [ -f "$NIXOPUS_HOME/.env" ]; then
+        local env_model
+        env_model=$(grep '^OLLAMA_MODEL=' "$NIXOPUS_HOME/.env" 2>/dev/null | cut -d= -f2-)
+        model="${env_model:-$model}"
+    fi
+    log_info "Pulling AI model '${model}' in background — nixopus will be ready to use while this finishes..."
+    (
+        if docker exec nixopus-ollama ollama pull "$model" > /tmp/nixopus-ollama-pull.log 2>&1; then
+            log_ok "Background model pull complete: '${model}'"
+        else
+            log_warn "Background model pull failed. Retry: docker exec nixopus-ollama ollama pull $model"
+        fi
+    ) &
+    disown
 }
 
 start_services() {
@@ -579,9 +612,10 @@ start_services() {
 
     log_info "Pulling container images (this may take several minutes on first install)..."
     if [ "${USE_OLLAMA:-false}" = true ]; then
-        log_info "Ollama image is ~2 GB — please be patient on slower connections"
+        log_info "Ollama image (~2 GB) + model (~1.3 GB) will download in the background after startup"
     fi
-    dc pull 2>&1 | while IFS= read -r line; do
+    # --parallel pulls all images concurrently (default in Compose v2, explicit for v1 compat)
+    dc pull --parallel 2>&1 | while IFS= read -r line; do
         case "$line" in
             *Pulling*|*Pull*complete*|*Downloaded*|*"Already exists"*|*Waiting*|*Extracting*|*Verifying*)
                 printf "\r  ${DIM}%s${NC}  " "$line"
@@ -603,7 +637,13 @@ start_services() {
 
         if [ "$healthy" -ge "$expected" ]; then
             log_ok "All services healthy"
-            pull_ollama_model
+            # If using a pre-seeded image the model is already baked in; skip the pull.
+            local ollama_img="${OLLAMA_IMAGE:-ghcr.io/nixopus/ollama:llama3.2-1b}"
+            if echo "$ollama_img" | grep -q "nixopus/ollama"; then
+                log_info "Using pre-seeded Ollama image — model already available, no extra download needed"
+            else
+                pull_ollama_model_bg
+            fi
             return
         fi
 

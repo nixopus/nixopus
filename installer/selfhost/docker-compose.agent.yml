@@ -25,6 +25,7 @@ services:
       OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
       AGENT_MODEL: "${AGENT_MODEL:-}"
       AGENT_LIGHT_MODEL: "${AGENT_LIGHT_MODEL:-}"
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-llama3.2:1b}"
       SECRET_MANAGER_ENABLED: "false"
       LOG_LEVEL: "${LOG_LEVEL:-info}"
     networks:

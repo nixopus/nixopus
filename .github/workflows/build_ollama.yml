@@ -1,0 +1,120 @@
+# Workflow: Build Pre-seeded Ollama Image
+# Description: Builds an Ollama image with the default model already downloaded
+#              and publishes it to ghcr.io/nixopus/ollama.
+# Why: Eliminates the blocking "docker exec ollama pull <model>" step during
+#      self-hosted installs. Users pull one image; model data arrives as
+#      Docker layers (cacheable, resumable) rather than a one-shot HTTP stream.
+#
+# Published tags:
+#   ghcr.io/nixopus/ollama:llama3.2-1b          (default, ~3.3 GB)
+#   ghcr.io/nixopus/ollama:llama3.2              (full 3B, ~4 GB)
+#   ghcr.io/nixopus/ollama:<model>-<ollama-ver>  (pinned)
+
+name: Build Ollama Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'Ollama model to bake in (e.g. llama3.2:1b, llama3.2, phi3:mini)'
+        required: false
+        default: 'llama3.2:1b'
+      ollama_version:
+        description: 'Ollama base image version (e.g. 0.19.0)'
+        required: false
+        default: '0.19.0'
+  schedule:
+    # Rebuild weekly to pick up Ollama security patches (Sundays 02:00 UTC)
+    - cron: '0 2 * * 0'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/ollama
+
+jobs:
+  build-ollama-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Set build variables
+        id: vars
+        run: |
+          MODEL="${{ github.event.inputs.model || 'llama3.2:1b' }}"
+          OLLAMA_VERSION="${{ github.event.inputs.ollama_version || '0.19.0' }}"
+          # Sanitize model name for use as a Docker tag (replace : with -)
+          MODEL_TAG=$(echo "$MODEL" | tr ':' '-')
+          echo "model=$MODEL"               >> "$GITHUB_OUTPUT"
+          echo "ollama_version=$OLLAMA_VERSION" >> "$GITHUB_OUTPUT"
+          echo "model_tag=$MODEL_TAG"       >> "$GITHUB_OUTPUT"
+          echo "image_tag=${REGISTRY}/${{ env.IMAGE_NAME }}:${MODEL_TAG}" >> "$GITHUB_OUTPUT"
+          echo "image_tag_versioned=${REGISTRY}/${{ env.IMAGE_NAME }}:${MODEL_TAG}-${OLLAMA_VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Write Dockerfile
+        run: |
+          cat > Dockerfile.ollama << 'EOF'
+          ARG OLLAMA_VERSION=0.19.0
+          FROM ollama/ollama:${OLLAMA_VERSION}
+
+          ARG MODEL=llama3.2:1b
+
+          # Pull model during image build so it's baked into the layer.
+          # The model files land in /root/.ollama/models which is the same
+          # path mounted as a volume at runtime — if users mount a volume
+          # the baked-in model is overshadowed, but on a fresh install with
+          # no pre-existing volume it's available immediately.
+          RUN ollama serve & \
+              sleep 8 && \
+              ollama pull ${MODEL} && \
+              pkill ollama || true
+
+          # Expose default Ollama port
+          EXPOSE 11434
+
+          ENTRYPOINT ["/bin/ollama"]
+          CMD ["serve"]
+          EOF
+
+      - name: Build and push pre-seeded Ollama image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.ollama
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            OLLAMA_VERSION=${{ steps.vars.outputs.ollama_version }}
+            MODEL=${{ steps.vars.outputs.model }}
+          tags: |
+            ${{ steps.vars.outputs.image_tag }}
+            ${{ steps.vars.outputs.image_tag_versioned }}
+          cache-from: type=gha,mode=max,scope=ollama-${{ steps.vars.outputs.model_tag }}
+          cache-to: type=gha,mode=max,scope=ollama-${{ steps.vars.outputs.model_tag }}
+          labels: |
+            org.opencontainers.image.description=Ollama ${{ steps.vars.outputs.ollama_version }} with ${{ steps.vars.outputs.model }} pre-loaded
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      - name: Summary
+        run: |
+          echo "## Ollama image published" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| | |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Model** | \`${{ steps.vars.outputs.model }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Ollama version** | \`${{ steps.vars.outputs.ollama_version }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Image** | \`${{ steps.vars.outputs.image_tag }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| **Pinned tag** | \`${{ steps.vars.outputs.image_tag_versioned }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Update \`docker-compose.ollama.yml\` image to use the pinned tag for reproducible installs." >> "$GITHUB_STEP_SUMMARY"
