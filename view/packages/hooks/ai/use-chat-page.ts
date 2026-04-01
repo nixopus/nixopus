@@ -18,6 +18,7 @@ import {
   useChatContextProviders
 } from './chat-context';
 import { useMemorySearch, type MemorySearchResult } from './use-memory-search';
+import { getSelfHosted } from '@/redux/conf';
 
 function useLocalStorageState(key: string, defaultValue: boolean) {
   const [value, setValue] = useState(() => {
@@ -56,6 +57,7 @@ export interface UseChatPageReturn {
   setAutoRunTools: (value: boolean) => void;
   selectedModel: string;
   setSelectedModel: (model: string) => void;
+  isSelfHosted: boolean;
   contextProviders: ContextProviderData[];
   handleNewChat: () => void;
 
@@ -107,6 +109,11 @@ export function useChatPage(): UseChatPageReturn {
   });
   const [pendingDeployPrompt, setPendingDeployPrompt] = useState<string | null>(null);
   const repoParamsHandledRef = useRef(false);
+  const [isSelfHosted, setIsSelfHosted] = useState(false);
+
+  useEffect(() => {
+    getSelfHosted().then(setIsSelfHosted);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('chat_selected_model', selectedModel);
@@ -119,7 +126,7 @@ export function useChatPage(): UseChatPageReturn {
     resourceId: threads.resourceId,
     contexts: selectedContexts,
     autoRunTools,
-    model: selectedModel,
+    model: isSelfHosted ? undefined : selectedModel,
     waitForThread: threads.waitForThread,
     onFirstMessage: (content) => {
       if (threads.activeThreadId) {
@@ -224,6 +231,7 @@ export function useChatPage(): UseChatPageReturn {
     setAutoRunTools,
     selectedModel,
     setSelectedModel,
+    isSelfHosted,
     contextProviders,
     handleNewChat,
 

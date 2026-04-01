@@ -139,6 +139,7 @@ export function ChatPage() {
               onAutoRunToolsChange={page.setAutoRunTools}
               selectedModel={page.selectedModel}
               onModelChange={page.setSelectedModel}
+              isSelfHosted={page.isSelfHosted}
               onAddContext={page.addContext}
               onRemoveContext={page.removeContext}
               onSubmit={page.handleSubmit}
@@ -1005,6 +1006,7 @@ interface ChatInputProps {
   onAutoRunToolsChange: (value: boolean) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
+  isSelfHosted: boolean;
   onAddContext: (ctx: ChatContext) => void;
   onRemoveContext: (ctx: ChatContext) => void;
   onSubmit: (e?: React.FormEvent) => void;
@@ -1023,6 +1025,7 @@ function ChatInput({
   onAutoRunToolsChange,
   selectedModel,
   onModelChange,
+  isSelfHosted,
   onAddContext,
   onRemoveContext,
   onSubmit,
@@ -1062,38 +1065,40 @@ function ChatInput({
               </span>
             );
           })}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted border border-border/50 transition-colors"
-              >
-                <Zap className="size-3" />
-                <span>{currentModelLabel}</span>
-                <ChevronDown className="size-3 opacity-50" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-52">
-              {AVAILABLE_MODELS.map((model) => (
-                <DropdownMenuItem
-                  key={model.id}
-                  onClick={() => onModelChange(model.id)}
-                  className={cn(
-                    'flex items-center gap-2',
-                    selectedModel === model.id && 'bg-primary/10'
-                  )}
+          {!isSelfHosted && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted border border-border/50 transition-colors"
                 >
-                  <Check
+                  <Zap className="size-3" />
+                  <span>{currentModelLabel}</span>
+                  <ChevronDown className="size-3 opacity-50" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52">
+                {AVAILABLE_MODELS.map((model) => (
+                  <DropdownMenuItem
+                    key={model.id}
+                    onClick={() => onModelChange(model.id)}
                     className={cn(
-                      'size-3.5 shrink-0',
-                      selectedModel === model.id ? 'opacity-100 text-primary' : 'opacity-0'
+                      'flex items-center gap-2',
+                      selectedModel === model.id && 'bg-primary/10'
                     )}
-                  />
-                  <span>{model.label}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  >
+                    <Check
+                      className={cn(
+                        'size-3.5 shrink-0',
+                        selectedModel === model.id ? 'opacity-100 text-primary' : 'opacity-0'
+                      )}
+                    />
+                    <span>{model.label}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           <div className="flex items-center gap-1 rounded-md border border-border/50 p-0.5">
             <button
               type="button"
