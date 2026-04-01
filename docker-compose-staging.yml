@@ -2,9 +2,7 @@ version: "3.8"
 
 services:
   nixopus-staging-api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
+    image: ghcr.io/${GITHUB_REPOSITORY:-nixopus/nixopus}-api:staging
     container_name: nixopus-staging-api
     ports:
       - "${API_PORT:-8443}:8443"
@@ -73,11 +71,7 @@ services:
       retries: 5
 
   nixopus-staging-view:
-    build:
-      context: ./view
-      dockerfile: Dockerfile
-      args:
-        - NEXT_PUBLIC_PORT=${NEXT_PUBLIC_PORT}
+    image: ghcr.io/${GITHUB_REPOSITORY:-nixopus/nixopus}-view:staging
     container_name: nixopus-staging-view
     ports:
       - "${NEXT_PUBLIC_PORT:-7443}:7443"

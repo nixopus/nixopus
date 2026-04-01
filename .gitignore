@@ -70,5 +70,5 @@ api/nixopus-api
 
 # Superpowers brainstorming & specs
 .superpowers/
-docs/superpowers/.worktrees/
+docs/superpowers
 .worktrees/
