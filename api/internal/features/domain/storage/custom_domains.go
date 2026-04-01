@@ -86,13 +86,9 @@ func (s *DomainStorage) UpdateCustomDomainVerification(id uuid.UUID, status stri
 }
 
 func (s *DomainStorage) DeleteCustomDomain(id uuid.UUID) error {
-	now := time.Now()
-	result, err := s.getDB().NewUpdate().
+	result, err := s.getDB().NewDelete().
 		Model((*shared_types.Domain)(nil)).
-		Set("deleted_at = ?", now).
-		Set("updated_at = ?", now).
 		Where("id = ?", id).
-		Where("deleted_at IS NULL").
 		Exec(s.Ctx)
 	if err != nil {
 		return err
