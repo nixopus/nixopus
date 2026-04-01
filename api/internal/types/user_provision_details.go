@@ -35,6 +35,9 @@ type UserProvisionDetails struct {
 	SSHKeyID         *uuid.UUID     `json:"ssh_key_id,omitempty" bun:"ssh_key_id,type:uuid"`
 	Subdomain        *string        `json:"subdomain,omitempty" bun:"subdomain"`
 	Domain           *string        `json:"domain,omitempty" bun:"domain"`
+	VcpuCount        int            `json:"vcpu_count" bun:"vcpu_count"`
+	MemoryMB         int            `json:"memory_mb" bun:"memory_mb"`
+	DiskSizeGB       int            `json:"disk_size_gb" bun:"disk_size_gb"`
 	Step             *ProvisionStep `json:"step,omitempty" bun:"step,type:provision_step"`
 	Error            *string        `json:"error,omitempty" bun:"error,type:text"`
 	CreatedAt        time.Time      `json:"created_at" bun:"created_at,notnull,default:now()"`

@@ -152,9 +152,6 @@ func (s *ServerStorage) ListServersByOrganizationID(orgID uuid.UUID, params type
 		Where("ssh_key_id IN (?)", bun.In(sshKeyIDs)).
 		Where("organization_id = ?", orgID)
 
-	// Note: Status filter is now applied via user.provision_status join above
-	// No need to filter provision details by status here
-
 	err = provisionQuery.Scan(s.Ctx)
 	if err != nil {
 		return nil, 0, err
@@ -168,7 +165,34 @@ func (s *ServerStorage) ListServersByOrganizationID(orgID uuid.UUID, params type
 		}
 	}
 
-	// Combine SSH keys with provision details
+	// Aggregate resource totals (vcpu, ram, disk) per SSH key
+	type resourceAggregate struct {
+		SSHKeyID    uuid.UUID `bun:"ssh_key_id"`
+		TotalVcpu   int       `bun:"total_vcpu"`
+		TotalRamMB  int       `bun:"total_ram_mb"`
+		TotalDiskGB int       `bun:"total_disk_gb"`
+	}
+	var aggregates []resourceAggregate
+	err = s.getDB().NewSelect().
+		TableExpr("user_provision_details").
+		ColumnExpr("ssh_key_id").
+		ColumnExpr("COALESCE(SUM(vcpu_count), 0) AS total_vcpu").
+		ColumnExpr("COALESCE(SUM(memory_mb), 0) AS total_ram_mb").
+		ColumnExpr("COALESCE(SUM(disk_size_gb), 0) AS total_disk_gb").
+		Where("ssh_key_id IN (?)", bun.In(sshKeyIDs)).
+		Where("organization_id = ?", orgID).
+		GroupExpr("ssh_key_id").
+		Scan(s.Ctx, &aggregates)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	aggregateMap := make(map[uuid.UUID]resourceAggregate, len(aggregates))
+	for _, agg := range aggregates {
+		aggregateMap[agg.SSHKeyID] = agg
+	}
+
+	// Combine SSH keys with provision details and resource totals
 	servers := make([]types.ServerResponse, 0, len(sshKeys))
 	for _, key := range sshKeys {
 		server := types.ServerResponse{
@@ -176,6 +200,11 @@ func (s *ServerStorage) ListServersByOrganizationID(orgID uuid.UUID, params type
 		}
 		if provision, ok := provisionMap[key.ID]; ok {
 			server.Provision = provision
+		}
+		if agg, ok := aggregateMap[key.ID]; ok {
+			server.TotalVcpu = agg.TotalVcpu
+			server.TotalRamMB = agg.TotalRamMB
+			server.TotalDiskGB = agg.TotalDiskGB
 		}
 		servers = append(servers, server)
 	}

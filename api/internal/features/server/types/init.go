@@ -23,9 +23,13 @@ type ServerListParams struct {
 }
 
 // ServerResponse represents a server (SSH key) with optional provision details
+// and aggregated resource allocation from all provisions on this server.
 type ServerResponse struct {
 	shared_types.SSHKey
-	Provision *shared_types.UserProvisionDetails `json:"provision,omitempty"`
+	Provision   *shared_types.UserProvisionDetails `json:"provision,omitempty"`
+	TotalVcpu   int                                `json:"total_vcpu"`
+	TotalRamMB  int                                `json:"total_ram_mb"`
+	TotalDiskGB int                                `json:"total_disk_gb"`
 }
 
 // ListServersResponseData contains the data for list servers response
