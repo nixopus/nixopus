@@ -1,6 +1,9 @@
 services:
   nixopus-ollama:
-    image: ollama/ollama:latest
+    # Pre-seeded image has the default model baked in — no blocking pull step at install time.
+    # Falls back to vanilla Ollama if the pre-seeded image isn't available yet;
+    # in that case get.sh will pull the model in the background after startup.
+    image: ${OLLAMA_IMAGE:-ghcr.io/nixopus/ollama:llama3.2-1b}
     container_name: nixopus-ollama
     restart: unless-stopped
     logging:
@@ -12,6 +15,8 @@ services:
       - nixopus-ollama-data:/root/.ollama
     networks:
       - nixopus-network
+    environment:
+      OLLAMA_MODEL: "${OLLAMA_MODEL:-llama3.2:1b}"
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 10s
