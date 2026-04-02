@@ -166,6 +166,12 @@ func (d *Dispatcher) buildMessage(event shared_types.NotificationEvent, chName s
 			msg.Subject = "Notification from Nixopus"
 			msg.Body = fmt.Sprintf("Event: %s", event.Type)
 		}
+	} else if chName == "system_email" {
+		msg.To = userEmail
+		msg.TemplateData = event.Data
+		if templateID, ok := systemEmailTemplateMap[event.Type]; ok {
+			msg.Metadata["resend_template_id"] = templateID
+		}
 	} else {
 		msg.Body = d.buildPlainTextBody(event)
 	}

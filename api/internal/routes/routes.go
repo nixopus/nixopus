@@ -167,6 +167,11 @@ func (router *Router) initChannels() map[string]channel.Channel {
 		"discord": channel.NewDiscordChannel(db, ctx),
 	}
 
+	resendCfg := config.AppConfig.Resend
+	if resendCfg.APIKey != "" {
+		channels["system_email"] = channel.NewSystemEmailChannel(resendCfg.APIKey, resendCfg.FromEmail)
+	}
+
 	agentCfg := config.AppConfig.AgentChannel
 	authURL := strings.TrimRight(config.AppConfig.BetterAuth.URL, "/")
 
