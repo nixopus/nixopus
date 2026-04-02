@@ -28,6 +28,8 @@ import { containerApi } from './services/container/containerApi';
 import { imagesApi } from './services/container/imagesApi';
 import { extensionsApi } from './services/extensions/extensionsApi';
 import { mcpApi } from './services/settings/mcpApi';
+import { getPluginReducers, getPluginMiddleware } from '@/plugins/registry';
+
 const createNoopStorage = () => ({
   getItem: (_key: string) => Promise.resolve(null),
   setItem: (_key: string, value: any) => Promise.resolve(value),
@@ -55,7 +57,7 @@ const persistConfig = {
   }
 };
 
-const rootReducer = combineReducers({
+const coreReducers = {
   [authApi.reducerPath]: authApi.reducer,
   auth: authReducer,
   [userApi.reducerPath]: userApi.reducer,
@@ -74,6 +76,11 @@ const rootReducer = combineReducers({
   [imagesApi.reducerPath]: imagesApi.reducer,
   [extensionsApi.reducerPath]: extensionsApi.reducer,
   [mcpApi.reducerPath]: mcpApi.reducer
+};
+
+const rootReducer = combineReducers({
+  ...coreReducers,
+  ...getPluginReducers()
 });
 
 type RootReducer = ReturnType<typeof rootReducer>;
@@ -110,7 +117,8 @@ export const store = configureStore({
       containerApi.middleware,
       imagesApi.middleware,
       extensionsApi.middleware,
-      mcpApi.middleware
+      mcpApi.middleware,
+      ...getPluginMiddleware()
     ]),
   devTools: process.env.NODE_ENV === 'development'
 });
