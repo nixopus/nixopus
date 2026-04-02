@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getPluginPrivatePaths, getPluginPublicPaths } from '@/plugins/registry';
 
 const AUTH_COOKIE = 'better-auth.session_token';
 const BASE_PATH = process.env.BASE_PATH || '';
 
-const PUBLIC_PATHS = ['/auth', '/login', '/register', '/reset-password', '/verify-email'];
-const PRIVATE_PATHS = ['/apps', '/charts', '/chats', '/extensions', '/settings', '/activities'];
+const CORE_PUBLIC_PATHS = ['/auth', '/login', '/register', '/reset-password', '/verify-email'];
+const CORE_PRIVATE_PATHS = ['/apps', '/charts', '/chats', '/extensions', '/settings', '/activities'];
+
+const PUBLIC_PATHS = [...CORE_PUBLIC_PATHS, ...getPluginPublicPaths()];
+const PRIVATE_PATHS = [...CORE_PRIVATE_PATHS, ...getPluginPrivatePaths()];
 const AUTH_BYPASS_PATHS = ['/apps/github-callback', '/charts/github-callback'];
 
 function getPath(pathname: string) {
