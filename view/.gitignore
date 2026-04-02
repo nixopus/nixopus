@@ -41,5 +41,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Plugin directories (externally sourced)
+plugins/*/
+!plugins/.gitkeep
+!plugins/_manifests.ts
+!plugins/registry.tsx
+
 # Generated plugin routes
 .plugin-routes.json
