@@ -272,6 +272,12 @@ func setupEnvVarMappings() {
 	viper.SetDefault("trail.allowed_images", []string{"nixopus-trail"})
 	viper.SetDefault("trail.trail_domain", "nixopus.com")
 
+	viper.BindEnv("trail.trial_period_days", "TRIAL_PERIOD_DAYS")
+	viper.SetDefault("trail.trial_period_days", 7)
+
+	viper.BindEnv("resend.api_key", "RESEND_API_KEY")
+	viper.BindEnv("resend.from_email", "RESEND_FROM_EMAIL")
+
 	// Live gateway
 	viper.BindEnv("live.chunk_size", "NIXOPUS_LIVE_CHUNK_SIZE")
 	viper.BindEnv("live.completion_workers", "NIXOPUS_LIVE_COMPLETION_WORKERS")

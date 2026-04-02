@@ -14,6 +14,7 @@ const (
 	EventVerificationEmail   EventType = "auth.verification"
 	EventUserAddedToOrg      EventType = "org.user_added"
 	EventUserRemovedFromOrg  EventType = "org.user_removed"
+	EventTrialExpired        EventType = "trail.trial_expired"
 )
 
 // NotificationEvent is the payload any service emits to trigger notifications.
