@@ -86,29 +86,42 @@ function NixopusIcon({ className }: { className?: string }) {
 export function ChatPage() {
   const { t } = useTranslation();
   const page = useChatPage();
-  const [pendingWelcomeMsg, setPendingWelcomeMsg] = React.useState<string | null>(null);
+  const justCreatedThreadRef = React.useRef(false);
+  const pendingMessageRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
-    if (pendingWelcomeMsg && page.activeThreadId && !page.isLoadingHistory) {
-      const timer = setTimeout(() => {
-        page.handleSuggestionClick(pendingWelcomeMsg);
-        setPendingWelcomeMsg(null);
-      }, 150);
-      return () => clearTimeout(timer);
+    if (pendingMessageRef.current && page.activeThreadId && !page.isLoadingHistory) {
+      const msg = pendingMessageRef.current;
+      pendingMessageRef.current = null;
+      page.handleSuggestionClick(msg);
     }
-  }, [pendingWelcomeMsg, page.activeThreadId, page.isLoadingHistory]);
+  }, [page.activeThreadId, page.isLoadingHistory, page.handleSuggestionClick]);
+
+  React.useEffect(() => {
+    if (!page.isLoadingHistory) {
+      justCreatedThreadRef.current = false;
+    }
+  }, [page.isLoadingHistory]);
+
+  const ensureThread = React.useCallback(() => {
+    if (!page.activeThreadId) {
+      justCreatedThreadRef.current = true;
+      page.handleNewChat();
+    }
+  }, [page.activeThreadId, page.handleNewChat]);
 
   const handleWelcomeSubmit = React.useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
       const text = page.inputValue.trim();
-      if (!text || pendingWelcomeMsg) return;
+      if (!text) return;
 
       if (page.activeThreadId) {
         page.handleSubmit(e);
       } else {
-        setPendingWelcomeMsg(text);
+        pendingMessageRef.current = text;
         page.setInputValue('');
+        justCreatedThreadRef.current = true;
         page.handleNewChat();
       }
     },
@@ -117,22 +130,21 @@ export function ChatPage() {
       page.activeThreadId,
       page.handleSubmit,
       page.handleNewChat,
-      pendingWelcomeMsg,
       page.setInputValue
     ]
   );
 
   const handleWelcomeSuggestionClick = React.useCallback(
     (text: string) => {
-      if (pendingWelcomeMsg) return;
       if (page.activeThreadId) {
         page.handleSuggestionClick(text);
       } else {
-        setPendingWelcomeMsg(text);
+        pendingMessageRef.current = text;
+        justCreatedThreadRef.current = true;
         page.handleNewChat();
       }
     },
-    [page.activeThreadId, page.handleSuggestionClick, page.handleNewChat, pendingWelcomeMsg]
+    [page.activeThreadId, page.handleSuggestionClick, page.handleNewChat]
   );
 
   const handleWelcomeKeyDown = React.useCallback(
@@ -145,10 +157,10 @@ export function ChatPage() {
     [handleWelcomeSubmit]
   );
 
-  const isWelcomeState =
-    page.isThreadsInitialized && page.messages.length === 0 && !page.isLoadingHistory;
-
-  const hasActiveThread = !!page.activeThreadId;
+  const showWelcome =
+    page.isThreadsInitialized &&
+    page.messages.length === 0 &&
+    (!page.isLoadingHistory || justCreatedThreadRef.current);
 
   return (
     <div className="flex h-full w-full overflow-hidden">
@@ -174,28 +186,7 @@ export function ChatPage() {
         )}
         {!page.isThreadsInitialized ? (
           <MessagesSkeleton />
-        ) : hasActiveThread && page.isLoadingHistory ? (
-          <MessagesSkeleton />
-        ) : isWelcomeState ? (
-          <ChatWelcomeView
-            inputValue={page.inputValue}
-            textareaRef={page.textareaRef}
-            selectedContexts={page.selectedContexts}
-            contextProviders={page.contextProviders}
-            autoRunTools={page.autoRunTools}
-            onAutoRunToolsChange={page.setAutoRunTools}
-            selectedModel={page.selectedModel}
-            onModelChange={page.setSelectedModel}
-            isSelfHosted={page.isSelfHosted}
-            onAddContext={page.addContext}
-            onRemoveContext={page.removeContext}
-            onSubmit={handleWelcomeSubmit}
-            onKeyDown={handleWelcomeKeyDown}
-            onChange={page.handleInputChange}
-            onSuggestionClick={handleWelcomeSuggestionClick}
-            disabled={!!pendingWelcomeMsg}
-          />
-        ) : (
+        ) : page.messages.length > 0 ? (
           <>
             <ChatMessages
               messages={page.messages}
@@ -226,6 +217,29 @@ export function ChatPage() {
               onStop={page.stopStreaming}
             />
           </>
+        ) : page.isLoadingHistory && !justCreatedThreadRef.current ? (
+          <MessagesSkeleton />
+        ) : showWelcome ? (
+          <ChatWelcomeView
+            inputValue={page.inputValue}
+            textareaRef={page.textareaRef}
+            selectedContexts={page.selectedContexts}
+            contextProviders={page.contextProviders}
+            autoRunTools={page.autoRunTools}
+            onAutoRunToolsChange={page.setAutoRunTools}
+            selectedModel={page.selectedModel}
+            onModelChange={page.setSelectedModel}
+            isSelfHosted={page.isSelfHosted}
+            onAddContext={page.addContext}
+            onRemoveContext={page.removeContext}
+            onSubmit={handleWelcomeSubmit}
+            onKeyDown={handleWelcomeKeyDown}
+            onChange={page.handleInputChange}
+            onSuggestionClick={handleWelcomeSuggestionClick}
+            onInputFocus={ensureThread}
+          />
+        ) : (
+          <MessagesSkeleton />
         )}
       </div>
     </div>
@@ -620,7 +634,7 @@ interface ChatWelcomeViewProps {
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSuggestionClick: (text: string) => void;
-  disabled?: boolean;
+  onInputFocus?: () => void;
 }
 
 function ChatWelcomeView({
@@ -639,7 +653,7 @@ function ChatWelcomeView({
   onKeyDown,
   onChange,
   onSuggestionClick,
-  disabled
+  onInputFocus
 }: ChatWelcomeViewProps) {
   const { t } = useTranslation();
   const currentModelLabel =
@@ -668,9 +682,9 @@ function ChatWelcomeView({
               value={inputValue}
               onChange={onChange}
               onKeyDown={onKeyDown}
+              onFocus={onInputFocus}
               placeholder={t('ai.input.placeholder')}
               className="min-h-[52px] max-h-[160px] resize-none border-0 bg-transparent px-4 pt-4 pb-2 text-base focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
-              disabled={disabled}
               rows={1}
             />
             <div className="flex items-center justify-between px-3 pb-3">
@@ -786,7 +800,7 @@ function ChatWelcomeView({
               <Button
                 type="submit"
                 size="icon"
-                disabled={disabled || !inputValue.trim()}
+                disabled={!inputValue.trim()}
                 className="shrink-0 size-9 rounded-xl"
               >
                 <Send className="size-4" />
@@ -801,8 +815,7 @@ function ChatWelcomeView({
               key={index}
               type="button"
               onClick={() => onSuggestionClick(suggestion)}
-              disabled={disabled}
-              className="px-3.5 py-2 text-sm rounded-full border border-border/50 bg-background hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              className="px-3.5 py-2 text-sm rounded-full border border-border/50 bg-background hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors"
             >
               {suggestion}
             </button>
