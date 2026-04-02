@@ -2,6 +2,7 @@ import React from 'react';
 import { Sidebar } from '@/components/ui/sidebar';
 import { User } from '@/redux/types/user';
 import { Organization } from '@/redux/types/orgs';
+import type { ComponentType } from 'react';
 import { LucideIcon } from 'lucide-react';
 import { translationKey } from '@/packages/hooks/shared/use-translation';
 
@@ -19,7 +20,7 @@ export interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 interface SideNav {
   title: string;
   url: string;
-  icon: LucideIcon;
+  icon: LucideIcon | ComponentType<{ className?: string }>;
   resource: string;
   items?: SideNavItem[];
 }
@@ -60,7 +61,7 @@ export interface TopNavMainProps {
 interface TopNavItem {
   title: string;
   url: string;
-  icon?: LucideIcon;
+  icon?: LucideIcon | ComponentType<{ className?: string }>;
   isActive?: boolean;
   items?: {
     title: string;
