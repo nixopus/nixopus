@@ -31,7 +31,6 @@ import {
   Input
 } from '@nixopus/ui';
 import {
-  Sparkles,
   Send,
   Loader2,
   Plus,
@@ -87,6 +86,69 @@ function NixopusIcon({ className }: { className?: string }) {
 export function ChatPage() {
   const { t } = useTranslation();
   const page = useChatPage();
+  const [pendingWelcomeMsg, setPendingWelcomeMsg] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (pendingWelcomeMsg && page.activeThreadId && !page.isLoadingHistory) {
+      const timer = setTimeout(() => {
+        page.handleSuggestionClick(pendingWelcomeMsg);
+        setPendingWelcomeMsg(null);
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [pendingWelcomeMsg, page.activeThreadId, page.isLoadingHistory]);
+
+  const handleWelcomeSubmit = React.useCallback(
+    (e?: React.FormEvent) => {
+      e?.preventDefault();
+      const text = page.inputValue.trim();
+      if (!text || pendingWelcomeMsg) return;
+
+      if (page.activeThreadId) {
+        page.handleSubmit(e);
+      } else {
+        setPendingWelcomeMsg(text);
+        page.setInputValue('');
+        page.handleNewChat();
+      }
+    },
+    [
+      page.inputValue,
+      page.activeThreadId,
+      page.handleSubmit,
+      page.handleNewChat,
+      pendingWelcomeMsg,
+      page.setInputValue
+    ]
+  );
+
+  const handleWelcomeSuggestionClick = React.useCallback(
+    (text: string) => {
+      if (pendingWelcomeMsg) return;
+      if (page.activeThreadId) {
+        page.handleSuggestionClick(text);
+      } else {
+        setPendingWelcomeMsg(text);
+        page.handleNewChat();
+      }
+    },
+    [page.activeThreadId, page.handleSuggestionClick, page.handleNewChat, pendingWelcomeMsg]
+  );
+
+  const handleWelcomeKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleWelcomeSubmit();
+      }
+    },
+    [handleWelcomeSubmit]
+  );
+
+  const isWelcomeState =
+    page.isThreadsInitialized && page.messages.length === 0 && !page.isLoadingHistory;
+
+  const hasActiveThread = !!page.activeThreadId;
 
   return (
     <div className="flex h-full w-full overflow-hidden">
@@ -112,22 +174,38 @@ export function ChatPage() {
         )}
         {!page.isThreadsInitialized ? (
           <MessagesSkeleton />
-        ) : page.activeThreadId ? (
+        ) : hasActiveThread && page.isLoadingHistory ? (
+          <MessagesSkeleton />
+        ) : isWelcomeState ? (
+          <ChatWelcomeView
+            inputValue={page.inputValue}
+            textareaRef={page.textareaRef}
+            selectedContexts={page.selectedContexts}
+            contextProviders={page.contextProviders}
+            autoRunTools={page.autoRunTools}
+            onAutoRunToolsChange={page.setAutoRunTools}
+            selectedModel={page.selectedModel}
+            onModelChange={page.setSelectedModel}
+            isSelfHosted={page.isSelfHosted}
+            onAddContext={page.addContext}
+            onRemoveContext={page.removeContext}
+            onSubmit={handleWelcomeSubmit}
+            onKeyDown={handleWelcomeKeyDown}
+            onChange={page.handleInputChange}
+            onSuggestionClick={handleWelcomeSuggestionClick}
+            disabled={!!pendingWelcomeMsg}
+          />
+        ) : (
           <>
-            {page.isLoadingHistory ? (
-              <MessagesSkeleton />
-            ) : (
-              <ChatMessages
-                messages={page.messages}
-                isStreaming={page.isStreaming}
-                scrollRef={page.scrollRef}
-                onSuggestionClick={page.handleSuggestionClick}
-                pendingToolApproval={page.pendingToolApproval}
-                autoRunTools={page.autoRunTools}
-                onApproveToolCall={page.handleApproveToolCall}
-                onDeclineToolCall={page.handleDeclineToolCall}
-              />
-            )}
+            <ChatMessages
+              messages={page.messages}
+              isStreaming={page.isStreaming}
+              scrollRef={page.scrollRef}
+              pendingToolApproval={page.pendingToolApproval}
+              autoRunTools={page.autoRunTools}
+              onApproveToolCall={page.handleApproveToolCall}
+              onDeclineToolCall={page.handleDeclineToolCall}
+            />
             {page.omStatus && <ContextWindowBar omStatus={page.omStatus} />}
             <ChatInput
               inputValue={page.inputValue}
@@ -148,22 +226,6 @@ export function ChatPage() {
               onStop={page.stopStreaming}
             />
           </>
-        ) : (
-          <div className="flex flex-1 items-center justify-center">
-            <div className="text-center space-y-4">
-              <div className="flex items-center justify-center size-16 rounded-2xl bg-primary/10 mx-auto">
-                <Sparkles className="size-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold">{t('ai.emptyState.title')}</h3>
-              <p className="text-sm text-muted-foreground max-w-sm">
-                {t('ai.emptyState.description')}
-              </p>
-              <Button onClick={page.handleNewChat} className="gap-2">
-                <Plus className="size-4" />
-                {t('ai.threads.newChat')}
-              </Button>
-            </div>
-          </div>
         )}
       </div>
     </div>
@@ -460,7 +522,6 @@ interface ChatMessagesProps {
   messages: ChatMessage[];
   isStreaming: boolean;
   scrollRef: React.RefObject<HTMLDivElement | null>;
-  onSuggestionClick: (text: string) => void;
   pendingToolApproval?: PendingToolApproval | null;
   autoRunTools?: boolean;
   onApproveToolCall?: () => void;
@@ -471,7 +532,6 @@ function ChatMessages({
   messages,
   isStreaming,
   scrollRef,
-  onSuggestionClick,
   pendingToolApproval,
   autoRunTools,
   onApproveToolCall,
@@ -482,33 +542,29 @@ function ChatMessages({
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto" {...({ ref: scrollRef } as any)}>
       <div className="max-w-3xl mx-auto px-4 py-6">
-        {messages.length === 0 ? (
-          <ChatEmptyState onSuggestionClick={onSuggestionClick} />
-        ) : (
-          <div className="space-y-6">
-            {messages.map((message, index) => {
-              const isLastAssistant = message.role === 'assistant' && index === messages.length - 1;
-              return (
-                <MessageBubble
-                  key={message.id}
-                  message={message}
-                  isStreaming={isStreaming}
-                  isLastAssistantMessage={isLastAssistant}
-                />
-              );
-            })}
-            {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
-              <StreamingIndicator />
-            )}
-            {pendingToolApproval && !autoRunTools && (
-              <ToolApprovalBanner
-                pending={pendingToolApproval}
-                onApprove={onApproveToolCall}
-                onDecline={onDeclineToolCall}
+        <div className="space-y-6">
+          {messages.map((message, index) => {
+            const isLastAssistant = message.role === 'assistant' && index === messages.length - 1;
+            return (
+              <MessageBubble
+                key={message.id}
+                message={message}
+                isStreaming={isStreaming}
+                isLastAssistantMessage={isLastAssistant}
               />
-            )}
-          </div>
-        )}
+            );
+          })}
+          {isStreaming && messages[messages.length - 1]?.role !== 'assistant' && (
+            <StreamingIndicator />
+          )}
+          {pendingToolApproval && !autoRunTools && (
+            <ToolApprovalBanner
+              pending={pendingToolApproval}
+              onApprove={onApproveToolCall}
+              onDecline={onDeclineToolCall}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -548,12 +604,46 @@ function ToolApprovalBanner({ pending, onApprove, onDecline }: ToolApprovalBanne
   );
 }
 
-interface ChatEmptyStateProps {
+interface ChatWelcomeViewProps {
+  inputValue: string;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  selectedContexts: ChatContext[];
+  contextProviders: ContextProviderData[];
+  autoRunTools: boolean;
+  onAutoRunToolsChange: (value: boolean) => void;
+  selectedModel: string;
+  onModelChange: (model: string) => void;
+  isSelfHosted: boolean;
+  onAddContext: (ctx: ChatContext) => void;
+  onRemoveContext: (ctx: ChatContext) => void;
+  onSubmit: (e?: React.FormEvent) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSuggestionClick: (text: string) => void;
+  disabled?: boolean;
 }
 
-function ChatEmptyState({ onSuggestionClick }: ChatEmptyStateProps) {
+function ChatWelcomeView({
+  inputValue,
+  textareaRef,
+  selectedContexts,
+  contextProviders,
+  autoRunTools,
+  onAutoRunToolsChange,
+  selectedModel,
+  onModelChange,
+  isSelfHosted,
+  onAddContext,
+  onRemoveContext,
+  onSubmit,
+  onKeyDown,
+  onChange,
+  onSuggestionClick,
+  disabled
+}: ChatWelcomeViewProps) {
   const { t } = useTranslation();
+  const currentModelLabel =
+    AVAILABLE_MODELS.find((m) => m.id === selectedModel)?.label ?? selectedModel;
 
   const suggestions = [
     t('ai.suggestions.deploy'),
@@ -562,26 +652,163 @@ function ChatEmptyState({ onSuggestionClick }: ChatEmptyStateProps) {
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-4">
-      <div className="flex items-center justify-center size-16 rounded-2xl bg-primary/10 mb-6">
-        <NixopusIcon className="size-8" />
-      </div>
-      <h3 className="text-lg font-semibold text-foreground mb-2">{t('ai.emptyState.title')}</h3>
-      <p className="text-sm text-muted-foreground text-center max-w-sm mb-2">
-        {t('ai.emptyState.description')}
-      </p>
-      <p className="text-xs text-muted-foreground/60 mb-6">{t('ai.emptyState.tryAskingAbout')}</p>
-      <div className="grid grid-cols-1 gap-2 w-full max-w-sm">
-        {suggestions.map((suggestion, index) => (
-          <button
-            key={index}
-            type="button"
-            onClick={() => onSuggestionClick(suggestion)}
-            className="px-4 py-3 text-sm text-left rounded-lg border border-border/50 bg-muted/30 hover:bg-muted/60 hover:border-border transition-colors text-muted-foreground hover:text-foreground"
-          >
-            {suggestion}
-          </button>
-        ))}
+    <div className="flex flex-1 flex-col items-center justify-center px-4 pb-12">
+      <div className="w-full max-w-2xl">
+        <div className="flex flex-col items-center gap-3 mb-8">
+          <div className="flex items-center justify-center size-12 rounded-2xl bg-primary/10">
+            <NixopusIcon className="size-6" />
+          </div>
+          <h2 className="text-xl font-semibold text-foreground">{t('ai.emptyState.title')}</h2>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-muted/20 shadow-sm focus-within:border-primary/30 focus-within:shadow-md transition-all">
+          <form onSubmit={onSubmit}>
+            <Textarea
+              ref={textareaRef}
+              value={inputValue}
+              onChange={onChange}
+              onKeyDown={onKeyDown}
+              placeholder={t('ai.input.placeholder')}
+              className="min-h-[52px] max-h-[160px] resize-none border-0 bg-transparent px-4 pt-4 pb-2 text-base focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+              disabled={disabled}
+              rows={1}
+            />
+            <div className="flex items-center justify-between px-3 pb-3">
+              <div className="flex items-center gap-2 flex-wrap">
+                {selectedContexts.map((ctx) => {
+                  const provider = contextProviders.find((p) => p.config.type === ctx.type);
+                  const Icon = provider?.config.icon;
+                  return (
+                    <span
+                      key={`${ctx.type}-${ctx.id}`}
+                      className="inline-flex items-center gap-1.5 pl-2 pr-1 py-0.5 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20"
+                    >
+                      {Icon && <Icon className="size-3" />}
+                      <span className="truncate max-w-[150px]">{ctx.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => onRemoveContext(ctx)}
+                        className="ml-0.5 p-0.5 rounded hover:bg-primary/20 transition-colors"
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+                {!isSelfHosted && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                      >
+                        <Zap className="size-3" />
+                        <span>{currentModelLabel}</span>
+                        <ChevronDown className="size-3 opacity-50" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-52">
+                      {AVAILABLE_MODELS.map((model) => (
+                        <DropdownMenuItem
+                          key={model.id}
+                          onClick={() => onModelChange(model.id)}
+                          className={cn(
+                            'flex items-center gap-2',
+                            selectedModel === model.id && 'bg-primary/10'
+                          )}
+                        >
+                          <Check
+                            className={cn(
+                              'size-3.5 shrink-0',
+                              selectedModel === model.id ? 'opacity-100 text-primary' : 'opacity-0'
+                            )}
+                          />
+                          <span>{model.label}</span>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+                <div className="flex items-center gap-1 rounded-md border border-border/50 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => onAutoRunToolsChange(false)}
+                    className={cn(
+                      'px-2 py-0.5 rounded text-xs transition-colors',
+                      !autoRunTools
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {t('ai.toolExecution.askBefore' as Parameters<typeof t>[0])}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onAutoRunToolsChange(true)}
+                    className={cn(
+                      'px-2 py-0.5 rounded text-xs transition-colors',
+                      autoRunTools
+                        ? 'bg-primary/10 text-primary font-medium'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {t('ai.toolExecution.autoRun' as Parameters<typeof t>[0])}
+                  </button>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                    >
+                      <CirclePlus className="size-3" />
+                      {t('ai.context.addContext')}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48">
+                    {contextProviders.map((provider) => {
+                      const Icon = provider.config.icon;
+                      return (
+                        <ContextSubMenu
+                          key={provider.config.type}
+                          provider={provider}
+                          icon={Icon}
+                          label={t(provider.config.labelKey as Parameters<typeof t>[0])}
+                          selectedContexts={selectedContexts}
+                          onAddContext={onAddContext}
+                          onRemoveContext={onRemoveContext}
+                        />
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <Button
+                type="submit"
+                size="icon"
+                disabled={disabled || !inputValue.trim()}
+                className="shrink-0 size-9 rounded-xl"
+              >
+                <Send className="size-4" />
+              </Button>
+            </div>
+          </form>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-2 mt-4">
+          {suggestions.map((suggestion, index) => (
+            <button
+              key={index}
+              type="button"
+              onClick={() => onSuggestionClick(suggestion)}
+              disabled={disabled}
+              className="px-3.5 py-2 text-sm rounded-full border border-border/50 bg-background hover:bg-muted/60 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            >
+              {suggestion}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground mt-4 text-center">{t('ai.input.hint')}</p>
       </div>
     </div>
   );
