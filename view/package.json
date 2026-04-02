@@ -4,6 +4,8 @@
   "private": true,
   "license": "Fair-Code Sustainable Use License",
   "scripts": {
+    "predev": "node scripts/generate-plugin-routes.js",
+    "prebuild": "node scripts/generate-plugin-routes.js",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start -p ${PORT:=7443}",
