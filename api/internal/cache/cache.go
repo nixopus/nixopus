@@ -14,6 +14,7 @@ import (
 
 const (
 	UserCacheKeyPrefix          = "user:"
+	UserByIDCacheKeyPrefix      = "user_id:"
 	OrgMembershipCacheKeyPrefix = "org_membership:"
 	UserCacheTTL                = 10 * time.Minute
 	OrgMembershipCacheTTL       = 30 * time.Minute
@@ -21,6 +22,8 @@ const (
 	FeatureFlagCacheTTL         = 10 * time.Minute
 	RBACCacheKeyPrefix          = "rbac:"
 	RBACCacheTTL                = 5 * time.Minute
+	SessionCacheKeyPrefix       = "session:"
+	SessionCacheTTL             = 5 * time.Minute
 )
 
 type Cache struct {
@@ -92,6 +95,44 @@ func (c *Cache) SetUser(ctx context.Context, email string, user *types.User) err
 		return err
 	}
 
+	return c.client.Set(ctx, key, data, UserCacheTTL).Err()
+}
+
+// GetUserByID retrieves a cached user by their UUID.
+func (c *Cache) GetUserByID(ctx context.Context, userID string) (*types.User, error) {
+	key := UserByIDCacheKeyPrefix + userID
+	data, err := c.client.Get(ctx, key).Bytes()
+	if err == redis.Nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var user types.User
+	if err := json.Unmarshal(data, &user); err != nil {
+		_ = c.client.Del(ctx, key).Err()
+		return nil, err
+	}
+
+	if user.ID == uuid.Nil {
+		_ = c.client.Del(ctx, key).Err()
+		return nil, nil
+	}
+
+	return &user, nil
+}
+
+// SetUserByID caches a user record by their UUID.
+func (c *Cache) SetUserByID(ctx context.Context, userID string, user *types.User) error {
+	if user == nil || user.ID == uuid.Nil {
+		return nil
+	}
+	key := UserByIDCacheKeyPrefix + userID
+	data, err := json.Marshal(user)
+	if err != nil {
+		return err
+	}
 	return c.client.Set(ctx, key, data, UserCacheTTL).Err()
 }
 
@@ -192,4 +233,24 @@ func (c *Cache) SetRBACPermissions(ctx context.Context, userID, orgID string, pe
 func (c *Cache) InvalidateRBACPermissions(ctx context.Context, userID, orgID string) error {
 	key := fmt.Sprintf("%s%s:%s", RBACCacheKeyPrefix, userID, orgID)
 	return c.client.Del(ctx, key).Err()
+}
+
+// GetSession retrieves a cached session verification result.
+// Returns nil on cache miss.
+func (c *Cache) GetSession(ctx context.Context, cacheKey string) ([]byte, error) {
+	key := SessionCacheKeyPrefix + cacheKey
+	data, err := c.client.Get(ctx, key).Bytes()
+	if err == redis.Nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+// SetSession caches a session verification result.
+func (c *Cache) SetSession(ctx context.Context, cacheKey string, data []byte) error {
+	key := SessionCacheKeyPrefix + cacheKey
+	return c.client.Set(ctx, key, data, SessionCacheTTL).Err()
 }
