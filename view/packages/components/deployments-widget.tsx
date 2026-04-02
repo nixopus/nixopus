@@ -128,7 +128,7 @@ export const DeploymentStatsWidget: React.FC<DeploymentStatsWidgetProps> = ({
 
   if (stats.total === 0 || pieData.length === 0) {
     return (
-      <CardWrapper title="Deployment Stats" icon={BarChart3} compact>
+      <CardWrapper title="Deployment Stats" icon={BarChart3} compact className="h-full">
         <div className="flex items-center justify-center h-full min-h-[200px]">
           <TypographyMuted>No deployment data available</TypographyMuted>
         </div>
@@ -137,7 +137,7 @@ export const DeploymentStatsWidget: React.FC<DeploymentStatsWidgetProps> = ({
   }
 
   return (
-    <CardWrapper title="Deployment Stats" icon={BarChart3} compact>
+    <CardWrapper title="Deployment Stats" icon={BarChart3} compact className="h-full">
       <div className="flex flex-col h-full" data-chart={id}>
         <ChartStyle id={id} config={chartConfig} />
         <div className="flex flex-1 justify-center items-center py-4">
