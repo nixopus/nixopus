@@ -18,34 +18,37 @@ import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi'
 import { useState, useMemo, useEffect } from 'react';
 import { Layers, ChartColumnDecreasing, MessageSquare, Puzzle } from 'lucide-react';
 import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
+import { getPluginNavItems } from '@/plugins/registry';
+
+const coreNavItems = [
+  {
+    title: 'navigation.selfHost',
+    url: '/apps',
+    icon: Layers,
+    resource: 'deploy'
+  },
+  {
+    title: 'navigation.chats',
+    url: '/chats',
+    icon: MessageSquare,
+    resource: 'ai'
+  },
+  {
+    title: 'navigation.dashboard',
+    url: '/charts',
+    icon: ChartColumnDecreasing,
+    resource: 'dashboard'
+  },
+  {
+    title: 'navigation.integrations',
+    url: '/integrations',
+    icon: Puzzle,
+    resource: 'notification'
+  }
+];
 
 const data = {
-  navMain: [
-    {
-      title: 'navigation.selfHost',
-      url: '/apps',
-      icon: Layers,
-      resource: 'deploy'
-    },
-    {
-      title: 'navigation.chats',
-      url: '/chats',
-      icon: MessageSquare,
-      resource: 'ai'
-    },
-    {
-      title: 'navigation.dashboard',
-      url: '/charts',
-      icon: ChartColumnDecreasing,
-      resource: 'dashboard'
-    },
-    {
-      title: 'navigation.integrations',
-      url: '/integrations',
-      icon: Puzzle,
-      resource: 'notification'
-    }
-  ]
+  navMain: [...coreNavItems, ...getPluginNavItems()]
 };
 
 export function useAppSidebar() {
