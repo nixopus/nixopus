@@ -100,3 +100,8 @@ export async function getPostHogHost() {
   const c = await fetchConfig();
   return (c?.posthogHost || '') as string;
 }
+
+export async function getTurnstileSiteKey() {
+  const c = await fetchConfig();
+  return (c?.turnstileSiteKey || '') as string;
+}
