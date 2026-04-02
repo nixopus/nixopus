@@ -22,6 +22,13 @@ import { CSPostHogProvider } from '@/packages/components/analytics/posthog-provi
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@nixopus/ui';
+import { getPluginProviders } from '@/plugins/registry';
+
+function PluginProviderWrapper({ children }: { children: React.ReactNode }) {
+  const Providers = getPluginProviders();
+  if (!Providers) return <>{children}</>;
+  return <Providers>{children}</Providers>;
+}
 
 const AppLoadingScreen = () => {
   const { resolvedTheme } = useTheme();
@@ -217,7 +224,9 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
                 ) : (
                   <SystemStatsProvider>
                     <SudoModeProvider>
-                      <AppLayout>{children}</AppLayout>
+                      <AppLayout>
+                        <PluginProviderWrapper>{children}</PluginProviderWrapper>
+                      </AppLayout>
                     </SudoModeProvider>
                   </SystemStatsProvider>
                 )}
