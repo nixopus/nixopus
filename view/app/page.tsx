@@ -10,7 +10,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isInitialized && isAuthenticated) {
-      router.push('/apps');
+      router.push('/chats');
     } else {
       router.push('/auth');
     }

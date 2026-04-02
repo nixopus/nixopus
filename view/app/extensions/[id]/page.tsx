@@ -50,7 +50,7 @@ export default function ExtensionDetailsPage() {
   } = useExtensionDetails();
 
   return (
-    <PageLayout maxWidth="7xl" padding="md" spacing="lg">
+    <PageLayout maxWidth="6xl" padding="md" spacing="lg">
       <TabsWrapper
         value={tab}
         onValueChange={setTab}

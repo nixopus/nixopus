@@ -12,6 +12,7 @@
     "update": "Update",
     "containers": "Containers",
     "chats": "Chats",
-    "integrations": "Integrations"
+    "integrations": "Integrations",
+    "manage": "Manage"
   }
 }

@@ -29,7 +29,7 @@ function useAuth() {
     setPassword(event.target.value);
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (captchaToken?: string) => {
     if (!email || !password) {
       toast.error(t('auth.login.errors.requiredFields'));
       return;
@@ -39,7 +39,8 @@ function useAuth() {
     try {
       const result = await authClient.signIn.email({
         email,
-        password
+        password,
+        fetchOptions: captchaToken ? { headers: { 'x-captcha-response': captchaToken } } : undefined
       });
 
       if (result.error) {
@@ -67,7 +68,7 @@ function useAuth() {
         // The layout.tsx will handle redirect automatically, but we can also redirect here
         // as a fallback after ensuring state is updated
         setTimeout(() => {
-          router.push('/apps');
+          router.push('/chats');
         }, 200);
       }
     } catch (error: any) {

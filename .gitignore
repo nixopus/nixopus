@@ -72,3 +72,4 @@ api/nixopus-api
 .superpowers/
 docs/superpowers
 .worktrees/
+.worktrees

@@ -97,7 +97,7 @@ function useTeamSettings() {
     requireSudo(async () => {
       try {
         await removeUserFromOrganization({
-          user_id: userId,
+          member_id: userId,
           organization_id: activeOrganization?.id || ''
         });
         await refetchUsers();
@@ -111,7 +111,7 @@ function useTeamSettings() {
   const handleUpdateUser = async (userId: string, role: UserTypes) => {
     try {
       await updateUserRole({
-        user_id: userId,
+        member_id: userId,
         organization_id: activeOrganization?.id || '',
         role: role.toLowerCase()
       });

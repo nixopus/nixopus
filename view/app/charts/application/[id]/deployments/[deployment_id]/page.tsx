@@ -16,7 +16,7 @@ function page() {
       resource="deploy"
       action="read"
       loadingFallback={
-        <PageLayout maxWidth="7xl" padding="md" spacing="lg">
+        <PageLayout maxWidth="6xl" padding="md" spacing="lg">
           <Skeleton className="h-8 w-48" />
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 flex-1 max-w-sm rounded-md" />
@@ -30,7 +30,7 @@ function page() {
         </PageLayout>
       }
     >
-      <PageLayout maxWidth="7xl" padding="md" spacing="lg">
+      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
         <DeploymentLogsTable id={deploymentId} isDeployment={true} title="Deployment Logs" />
       </PageLayout>
     </ResourceGuard>

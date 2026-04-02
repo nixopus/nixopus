@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { Blocks, Settings, ChevronRight } from 'lucide-react';
+import { Blocks, ChevronRight } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -32,7 +32,6 @@ import { AnyPermissionGuard } from '@/packages/components/rbac';
 import { CreateTeam } from '@/packages/components/team-settings';
 import { NavMain } from '@/packages/components/nav-main';
 import { Terminal } from '@/packages/components/terminal';
-import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 import {
   AppSidebarProps,
   AppTopBarProps,
@@ -41,9 +40,22 @@ import {
 } from '@/packages/types/layout';
 import { cn } from '@/lib/utils';
 import { useLayout } from '@/packages/hooks/use-layout';
+import { getPluginBanners } from '@/plugins/registry';
 
 interface LayoutProps {
   children: React.ReactNode;
+}
+
+function PluginBanners() {
+  const banners = getPluginBanners();
+  if (banners.length === 0) return null;
+  return (
+    <>
+      {banners.map((Banner, i) => (
+        <Banner key={i} />
+      ))}
+    </>
+  );
 }
 
 function Layout({ children }: LayoutProps) {
@@ -97,6 +109,7 @@ function Layout({ children }: LayoutProps) {
         setActiveNav={setActiveNav}
       />
       <SidebarInset>
+        <PluginBanners />
         <AppTopBar
           breadcrumbs={breadcrumbs}
           isTerminalOpen={isTerminalOpen}
@@ -293,7 +306,6 @@ export function AppSidebar({
   setActiveNav,
   ...props
 }: AppSidebarProps) {
-  const { openSettings } = useSettingsModal();
   const router = useRouter();
   const { resolvedTheme } = useTheme();
 
@@ -314,7 +326,7 @@ export function AppSidebar({
                 if (process.env.NEXT_PUBLIC_BASE_PATH) {
                   window.location.href = '/';
                 } else {
-                  router.push('/apps');
+                  router.push('/chats');
                 }
               }}
               className="cursor-pointer group-data-[collapsible=icon]:justify-center"
@@ -353,12 +365,6 @@ export function AppSidebar({
             >
               <Blocks />
               <span>{t('navigation.extensions')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => openSettings()} className="cursor-pointer">
-              <Settings />
-              <span>{t('settings.title')}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
