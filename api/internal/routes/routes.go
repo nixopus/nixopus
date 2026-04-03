@@ -198,9 +198,6 @@ func (router *Router) SetupRoutes() {
 	if router.schedulers != nil && router.schedulers.HealthCheck != nil {
 		router.schedulers.HealthCheck.SetNotifier(dispatcher)
 	}
-	if router.schedulers != nil && router.schedulers.TrialExpiry != nil {
-		router.schedulers.TrialExpiry.SetNotifier(dispatcher)
-	}
 
 	PORT := config.AppConfig.Server.Port
 	server := router.createServer(PORT)

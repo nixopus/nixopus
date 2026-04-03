@@ -3,7 +3,6 @@ package scheduler
 import (
 	"context"
 
-	"github.com/nixopus/nixopus/api/internal/config"
 	healthcheck_service "github.com/nixopus/nixopus/api/internal/features/healthcheck/service"
 	healthcheck_storage "github.com/nixopus/nixopus/api/internal/features/healthcheck/storage"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
@@ -17,7 +16,6 @@ type Schedulers struct {
 	HealthCheck *HealthCheckScheduler
 	Billing     *BillingScheduler
 	Backup      *BackupScheduler
-	TrialExpiry *TrialExpiryScheduler
 }
 
 // InitSchedulers creates and configures all schedulers
@@ -39,13 +37,11 @@ func InitSchedulers(store *shared_storage.Store, ctx context.Context) *Scheduler
 
 	billingScheduler := NewBillingScheduler(store.DB, ctx, l)
 	backupScheduler := NewBackupScheduler(store.DB, ctx, l)
-	trialExpiryScheduler := NewTrialExpiryScheduler(store.DB, ctx, l, config.AppConfig.Trail.TrialPeriodDays)
 
 	return &Schedulers{
 		Main:        sched,
 		HealthCheck: healthCheckScheduler,
 		Billing:     billingScheduler,
 		Backup:      backupScheduler,
-		TrialExpiry: trialExpiryScheduler,
 	}
 }
