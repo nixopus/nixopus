@@ -8,7 +8,7 @@ import PageLayout from '@/packages/layouts/page-layout';
 
 function ApplicationDetailsSkeleton() {
   return (
-    <PageLayout maxWidth="7xl" padding="md" spacing="lg">
+    <PageLayout maxWidth="6xl" padding="md" spacing="lg">
       <div className="space-y-4 mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -59,7 +59,7 @@ function Page() {
 
   return (
     <ResourceGuard resource="deploy" action="read" loadingFallback={<ApplicationDetailsSkeleton />}>
-      <PageLayout maxWidth="7xl" padding="md" spacing="lg">
+      <PageLayout maxWidth="6xl" padding="md" spacing="lg">
         <ApplicationDetailsHeader application={application} />
         <TabsWrapper
           value={activeTab}

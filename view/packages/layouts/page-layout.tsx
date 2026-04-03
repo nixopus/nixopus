@@ -25,10 +25,10 @@ const maxWidthClasses = {
 
 const paddingClasses = {
   none: '',
-  sm: 'py-2 sm:py-3 lg:py-4',
-  md: 'py-4 sm:py-6 lg:py-8',
-  lg: 'py-6 sm:py-8 lg:py-10',
-  xl: 'py-8 sm:py-10 lg:py-12'
+  sm: 'py-4',
+  md: 'py-6',
+  lg: 'py-8',
+  xl: 'py-10'
 };
 
 const spacingClasses = {
@@ -49,7 +49,7 @@ function PageLayout({
   return (
     <div
       className={cn(
-        maxWidth === 'full' ? 'w-full px-4 sm:px-6 lg:px-8' : 'container mx-auto',
+        'w-full mx-auto px-4',
         paddingClasses[padding],
         spacingClasses[spacing],
         maxWidthClasses[maxWidth],
