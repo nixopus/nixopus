@@ -29,51 +29,70 @@ export async function preloadBaseUrl() {
   }
 }
 
+const sharedPrepareHeaders = async (
+  headers: Headers,
+  { getState }: { getState: () => unknown }
+) => {
+  try {
+    const state = getState() as RootState;
+    let token = state.auth.token;
+    if (!token) {
+      const session = await authClient.getSession();
+      token = session?.data?.session?.token;
+    }
+    const organizationId =
+      state.user.activeOrganization?.id || state.orgs.organizations[0]?.organization.id;
+
+    if (token) {
+      headers.set('authorization', `Bearer ${token}`);
+    }
+
+    if (organizationId) {
+      headers.set('X-Organization-Id', organizationId);
+    }
+
+    const advancedSettings = getAdvancedSettings();
+    if (advancedSettings.disableApiCache) {
+      headers.set('X-Disable-Cache', 'true');
+    }
+  } catch (error) {
+    console.error('Error getting session token:', error);
+  }
+
+  return headers;
+};
+
+const proxiedBaseQuery = fetchBaseQuery({
+  baseUrl: '',
+  prepareHeaders: sharedPrepareHeaders,
+  credentials: 'include'
+});
+
+let apiBaseQuery: ReturnType<typeof fetchBaseQuery> | null = null;
+
+async function getApiBaseQuery() {
+  if (apiBaseQuery) return apiBaseQuery;
+  if (!currentBaseUrl) {
+    currentBaseUrl = await getBaseUrl();
+  }
+  apiBaseQuery = fetchBaseQuery({
+    baseUrl: currentBaseUrl,
+    prepareHeaders: sharedPrepareHeaders,
+    credentials: 'include'
+  });
+  return apiBaseQuery;
+}
+
+const PROXIED_PREFIXES = ['/api/auth', '/api/credits', '/api/trail', '/api/agent'];
+
 const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,
   api,
   extraOptions
 ) => {
-  if (!currentBaseUrl) {
-    currentBaseUrl = await getBaseUrl();
-  }
-
-  const advancedSettings = getAdvancedSettings();
-
-  const baseQuery = fetchBaseQuery({
-    baseUrl: currentBaseUrl,
-    prepareHeaders: async (headers, { getState }) => {
-      try {
-        const state = getState() as RootState;
-        // Use Redux token when available to avoid getSession on every API request
-        let token = state.auth.token;
-        if (!token) {
-          const session = await authClient.getSession();
-          token = session?.data?.session?.token;
-        }
-        const organizationId =
-          state.user.activeOrganization?.id || state.orgs.organizations[0]?.organization.id;
-
-        if (token) {
-          headers.set('authorization', `Bearer ${token}`);
-        }
-
-        if (organizationId) {
-          headers.set('X-Organization-Id', organizationId);
-        }
-
-        // Apply advanced settings for cache control
-        if (advancedSettings.disableApiCache) {
-          headers.set('X-Disable-Cache', 'true');
-        }
-      } catch (error) {
-        console.error('Error getting session token:', error);
-      }
-
-      return headers;
-    },
-    credentials: 'include'
-  });
+  const url = typeof args === 'string' ? args : args.url;
+  const isProxiedEndpoint = PROXIED_PREFIXES.some((prefix) => url.startsWith(prefix));
+  const baseQuery = isProxiedEndpoint ? proxiedBaseQuery : await getApiBaseQuery();
 
   return baseQuery(args, api, extraOptions);
 };

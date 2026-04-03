@@ -28,45 +28,55 @@ interface AuthPayload {
   refreshToken: string | undefined;
 }
 
-export const initializeAuth = createAsyncThunk<AuthPayload | null, void, { rejectValue: string }>(
-  'auth/initialize',
-  async (_, { dispatch, rejectWithValue }) => {
-    try {
-      const sessionResult = await authClient.getSession();
-
-      if (!sessionResult?.data?.session) {
-        return null;
-      }
-
-      try {
-        // Parallelize: getUserDetails and fetchUserOrganizations don't depend on each other
-        const [userResult, organizationsResult] = await Promise.all([
-          dispatch(authApi.endpoints.getUserDetails.initiate(undefined)).unwrap(),
-          dispatch(fetchUserOrganizations())
-            .unwrap()
-            .catch(() => [] as any)
-        ]);
-
-        if (organizationsResult && organizationsResult.length > 0) {
-          const firstOrg = organizationsResult[0];
-          dispatch(setActiveOrganization(firstOrg.organization));
-        }
-
-        dispatch(FeatureFlagsApi.endpoints.getAllFeatureFlags.initiate(undefined));
-
-        return {
-          user: userResult,
-          token: sessionResult.data.session.token || '',
-          refreshToken: undefined
-        };
-      } catch (error: any) {
-        return rejectWithValue('Failed to fetch user details');
-      }
-    } catch (error: any) {
-      return rejectWithValue('Auth initialization failed');
-    }
+export const initializeAuth = createAsyncThunk<
+  AuthPayload | null,
+  { forceRefresh?: boolean } | void,
+  { rejectValue: string }
+>('auth/initialize', async (args, { dispatch, rejectWithValue, getState }) => {
+  const forceRefresh = args && typeof args === 'object' ? args.forceRefresh : false;
+  const state = getState() as { auth: AuthState };
+  if (!forceRefresh && state.auth.isInitialized && state.auth.isAuthenticated) {
+    return {
+      user: state.auth.user,
+      token: state.auth.token,
+      refreshToken: state.auth.refreshToken
+    };
   }
-);
+  try {
+    const sessionResult = await authClient.getSession();
+
+    if (!sessionResult?.data?.session) {
+      return null;
+    }
+
+    try {
+      // Parallelize: getUserDetails and fetchUserOrganizations don't depend on each other
+      const [userResult, organizationsResult] = await Promise.all([
+        dispatch(authApi.endpoints.getUserDetails.initiate(undefined)).unwrap(),
+        dispatch(fetchUserOrganizations())
+          .unwrap()
+          .catch(() => [] as any)
+      ]);
+
+      if (organizationsResult && organizationsResult.length > 0) {
+        const firstOrg = organizationsResult[0];
+        dispatch(setActiveOrganization(firstOrg.organization));
+      }
+
+      dispatch(FeatureFlagsApi.endpoints.getAllFeatureFlags.initiate(undefined));
+
+      return {
+        user: userResult,
+        token: sessionResult.data.session.token || '',
+        refreshToken: undefined
+      };
+    } catch (error: any) {
+      return rejectWithValue('Failed to fetch user details');
+    }
+  } catch (error: any) {
+    return rejectWithValue('Auth initialization failed');
+  }
+});
 
 export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { dispatch }) => {
   try {

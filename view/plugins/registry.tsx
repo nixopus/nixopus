@@ -14,11 +14,8 @@ export interface PluginManifest {
     privatePaths?: string[];
     publicPaths?: string[];
   };
-  redux?: {
-    reducers?: Record<string, any>;
-    middleware?: any[];
-  };
   providers?: ComponentType<{ children: ReactNode }>;
+  banners?: ComponentType[];
 }
 
 // Plugin manifests are loaded from a generated file that the route
@@ -41,12 +38,8 @@ export function getPluginPublicPaths(): string[] {
   return plugins.flatMap((p) => p.middleware?.publicPaths ?? []);
 }
 
-export function getPluginReducers(): Record<string, any> {
-  return plugins.reduce((acc, p) => ({ ...acc, ...(p.redux?.reducers ?? {}) }), {});
-}
-
-export function getPluginMiddleware(): any[] {
-  return plugins.flatMap((p) => p.redux?.middleware ?? []);
+export function getPluginBanners(): ComponentType[] {
+  return plugins.flatMap((p) => p.banners ?? []);
 }
 
 export function getPluginProviders(): ComponentType<{ children: ReactNode }> | null {

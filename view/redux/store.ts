@@ -28,7 +28,7 @@ import { containerApi } from './services/container/containerApi';
 import { imagesApi } from './services/container/imagesApi';
 import { extensionsApi } from './services/extensions/extensionsApi';
 import { mcpApi } from './services/settings/mcpApi';
-import { getPluginReducers, getPluginMiddleware } from '@/plugins/registry';
+import { getPluginReducers, getPluginMiddleware } from '@/plugins/registry-client';
 
 const createNoopStorage = () => ({
   getItem: (_key: string) => Promise.resolve(null),

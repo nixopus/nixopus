@@ -41,9 +41,22 @@ import {
 } from '@/packages/types/layout';
 import { cn } from '@/lib/utils';
 import { useLayout } from '@/packages/hooks/use-layout';
+import { getPluginBanners } from '@/plugins/registry';
 
 interface LayoutProps {
   children: React.ReactNode;
+}
+
+function PluginBanners() {
+  const banners = getPluginBanners();
+  if (banners.length === 0) return null;
+  return (
+    <>
+      {banners.map((Banner, i) => (
+        <Banner key={i} />
+      ))}
+    </>
+  );
 }
 
 function Layout({ children }: LayoutProps) {
@@ -97,6 +110,7 @@ function Layout({ children }: LayoutProps) {
         setActiveNav={setActiveNav}
       />
       <SidebarInset>
+        <PluginBanners />
         <AppTopBar
           breadcrumbs={breadcrumbs}
           isTerminalOpen={isTerminalOpen}

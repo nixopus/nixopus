@@ -1,5 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
-import { emailOTPClient } from 'better-auth/client/plugins';
+import { emailOTPClient, organizationClient, apiKeyClient } from 'better-auth/client/plugins';
+import { dodopaymentsClient } from '@dodopayments/better-auth';
 import { passkeyClient } from '@better-auth/passkey/client';
 
 const getBaseURL = () => {
@@ -9,7 +10,29 @@ const getBaseURL = () => {
   return process.env.AUTH_SERVICE_URL || 'http://localhost:9090/api/auth';
 };
 
+const getApiKey = () => {
+  if (typeof window !== 'undefined') {
+    return (window as any).__NIXOPUS_API_KEY__ || '';
+  }
+  return process.env.NEXT_PUBLIC_AUTH_API_KEY || '';
+};
+
 export const authClient = createAuthClient({
   baseURL: getBaseURL(),
-  plugins: [emailOTPClient(), passkeyClient()]
+  fetchOptions: {
+    onRequest: (ctx: any) => {
+      const apiKey = getApiKey();
+      if (apiKey) {
+        ctx.headers.set('x-api-key', apiKey);
+      }
+      return ctx;
+    }
+  },
+  plugins: [
+    emailOTPClient(),
+    organizationClient(),
+    dodopaymentsClient(),
+    apiKeyClient(),
+    passkeyClient()
+  ]
 });

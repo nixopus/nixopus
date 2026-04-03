@@ -41,7 +41,10 @@ export enum USERURLS {
   GET_PREFERENCES = 'v1/user/preferences',
   UPDATE_PREFERENCES = 'v1/user/preferences',
   GET_ORGANIZATION_SETTINGS = 'v1/organizations/settings',
-  UPDATE_ORGANIZATION_SETTINGS = 'v1/organizations/settings'
+  UPDATE_ORGANIZATION_SETTINGS = 'v1/organizations/settings',
+  PENDING_INVITES = 'v1/organizations/invite/pending',
+  CANCEL_INVITE = 'v1/organizations/invite/cancel',
+  MARK_ONBOARDED = 'v1/user/onboarded'
 }
 
 export enum USER_NOTIFICATION_SETTINGS {

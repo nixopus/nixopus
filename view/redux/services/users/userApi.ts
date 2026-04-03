@@ -31,6 +31,22 @@ export interface InviteAcceptRequest {
   email?: string;
 }
 
+export interface PendingInviteResponse {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  invitedBy?: { name?: string; email?: string };
+  invitedAt: string;
+  expiresAt?: string;
+  organizationId: string;
+}
+
+export interface CancelInviteRequest {
+  invitationId: string;
+  organization_id: string;
+}
+
 import { baseQueryWithReauth } from '@/redux/base-query';
 import {
   User,
@@ -161,6 +177,31 @@ export const userApi = createApi({
       }
     }),
     // Note: getOrganizationUsers removed - now using Better Auth service layer via useOrganizationMembers hook
+    getOrganizationUsers: builder.query<OrganizationUsers[], string>({
+      query: (organizationId) => ({
+        url: `${USERURLS.ORGANIZATION_USERS}?organization_id=${organizationId}`,
+        method: 'GET'
+      }),
+      providesTags: [{ type: 'User', id: 'ORG_USERS' }],
+      transformResponse: (response: { data: OrganizationUsers[] }) => response.data
+    }),
+    getPendingInvites: builder.query<PendingInviteResponse[], string>({
+      query: (organizationId) => ({
+        url: `${USERURLS.PENDING_INVITES}?organization_id=${organizationId}`,
+        method: 'GET'
+      }),
+      providesTags: [{ type: 'User', id: 'PENDING_INVITES' }],
+      transformResponse: (response: { data: PendingInviteResponse[] }) => response.data
+    }),
+    cancelInvite: builder.mutation<{ message: string }, CancelInviteRequest>({
+      query: (payload) => ({
+        url: USERURLS.CANCEL_INVITE,
+        method: 'POST',
+        body: payload
+      }),
+      invalidatesTags: [{ type: 'User', id: 'PENDING_INVITES' }],
+      transformResponse: (response: { data: { message: string } }) => response.data
+    }),
     updateOrganizationDetails: builder.mutation<Organization, UpdateOrganizationDetailsRequest>({
       query(payload) {
         return {
@@ -372,7 +413,9 @@ export const {
   useRemoveUserFromOrganizationMutation,
   useUpdateUserNameMutation,
   useGetActiveMemberQuery,
-  // useGetOrganizationUsersQuery - Removed: Use useOrganizationMembers from @/packages/hooks/auth/use-better-auth-orgs
+  useGetOrganizationUsersQuery,
+  useGetPendingInvitesQuery,
+  useCancelInviteMutation,
   useUpdateOrganizationDetailsMutation,
   useCreateUserMutation,
   useUpdateUserRoleMutation,
