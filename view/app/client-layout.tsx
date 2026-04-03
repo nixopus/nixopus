@@ -5,7 +5,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '@/redux/store';
 import { Toaster } from '@nixopus/ui';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import { initializeAuth } from '@/redux/features/users/authSlice';
 import { preloadBaseUrl } from '@/redux/base-query';
 import { usePathname, useRouter } from 'next/navigation';
@@ -20,12 +20,36 @@ import { CSPostHogProvider } from '@/packages/components/analytics/posthog-provi
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@nixopus/ui';
-import { getPluginProviders } from '@/plugins/registry';
+import {
+  getPluginProviders,
+  getPluginGuards,
+  getPluginGlobalComponents,
+  getPluginNoLayoutPaths
+} from '@/plugins/registry';
+import type { ReactElement } from 'react';
 
 function PluginProviderWrapper({ children }: { children: React.ReactNode }) {
   const Providers = getPluginProviders();
   if (!Providers) return <>{children}</>;
   return <Providers>{children}</Providers>;
+}
+
+function PluginGuardWrapper({ children }: { children: React.ReactNode }) {
+  const guards = getPluginGuards();
+  if (guards.length === 0) return <>{children}</>;
+  return guards.reduceRight((acc, Guard) => <Guard>{acc}</Guard>, children) as ReactElement;
+}
+
+function PluginGlobalComponents() {
+  const components = getPluginGlobalComponents();
+  if (components.length === 0) return null;
+  return (
+    <>
+      {components.map((Component, i) => (
+        <Component key={i} />
+      ))}
+    </>
+  );
 }
 
 const AppLoadingScreen = () => {
@@ -198,6 +222,12 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
     }
   }, [pathname, isLoading, isInitialized, router, isPublicRoute, isAuthenticated]);
 
+  const noLayoutPaths = useMemo(() => getPluginNoLayoutPaths(), []);
+  const isNoLayoutRoute = useMemo(
+    () => noLayoutPaths.some((route) => pathname === route || pathname.startsWith(route + '/')),
+    [pathname, noLayoutPaths]
+  );
+
   return (
     <>
       <ThemeProvider
@@ -219,13 +249,24 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
               {isPublicRoute ? (
                 <>{children}</>
               ) : (
-                <SystemStatsProvider>
-                  <SudoModeProvider>
-                    <AppLayout>
-                      <PluginProviderWrapper>{children}</PluginProviderWrapper>
-                    </AppLayout>
-                  </SudoModeProvider>
-                </SystemStatsProvider>
+                <>
+                  <PluginGlobalComponents />
+                  <Suspense fallback={<AppShellSkeleton />}>
+                    <PluginGuardWrapper>
+                      <SystemStatsProvider>
+                        <SudoModeProvider>
+                          {isNoLayoutRoute ? (
+                            <PluginProviderWrapper>{children}</PluginProviderWrapper>
+                          ) : (
+                            <AppLayout>
+                              <PluginProviderWrapper>{children}</PluginProviderWrapper>
+                            </AppLayout>
+                          )}
+                        </SudoModeProvider>
+                      </SystemStatsProvider>
+                    </PluginGuardWrapper>
+                  </Suspense>
+                </>
               )}
             </FeatureFlagsProvider>
           </WebSocketProvider>

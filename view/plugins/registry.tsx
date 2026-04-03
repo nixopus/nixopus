@@ -26,6 +26,9 @@ export interface PluginManifest {
   providers?: ComponentType<{ children: ReactNode }>;
   banners?: ComponentType[];
   captcha?: ComponentType<CaptchaComponentProps>;
+  guards?: ComponentType<{ children: ReactNode }>[];
+  globalComponents?: ComponentType[];
+  noLayoutPaths?: string[];
 }
 
 // Plugin manifests are loaded from a generated file that the route
@@ -72,4 +75,16 @@ export function getPluginCaptcha(): ComponentType<CaptchaComponentProps> | null 
     if (p.captcha) return p.captcha;
   }
   return null;
+}
+
+export function getPluginGuards(): ComponentType<{ children: ReactNode }>[] {
+  return plugins.flatMap((p) => p.guards ?? []);
+}
+
+export function getPluginGlobalComponents(): ComponentType[] {
+  return plugins.flatMap((p) => p.globalComponents ?? []);
+}
+
+export function getPluginNoLayoutPaths(): string[] {
+  return plugins.flatMap((p) => p.noLayoutPaths ?? []);
 }
