@@ -18,11 +18,13 @@ const (
 // Member represents Better Auth member table (org membership)
 type Member struct {
 	bun.BaseModel  `bun:"table:member,alias:m" swaggerignore:"true"`
-	ID             uuid.UUID `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
-	OrganizationID uuid.UUID `bun:"organization_id,notnull,type:uuid"`
-	UserID         uuid.UUID `bun:"user_id,notnull,type:uuid"`
-	Role           string    `bun:"role,notnull,default:member"`
-	CreatedAt      time.Time `bun:"created_at,notnull"`
+	ID             uuid.UUID     `bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
+	OrganizationID uuid.UUID     `bun:"organization_id,notnull,type:uuid"`
+	UserID         uuid.UUID     `bun:"user_id,notnull,type:uuid"`
+	Role           string        `bun:"role,notnull,default:member"`
+	CreatedAt      time.Time     `bun:"created_at,notnull"`
+	User           *User         `bun:"rel:belongs-to,join:user_id=id"`
+	Organization   *Organization `bun:"rel:belongs-to,join:organization_id=id"`
 }
 
 // Organization matches Better Auth organization structure
