@@ -45,7 +45,7 @@ func (u *UserController) UpdateAvatar(s fuego.ContextWithBody[types.UpdateAvatar
 		}
 	}
 
-	u.cache.InvalidateUser(u.ctx, user.ID.String())
+	u.cache.InvalidateUserByID(u.ctx, user.ID.String())
 
 	return &types.MessageResponse{
 		Status:  "success",

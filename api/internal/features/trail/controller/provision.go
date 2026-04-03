@@ -61,6 +61,10 @@ func (c *TrailController) ProvisionTrail(f fuego.ContextWithBody[types.Provision
 		}
 	}
 
+	if c.cache != nil {
+		_ = c.cache.InvalidateUserByID(c.ctx, user.ID.String())
+	}
+
 	return &types.ProvisionTrailResponse{
 		Status:  "success",
 		Message: "Trail provisioning started",
