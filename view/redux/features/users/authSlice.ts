@@ -6,6 +6,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { REHYDRATE } from 'redux-persist';
 import { authClient } from '@/packages/lib/auth-client';
+import { clearAuthTokens } from '@/packages/utils/auth';
 import { setActiveOrganization } from './userSlice';
 import { fetchUserOrganizations } from './orgSlice';
 
@@ -71,9 +72,11 @@ export const initializeAuth = createAsyncThunk<AuthPayload | null, void, { rejec
 export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { dispatch }) => {
   try {
     await authClient.signOut();
+    clearAuthTokens();
     dispatch(logout());
   } catch (error) {
     console.error('Better Auth logout failed:', error);
+    clearAuthTokens();
     dispatch(logout());
   }
 });
