@@ -35,7 +35,7 @@ export function middleware(request: NextRequest) {
     path === '/' || path === '/auth' || path === '/login' || path === '/register';
   if (hasAuth && isAuthLanding) {
     const url = request.nextUrl.clone();
-    url.pathname = BASE_PATH ? `${BASE_PATH}/apps` : '/apps';
+    url.pathname = BASE_PATH ? `${BASE_PATH}/chats` : '/chats';
     return NextResponse.redirect(url);
   }
 

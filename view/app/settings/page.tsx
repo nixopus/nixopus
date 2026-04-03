@@ -10,7 +10,7 @@ function Page() {
 
   useEffect(() => {
     openSettings('general');
-    router.replace('/apps');
+    router.replace('/chats');
   }, [openSettings, router]);
 
   return null;

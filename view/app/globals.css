@@ -413,3 +413,34 @@
 div[data-slot='card'] {
   border-color: var(--color-border) !important;
 }
+
+[data-slot='table-head'] {
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  height: 2.5rem;
+}
+
+[data-slot='table-body'] {
+  background-color: color-mix(in oklch, var(--foreground) 3%, transparent);
+}
+
+[data-slot='table-cell'] {
+  padding: 1rem 1.25rem;
+}
+
+[data-slot='table-body'] > [data-slot='table-row'] {
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.15s;
+}
+
+[data-slot='table-body'] > [data-slot='table-row']:last-child {
+  border-bottom: none;
+}
+
+[data-slot='table-body'] > [data-slot='table-row']:hover {
+  background-color: color-mix(in oklch, var(--foreground) 5%, transparent);
+}

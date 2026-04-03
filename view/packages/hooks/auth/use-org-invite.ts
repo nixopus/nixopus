@@ -70,7 +70,7 @@ function useOrganizationInvite() {
 
       // Redirect to dashboard after a short delay
       setTimeout(() => {
-        router.push('/apps');
+        router.push('/chats');
       }, 2000);
     } catch (error: any) {
       console.error('Error accepting invitation:', error);

@@ -328,7 +328,7 @@ export function AppSidebar({
                 if (process.env.NEXT_PUBLIC_BASE_PATH) {
                   window.location.href = '/';
                 } else {
-                  router.push('/apps');
+                  router.push('/chats');
                 }
               }}
               className="cursor-pointer group-data-[collapsible=icon]:justify-center"

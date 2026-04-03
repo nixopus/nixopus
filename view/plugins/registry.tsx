@@ -5,6 +5,7 @@ export interface PluginNavItem {
   url: string;
   icon: ComponentType<{ className?: string }>;
   resource: string;
+  order?: number;
 }
 
 export interface PluginManifest {

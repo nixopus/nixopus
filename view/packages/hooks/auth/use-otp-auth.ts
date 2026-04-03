@@ -92,7 +92,7 @@ function useOtpAuth() {
         }
 
         setTimeout(() => {
-          router.push('/apps');
+          router.push('/chats');
         }, 200);
       }
     } catch (error: any) {

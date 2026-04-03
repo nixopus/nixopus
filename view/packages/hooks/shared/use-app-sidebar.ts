@@ -22,33 +22,39 @@ import { getPluginNavItems } from '@/plugins/registry';
 
 const coreNavItems = [
   {
-    title: 'navigation.selfHost',
-    url: '/apps',
-    icon: Layers,
-    resource: 'deploy'
-  },
-  {
     title: 'navigation.chats',
     url: '/chats',
     icon: MessageSquare,
-    resource: 'ai'
+    resource: 'ai',
+    order: 10
+  },
+  {
+    title: 'navigation.selfHost',
+    url: '/apps',
+    icon: Layers,
+    resource: 'deploy',
+    order: 20
   },
   {
     title: 'navigation.dashboard',
     url: '/charts',
     icon: ChartColumnDecreasing,
-    resource: 'dashboard'
+    resource: 'dashboard',
+    order: 30
   },
   {
     title: 'navigation.integrations',
     url: '/integrations',
     icon: Puzzle,
-    resource: 'notification'
+    resource: 'notification',
+    order: 100
   }
 ];
 
 const data = {
-  navMain: [...coreNavItems, ...getPluginNavItems()]
+  navMain: [...coreNavItems, ...getPluginNavItems()].sort(
+    (a, b) => (a.order ?? 50) - (b.order ?? 50)
+  )
 };
 
 export function useAppSidebar() {

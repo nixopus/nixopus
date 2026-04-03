@@ -23,7 +23,7 @@ export default function NotFound() {
           {t('common.notFound.description' as any)}
         </p>
         <div className="flex flex-col gap-2 w-full max-w-xs">
-          <Button onClick={() => router.push('/apps')} className="w-full">
+          <Button onClick={() => router.push('/chats')} className="w-full">
             <Home className="mr-2 h-4 w-4" />
             {t('common.notFound.goHome' as any)}
           </Button>

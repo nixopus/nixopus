@@ -67,7 +67,7 @@ function useAuth() {
         // The layout.tsx will handle redirect automatically, but we can also redirect here
         // as a fallback after ensuring state is updated
         setTimeout(() => {
-          router.push('/apps');
+          router.push('/chats');
         }, 200);
       }
     } catch (error: any) {

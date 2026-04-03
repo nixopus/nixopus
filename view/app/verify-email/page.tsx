@@ -51,7 +51,7 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     if (status === 'success') {
-      router.push('/apps');
+      router.push('/chats');
       toast.success(t('auth.verifyEmail.success.message'));
     }
   }, [status]);

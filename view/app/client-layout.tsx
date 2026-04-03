@@ -155,7 +155,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if ((hasPersistedAuth || isAuthenticated) && (pathname === '/' || pathname === '/auth')) {
-      router.prefetch('/apps');
+      router.prefetch('/chats');
     }
   }, [hasPersistedAuth, isAuthenticated, pathname, router]);
 
@@ -195,7 +195,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
         pathname === '/login' ||
         pathname === '/register'
       ) {
-        router.push('/apps');
+        router.push('/chats');
       }
     }
   }, [pathname, isLoading, isInitialized, router, isPublicRoute, isAuthenticated]);
