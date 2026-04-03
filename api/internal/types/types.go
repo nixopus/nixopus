@@ -24,7 +24,6 @@ type Config struct {
 	Live         LiveConfig         `mapstructure:"live"`
 	S3           S3Config           `mapstructure:"s3"`
 	Timescale    TimescaleConfig    `mapstructure:"timescale"`
-	Resend       ResendConfig       `mapstructure:"resend"`
 }
 
 // LiveConfig holds configuration for the live gateway (WebSocket, file sync, build).
@@ -52,11 +51,6 @@ type S3Config struct {
 	AccessKey string `mapstructure:"access_key"`
 	SecretKey string `mapstructure:"secret_key"`
 	UseSSL    bool   `mapstructure:"use_ssl"`
-}
-
-type ResendConfig struct {
-	APIKey    string `mapstructure:"api_key"`
-	FromEmail string `mapstructure:"from_email"`
 }
 
 type BetterAuthConfig struct {
@@ -140,7 +134,6 @@ type TrailConfig struct {
 	DefaultImage        string   `mapstructure:"default_image"`
 	AllowedImages       []string `mapstructure:"allowed_images"`
 	TrailDomain         string   `mapstructure:"trail_domain"`
-	TrialPeriodDays     int      `mapstructure:"trial_period_days"`
 }
 
 type ClientContext string

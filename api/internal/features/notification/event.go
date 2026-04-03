@@ -37,17 +37,12 @@ var eventTemplateMap = map[shared_types.EventType]eventTemplate{
 	shared_types.EventHealthCheckCritical: {Subject: "Health Check Critical", Template: "healthcheck_critical.html"},
 }
 
-var systemEmailTemplateMap = map[shared_types.EventType]string{
-	shared_types.EventTrialExpired: "trial-expired",
-}
-
 // skipPreferenceCheck lists event types where we always send regardless
 // of user preferences (e.g. password reset must always go through).
 var skipPreferenceCheck = map[shared_types.EventType]bool{
 	shared_types.EventPasswordReset:       true,
 	shared_types.EventVerificationEmail:   true,
 	shared_types.EventHealthCheckCritical: true,
-	shared_types.EventTrialExpired:        true,
 }
 
 // defaultChannelsForEvent returns the channels to use when the event
@@ -64,8 +59,6 @@ func defaultChannelsForEvent(eventType shared_types.EventType) []string {
 		return []string{"slack", "discord", "agent"}
 	case shared_types.EventBuildFailed, shared_types.EventHealthCheckCritical:
 		return []string{"email", "slack", "discord", "agent"}
-	case shared_types.EventTrialExpired:
-		return []string{"system_email"}
 	default:
 		return []string{"email"}
 	}

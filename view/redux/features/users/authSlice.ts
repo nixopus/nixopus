@@ -81,10 +81,15 @@ export const initializeAuth = createAsyncThunk<
 export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { dispatch }) => {
   try {
     await authClient.signOut();
-    dispatch(logout());
   } catch (error) {
     console.error('Better Auth logout failed:', error);
+  } finally {
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+      sessionStorage.clear();
+    }
     dispatch(logout());
+    dispatch({ type: 'RESET_STATE' });
   }
 });
 
