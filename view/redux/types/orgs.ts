@@ -57,7 +57,7 @@ export interface AddUserToOrganizationRequest {
 }
 
 export interface RemoveUserFromOrganizationRequest {
-  user_id: string;
+  member_id: string;
   organization_id: string;
 }
 
@@ -90,7 +90,7 @@ export interface CreateUserRequest {
 }
 
 export interface UpdateUserRoleRequest {
-  user_id: string;
+  member_id: string;
   organization_id: string;
   role: string;
 }

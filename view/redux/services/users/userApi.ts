@@ -98,15 +98,15 @@ export const userApi = createApi({
     removeUserFromOrganization: builder.mutation<void, RemoveUserFromOrganizationRequest>({
       query(payload) {
         return {
-          url: USERURLS.REMOVE_USER_FROM_ORGANIZATION,
+          url: '/api/auth/organization/remove-member',
           method: 'POST',
-          body: payload
+          body: {
+            memberIdOrEmail: payload.member_id,
+            organizationId: payload.organization_id
+          }
         };
       },
-      invalidatesTags: [{ type: 'User', id: 'LIST' }],
-      transformResponse: (response: { data: void }) => {
-        return response.data;
-      }
+      invalidatesTags: [{ type: 'User', id: 'LIST' }]
     }),
     updateUserName: builder.mutation<string, string>({
       query(name) {
@@ -178,36 +178,118 @@ export const userApi = createApi({
     }),
     // Note: getOrganizationUsers removed - now using Better Auth service layer via useOrganizationMembers hook
     getOrganizationUsers: builder.query<OrganizationUsers[], string>({
-      query: (organizationId) => ({
-        url: `${USERURLS.ORGANIZATION_USERS}?organization_id=${organizationId}`,
-        method: 'GET'
-      }),
-      providesTags: [{ type: 'User', id: 'ORG_USERS' }],
-      transformResponse: (response: { data: OrganizationUsers[] }) => response.data
+      query(organizationId) {
+        return {
+          url: `/api/auth/organization/list-members?organizationId=${organizationId}`,
+          method: 'GET'
+        };
+      },
+      providesTags: [{ type: 'User', id: 'LIST' }],
+      transformResponse: (response: unknown): OrganizationUsers[] => {
+        let members: any[] = [];
+        if (Array.isArray(response)) {
+          members = response;
+        } else if (response && typeof response === 'object') {
+          const r = response as Record<string, unknown>;
+          if (Array.isArray(r.members)) members = r.members;
+          else if (Array.isArray(r.data)) members = r.data;
+        }
+        if (!members.length) return [];
+        return members.map(
+          (member: any): OrganizationUsers => ({
+            id: member.id,
+            user_id: member.userId,
+            organization_id: member.organizationId,
+            created_at: member.createdAt || new Date().toISOString(),
+            updated_at: member.updatedAt || new Date().toISOString(),
+            deleted_at: null,
+            user: {
+              id: member.user?.id || member.userId,
+              username: member.user?.name || member.user?.email || '',
+              email: member.user?.email || '',
+              avatar: member.user?.image || undefined,
+              type: Array.isArray(member.role)
+                ? member.role[0] || 'member'
+                : member.role || 'member',
+              is_verified: member.user?.emailVerified || false,
+              is_email_verified: member.user?.emailVerified || false,
+              two_factor_enabled: false,
+              two_factor_secret: '',
+              created_at: member.user?.createdAt || new Date().toISOString(),
+              updated_at: member.user?.updatedAt || new Date().toISOString(),
+              organization_users: [],
+              organizations: []
+            },
+            roles: Array.isArray(member.role) ? member.role : [member.role || 'member'],
+            permissions: []
+          })
+        );
+      }
     }),
     getPendingInvites: builder.query<PendingInviteResponse[], string>({
-      query: (organizationId) => ({
-        url: `${USERURLS.PENDING_INVITES}?organization_id=${organizationId}`,
-        method: 'GET'
-      }),
-      providesTags: [{ type: 'User', id: 'PENDING_INVITES' }],
-      transformResponse: (response: { data: PendingInviteResponse[] }) => response.data
+      query(organizationId) {
+        return {
+          url: `/api/auth/organization/list-invitations?organizationId=${organizationId}`,
+          method: 'GET'
+        };
+      },
+      providesTags: [{ type: 'User', id: 'LIST' }],
+      transformResponse: (response: unknown): PendingInviteResponse[] => {
+        if (!response || !Array.isArray(response)) {
+          return [];
+        }
+        return response.map(
+          (invite: any): PendingInviteResponse => ({
+            id: invite.id,
+            email: invite.email,
+            role: invite.role || 'member',
+            status: invite.status || 'pending',
+            organizationId: invite.organizationId,
+            invitedBy: invite.invitedBy,
+            invitedAt: invite.createdAt || invite.invitedAt || new Date().toISOString(),
+            expiresAt: invite.expiresAt
+          })
+        );
+      }
     }),
     cancelInvite: builder.mutation<{ message: string }, CancelInviteRequest>({
-      query: (payload) => ({
-        url: USERURLS.CANCEL_INVITE,
-        method: 'POST',
-        body: payload
-      }),
-      invalidatesTags: [{ type: 'User', id: 'PENDING_INVITES' }],
-      transformResponse: (response: { data: { message: string } }) => response.data
+      query(payload) {
+        return {
+          url: '/api/auth/organization/cancel-invitation',
+          method: 'POST',
+          body: {
+            invitationId: payload.invitationId
+          }
+        };
+      },
+      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+      transformResponse: () => {
+        return { message: 'Invitation canceled successfully' };
+      }
     }),
     updateOrganizationDetails: builder.mutation<Organization, UpdateOrganizationDetailsRequest>({
       query(payload) {
         return {
-          url: `${USERURLS.CREATE_ORGANIZATION}?id=${payload.id}`,
-          method: 'PUT',
-          body: payload
+          url: '/api/auth/organization/update',
+          method: 'POST',
+          body: {
+            organizationId: payload.id,
+            data: {
+              name: payload.name,
+              metadata: { description: payload.description }
+            }
+          }
+        };
+      },
+      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+      transformResponse: (response: any) => {
+        return {
+          id: response?.id || '',
+          name: response?.name || '',
+          description: response?.metadata?.description || '',
+          created_at: response?.createdAt || new Date().toISOString(),
+          updated_at: response?.updatedAt || new Date().toISOString(),
+          deleted_at: null
         };
       }
     }),
@@ -223,34 +305,51 @@ export const userApi = createApi({
     updateUserRole: builder.mutation<void, UpdateUserRoleRequest>({
       query(payload) {
         return {
-          url: USERURLS.UPDATE_USER_ROLE,
+          url: '/api/auth/organization/update-member-role',
           method: 'POST',
-          body: payload
+          body: {
+            memberId: payload.member_id,
+            role: payload.role,
+            organizationId: payload.organization_id
+          }
         };
-      }
+      },
+      invalidatesTags: [{ type: 'User', id: 'LIST' }]
     }),
     sendInvite: builder.mutation<{ message: string }, InviteSendRequest>({
       query(payload) {
         return {
-          url: USERURLS.SEND_INVITE,
+          url: '/api/auth/organization/invite-member',
           method: 'POST',
-          body: payload
+          body: {
+            email: payload.email,
+            role: payload.role,
+            organizationId: payload.organization_id,
+            resend: false
+          }
         };
       },
-      transformResponse: (response: { data: { message: string } }) => {
-        return response.data;
+      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+      transformResponse: () => {
+        return { message: 'Invitation sent successfully' };
       }
     }),
     resendInvite: builder.mutation<{ message: string }, InviteResendRequest>({
       query(payload) {
         return {
-          url: USERURLS.RESEND_INVITE,
+          url: '/api/auth/organization/invite-member',
           method: 'POST',
-          body: payload
+          body: {
+            email: payload.email,
+            role: payload.role,
+            organizationId: payload.organization_id,
+            resend: true
+          }
         };
       },
-      transformResponse: (response: { data: { message: string } }) => {
-        return response.data;
+      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+      transformResponse: () => {
+        return { message: 'Invitation resent successfully' };
       }
     }),
     acceptInvite: builder.mutation<{ message: string }, InviteAcceptRequest>({

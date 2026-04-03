@@ -238,19 +238,6 @@ function GeneralSettingsContent() {
           </div>
         </div>
       </div>
-      <Button
-        variant="secondary"
-        onClick={sidebar.handleLogoutClick}
-        className="w-full gap-2 mt-4 sm:mb-0"
-      >
-        <LogOut className="h-4 w-4" />
-        {t('user.menu.logout')}
-      </Button>
-      <LogoutDialog
-        open={sidebar.showLogoutDialog}
-        onConfirm={sidebar.handleLogoutConfirm}
-        onCancel={sidebar.handleLogoutCancel}
-      />
     </div>
   );
 }
@@ -475,15 +462,17 @@ function TroubleshootingSettingsContent() {
 
 export function SettingsContent({ activeCategory }: SettingsContentProps) {
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto sm:overflow-hidden p-3 sm:p-6 pb-6 sm:pb-6">
-      {activeCategory === 'general' && <GeneralSettingsContent />}
-      {activeCategory === 'notifications' && <NotificationsSettingsContent />}
-      {/* {activeCategory === 'domains' && <DomainsSettingsContent />} */}
-      {activeCategory === 'keyboard-shortcuts' && <KeyboardShortcutsSettingsContent />}
-      {activeCategory === 'network' && <NetworkSettingsContent />}
-      {activeCategory === 'terminal' && <TerminalSettingsContent />}
-      {activeCategory === 'container' && <ContainerSettingsContent />}
-      {activeCategory === 'troubleshooting' && <TroubleshootingSettingsContent />}
+    <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
+      <div className="w-full max-w-4xl mx-auto p-6 sm:p-10">
+        {activeCategory === 'general' && <GeneralSettingsContent />}
+        {activeCategory === 'notifications' && <NotificationsSettingsContent />}
+        {/* {activeCategory === 'domains' && <DomainsSettingsContent />} */}
+        {activeCategory === 'keyboard-shortcuts' && <KeyboardShortcutsSettingsContent />}
+        {activeCategory === 'network' && <NetworkSettingsContent />}
+        {activeCategory === 'terminal' && <TerminalSettingsContent />}
+        {activeCategory === 'container' && <ContainerSettingsContent />}
+        {activeCategory === 'troubleshooting' && <TroubleshootingSettingsContent />}
+      </div>
     </div>
   );
 }

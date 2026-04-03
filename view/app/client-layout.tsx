@@ -14,9 +14,7 @@ import { FeatureFlagsProvider } from '@/packages/hooks/shared/features_provider'
 import { SystemStatsProvider } from '@/packages/hooks/shared/system-stats-provider';
 import { palette } from '@/packages/utils/colors';
 import { authClient } from '@/packages/lib/auth-client';
-import { SettingsModalProvider } from '@/packages/hooks/shared/use-settings-modal';
 import AppLayout from '@/packages/layouts/layout';
-import { SettingsModal } from '@/packages/components/settings';
 import { SudoModeProvider } from '@/packages/hooks/security/use-sudo-mode';
 import { CSPostHogProvider } from '@/packages/components/analytics/posthog-provider';
 import Image from 'next/image';
@@ -216,24 +214,21 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
             <AppShellSkeleton />
           )
         ) : (
-          <SettingsModalProvider>
-            <WebSocketProvider>
-              <FeatureFlagsProvider>
-                {isPublicRoute ? (
-                  <>{children}</>
-                ) : (
-                  <SystemStatsProvider>
-                    <SudoModeProvider>
-                      <AppLayout>
-                        <PluginProviderWrapper>{children}</PluginProviderWrapper>
-                      </AppLayout>
-                    </SudoModeProvider>
-                  </SystemStatsProvider>
-                )}
-              </FeatureFlagsProvider>
-            </WebSocketProvider>
-            <SettingsModal />
-          </SettingsModalProvider>
+          <WebSocketProvider>
+            <FeatureFlagsProvider>
+              {isPublicRoute ? (
+                <>{children}</>
+              ) : (
+                <SystemStatsProvider>
+                  <SudoModeProvider>
+                    <AppLayout>
+                      <PluginProviderWrapper>{children}</PluginProviderWrapper>
+                    </AppLayout>
+                  </SudoModeProvider>
+                </SystemStatsProvider>
+              )}
+            </FeatureFlagsProvider>
+          </WebSocketProvider>
         )}
       </ThemeProvider>
       <Toaster />

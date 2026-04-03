@@ -21,10 +21,7 @@ export enum USERURLS {
   USER_ORGANIZATIONS = 'auth/organization/list',
   CREATE_ORGANIZATION = 'v1/organizations',
   ADD_USER_TO_ORGANIZATION = 'v1/organizations/add-user',
-  REMOVE_USER_FROM_ORGANIZATION = 'v1/organizations/remove-user',
-  UPDATE_USER_ROLE = 'v1/organizations/update-user-role',
   UPDATE_USER_NAME = 'v1/user/name',
-  ORGANIZATION_USERS = 'v1/organizations/users',
   CREATE_USER = 'v1/auth/create-user',
   GET_RESOURCES = 'v1/organizations/resources',
   GET_SETTINGS = 'v1/user/settings',
@@ -35,15 +32,11 @@ export enum USERURLS {
   CHECK_FOR_UPDATES = 'v1/update/check',
   PERFORM_UPDATE = 'v1/update',
   UPDATE_AVATAR = 'v1/user/avatar',
-  SEND_INVITE = 'v1/organizations/invite/send',
-  RESEND_INVITE = 'v1/organizations/invite/resend',
   ACCEPT_INVITE = 'v1/organizations/invite/accept',
   GET_PREFERENCES = 'v1/user/preferences',
   UPDATE_PREFERENCES = 'v1/user/preferences',
   GET_ORGANIZATION_SETTINGS = 'v1/organizations/settings',
   UPDATE_ORGANIZATION_SETTINGS = 'v1/organizations/settings',
-  PENDING_INVITES = 'v1/organizations/invite/pending',
-  CANCEL_INVITE = 'v1/organizations/invite/cancel',
   MARK_ONBOARDED = 'v1/user/onboarded'
 }
 

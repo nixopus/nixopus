@@ -6,6 +6,14 @@ export interface PluginNavItem {
   icon: ComponentType<{ className?: string }>;
   resource: string;
   order?: number;
+  group?: string;
+  section?: string;
+}
+
+export interface CaptchaComponentProps {
+  siteKey: string;
+  theme?: 'light' | 'dark' | 'auto';
+  onToken: (token: string | null) => void;
 }
 
 export interface PluginManifest {
@@ -17,6 +25,7 @@ export interface PluginManifest {
   };
   providers?: ComponentType<{ children: ReactNode }>;
   banners?: ComponentType[];
+  captcha?: ComponentType<CaptchaComponentProps>;
 }
 
 // Plugin manifests are loaded from a generated file that the route
@@ -56,4 +65,11 @@ export function getPluginProviders(): ComponentType<{ children: ReactNode }> | n
       children
     ) as ReactElement;
   };
+}
+
+export function getPluginCaptcha(): ComponentType<CaptchaComponentProps> | null {
+  for (const p of plugins) {
+    if (p.captcha) return p.captcha;
+  }
+  return null;
 }

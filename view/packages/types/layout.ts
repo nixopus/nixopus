@@ -20,7 +20,7 @@ export interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 interface SideNav {
   title: string;
   url: string;
-  icon: LucideIcon | ComponentType<{ className?: string }>;
+  icon?: LucideIcon | ComponentType<{ className?: string }>;
   resource: string;
   items?: SideNavItem[];
 }
@@ -29,6 +29,7 @@ interface SideNavItem {
   title: string;
   url: string;
   resource?: string;
+  section?: string;
 }
 
 // Topbar
@@ -66,6 +67,7 @@ interface TopNavItem {
   items?: {
     title: string;
     url: string;
+    section?: string;
   }[];
 }
 

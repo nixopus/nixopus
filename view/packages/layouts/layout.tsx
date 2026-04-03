@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { Blocks, Settings, ChevronRight } from 'lucide-react';
+import { Blocks, ChevronRight } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -32,7 +32,6 @@ import { AnyPermissionGuard } from '@/packages/components/rbac';
 import { CreateTeam } from '@/packages/components/team-settings';
 import { NavMain } from '@/packages/components/nav-main';
 import { Terminal } from '@/packages/components/terminal';
-import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
 import {
   AppSidebarProps,
   AppTopBarProps,
@@ -307,7 +306,6 @@ export function AppSidebar({
   setActiveNav,
   ...props
 }: AppSidebarProps) {
-  const { openSettings } = useSettingsModal();
   const router = useRouter();
   const { resolvedTheme } = useTheme();
 
@@ -367,12 +365,6 @@ export function AppSidebar({
             >
               <Blocks />
               <span>{t('navigation.extensions')}</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={() => openSettings()} className="cursor-pointer">
-              <Settings />
-              <span>{t('settings.title')}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

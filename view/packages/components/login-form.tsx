@@ -7,15 +7,16 @@ import { Label } from '@nixopus/ui';
 import { Alert, AlertDescription } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useCallback, type ComponentType } from 'react';
 import { z } from 'zod';
+import type { CaptchaComponentProps } from '@/plugins/registry';
 
 export interface LoginFormProps {
   email: string;
   password: string;
   handleEmailChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   handlePasswordChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
-  handleLogin: () => void;
+  handleLogin: (captchaToken?: string) => void;
   isLoading: boolean;
   twoFactorCode?: string;
   handleTwoFactorCodeChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -23,13 +24,21 @@ export interface LoginFormProps {
   handleTwoFactorLogin?: () => void;
   isTwoFactorLoading?: boolean;
   hideRegistration?: boolean;
+  CaptchaComponent?: ComponentType<CaptchaComponentProps>;
+  captchaSiteKey?: string;
 }
 
-export function LoginForm({ ...props }: LoginFormProps) {
+export function LoginForm({ CaptchaComponent, captchaSiteKey, ...props }: LoginFormProps) {
   const { t } = useTranslation();
   const [showPassword, setShowPassword] = useState(false);
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaEnabled = !!CaptchaComponent && !!captchaSiteKey;
+
+  const handleToken = useCallback((token: string | null) => {
+    setCaptchaToken(token);
+  }, []);
 
   // Zod schema for login validation
   const loginSchema = z.object({
@@ -58,7 +67,8 @@ export function LoginForm({ ...props }: LoginFormProps) {
       return;
     }
 
-    props.handleLogin();
+    props.handleLogin(captchaToken ?? undefined);
+    setCaptchaToken(null);
   };
 
   return (
@@ -137,11 +147,20 @@ export function LoginForm({ ...props }: LoginFormProps) {
                   />
                 </div>
               )}
+              {captchaEnabled && CaptchaComponent && !props.showTwoFactor && (
+                <div className="flex justify-center">
+                  <CaptchaComponent siteKey={captchaSiteKey!} onToken={handleToken} />
+                </div>
+              )}
               <Button
                 type="submit"
                 className="w-full"
                 onClick={props.showTwoFactor ? props.handleTwoFactorLogin : handleLoginClick}
-                disabled={props.showTwoFactor ? props.isTwoFactorLoading : props.isLoading}
+                disabled={
+                  props.showTwoFactor
+                    ? props.isTwoFactorLoading
+                    : props.isLoading || (captchaEnabled && !captchaToken)
+                }
               >
                 {props.showTwoFactor
                   ? props.isTwoFactorLoading

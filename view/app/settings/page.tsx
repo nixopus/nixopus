@@ -1,19 +1,5 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { useEffect } from 'react';
-import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
-import { useRouter } from 'next/navigation';
-
-function Page() {
-  const { openSettings } = useSettingsModal();
-  const router = useRouter();
-
-  useEffect(() => {
-    openSettings('general');
-    router.replace('/chats');
-  }, [openSettings, router]);
-
-  return null;
+export default function SettingsPage() {
+  redirect('/settings/general');
 }
-
-export default Page;

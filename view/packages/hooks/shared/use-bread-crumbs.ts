@@ -21,14 +21,14 @@ function useBreadCrumbs() {
     const dashboardCrumb: BreadcrumbItem = { href: '/', label: 'Machine', external: true };
 
     if (hasBasePath) {
-      return pathname.startsWith('/apps')
+      return pathname.startsWith('/chats')
         ? [dashboardCrumb, ...crumblist]
-        : [dashboardCrumb, { href: '/apps', label: 'Apps' }, ...crumblist];
+        : [dashboardCrumb, { href: '/chats', label: 'Chats' }, ...crumblist];
     }
 
-    return pathname.startsWith('/apps')
+    return pathname.startsWith('/chats')
       ? [...crumblist]
-      : [{ href: '/apps', label: 'Apps' }, ...crumblist];
+      : [{ href: '/chats', label: 'Chats' }, ...crumblist];
   };
 
   return { getBreadcrumbs };

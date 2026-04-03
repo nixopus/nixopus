@@ -9,7 +9,11 @@ import useOtpAuth from '@/packages/hooks/auth/use-otp-auth';
 import { usePasswordLoginEnabled } from '@/packages/hooks/shared/use-config';
 import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { getPluginCaptcha } from '@/plugins/registry';
+import { getTurnstileSiteKey } from '@/redux/conf';
+
+const CaptchaComponent = getPluginCaptcha();
 
 export default function Auth() {
   const pathname = usePathname();
@@ -17,6 +21,13 @@ export default function Auth() {
   const router = useRouter();
   const passwordLoginEnabled = usePasswordLoginEnabled();
   const { data: isAdminRegistered } = useIsAdminRegisteredQuery();
+  const [captchaSiteKey, setCaptchaSiteKey] = useState('');
+
+  useEffect(() => {
+    getTurnstileSiteKey().then((key) => {
+      if (key) setCaptchaSiteKey(key);
+    });
+  }, []);
 
   const isResetPasswordPage = pathname === '/auth/reset-password';
   const resetToken = searchParams.get('token');
@@ -52,7 +63,9 @@ export default function Auth() {
     email: otpEmail,
     otp,
     otpSent,
-    loaded: otpLoaded
+    loaded: otpLoaded,
+    timer,
+    formatTimer
   } = useOtpAuth();
 
   const loaded =
@@ -116,6 +129,8 @@ export default function Auth() {
             handleLogin={handleLogin}
             isLoading={isLoading}
             hideRegistration={isAdminRegistered}
+            CaptchaComponent={CaptchaComponent ?? undefined}
+            captchaSiteKey={captchaSiteKey}
           />
         ) : (
           <OtpLoginForm
@@ -129,6 +144,10 @@ export default function Auth() {
             isSendingOtp={isSendingOtp}
             isVerifyingOtp={isVerifyingOtp}
             otpSent={otpSent}
+            timer={timer}
+            formatTimer={formatTimer}
+            CaptchaComponent={CaptchaComponent ?? undefined}
+            captchaSiteKey={captchaSiteKey}
           />
         )}
       </div>

@@ -23,7 +23,8 @@ export async function GET() {
     githubAppSlug: process.env.GITHUB_APP_SLUG || '',
     selfHosted: process.env.SELF_HOSTED === 'true' || false,
     posthogKey: process.env.POSTHOG_KEY || '',
-    posthogHost: process.env.POSTHOG_HOST || ''
+    posthogHost: process.env.POSTHOG_HOST || '',
+    turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || ''
   });
   response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
   return response;

@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import { ChevronRight } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@nixopus/ui';
@@ -90,16 +91,29 @@ export function NavMain({ items, onItemClick }: TopNavMainProps) {
                 {hasNestedItems && (
                   <CollapsibleContent>
                     <SidebarMenuSub>
-                      {item.items?.map((subItem) => {
+                      {item.items?.map((subItem, index) => {
                         const subItemIsActive = isItemActive(subItem.url);
+                        const prevSection =
+                          index > 0 ? item.items?.[index - 1]?.section : undefined;
+                        const showSectionLabel = subItem.section && subItem.section !== prevSection;
+
                         return (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton asChild isActive={subItemIsActive}>
-                              <Link href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
+                          <React.Fragment key={subItem.title}>
+                            {showSectionLabel && (
+                              <li className="pt-3 pb-1 first:pt-1">
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                                  {subItem.section}
+                                </span>
+                              </li>
+                            )}
+                            <SidebarMenuSubItem>
+                              <SidebarMenuSubButton asChild isActive={subItemIsActive}>
+                                <Link href={subItem.url}>
+                                  <span>{subItem.title}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          </React.Fragment>
                         );
                       })}
                     </SidebarMenuSub>

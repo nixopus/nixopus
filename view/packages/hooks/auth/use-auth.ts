@@ -29,7 +29,7 @@ function useAuth() {
     setPassword(event.target.value);
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (captchaToken?: string) => {
     if (!email || !password) {
       toast.error(t('auth.login.errors.requiredFields'));
       return;
@@ -39,7 +39,8 @@ function useAuth() {
     try {
       const result = await authClient.signIn.email({
         email,
-        password
+        password,
+        fetchOptions: captchaToken ? { headers: { 'x-captcha-response': captchaToken } } : undefined
       });
 
       if (result.error) {

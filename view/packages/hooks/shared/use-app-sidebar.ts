@@ -16,8 +16,7 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, ChartColumnDecreasing, MessageSquare, Puzzle } from 'lucide-react';
-import { useSettingsModal } from '@/packages/hooks/shared/use-settings-modal';
+import { Layers, ChartColumnDecreasing, MessageSquare, Settings } from 'lucide-react';
 import { getPluginNavItems } from '@/plugins/registry';
 
 const coreNavItems = [
@@ -45,16 +44,90 @@ const coreNavItems = [
   {
     title: 'navigation.integrations',
     url: '/integrations',
-    icon: Puzzle,
     resource: 'notification',
+    group: 'settings',
+    section: 'Organization',
+    order: 94
+  },
+  {
+    title: 'General',
+    url: '/settings/general',
+    resource: 'settings',
+    group: 'settings',
+    section: 'Account',
     order: 100
+  },
+  {
+    title: 'Keyboard Shortcuts',
+    url: '/settings/keyboard-shortcuts',
+    resource: 'settings',
+    group: 'settings',
+    section: 'Account',
+    order: 102
+  },
+  {
+    title: 'Terminal',
+    url: '/settings/terminal',
+    resource: 'settings',
+    group: 'settings',
+    section: 'System',
+    order: 110
+  },
+  {
+    title: 'Container',
+    url: '/settings/container',
+    resource: 'settings',
+    group: 'settings',
+    section: 'System',
+    order: 111
+  },
+  {
+    title: 'Network',
+    url: '/settings/network',
+    resource: 'settings',
+    group: 'settings',
+    section: 'System',
+    order: 112
+  },
+  {
+    title: 'Troubleshooting',
+    url: '/settings/troubleshooting',
+    resource: 'settings',
+    group: 'settings',
+    section: 'System',
+    order: 113
   }
 ];
 
-const data = {
-  navMain: [...coreNavItems, ...getPluginNavItems()].sort(
+function buildNavItems() {
+  const allItems = [...coreNavItems, ...getPluginNavItems()].sort(
     (a, b) => (a.order ?? 50) - (b.order ?? 50)
-  )
+  );
+
+  const topLevel = allItems.filter((item) => !item.group);
+  const grouped = allItems.filter((item) => item.group === 'settings');
+
+  if (grouped.length === 0) return topLevel;
+
+  const settingsGroup = {
+    title: 'Settings',
+    url: grouped[0].url,
+    icon: Settings,
+    resource: 'settings',
+    order: 90,
+    items: grouped.map((item) => ({
+      title: item.title,
+      url: item.url,
+      resource: item.resource,
+      section: 'section' in item ? (item as any).section : undefined
+    }))
+  };
+
+  return [...topLevel, settingsGroup].sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
+}
+
+const data = {
+  navMain: buildNavItems()
 };
 
 export function useAppSidebar() {
@@ -67,7 +140,6 @@ export function useAppSidebar() {
   const { canAccessResource } = useRBAC();
   const pathname = usePathname();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
-  const { closeSettings } = useSettingsModal();
 
   const hasAnyPermission = useMemo(() => {
     const allowedResources = ['dashboard', 'settings', 'extensions', 'ai'];
@@ -197,7 +269,6 @@ Add any other context about the problem here.`;
 
   const handleLogoutConfirm = async () => {
     setShowLogoutDialog(false);
-    closeSettings();
 
     try {
       clearLocalStorage();
@@ -245,7 +316,7 @@ Add any other context about the problem here.`;
             return {
               ...baseItem,
               items: item.items.map(
-                (subItem: { title: string; url: string; resource?: string }) => ({
+                (subItem: { title: string; url: string; resource?: string; section?: string }) => ({
                   ...subItem,
                   title: t(subItem.title as any)
                 })
@@ -273,12 +344,16 @@ Add any other context about the problem here.`;
   // Sync activeNav with current pathname to prevent multiple active menu items
   useEffect(() => {
     if (pathname) {
-      // Find the matching navigation item URL for the current pathname
-      const matchingNavItem = data.navMain.find(
-        (item) => pathname === item.url || pathname.startsWith(item.url + '/')
-      );
+      const matchingNavItem = data.navMain.find((item) => {
+        if (pathname === item.url || pathname.startsWith(item.url + '/')) return true;
+        if ('items' in item && item.items) {
+          return item.items.some(
+            (sub: { url: string }) => pathname === sub.url || pathname.startsWith(sub.url + '/')
+          );
+        }
+        return false;
+      });
 
-      // Only update activeNav if we found a match and it's different from current activeNav
       if (matchingNavItem && matchingNavItem.url !== activeNav) {
         setActiveNav(matchingNavItem.url);
       }
