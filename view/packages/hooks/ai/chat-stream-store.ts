@@ -65,6 +65,17 @@ function extractUsageFromPayload(payload: unknown): TokenUsage | null {
   };
 }
 
+const DELEGATION_FORWARD_TYPES = new Set([
+  'text-delta',
+  'text-end',
+  'text-start',
+  'tool-call',
+  'tool-call-start',
+  'tool-result'
+]);
+
+const HIDDEN_TOOLS = new Set(['search_tools', 'load_tool']);
+
 class ChatStreamStore {
   private sessions = new Map<string, SessionInternal>();
   private listeners = new Map<string, Set<Listener>>();
@@ -190,6 +201,15 @@ class ChatStreamStore {
 
     if (s.abortController?.signal.aborted) return;
 
+    if (chunk.type === 'tool-output') {
+      const p = chunk.payload as Record<string, unknown> | undefined;
+      const output = p?.output as StreamChunk | undefined;
+      if (output?.type && DELEGATION_FORWARD_TYPES.has(output.type)) {
+        this.handleChunk(threadId, output);
+      }
+      return;
+    }
+
     if (chunk.type === 'start' && chunk.runId) {
       s.runId = chunk.runId;
       return;
@@ -261,6 +281,7 @@ class ChatStreamStore {
       const toolName = (p?.toolName as string) ?? 'tool';
 
       if (toolName === 'ask_user' || toolName === 'askUser') return;
+      if (HIDDEN_TOOLS.has(toolName)) return;
 
       if (toolCallId) {
         s.needsNewTextPart = true;
