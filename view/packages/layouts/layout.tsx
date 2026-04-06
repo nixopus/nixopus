@@ -134,7 +134,7 @@ function Layout({ children }: LayoutProps) {
           handleTeamDescriptionChange={handleTeamDescriptionChange}
           isLoading={isLoading}
         />
-        <div className="w-full h-full flex-1">
+        <div className="w-full flex-1 min-h-0">
           <ResizablePanelLayout
             TerminalPosition={TerminalPosition}
             isTerminalOpen={isTerminalOpen}
