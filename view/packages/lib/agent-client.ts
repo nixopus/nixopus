@@ -158,19 +158,18 @@ export async function* streamAgent(
   resourceId: string,
   headers: Record<string, string>,
   signal?: AbortSignal,
-  model?: string
+  model?: string,
+  requireToolApproval?: boolean
 ): AsyncGenerator<StreamChunk> {
   const query = model ? { model } : undefined;
-  const response = await agentFetch(
-    `/agents/${AGENT_ID}/stream`,
-    {
-      messages: [{ role: 'user', content }],
-      memory: { thread: threadId, resource: resourceId }
-    },
-    headers,
-    signal,
-    query
-  );
+  const body: Record<string, unknown> = {
+    messages: [{ role: 'user', content }],
+    memory: { thread: threadId, resource: resourceId }
+  };
+  if (requireToolApproval) {
+    body.requireToolApproval = true;
+  }
+  const response = await agentFetch(`/agents/${AGENT_ID}/stream`, body, headers, signal, query);
 
   yield* readSseStream(response.body!, signal);
 }

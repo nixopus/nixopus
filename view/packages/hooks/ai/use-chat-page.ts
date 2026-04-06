@@ -100,7 +100,7 @@ export function useChatPage(): UseChatPageReturn {
     false
   );
   const [selectedContexts, setSelectedContexts] = useState<ChatContext[]>([]);
-  const [autoRunTools, setAutoRunTools] = useLocalStorageState('chat_auto_run_tools', false);
+  const [autoRunTools, setAutoRunTools] = useLocalStorageState('chat_auto_run_tools', true);
   const [selectedModel, setSelectedModel] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('chat_selected_model') || AVAILABLE_MODELS[0].id;

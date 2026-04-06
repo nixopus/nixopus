@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { useAppSelector } from '@/redux/hooks';
 import { authClient } from '@/packages/lib/auth-client';
 import {
@@ -13,6 +13,7 @@ import {
 } from '@/packages/lib/agent-client';
 import { type ChatContext, formatContextsForAgent } from './chat-context';
 import { v4 as uuid } from 'uuid';
+import { chatStreamStore } from './chat-stream-store';
 
 export type MessagePart =
   | { type: 'text'; content: string }
@@ -209,21 +210,24 @@ export function useAgentChat({
   onFirstMessage,
   waitForThread
 }: UseAgentChatOptions) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const subscribe = useCallback(
+    (cb: () => void) => chatStreamStore.subscribe(threadId, cb),
+    [threadId]
+  );
+  const snapshot = useSyncExternalStore(
+    subscribe,
+    () => chatStreamStore.getSnapshot(threadId),
+    chatStreamStore.getEmptySnapshot
+  );
+
+  const { messages, isStreaming, pendingToolApproval, omStatus } = snapshot;
+
   const [inputValue, setInputValue] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [pendingToolApproval, setPendingToolApproval] = useState<PendingToolApproval | null>(null);
   const [activeQuestion, setActiveQuestion] = useState<AgentQuestion | null>(null);
-  const [omStatus, setOmStatus] = useState<OmStatus | null>(null);
-  const omStatusRef = useRef<OmStatus | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const abortRef = useRef<AbortController | null>(null);
-  const pendingApprovalRef = useRef(false);
-  const needsStepSeparatorRef = useRef(false);
-  const needsNewTextPartRef = useRef(false);
-  const firstTextDeltaTimeRef = useRef<number | null>(null);
+  const lastAutoApprovedRef = useRef<string | null>(null);
 
   const token = useAppSelector((state) => state.auth.token);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
@@ -243,14 +247,12 @@ export function useAgentChat({
   }, [messages, scrollToBottom]);
 
   useEffect(() => {
-    if (!threadId) {
-      setMessages([]);
-      return;
-    }
+    if (!threadId) return;
+
+    if (chatStreamStore.hasActiveStream(threadId)) return;
 
     let cancelled = false;
     setIsLoadingHistory(true);
-    setMessages([]);
 
     (async () => {
       try {
@@ -265,6 +267,7 @@ export function useAgentChat({
         });
 
         if (cancelled) return;
+        if (chatStreamStore.hasActiveStream(threadId)) return;
 
         const msgs: ChatMessage[] = [];
         const rawMessages = result?.messages ?? [];
@@ -293,7 +296,7 @@ export function useAgentChat({
             });
           }
         }
-        setMessages(msgs);
+        chatStreamStore.setMessages(threadId, msgs);
       } catch {
         // thread may not exist on server yet
       } finally {
@@ -306,301 +309,16 @@ export function useAgentChat({
     };
   }, [threadId, resourceId, token, organizationId, waitForThread]);
 
-  const extractUsageFromPayload = useCallback((payload: unknown): TokenUsage | null => {
-    if (!payload || typeof payload !== 'object') return null;
-    const p = payload as Record<string, unknown>;
-
-    const output = p.output as Record<string, unknown> | undefined;
-    const outputUsage = output?.usage as Record<string, unknown> | undefined;
-
-    const metadata = p.metadata as Record<string, unknown> | undefined;
-    const providerMeta = metadata?.providerMetadata as Record<string, unknown> | undefined;
-    const orMeta = providerMeta?.openrouter as Record<string, unknown> | undefined;
-    const orUsage = orMeta?.usage as Record<string, unknown> | undefined;
-
-    const usage = outputUsage ?? orUsage;
-    if (!usage) return null;
-
-    const prompt = (usage.promptTokens as number) ?? (usage.inputTokens as number) ?? undefined;
-    const completion =
-      (usage.completionTokens as number) ?? (usage.outputTokens as number) ?? undefined;
-
-    if (typeof prompt !== 'number' && typeof completion !== 'number') return null;
-
-    const promptTokens = prompt ?? 0;
-    const completionTokens = completion ?? 0;
-    const costUsd = typeof orUsage?.cost === 'number' ? (orUsage.cost as number) : undefined;
-
-    return {
-      promptTokens,
-      completionTokens,
-      totalTokens:
-        typeof (usage.totalTokens as number) === 'number'
-          ? (usage.totalTokens as number)
-          : promptTokens + completionTokens,
-      costUsd
-    };
-  }, []);
-
-  const accumulateUsage = useCallback((messageId: string, usage: TokenUsage) => {
-    setMessages((prev) =>
-      prev.map((m) => {
-        if (m.id !== messageId) return m;
-        const existing = m.usage;
-        if (existing) {
-          const costUsd =
-            existing.costUsd != null || usage.costUsd != null
-              ? (existing.costUsd ?? 0) + (usage.costUsd ?? 0)
-              : undefined;
-          return {
-            ...m,
-            usage: {
-              promptTokens: existing.promptTokens + usage.promptTokens,
-              completionTokens: existing.completionTokens + usage.completionTokens,
-              totalTokens: existing.totalTokens + usage.totalTokens,
-              costUsd
-            }
-          };
-        }
-        return { ...m, usage };
-      })
-    );
-  }, []);
-
-  const handleChunk = useCallback(
-    (
-      chunk: StreamChunk,
-      assistantMessageId: string,
-      runIdRef: { current: string },
-      abortSignal: AbortSignal
-    ) => {
-      if (abortSignal.aborted) return;
-
-      if (chunk.type === 'start' && chunk.runId) {
-        runIdRef.current = chunk.runId;
-      }
-
-      if (chunk.type === 'text-delta') {
-        if (firstTextDeltaTimeRef.current === null) {
-          firstTextDeltaTimeRef.current = Date.now();
-        }
-        const text = chunk.payload?.text as string | undefined;
-        if (text) {
-          const insertSep = needsStepSeparatorRef.current;
-          const startNewPart = needsNewTextPartRef.current;
-          needsStepSeparatorRef.current = false;
-          needsNewTextPartRef.current = false;
-          setMessages((prev) =>
-            prev.map((m) => {
-              if (m.id !== assistantMessageId) return m;
-              const sep = insertSep && m.content.length > 0 ? '\n\n' : '';
-              const newContent = m.content + sep + text;
-
-              let parts = [...(m.parts || [])];
-              parts = parts.map((p) =>
-                p.type === 'tool-call' && p.status === 'running'
-                  ? { ...p, status: 'done' as const }
-                  : p
-              );
-              const lastPart = parts[parts.length - 1];
-              if (!startNewPart && lastPart?.type === 'text') {
-                parts[parts.length - 1] = { ...lastPart, content: lastPart.content + text };
-              } else {
-                parts.push({ type: 'text' as const, content: text });
-              }
-
-              return { ...m, content: newContent, parts };
-            })
-          );
-        }
-      }
-
-      if (chunk.type === 'step-finish') {
-        needsStepSeparatorRef.current = true;
-        needsNewTextPartRef.current = true;
-        const stepUsage = extractUsageFromPayload(chunk.payload);
-        if (stepUsage) {
-          accumulateUsage(assistantMessageId, stepUsage);
-        }
-      }
-
-      if (chunk.type === 'text-end') {
-        needsStepSeparatorRef.current = true;
-        needsNewTextPartRef.current = true;
-      }
-
-      if (
-        chunk.type === 'tool-call' ||
-        chunk.type === 'tool-call-start' ||
-        chunk.type === 'tool-call-approval'
-      ) {
-        const p = chunk.payload as
-          | {
-              toolCallId?: string;
-              toolName?: string;
-              args?: unknown;
-              runId?: string;
-              id?: string;
-            }
-          | undefined;
-        const toolCallId = p?.toolCallId ?? p?.id;
-        const toolName = (p?.toolName as string) ?? 'tool';
-
-        if (toolName === 'ask_user' || toolName === 'askUser') return;
-
-        if (toolCallId) {
-          needsNewTextPartRef.current = true;
-          const tcId = String(toolCallId);
-          setMessages((prev) =>
-            prev.map((m) => {
-              if (m.id !== assistantMessageId) return m;
-              const parts = [...(m.parts || [])];
-              if (!parts.some((pt) => pt.type === 'tool-call' && pt.toolCallId === tcId)) {
-                parts.push({
-                  type: 'tool-call' as const,
-                  toolName,
-                  toolCallId: tcId,
-                  args: p?.args,
-                  status: 'running' as const
-                });
-              }
-              return { ...m, parts };
-            })
-          );
-        }
-      }
-
-      if (chunk.type === 'tool-result') {
-        const p = chunk.payload as
-          | {
-              toolCallId?: string;
-              toolName?: string;
-              result?: { title?: string; description?: string; fields?: AgentQuestionField[] };
-            }
-          | undefined;
-        const tcId = p?.toolCallId;
-
-        if (tcId) {
-          needsNewTextPartRef.current = true;
-          setMessages((prev) =>
-            prev.map((m) => {
-              if (m.id !== assistantMessageId) return m;
-              const parts = (m.parts || []).map((pt) =>
-                pt.type === 'tool-call' && pt.toolCallId === tcId
-                  ? { ...pt, status: 'done' as const }
-                  : pt
-              );
-              return { ...m, parts };
-            })
-          );
-        }
-      }
-
-      if (chunk.type === 'finish' && chunk.payload) {
-        const finishPayload = chunk.payload as Record<string, unknown>;
-
-        setMessages((prev) => {
-          const msg = prev.find((m) => m.id === assistantMessageId);
-          if (!msg?.usage) {
-            const finishUsage = extractUsageFromPayload(finishPayload);
-            if (finishUsage) {
-              return prev.map((m) =>
-                m.id === assistantMessageId ? { ...m, usage: finishUsage } : m
-              );
-            }
-          }
-          return prev;
-        });
-
-        const finishReason = finishPayload.finishReason as string | undefined;
-        const sp = finishPayload.suspendPayload as
-          | { toolCallId?: string; runId?: string; toolName?: string; args?: unknown }
-          | undefined;
-        if (finishReason === 'suspended' && sp) {
-          pendingApprovalRef.current = true;
-          setPendingToolApproval({
-            runId: sp.runId ?? '',
-            toolCallId: sp.toolCallId ?? '',
-            toolName: (sp.toolName as string) ?? 'tool',
-            args: sp.args ?? {}
-          });
-        }
-      }
-
-      if (chunk.type === 'data-om-status') {
-        const d = chunk.payload as
-          | {
-              windows?: {
-                active?: {
-                  messages?: { tokens?: number; threshold?: number };
-                  observations?: { tokens?: number; threshold?: number };
-                };
-              };
-            }
-          | undefined;
-        const active = d?.windows?.active;
-        if (active) {
-          const next: OmStatus = {
-            messages: {
-              tokens: active.messages?.tokens ?? 0,
-              threshold: active.messages?.threshold ?? 30000
-            },
-            observations: {
-              tokens: active.observations?.tokens ?? 0,
-              threshold: active.observations?.threshold ?? 40000
-            },
-            isObserving: omStatusRef.current?.isObserving ?? false,
-            observationsText: omStatusRef.current?.observationsText ?? null
-          };
-          omStatusRef.current = next;
-          setOmStatus(next);
-        }
-      }
-
-      if (chunk.type === 'data-om-observation-start') {
-        const prev = omStatusRef.current;
-        if (prev) {
-          const next = { ...prev, isObserving: true };
-          omStatusRef.current = next;
-          setOmStatus(next);
-        }
-      }
-
-      if (chunk.type === 'data-om-observation-end' || chunk.type === 'data-om-activation') {
-        const d = chunk.payload as { observations?: string } | undefined;
-        const prev = omStatusRef.current;
-        if (prev) {
-          const next: OmStatus = {
-            ...prev,
-            isObserving: false,
-            observationsText: d?.observations ?? prev.observationsText
-          };
-          omStatusRef.current = next;
-          setOmStatus(next);
-        }
-      }
-    },
-    [extractUsageFromPayload, accumulateUsage]
-  );
-
   const streamResponse = useCallback(
     async (userContent: string) => {
       if (!threadId) return;
 
-      const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
-
       const abortController = new AbortController();
-      abortRef.current = abortController;
-      const runIdRef = { current: '' };
-      firstTextDeltaTimeRef.current = null;
-
       const assistantMessageId = uuid();
-      setMessages((prev) => [
-        ...prev,
-        { id: assistantMessageId, role: 'assistant', content: '', timestamp: new Date(), parts: [] }
-      ]);
+      chatStreamStore.beginStream(threadId, assistantMessageId, abortController);
 
       try {
+        const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
         const contextPrefix = formatContextsForAgent(contexts);
         const stream = streamAgent(
           contextPrefix + userContent,
@@ -608,76 +326,39 @@ export function useAgentChat({
           resourceId || threadId,
           headers,
           abortController.signal,
-          model
+          model,
+          !autoRunTools
         );
 
         for await (const chunk of stream) {
-          handleChunk(chunk, assistantMessageId, runIdRef, abortController.signal);
+          chatStreamStore.handleChunk(threadId, chunk);
         }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === 'AbortError') return;
-
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to get response from AI agent';
-
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantMessageId
-              ? { ...m, content: m.content || `Error: ${errorMessage}` }
-              : m
-          )
-        );
-      } finally {
-        if (!pendingApprovalRef.current) {
-          setIsStreaming(false);
-        }
-        abortRef.current = null;
-        needsStepSeparatorRef.current = false;
-        needsNewTextPartRef.current = false;
-        const durationMs = firstTextDeltaTimeRef.current
-          ? Date.now() - firstTextDeltaTimeRef.current
-          : undefined;
-        firstTextDeltaTimeRef.current = null;
-        setMessages((prev) =>
-          prev.map((m) => {
-            if (m.id !== assistantMessageId) return m;
-            const parts = m.parts?.some((p) => p.type === 'tool-call' && p.status === 'running')
-              ? m.parts.map((p) =>
-                  p.type === 'tool-call' && p.status === 'running'
-                    ? { ...p, status: 'done' as const }
-                    : p
-                )
-              : m.parts;
-            const usage = m.usage
-              ? { ...m.usage, durationMs }
-              : durationMs != null
-                ? { promptTokens: 0, completionTokens: 0, totalTokens: 0, durationMs }
-                : m.usage;
-            return { ...m, parts, usage };
-          })
-        );
+        chatStreamStore.finishStream(threadId, errorMessage);
+        return;
       }
+      chatStreamStore.finishStream(threadId);
     },
-    [threadId, resourceId, token, organizationId, contexts, model, handleChunk]
+    [threadId, resourceId, token, organizationId, contexts, model, autoRunTools]
   );
 
   const handleApproveToolCall = useCallback(async () => {
-    const pending = pendingToolApproval;
+    if (!threadId) return;
+    const snap = chatStreamStore.getSnapshot(threadId);
+    const pending = snap.pendingToolApproval;
     if (!pending) return;
 
-    setPendingToolApproval(null);
-    pendingApprovalRef.current = false;
-
-    const assistantMessageId = messages.filter((m) => m.role === 'assistant').pop()?.id;
+    const assistantMessageId = chatStreamStore.prepareApprovalStream(threadId);
     if (!assistantMessageId) {
-      setIsStreaming(false);
+      chatStreamStore.stopStream(threadId);
       return;
     }
 
     const abortController = new AbortController();
-    abortRef.current = abortController;
-    const runIdRef = { current: '' };
-    needsNewTextPartRef.current = true;
+    chatStreamStore.startApprovalStream(threadId, abortController);
 
     try {
       const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
@@ -688,71 +369,31 @@ export function useAgentChat({
       );
 
       for await (const chunk of stream) {
-        handleChunk(chunk, assistantMessageId, runIdRef, abortController.signal);
+        chatStreamStore.handleChunk(threadId, chunk);
       }
     } catch {
-      setMessages((prev) =>
-        prev.map((m) =>
-          m.id === assistantMessageId
-            ? { ...m, content: m.content + '\n\n_Tool execution failed._' }
-            : m
-        )
-      );
-    } finally {
-      if (!pendingApprovalRef.current) setIsStreaming(false);
-      abortRef.current = null;
-      needsStepSeparatorRef.current = false;
-      needsNewTextPartRef.current = false;
-      if (assistantMessageId) {
-        setMessages((prev) =>
-          prev.map((m) => {
-            if (m.id !== assistantMessageId || !m.parts) return m;
-            const hasRunning = m.parts.some(
-              (p) => p.type === 'tool-call' && p.status === 'running'
-            );
-            if (!hasRunning) return m;
-            return {
-              ...m,
-              parts: m.parts.map((p) =>
-                p.type === 'tool-call' && p.status === 'running'
-                  ? { ...p, status: 'done' as const }
-                  : p
-              )
-            };
-          })
-        );
-      }
+      chatStreamStore.appendErrorToLastAssistant(threadId, '\n\n_Tool execution failed._');
     }
-  }, [pendingToolApproval, token, organizationId, messages, handleChunk]);
+    chatStreamStore.finishApprovalStream(threadId);
+  }, [threadId, token, organizationId]);
 
   const handleDeclineToolCall = useCallback(async () => {
-    const pending = pendingToolApproval;
+    if (!threadId) return;
+    const snap = chatStreamStore.getSnapshot(threadId);
+    const pending = snap.pendingToolApproval;
     if (!pending) return;
 
-    setPendingToolApproval(null);
-    pendingApprovalRef.current = false;
+    chatStreamStore.declineApproval(threadId);
 
     try {
       const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
       await declineAgentToolCall({ runId: pending.runId, toolCallId: pending.toolCallId }, headers);
-      const assistantMessageId = messages.filter((m) => m.role === 'assistant').pop()?.id;
-      if (assistantMessageId) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === assistantMessageId
-              ? { ...m, content: m.content + '\n\n_Tool call was declined._' }
-              : m
-          )
-        );
-      }
+      chatStreamStore.appendErrorToLastAssistant(threadId, '\n\n_Tool call was declined._');
     } catch {
       // ignore
-    } finally {
-      setIsStreaming(false);
     }
-  }, [pendingToolApproval, token, organizationId, messages]);
+  }, [threadId, token, organizationId]);
 
-  const lastAutoApprovedRef = useRef<string | null>(null);
   useEffect(() => {
     if (!pendingToolApproval) {
       lastAutoApprovedRef.current = null;
@@ -768,7 +409,8 @@ export function useAgentChat({
   const handleSubmit = useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
-      if (!inputValue.trim() || isStreaming || !threadId) return;
+      if (!inputValue.trim() || !threadId) return;
+      if (chatStreamStore.getSnapshot(threadId).isStreaming) return;
 
       const content = inputValue.trim();
       const userMessage: ChatMessage = {
@@ -779,18 +421,16 @@ export function useAgentChat({
         ...(contexts.length > 0 ? { contexts: [...contexts] } : {})
       };
 
-      setMessages((prev) => {
-        const isFirst = prev.length === 0;
-        if (isFirst && onFirstMessage) {
-          onFirstMessage(content);
-        }
-        return [...prev, userMessage];
-      });
+      const snap = chatStreamStore.getSnapshot(threadId);
+      if (snap.messages.length === 0 && onFirstMessage) {
+        onFirstMessage(content);
+      }
+
+      chatStreamStore.addUserMessage(threadId, userMessage);
       setInputValue('');
-      setIsStreaming(true);
       streamResponse(content);
     },
-    [inputValue, isStreaming, threadId, streamResponse, onFirstMessage, contexts]
+    [inputValue, threadId, streamResponse, onFirstMessage, contexts]
   );
 
   const handleKeyDown = useCallback(
@@ -805,27 +445,27 @@ export function useAgentChat({
 
   const handleSuggestionClick = useCallback(
     (text: string) => {
-      if (!isStreaming && threadId) {
-        setInputValue('');
-        const userMessage: ChatMessage = {
-          id: uuid(),
-          role: 'user',
-          content: text,
-          timestamp: new Date(),
-          ...(contexts.length > 0 ? { contexts: [...contexts] } : {})
-        };
-        setMessages((prev) => {
-          const isFirst = prev.length === 0;
-          if (isFirst && onFirstMessage) {
-            onFirstMessage(text);
-          }
-          return [...prev, userMessage];
-        });
-        setIsStreaming(true);
-        streamResponse(text);
+      if (!threadId) return;
+      if (chatStreamStore.getSnapshot(threadId).isStreaming) return;
+
+      const userMessage: ChatMessage = {
+        id: uuid(),
+        role: 'user',
+        content: text,
+        timestamp: new Date(),
+        ...(contexts.length > 0 ? { contexts: [...contexts] } : {})
+      };
+
+      const snap = chatStreamStore.getSnapshot(threadId);
+      if (snap.messages.length === 0 && onFirstMessage) {
+        onFirstMessage(text);
       }
+
+      chatStreamStore.addUserMessage(threadId, userMessage);
+      setInputValue('');
+      streamResponse(text);
     },
-    [isStreaming, threadId, streamResponse, onFirstMessage, contexts]
+    [threadId, streamResponse, onFirstMessage, contexts]
   );
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -835,7 +475,8 @@ export function useAgentChat({
   const submitQuestionResponse = useCallback(
     (answers: Record<string, string>) => {
       setActiveQuestion(null);
-      if (!threadId || isStreaming) return;
+      if (!threadId) return;
+      if (chatStreamStore.getSnapshot(threadId).isStreaming) return;
 
       const formatted = Object.entries(answers)
         .map(([key, value]) => `${key}: ${value}`)
@@ -848,11 +489,10 @@ export function useAgentChat({
         content,
         timestamp: new Date()
       };
-      setMessages((prev) => [...prev, userMessage]);
-      setIsStreaming(true);
+      chatStreamStore.addUserMessage(threadId, userMessage);
       streamResponse(content);
     },
-    [threadId, isStreaming, streamResponse]
+    [threadId, streamResponse]
   );
 
   const dismissQuestion = useCallback(() => {
@@ -860,9 +500,8 @@ export function useAgentChat({
   }, []);
 
   const stopStreaming = useCallback(() => {
-    abortRef.current?.abort();
-    setIsStreaming(false);
-  }, []);
+    if (threadId) chatStreamStore.stopStream(threadId);
+  }, [threadId]);
 
   return {
     messages,
