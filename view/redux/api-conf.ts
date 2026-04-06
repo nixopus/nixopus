@@ -57,7 +57,7 @@ export enum USER_NOTIFICATION_SETTINGS {
 
 export enum DOMAIN_SETTINGS {
   ADD_DOMAIN = 'v1/domain',
-  GET_DOMAINS = 'v1/domains',
+  GET_DOMAINS = 'v1/domain',
   UPDATE_DOMAIN = 'v1/domain',
   DELETE_DOMAIN = 'v1/domain',
   GENERATE_RANDOM_SUBDOMAIN = 'v1/domain/generate'
@@ -174,4 +174,26 @@ export enum MCP_SETTINGS {
   UPDATE_SERVER = 'v1/mcp/servers',
   DELETE_SERVER = 'v1/mcp/servers',
   TEST_SERVER = 'v1/mcp/servers/test'
+}
+
+export enum MACHINEHOSTURLS {
+  STATUS = 'v1/machine/status',
+  STATS = 'v1/machine/stats',
+  EXEC = 'v1/machine/exec',
+  RESTART = 'v1/machine/restart',
+  PAUSE = 'v1/machine/pause',
+  RESUME = 'v1/machine/resume',
+  BACKUP = 'v1/machine/backup',
+  METRICS = 'v1/machine/metrics',
+  EVENTS = 'v1/machine/events'
+}
+
+export enum SERVERURLS {
+  GET_SERVERS = 'v1/servers',
+  CREATE_MACHINE = 'v1/machines',
+  VERIFY_MACHINE = 'v1/machines',
+  PROVISION_MACHINE = 'v1/machines/provision',
+  PROVISION_STATUS = 'v1/machines/provision',
+  DELETE_MACHINE = 'v1/machines',
+  SSH_STATUS = 'v1/machines'
 }

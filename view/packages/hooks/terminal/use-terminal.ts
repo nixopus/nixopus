@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useMachineId } from '@/packages/contexts/machine-context';
 import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { getAdvancedSettings } from '@/packages/utils/advanced-settings';
 import type { ExitHandler, TerminalOutput } from '../../types/terminal';
@@ -70,8 +71,11 @@ export const useTerminal = (
   height: number,
   allowInput: boolean = true,
   terminalId: string = 'terminal_id',
-  exitHandler?: ExitHandler
+  exitHandler?: ExitHandler,
+  serverId?: string | null
 ) => {
+  const contextMachineId = useMachineId();
+  const serverIdForWs = serverId !== undefined ? serverId : contextMachineId;
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const fitAddonRef = useRef<any | null>(null);
   const { isStopped, setIsStopped } = StopExecution();
@@ -93,6 +97,12 @@ export const useTerminal = (
   useEffect(() => {
     sendJsonMessageRef.current = sendJsonMessage;
   }, [sendJsonMessage]);
+
+  const terminalPayload = useCallback(
+    (data: Record<string, unknown>) =>
+      serverIdForWs ? { ...data, serverId: serverIdForWs } : data,
+    [serverIdForWs]
+  );
 
   const safeSendMessage = useCallback((data: any) => {
     if (isReadyRef.current) {
@@ -120,14 +130,14 @@ export const useTerminal = (
     if (isStopped && terminalInstance) {
       safeSendMessage({
         action: 'terminal',
-        data: {
+        data: terminalPayload({
           value: CTRL_C,
           terminalId
-        }
+        })
       });
       setIsStopped(false);
     }
-  }, [isStopped, safeSendMessage, setIsStopped, terminalInstance, terminalId]);
+  }, [isStopped, safeSendMessage, setIsStopped, terminalInstance, terminalId, terminalPayload]);
 
   const handleTerminalFrame = useCallback(
     (raw: string) => {
@@ -263,11 +273,11 @@ export const useTerminal = (
           if (dimensions) {
             safeSendMessage({
               action: 'terminal_resize',
-              data: {
+              data: terminalPayload({
                 cols: dimensions.cols,
                 rows: dimensions.rows,
                 terminalId
-              }
+              })
             });
           }
         });
@@ -393,10 +403,10 @@ export const useTerminal = (
             // Send all input to backend
             safeSendMessage({
               action: 'terminal',
-              data: {
+              data: terminalPayload({
                 value: data,
                 terminalId
-              }
+              })
             });
           });
         }
@@ -404,11 +414,11 @@ export const useTerminal = (
         term.onResize((size) => {
           safeSendMessage({
             action: 'terminal_resize',
-            data: {
+            data: terminalPayload({
               cols: size.cols,
               rows: size.rows,
               terminalId
-            }
+            })
           });
         });
       }
@@ -428,17 +438,17 @@ export const useTerminal = (
         setTimeout(() => {
           safeSendMessage({
             action: 'terminal',
-            data: {
+            data: terminalPayload({
               value: '\n',
               terminalId
-            }
+            })
           });
         }, 100);
       }
     } catch (error) {
       console.error('Error initializing terminal:', error);
     }
-  }, [safeSendMessage, terminalRef, terminalInstance, allowInput, terminalId]);
+  }, [safeSendMessage, terminalRef, terminalInstance, allowInput, terminalId, terminalPayload]);
 
   // Update xterm theme when app theme changes
   useEffect(() => {

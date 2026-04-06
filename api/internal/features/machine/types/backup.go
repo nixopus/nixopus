@@ -50,6 +50,7 @@ type BackupListParams struct {
 	SortBy    string `json:"sort_by"`
 	SortOrder string `json:"sort_order"`
 	Status    string `json:"status"`
+	ServerID  string `json:"server_id"`
 }
 
 type BackupListResponseData struct {

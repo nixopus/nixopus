@@ -33,6 +33,7 @@ type UserProvisionDetails struct {
 	GuestIP          *string        `json:"guest_ip,omitempty" bun:"guest_ip"`
 	LXDContainerName *string        `json:"lxd_container_name,omitempty" bun:"lxd_container_name"`
 	SSHKeyID         *uuid.UUID     `json:"ssh_key_id,omitempty" bun:"ssh_key_id,type:uuid"`
+	Type             string         `json:"type" bun:"type,notnull,default:'trial'"`
 	Subdomain        *string        `json:"subdomain,omitempty" bun:"subdomain"`
 	Domain           *string        `json:"domain,omitempty" bun:"domain"`
 	VcpuCount        int            `json:"vcpu_count" bun:"vcpu_count"`
@@ -43,7 +44,7 @@ type UserProvisionDetails struct {
 	CreatedAt        time.Time      `json:"created_at" bun:"created_at,notnull,default:now()"`
 	UpdatedAt        time.Time      `json:"updated_at" bun:"updated_at,notnull,default:now()"`
 
-	User         *User         `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
-	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	SSHKey       *SSHKey       `json:"ssh_key,omitempty" bun:"rel:belongs-to,join:ssh_key_id=id"`
+	User         *User         `json:"-" bun:"rel:belongs-to,join:user_id=id"`
+	Organization *Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
+	SSHKey       *SSHKey       `json:"-" bun:"rel:belongs-to,join:ssh_key_id=id"`
 }

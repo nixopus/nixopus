@@ -30,11 +30,18 @@ func (s *DomainsService) AddCustomDomain(ctx context.Context, userID, orgID uuid
 	}
 
 	var provisionDetails shared_types.UserProvisionDetails
-	err = s.store.DB.NewSelect().
-		Model(&provisionDetails).
-		Where("organization_id = ?", orgID).
-		Limit(1).
-		Scan(ctx)
+	q := s.store.DB.NewSelect().Model(&provisionDetails)
+	serverIDStr, _ := ctx.Value(shared_types.ServerIDKey).(string)
+	if serverIDStr != "" {
+		if sid, parseErr := uuid.Parse(serverIDStr); parseErr == nil {
+			q = q.Where("ssh_key_id = ? AND organization_id = ?", sid, orgID)
+		} else {
+			q = q.Where("organization_id = ?", orgID)
+		}
+	} else {
+		q = q.Where("organization_id = ?", orgID)
+	}
+	err = q.Limit(1).Scan(ctx)
 	if err != nil {
 		s.logger.Log(logger.Error, "failed to get provision details", err.Error())
 		return nil, nil, "", fmt.Errorf("provision details not found for organization")

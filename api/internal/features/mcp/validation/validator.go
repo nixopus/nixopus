@@ -121,6 +121,22 @@ func ValidateUpdateRequest(req *UpdateServerRequest) error {
 	return nil
 }
 
+type CallToolRequest struct {
+	ServerID  string         `json:"server_id"`
+	ToolName  string         `json:"tool_name"`
+	Arguments map[string]any `json:"arguments,omitempty"`
+}
+
+func ValidateCallToolRequest(req *CallToolRequest) error {
+	if strings.TrimSpace(req.ServerID) == "" {
+		return errors.New("server_id is required")
+	}
+	if strings.TrimSpace(req.ToolName) == "" {
+		return errors.New("tool_name is required")
+	}
+	return nil
+}
+
 func ValidateTestRequest(req *TestServerRequest) error {
 	if strings.TrimSpace(req.ProviderID) == "" {
 		return ErrProviderRequired

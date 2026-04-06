@@ -36,16 +36,9 @@ const getStatusConfig = (statusValue?: string): StatusConfig => {
 };
 
 const getEnvironmentStyles = (environment: string): string => {
-  switch (environment) {
-    case 'development':
-      return 'border-blue-500/30 text-blue-500 bg-blue-500/10';
-    case 'staging':
-      return 'border-amber-500/30 text-amber-500 bg-amber-500/10';
-    case 'production':
-      return 'border-emerald-500/30 text-emerald-500 bg-emerald-500/10';
-    default:
-      return 'border-zinc-500/30 text-zinc-500 bg-zinc-500/10';
-  }
+  if (environment === 'production')
+    return 'border-transparent text-muted-foreground bg-foreground/5';
+  return 'border-border text-muted-foreground bg-foreground/5';
 };
 
 const getStatusTextColor = (status?: string): string => {

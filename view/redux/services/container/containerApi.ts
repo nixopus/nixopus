@@ -35,6 +35,7 @@ export interface UpdateContainerResourcesRequest {
   memory: number; // Memory limit in bytes (0 = unlimited)
   memory_swap: number; // Total memory limit (memory + swap) in bytes (0 = unlimited, -1 = unlimited swap)
   cpu_shares: number; // CPU shares (relative weight)
+  server_id?: string;
 }
 
 export interface UpdateContainerResourcesResponse {
@@ -51,7 +52,14 @@ export type ContainerListParams = {
   search?: string;
   sort_by?: 'name' | 'status';
   sort_order?: 'asc' | 'desc';
+  server_id?: string;
 };
+
+export type ContainerIdArg = string | { containerId: string; server_id?: string };
+
+function resolveContainerIdArg(arg: ContainerIdArg): { containerId: string; server_id?: string } {
+  return typeof arg === 'string' ? { containerId: arg } : arg;
+}
 
 export const containerApi = createApi({
   reducerPath: 'containerApi',
@@ -70,10 +78,17 @@ export const containerApi = createApi({
       },
       ContainerListParams
     >({
-      query: ({ page, page_size, search, sort_by, sort_order }) => ({
+      query: ({ page, page_size, search, sort_by, sort_order, server_id }) => ({
         url: CONTAINERURLS.GET_CONTAINERS,
         method: 'GET',
-        params: { page, page_size, search, sort_by, sort_order }
+        params: {
+          page,
+          page_size,
+          search,
+          sort_by,
+          sort_order,
+          ...(server_id ? { server_id } : {})
+        }
       }),
       providesTags: [{ type: 'Container', id: 'LIST' }],
       transformResponse: (response: {
@@ -98,49 +113,75 @@ export const containerApi = createApi({
         };
       }
     }),
-    getContainer: builder.query<Container, string>({
-      query: (containerId) => ({
-        url: CONTAINERURLS.GET_CONTAINER.replace('{container_id}', containerId),
-        method: 'GET'
-      }),
-      providesTags: (result, error, id) => [{ type: 'Container', id }],
+    getContainer: builder.query<Container, ContainerIdArg>({
+      query: (arg) => {
+        const { containerId, server_id } = resolveContainerIdArg(arg);
+        return {
+          url: `${CONTAINERURLS.GET_CONTAINER.replace('{container_id}', containerId)}${server_id ? `?server_id=${encodeURIComponent(server_id)}` : ''}`,
+          method: 'GET'
+        };
+      },
+      providesTags: (result, error, arg) => [
+        { type: 'Container', id: resolveContainerIdArg(arg).containerId }
+      ],
       transformResponse: (response: { data: Container }) => {
         return response.data;
       }
     }),
-    startContainer: builder.mutation<void, string>({
-      query: (containerId) => ({
-        url: CONTAINERURLS.START_CONTAINER.replace('{container_id}', containerId),
-        method: 'POST'
-      }),
-      invalidatesTags: (result, error, id) => [
-        { type: 'Container', id },
-        { type: 'Container', id: 'LIST' }
-      ]
+    startContainer: builder.mutation<void, ContainerIdArg>({
+      query: (arg) => {
+        const { containerId, server_id } = resolveContainerIdArg(arg);
+        return {
+          url: `${CONTAINERURLS.START_CONTAINER.replace('{container_id}', containerId)}${server_id ? `?server_id=${encodeURIComponent(server_id)}` : ''}`,
+          method: 'POST'
+        };
+      },
+      invalidatesTags: (result, error, arg) => {
+        const { containerId } = resolveContainerIdArg(arg);
+        return [
+          { type: 'Container', id: containerId },
+          { type: 'Container', id: 'LIST' }
+        ];
+      }
     }),
-    stopContainer: builder.mutation<void, string>({
-      query: (containerId) => ({
-        url: CONTAINERURLS.STOP_CONTAINER.replace('{container_id}', containerId),
-        method: 'POST'
-      }),
-      invalidatesTags: (result, error, id) => [
-        { type: 'Container', id },
-        { type: 'Container', id: 'LIST' }
-      ]
+    stopContainer: builder.mutation<void, ContainerIdArg>({
+      query: (arg) => {
+        const { containerId, server_id } = resolveContainerIdArg(arg);
+        return {
+          url: `${CONTAINERURLS.STOP_CONTAINER.replace('{container_id}', containerId)}${server_id ? `?server_id=${encodeURIComponent(server_id)}` : ''}`,
+          method: 'POST'
+        };
+      },
+      invalidatesTags: (result, error, arg) => {
+        const { containerId } = resolveContainerIdArg(arg);
+        return [
+          { type: 'Container', id: containerId },
+          { type: 'Container', id: 'LIST' }
+        ];
+      }
     }),
-    removeContainer: builder.mutation<void, string>({
-      query: (containerId) => ({
-        url: CONTAINERURLS.REMOVE_CONTAINER.replace('{container_id}', containerId),
-        method: 'DELETE'
-      }),
-      invalidatesTags: (result, error, id) => [
-        { type: 'Container', id },
-        { type: 'Container', id: 'LIST' }
-      ]
+    removeContainer: builder.mutation<void, ContainerIdArg>({
+      query: (arg) => {
+        const { containerId, server_id } = resolveContainerIdArg(arg);
+        return {
+          url: `${CONTAINERURLS.REMOVE_CONTAINER.replace('{container_id}', containerId)}${server_id ? `?server_id=${encodeURIComponent(server_id)}` : ''}`,
+          method: 'DELETE'
+        };
+      },
+      invalidatesTags: (result, error, arg) => {
+        const { containerId } = resolveContainerIdArg(arg);
+        return [
+          { type: 'Container', id: containerId },
+          { type: 'Container', id: 'LIST' }
+        ];
+      }
     }),
-    getContainerLogs: builder.query<string, { containerId: string; tail?: number }>({
-      query: ({ containerId, tail }) => ({
-        url: CONTAINERURLS.GET_CONTAINER_LOGS.replace('{container_id}', containerId),
+    getContainerLogs: builder.query<
+      string,
+      { containerId: string; tail?: number; server_id?: string }
+    >({
+      query: ({ containerId, tail, server_id }) => ({
+        url: `${CONTAINERURLS.GET_CONTAINER_LOGS.replace('{container_id}', containerId)}${server_id ? `?server_id=${encodeURIComponent(server_id)}` : ''}`,
         method: 'POST',
         body: {
           id: containerId,
@@ -157,8 +198,8 @@ export const containerApi = createApi({
       UpdateContainerResourcesResponse,
       UpdateContainerResourcesRequest
     >({
-      query: ({ containerId, memory, memory_swap, cpu_shares }) => ({
-        url: CONTAINERURLS.UPDATE_CONTAINER_RESOURCES.replace('{container_id}', containerId),
+      query: ({ containerId, memory, memory_swap, cpu_shares, server_id }) => ({
+        url: `${CONTAINERURLS.UPDATE_CONTAINER_RESOURCES.replace('{container_id}', containerId)}${server_id ? `?server_id=${encodeURIComponent(server_id)}` : ''}`,
         method: 'PUT',
         body: {
           memory,

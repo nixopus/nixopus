@@ -177,7 +177,7 @@ export const useDashboard = () => {
     {
       id: 'load-average',
       component: <LoadAverageCard systemStats={systemStats} />,
-      isDefault: true
+      isDefault: false
     },
     {
       id: 'memory-usage',

@@ -10,6 +10,7 @@ const VALID_CATEGORIES = [
   'network',
   'terminal',
   'container',
+  'agent',
   'troubleshooting'
 ];
 

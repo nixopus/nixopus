@@ -34,7 +34,7 @@ func (s *TrailService) GetStatus(userID, sessionID string) (*types.StatusRespons
 	userStatus, err := s.storage.GetUserProvisionStatus(userID)
 	if err != nil {
 		s.logger.Log(logger.Warning, fmt.Sprintf("Failed to get user provision status: %v", err), userID)
-		userStatus = types.UserProvisionStatusNotStarted
+		userStatus = types.UserProvisionStatusPending
 	}
 
 	progress, message := s.calculateProgress(details.Step, userStatus, details.Error)
@@ -62,7 +62,7 @@ func (s *TrailService) GetStatus(userID, sessionID string) (*types.StatusRespons
 
 // calculateProgress returns progress percentage and message based on step and status.
 func (s *TrailService) calculateProgress(step *types.ProvisionStep, status types.UserProvisionStatus, errorMsg *string) (int, string) {
-	if status == types.UserProvisionStatusActive {
+	if status == types.UserProvisionStatusCompleted {
 		return 100, "Provisioning completed successfully"
 	}
 
@@ -74,7 +74,7 @@ func (s *TrailService) calculateProgress(step *types.ProvisionStep, status types
 		return 0, msg
 	}
 
-	if status == types.UserProvisionStatusNotStarted {
+	if status == types.UserProvisionStatusPending {
 		return 0, "Waiting to start..."
 	}
 

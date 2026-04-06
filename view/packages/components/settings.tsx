@@ -40,6 +40,12 @@ import { Heart, HelpCircle, AlertCircle, ArrowUpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@nixopus/ui';
 import { useSettingsFooter } from '@/packages/hooks/settings/use-settings-footer';
 import { SettingsSidebarProps } from '../types/settings';
+import { toast } from 'sonner';
+import {
+  useGetOrganizationSettingsQuery,
+  useUpdateOrganizationSettingsMutation
+} from '@/redux/services/users/userApi';
+import { OrganizationSettingsData } from '@/redux/types/user';
 
 interface SettingsContentProps {
   activeCategory: string;
@@ -460,6 +466,53 @@ function TroubleshootingSettingsContent() {
   );
 }
 
+function AgentSettingsContent() {
+  const { data: orgSettings, isLoading } = useGetOrganizationSettingsQuery();
+  const [updateOrgSettings] = useUpdateOrganizationSettingsMutation();
+
+  if (isLoading) {
+    return <SettingsSkeleton />;
+  }
+
+  const aiIncidentsEnabled = orgSettings?.settings?.ai_incidents_enabled ?? false;
+
+  const handleToggle = async (checked: boolean) => {
+    try {
+      await updateOrgSettings({
+        ai_incidents_enabled: checked
+      } as OrganizationSettingsData).unwrap();
+      toast.success('Setting updated');
+    } catch {
+      toast.error('Failed to update setting');
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="space-y-6 flex-1 overflow-y-auto no-scrollbar">
+        <div>
+          <h2 className="text-2xl font-semibold">Agent</h2>
+          <TypographyMuted className="text-sm mt-1">
+            Configure AI agent behavior for your organization.
+          </TypographyMuted>
+        </div>
+        <div className="rounded-lg border p-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-sm font-medium">Incident Analysis</Label>
+              <TypographyMuted className="text-xs">
+                When enabled, deployment failures and critical health checks are automatically
+                analyzed by the AI agent. Results appear as incident threads in the chat.
+              </TypographyMuted>
+            </div>
+            <Switch checked={aiIncidentsEnabled} onCheckedChange={handleToggle} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SettingsContent({ activeCategory }: SettingsContentProps) {
   return (
     <div className="flex-1 flex flex-col overflow-y-auto no-scrollbar">
@@ -471,6 +524,7 @@ export function SettingsContent({ activeCategory }: SettingsContentProps) {
         {activeCategory === 'network' && <NetworkSettingsContent />}
         {activeCategory === 'terminal' && <TerminalSettingsContent />}
         {activeCategory === 'container' && <ContainerSettingsContent />}
+        {activeCategory === 'agent' && <AgentSettingsContent />}
         {activeCategory === 'troubleshooting' && <TroubleshootingSettingsContent />}
       </div>
     </div>

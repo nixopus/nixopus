@@ -24,8 +24,8 @@ func NewBackupService(p ProvisionInfoProvider, bs *storage.BackupStorage, db *bu
 	return &BackupService{provisionInfo: p, backupStore: bs, db: db}
 }
 
-func (s *BackupService) TriggerBackup(ctx context.Context, userID uuid.UUID, orgID uuid.UUID) (*types.TriggerBackupResponse, error) {
-	info, err := s.provisionInfo.GetProvisionInfo(ctx, orgID, nil)
+func (s *BackupService) TriggerBackup(ctx context.Context, userID, orgID uuid.UUID, serverID *uuid.UUID) (*types.TriggerBackupResponse, error) {
+	info, err := s.provisionInfo.GetProvisionInfo(ctx, orgID, serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve machine: %w", err)
 	}
@@ -33,7 +33,7 @@ func (s *BackupService) TriggerBackup(ctx context.Context, userID uuid.UUID, org
 		return nil, types.ErrMachineNotProvisioned
 	}
 
-	hasRunning, err := s.backupStore.HasInProgressBackup(ctx, orgID)
+	hasRunning, err := s.backupStore.HasInProgressBackup(ctx, orgID, serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check backup status: %w", err)
 	}
@@ -75,7 +75,16 @@ func (s *BackupService) ListBackups(ctx context.Context, orgID uuid.UUID, params
 		params.SortOrder = "desc"
 	}
 
-	backups, totalCount, err := s.backupStore.ListByOrg(ctx, orgID, params)
+	var serverUUID *uuid.UUID
+	if params.ServerID != "" {
+		parsed, err := uuid.Parse(params.ServerID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid server_id: %w", err)
+		}
+		serverUUID = &parsed
+	}
+
+	backups, totalCount, err := s.backupStore.ListByOrg(ctx, orgID, serverUUID, params)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list backups: %w", err)
 	}
@@ -95,7 +104,7 @@ func (s *BackupService) ListBackups(ctx context.Context, orgID uuid.UUID, params
 	}, nil
 }
 
-func (s *BackupService) GetBackupSchedule(ctx context.Context, orgID uuid.UUID) (*types.BackupScheduleResponse, error) {
+func (s *BackupService) GetBackupSchedule(ctx context.Context, orgID uuid.UUID, _ *uuid.UUID) (*types.BackupScheduleResponse, error) {
 	settings, err := utils.GetOrganizationSettings(ctx, s.db, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get organization settings: %w", err)
@@ -130,7 +139,7 @@ func (s *BackupService) GetBackupSchedule(ctx context.Context, orgID uuid.UUID) 
 	}, nil
 }
 
-func (s *BackupService) UpdateBackupSchedule(ctx context.Context, orgID uuid.UUID, req types.BackupScheduleData) (*types.BackupScheduleResponse, error) {
+func (s *BackupService) UpdateBackupSchedule(ctx context.Context, orgID uuid.UUID, _ *uuid.UUID, req types.BackupScheduleData) (*types.BackupScheduleResponse, error) {
 	if req.Frequency != "daily" && req.Frequency != "weekly" {
 		return nil, fmt.Errorf("invalid frequency: must be 'daily' or 'weekly'")
 	}

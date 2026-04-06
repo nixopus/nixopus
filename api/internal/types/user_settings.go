@@ -20,5 +20,5 @@ type UserSettings struct {
 	UpdatedAt     time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 	DeletedAt     *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
 
-	User *User `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
+	User *User `json:"-" bun:"rel:belongs-to,join:user_id=id"`
 }

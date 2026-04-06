@@ -32,7 +32,7 @@ type UserPreferences struct {
 	CreatedAt     time.Time           `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt     time.Time           `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 
-	User *User `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
+	User *User `json:"-" bun:"rel:belongs-to,join:user_id=id"`
 }
 
 // OrganizationSettingsData represents the JSONB data for organization settings
@@ -61,6 +61,9 @@ type OrganizationSettingsData struct {
 	BackupScheduleHourUTC   *int    `json:"backup_schedule_hour_utc,omitempty"`
 	BackupScheduleDayOfWeek *int    `json:"backup_schedule_day_of_week,omitempty"`
 	BackupRetentionCount    *int    `json:"backup_retention_count,omitempty"`
+
+	// AI settings
+	AIIncidentsEnabled *bool `json:"ai_incidents_enabled,omitempty"`
 }
 
 // OrganizationSettings represents organization-level settings stored in the database
@@ -72,7 +75,7 @@ type OrganizationSettings struct {
 	CreatedAt      time.Time                `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt      time.Time                `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 
-	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	Organization *Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
 // DefaultUserPreferencesData returns default values for user preferences
@@ -127,6 +130,8 @@ func DefaultOrganizationSettingsData() OrganizationSettingsData {
 	backupScheduleDayOfWeek := 0
 	backupRetentionCount := 7
 
+	aiIncidentsEnabled := false
+
 	return OrganizationSettingsData{
 		WebsocketReconnectAttempts:       5,
 		WebsocketReconnectInterval:       3000,
@@ -148,5 +153,6 @@ func DefaultOrganizationSettingsData() OrganizationSettingsData {
 		BackupScheduleHourUTC:            &backupScheduleHourUTC,
 		BackupScheduleDayOfWeek:          &backupScheduleDayOfWeek,
 		BackupRetentionCount:             &backupRetentionCount,
+		AIIncidentsEnabled:               &aiIncidentsEnabled,
 	}
 }

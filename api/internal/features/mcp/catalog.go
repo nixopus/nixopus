@@ -30,8 +30,8 @@ var Catalog = []MCPProvider{
 		ID:          "supabase",
 		Name:        "Supabase",
 		Description: "Connect to your Supabase project via MCP",
-		URL:         "https://mcp.supabase.com/sse",
-		Transport:   "sse",
+		URL:         "https://mcp.supabase.com/mcp",
+		Transport:   "http",
 		Fields: []ProviderField{
 			{Key: "access_token", Label: "Access Token", Required: true,
 				HeaderName: "Authorization", HeaderPrefix: "Bearer", Sensitive: true},
@@ -47,6 +47,72 @@ var Catalog = []MCPProvider{
 		Transport:   "http",
 		Fields: []ProviderField{
 			{Key: "token", Label: "Personal Access Token", Required: true,
+				HeaderName: "Authorization", HeaderPrefix: "Bearer", Sensitive: true},
+		},
+	},
+	{
+		ID:          "linear",
+		Name:        "Linear",
+		Description: "Access Linear issues, projects, and teams via MCP",
+		URL:         "https://mcp.linear.app/mcp",
+		Transport:   "http",
+		Fields: []ProviderField{
+			{Key: "api_key", Label: "API Key", Required: true,
+				HeaderName: "Authorization", HeaderPrefix: "Bearer", Sensitive: true},
+		},
+	},
+	{
+		ID:          "sentry",
+		Name:        "Sentry",
+		Description: "Access Sentry issues, errors, and debugging data via MCP",
+		URL:         "https://mcp.sentry.dev/mcp",
+		Transport:   "http",
+		Fields: []ProviderField{
+			{Key: "auth_token", Label: "Auth Token", Required: true,
+				HeaderName: "Authorization", HeaderPrefix: "Bearer", Sensitive: true},
+		},
+	},
+	{
+		ID:          "atlassian",
+		Name:        "Atlassian",
+		Description: "Access Jira, Confluence, and Compass via MCP",
+		URL:         "https://mcp.atlassian.com/v1/mcp",
+		Transport:   "http",
+		Fields: []ProviderField{
+			{Key: "api_token", Label: "API Token", Required: true,
+				HeaderName: "Authorization", HeaderPrefix: "Bearer", Sensitive: true},
+		},
+	},
+	{
+		ID:          "semgrep",
+		Name:        "Semgrep",
+		Description: "Scan code for security vulnerabilities via MCP",
+		URL:         "https://mcp.semgrep.ai/mcp",
+		Transport:   "http",
+		Fields: []ProviderField{
+			{Key: "app_token", Label: "App Token", Required: true,
+				HeaderName: "SEMGREP_APP_TOKEN", Sensitive: true},
+		},
+	},
+	{
+		ID:          "neon",
+		Name:        "Neon",
+		Description: "Manage Neon Postgres databases via MCP",
+		URL:         "https://mcp.neon.tech/mcp",
+		Transport:   "http",
+		Fields: []ProviderField{
+			{Key: "api_key", Label: "API Key", Required: true,
+				HeaderName: "Authorization", HeaderPrefix: "Bearer", Sensitive: true},
+		},
+	},
+	{
+		ID:          "planetscale",
+		Name:        "PlanetScale",
+		Description: "Access PlanetScale MySQL databases via MCP",
+		URL:         "https://mcp.pscale.dev/mcp/planetscale",
+		Transport:   "http",
+		Fields: []ProviderField{
+			{Key: "api_token", Label: "Service Token", Required: true,
 				HeaderName: "Authorization", HeaderPrefix: "Bearer", Sensitive: true},
 		},
 	},

@@ -100,11 +100,16 @@ func (s *BillingService) SelectPlan(ctx context.Context, orgID uuid.UUID, planTi
 		return nil, err
 	}
 
-	if wasSuspended {
-		_ = s.storage.ReactivateSSHKey(ctx, orgID)
+	var billingSSHKeyID *uuid.UUID
+	if existing != nil {
+		billingSSHKeyID = existing.SSHKeyID
 	}
 
-	s.enqueueResourceUpgrade(ctx, orgID, plan)
+	if wasSuspended && existing.SSHKeyID != nil {
+		_ = s.storage.ReactivateSSHKey(ctx, *existing.SSHKeyID)
+	}
+
+	s.enqueueResourceUpgrade(ctx, orgID, plan, billingSSHKeyID)
 
 	newBalance, _ := s.storage.GetWalletBalance(orgID)
 
@@ -119,8 +124,8 @@ func (s *BillingService) SelectPlan(ctx context.Context, orgID uuid.UUID, planTi
 	}, nil
 }
 
-func (s *BillingService) enqueueResourceUpgrade(ctx context.Context, orgID uuid.UUID, plan *types.MachinePlan) {
-	info, err := s.storage.GetProvisionInfo(ctx, orgID, nil)
+func (s *BillingService) enqueueResourceUpgrade(ctx context.Context, orgID uuid.UUID, plan *types.MachinePlan, sshKeyID *uuid.UUID) {
+	info, err := s.storage.GetProvisionInfo(ctx, orgID, sshKeyID)
 	if err != nil || info == nil || info.ContainerName == "" {
 		return
 	}
@@ -135,11 +140,17 @@ func (s *BillingService) enqueueResourceUpgrade(ctx context.Context, orgID uuid.
 	})
 }
 
+func (s *BillingService) IsServerUserOwned(orgID uuid.UUID, serverID uuid.UUID) (bool, error) {
+	return s.storage.IsServerUserOwned(orgID, serverID)
+}
+
 func (s *BillingService) GetBillingStatus(orgID uuid.UUID) (*types.MachineBillingResponse, error) {
 	billing, err := s.storage.GetBillingByOrgID(orgID)
 	if err != nil {
 		return nil, err
 	}
+
+	hasUnpaidTrial := s.checkUnpaidTrial(orgID)
 
 	if billing != nil {
 		plan, err := s.storage.GetPlanByID(billing.MachinePlanID)
@@ -148,9 +159,10 @@ func (s *BillingService) GetBillingStatus(orgID uuid.UUID) (*types.MachineBillin
 		}
 
 		data := &types.MachineBillingStatusData{
-			HasMachine:    true,
-			BillingStatus: string(billing.Status),
-			PeriodEnd:     billing.CurrentPeriodEnd.Format(time.RFC3339),
+			HasMachine:     true,
+			BillingStatus:  string(billing.Status),
+			PeriodEnd:      billing.CurrentPeriodEnd.Format(time.RFC3339),
+			HasUnpaidTrial: hasUnpaidTrial,
 		}
 
 		if plan != nil {
@@ -186,15 +198,24 @@ func (s *BillingService) GetBillingStatus(orgID uuid.UUID) (*types.MachineBillin
 		return &types.MachineBillingResponse{
 			Status: "success",
 			Data: &types.MachineBillingStatusData{
-				HasMachine:    true,
-				BillingStatus: "unbilled",
-				Message:       "Your machine does not have a billing plan configured.",
+				HasMachine:     true,
+				BillingStatus:  "unbilled",
+				Message:        "Your machine does not have a billing plan configured.",
+				HasUnpaidTrial: hasUnpaidTrial,
 			},
 		}, nil
 	}
 
 	return &types.MachineBillingResponse{
 		Status: "success",
-		Data:   &types.MachineBillingStatusData{HasMachine: false},
+		Data:   &types.MachineBillingStatusData{HasMachine: false, HasUnpaidTrial: hasUnpaidTrial},
 	}, nil
+}
+
+func (s *BillingService) checkUnpaidTrial(orgID uuid.UUID) bool {
+	hasTrialWithoutBilling, err := s.storage.HasTrialWithoutActiveBilling(orgID)
+	if err != nil {
+		return false
+	}
+	return hasTrialWithoutBilling
 }

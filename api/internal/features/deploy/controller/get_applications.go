@@ -41,7 +41,14 @@ func (c *DeployController) GetApplications(f fuego.ContextNoBody) (*types.ListAp
 		}
 	}
 
-	applications, totalCount, err := c.service.GetApplications(page, pageSize, sortBy, sortDirection, organizationID)
+	var serverID *uuid.UUID
+	if s := r.URL.Query().Get("server_id"); s != "" {
+		if parsed, err := uuid.Parse(s); err == nil {
+			serverID = &parsed
+		}
+	}
+
+	applications, totalCount, err := c.service.GetApplications(page, pageSize, sortBy, sortDirection, organizationID, serverID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

@@ -11,12 +11,9 @@ import {
 } from '@/packages/lib/streamdown-config';
 import {
   Button,
-  ScrollArea,
-  ScrollBar,
   Textarea,
   Avatar,
   AvatarFallback,
-  Separator,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -33,14 +30,8 @@ import {
 import {
   Send,
   Loader2,
-  Plus,
-  Trash2,
   User,
-  MessageSquare,
-  MessageSquareText,
   StopCircle,
-  PanelLeftClose,
-  PanelLeftOpen,
   X,
   CirclePlus,
   Search,
@@ -48,7 +39,6 @@ import {
   ChevronRight,
   ChevronDown,
   Copy,
-  Pencil,
   Zap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -62,7 +52,6 @@ import {
   type AgentQuestionField
 } from '@/packages/hooks/ai/use-agent-chat';
 import { ContextWindowBar } from './context-window-bar';
-import { type ChatThread } from '@/packages/hooks/ai/use-chat-threads';
 import {
   type ChatContext,
   type ContextProviderData,
@@ -70,7 +59,6 @@ import {
 } from '@/packages/hooks/ai/chat-context';
 import {
   useChatPage,
-  useThreadSidebarSearch,
   useChatMessagesScroll,
   useContextSearch,
   formatTime,
@@ -164,18 +152,6 @@ export function ChatPage() {
 
   return (
     <div className="flex h-full w-full overflow-hidden">
-      <ThreadSidebar
-        threads={page.threads}
-        activeThreadId={page.activeThreadId}
-        resourceId={page.resourceId}
-        isLoading={!page.isThreadsInitialized}
-        isCollapsed={page.sidebarCollapsed}
-        onToggleCollapse={page.toggleSidebarCollapse}
-        onSelectThread={page.setActiveThreadId}
-        onNewChat={page.handleNewChat}
-        onDeleteThread={page.deleteThread}
-        onRenameThread={page.renameThread}
-      />
       <div className="flex flex-1 flex-col min-w-0">
         {page.activeQuestion && (
           <AgentQuestionModal
@@ -198,24 +174,31 @@ export function ChatPage() {
               onDeclineToolCall={page.handleDeclineToolCall}
             />
             {page.omStatus && <ContextWindowBar omStatus={page.omStatus} />}
-            <ChatInput
-              inputValue={page.inputValue}
-              isStreaming={page.isStreaming}
-              textareaRef={page.textareaRef}
-              selectedContexts={page.selectedContexts}
-              contextProviders={page.contextProviders}
-              autoRunTools={page.autoRunTools}
-              onAutoRunToolsChange={page.setAutoRunTools}
-              selectedModel={page.selectedModel}
-              onModelChange={page.setSelectedModel}
-              isSelfHosted={page.isSelfHosted}
-              onAddContext={page.addContext}
-              onRemoveContext={page.removeContext}
-              onSubmit={page.handleSubmit}
-              onKeyDown={page.handleKeyDown}
-              onChange={page.handleInputChange}
-              onStop={page.stopStreaming}
-            />
+            {page.readOnly ? (
+              <div className="shrink-0 border-t border-border/50 bg-amber-500/5 px-4 py-3 text-center">
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  This is an automated incident thread and is read-only.
+                </p>
+              </div>
+            ) : (
+              <ChatInput
+                inputValue={page.inputValue}
+                isStreaming={page.isStreaming}
+                textareaRef={page.textareaRef}
+                selectedContexts={page.selectedContexts}
+                contextProviders={page.contextProviders}
+                autoRunTools={page.autoRunTools}
+                onAutoRunToolsChange={page.setAutoRunTools}
+                selectedModel={page.selectedModel}
+                onModelChange={page.setSelectedModel}
+                onAddContext={page.addContext}
+                onRemoveContext={page.removeContext}
+                onSubmit={page.handleSubmit}
+                onKeyDown={page.handleKeyDown}
+                onChange={page.handleInputChange}
+                onStop={page.stopStreaming}
+              />
+            )}
           </>
         ) : page.isLoadingHistory && !justCreatedThreadRef.current ? (
           <MessagesSkeleton />
@@ -229,7 +212,6 @@ export function ChatPage() {
             onAutoRunToolsChange={page.setAutoRunTools}
             selectedModel={page.selectedModel}
             onModelChange={page.setSelectedModel}
-            isSelfHosted={page.isSelfHosted}
             onAddContext={page.addContext}
             onRemoveContext={page.removeContext}
             onSubmit={handleWelcomeSubmit}
@@ -243,292 +225,6 @@ export function ChatPage() {
         )}
       </div>
     </div>
-  );
-}
-
-interface ThreadSidebarProps {
-  threads: ChatThread[];
-  activeThreadId: string | null;
-  resourceId?: string;
-  isLoading?: boolean;
-  isCollapsed?: boolean;
-  onToggleCollapse: () => void;
-  onSelectThread: (id: string) => void;
-  onNewChat: () => void;
-  onDeleteThread: (id: string) => void;
-  onRenameThread: (id: string, title: string) => void;
-}
-
-function ThreadSidebar({
-  threads,
-  activeThreadId,
-  resourceId,
-  isLoading,
-  isCollapsed,
-  onToggleCollapse,
-  onSelectThread,
-  onNewChat,
-  onDeleteThread,
-  onRenameThread
-}: ThreadSidebarProps) {
-  const { t } = useTranslation();
-  const sidebarSearch = useThreadSidebarSearch(resourceId);
-
-  if (isCollapsed) {
-    return (
-      <div className="w-12 shrink-0 border-r border-border/50 flex flex-col items-center bg-muted/20 py-2 gap-1">
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8" onClick={onToggleCollapse}>
-                <PanelLeftOpen className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{t('ai.threads.expandSidebar')}</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-8" onClick={onNewChat}>
-                <Plus className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{t('ai.threads.newChat')}</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <Separator className="my-1" />
-        <ScrollArea className="flex-1 w-full">
-          <div className="flex flex-col items-center gap-0.5 px-1">
-            <TooltipProvider delayDuration={0}>
-              {isLoading
-                ? [...Array(3)].map((_, i) => <Skeleton key={i} className="size-8 rounded-md" />)
-                : threads.map((thread) => (
-                    <Tooltip key={thread.id}>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant={thread.id === activeThreadId ? 'secondary' : 'ghost'}
-                          size="icon"
-                          className="size-8"
-                          onClick={() => onSelectThread(thread.id)}
-                        >
-                          <MessageSquareText className="size-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        {thread.title || t('ai.threads.untitledChat')}
-                      </TooltipContent>
-                    </Tooltip>
-                  ))}
-            </TooltipProvider>
-          </div>
-          <ScrollBar />
-        </ScrollArea>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-64 shrink-0 border-r border-border/50 flex flex-col bg-muted/20">
-      <div className="p-3 flex items-center gap-2">
-        <Button onClick={onNewChat} variant="outline" className="flex-1 gap-2 justify-start">
-          <Plus className="size-4" />
-          {t('ai.threads.newChat')}
-        </Button>
-        <TooltipProvider delayDuration={0}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-9 shrink-0"
-                onClick={onToggleCollapse}
-              >
-                <PanelLeftClose className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{t('ai.threads.collapseSidebar')}</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      </div>
-      <div className="px-2 py-2">
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
-          <Input
-            value={sidebarSearch.searchInputValue}
-            onChange={(e) => sidebarSearch.handleSearchInputChange(e.target.value)}
-            onKeyDown={(e) => sidebarSearch.handleSearchKeyDown(e.key)}
-            placeholder={t('ai.threads.searchChats' as Parameters<typeof t>[0])}
-            className="h-8 pl-7 text-xs"
-          />
-        </div>
-      </div>
-      <Separator />
-      <div className="px-3 py-2">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {sidebarSearch.memorySearchResults.length > 0
-            ? t('ai.threads.searchResults' as Parameters<typeof t>[0])
-            : t('ai.threads.recentChats')}
-        </span>
-      </div>
-      <ScrollArea className="flex-1 [&_[data-radix-scroll-area-viewport]>div]:!block [&_[data-radix-scroll-area-viewport]>div]:!min-w-0">
-        <div className="px-2 pb-2 space-y-0.5">
-          {sidebarSearch.memorySearchResults.length > 0 ? (
-            sidebarSearch.isSearching ? (
-              <ThreadsSkeleton />
-            ) : (
-              sidebarSearch.memorySearchResults.map((r) => (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => sidebarSearch.handleSelectSearchResult(r.threadId, onSelectThread)}
-                  className="w-full flex flex-col gap-0.5 px-3 py-2 rounded-md text-left text-sm hover:bg-muted/60 transition-colors"
-                >
-                  <span className="text-xs text-muted-foreground truncate">
-                    {r.threadTitle || t('ai.threads.untitledChat')}
-                  </span>
-                  <span className="text-xs truncate">{r.content}</span>
-                </button>
-              ))
-            )
-          ) : isLoading ? (
-            <ThreadsSkeleton />
-          ) : threads.length === 0 ? (
-            <div className="px-3 py-8 text-center">
-              <MessageSquare className="size-8 text-muted-foreground/40 mx-auto mb-2" />
-              <p className="text-xs text-muted-foreground">{t('ai.threads.emptyState.title')}</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                {t('ai.threads.emptyState.description')}
-              </p>
-            </div>
-          ) : (
-            threads.map((thread) => (
-              <ThreadItem
-                key={thread.id}
-                thread={thread}
-                isActive={thread.id === activeThreadId}
-                onSelect={() => onSelectThread(thread.id)}
-                onDelete={() => onDeleteThread(thread.id)}
-                onRename={(title) => onRenameThread(thread.id, title)}
-              />
-            ))
-          )}
-        </div>
-        <ScrollBar />
-      </ScrollArea>
-    </div>
-  );
-}
-
-interface ThreadItemProps {
-  thread: ChatThread;
-  isActive: boolean;
-  onSelect: () => void;
-  onDelete: () => void;
-  onRename: (title: string) => void;
-}
-
-function ThreadItem({ thread, isActive, onSelect, onDelete, onRename }: ThreadItemProps) {
-  const [isEditing, setIsEditing] = React.useState(false);
-  const [editValue, setEditValue] = React.useState(thread.title);
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
-  React.useEffect(() => {
-    if (isEditing) {
-      inputRef.current?.focus();
-      inputRef.current?.select();
-    }
-  }, [isEditing]);
-
-  const handleStartEditing = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setEditValue(thread.title);
-    setIsEditing(true);
-  };
-
-  const handleSave = () => {
-    const trimmed = editValue.trim();
-    if (trimmed && trimmed !== thread.title) {
-      onRename(trimmed);
-    }
-    setIsEditing(false);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSave();
-    }
-    if (e.key === 'Escape') {
-      setEditValue(thread.title);
-      setIsEditing(false);
-    }
-  };
-
-  if (isEditing) {
-    return (
-      <div
-        className={cn(
-          'relative w-full min-w-0 flex items-center gap-2 px-3 py-1.5 rounded-md text-sm',
-          isActive ? 'bg-primary/10' : 'bg-muted/60'
-        )}
-      >
-        <MessageSquare className="size-4 shrink-0 text-muted-foreground" />
-        <Input
-          ref={inputRef}
-          value={editValue}
-          onChange={(e) => setEditValue(e.target.value)}
-          onBlur={handleSave}
-          onKeyDown={handleKeyDown}
-          className="h-6 px-1 text-sm border-none bg-transparent focus-visible:ring-1 focus-visible:ring-primary/40"
-        />
-      </div>
-    );
-  }
-
-  return (
-    <button
-      onClick={onSelect}
-      onDoubleClick={handleStartEditing}
-      className={cn(
-        'relative w-full min-w-0 flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group text-left',
-        isActive
-          ? 'bg-primary/10 text-primary font-medium'
-          : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-      )}
-    >
-      <MessageSquare className="size-4 shrink-0" />
-      <span className="flex-1 min-w-0 truncate text-left">{thread.title}</span>
-      <TooltipProvider delayDuration={0}>
-        <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-muted/80 backdrop-blur-sm rounded">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                role="button"
-                onClick={handleStartEditing}
-                className="p-1 rounded hover:bg-muted hover:text-foreground"
-              >
-                <Pencil className="size-3.5" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="right">Rename</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                role="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-                className="p-1 rounded hover:bg-destructive/10 hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="right">Delete</TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
-    </button>
   );
 }
 
@@ -627,7 +323,6 @@ interface ChatWelcomeViewProps {
   onAutoRunToolsChange: (value: boolean) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
-  isSelfHosted: boolean;
   onAddContext: (ctx: ChatContext) => void;
   onRemoveContext: (ctx: ChatContext) => void;
   onSubmit: (e?: React.FormEvent) => void;
@@ -646,7 +341,6 @@ function ChatWelcomeView({
   onAutoRunToolsChange,
   selectedModel,
   onModelChange,
-  isSelfHosted,
   onAddContext,
   onRemoveContext,
   onSubmit,
@@ -709,40 +403,38 @@ function ChatWelcomeView({
                     </span>
                   );
                 })}
-                {!isSelfHosted && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                    >
+                      <Zap className="size-3" />
+                      <span>{currentModelLabel}</span>
+                      <ChevronDown className="size-3 opacity-50" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-52">
+                    {AVAILABLE_MODELS.map((model) => (
+                      <DropdownMenuItem
+                        key={model.id}
+                        onClick={() => onModelChange(model.id)}
+                        className={cn(
+                          'flex items-center gap-2',
+                          selectedModel === model.id && 'bg-primary/10'
+                        )}
                       >
-                        <Zap className="size-3" />
-                        <span>{currentModelLabel}</span>
-                        <ChevronDown className="size-3 opacity-50" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start" className="w-52">
-                      {AVAILABLE_MODELS.map((model) => (
-                        <DropdownMenuItem
-                          key={model.id}
-                          onClick={() => onModelChange(model.id)}
+                        <Check
                           className={cn(
-                            'flex items-center gap-2',
-                            selectedModel === model.id && 'bg-primary/10'
+                            'size-3.5 shrink-0',
+                            selectedModel === model.id ? 'opacity-100 text-primary' : 'opacity-0'
                           )}
-                        >
-                          <Check
-                            className={cn(
-                              'size-3.5 shrink-0',
-                              selectedModel === model.id ? 'opacity-100 text-primary' : 'opacity-0'
-                            )}
-                          />
-                          <span>{model.label}</span>
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                )}
+                        />
+                        <span>{model.label}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <div className="flex items-center gap-1 rounded-md border border-border/50 p-0.5">
                   <button
                     type="button"
@@ -1053,6 +745,12 @@ function MessageBubble({
                 {ctx.meta?.Status && (
                   <span className="text-muted-foreground/60">{ctx.meta.Status}</span>
                 )}
+                {ctx.meta?.Language && (
+                  <span className="text-muted-foreground/60">{ctx.meta.Language}</span>
+                )}
+                {ctx.meta?.Provider && (
+                  <span className="text-muted-foreground/60">{ctx.meta.Provider}</span>
+                )}
               </span>
             ))}
           </div>
@@ -1226,6 +924,16 @@ function ContextSubMenu({
                       {item.meta.Status}
                     </span>
                   )}
+                  {item.meta?.Language && (
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {item.meta.Language}
+                    </span>
+                  )}
+                  {item.meta?.Provider && (
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {item.meta.Provider}
+                    </span>
+                  )}
                 </DropdownMenuItem>
               );
             })
@@ -1246,7 +954,6 @@ interface ChatInputProps {
   onAutoRunToolsChange: (value: boolean) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
-  isSelfHosted: boolean;
   onAddContext: (ctx: ChatContext) => void;
   onRemoveContext: (ctx: ChatContext) => void;
   onSubmit: (e?: React.FormEvent) => void;
@@ -1265,7 +972,6 @@ function ChatInput({
   onAutoRunToolsChange,
   selectedModel,
   onModelChange,
-  isSelfHosted,
   onAddContext,
   onRemoveContext,
   onSubmit,
@@ -1295,6 +1001,8 @@ function ChatInput({
                   <span className="text-primary/60">{ctx.meta.Environment}</span>
                 )}
                 {ctx.meta?.Status && <span className="text-primary/60">{ctx.meta.Status}</span>}
+                {ctx.meta?.Language && <span className="text-primary/60">{ctx.meta.Language}</span>}
+                {ctx.meta?.Provider && <span className="text-primary/60">{ctx.meta.Provider}</span>}
                 <button
                   type="button"
                   onClick={() => onRemoveContext(ctx)}
@@ -1305,40 +1013,38 @@ function ChatInput({
               </span>
             );
           })}
-          {!isSelfHosted && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted border border-border/50 transition-colors"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-muted border border-border/50 transition-colors"
+              >
+                <Zap className="size-3" />
+                <span>{currentModelLabel}</span>
+                <ChevronDown className="size-3 opacity-50" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-52">
+              {AVAILABLE_MODELS.map((model) => (
+                <DropdownMenuItem
+                  key={model.id}
+                  onClick={() => onModelChange(model.id)}
+                  className={cn(
+                    'flex items-center gap-2',
+                    selectedModel === model.id && 'bg-primary/10'
+                  )}
                 >
-                  <Zap className="size-3" />
-                  <span>{currentModelLabel}</span>
-                  <ChevronDown className="size-3 opacity-50" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-52">
-                {AVAILABLE_MODELS.map((model) => (
-                  <DropdownMenuItem
-                    key={model.id}
-                    onClick={() => onModelChange(model.id)}
+                  <Check
                     className={cn(
-                      'flex items-center gap-2',
-                      selectedModel === model.id && 'bg-primary/10'
+                      'size-3.5 shrink-0',
+                      selectedModel === model.id ? 'opacity-100 text-primary' : 'opacity-0'
                     )}
-                  >
-                    <Check
-                      className={cn(
-                        'size-3.5 shrink-0',
-                        selectedModel === model.id ? 'opacity-100 text-primary' : 'opacity-0'
-                      )}
-                    />
-                    <span>{model.label}</span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+                  />
+                  <span>{model.label}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="flex items-center gap-1 rounded-md border border-border/50 p-0.5">
             <button
               type="button"
@@ -1584,19 +1290,6 @@ function AgentQuestionModal({ question, onSubmit, onDismiss }: AgentQuestionModa
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={cn('animate-pulse rounded-md bg-muted', className)} />;
-}
-
-function ThreadsSkeleton() {
-  return (
-    <div className="space-y-1 px-1">
-      {[...Array(5)].map((_, i) => (
-        <div key={i} className="flex items-center gap-2 px-3 py-2">
-          <Skeleton className="size-4 shrink-0 rounded" />
-          <Skeleton className="h-4 flex-1" />
-        </div>
-      ))}
-    </div>
-  );
 }
 
 function MessagesSkeleton() {

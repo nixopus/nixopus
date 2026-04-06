@@ -17,23 +17,25 @@ type FeatureFlag struct {
 	UpdatedAt      time.Time  `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 	DeletedAt      *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
 
-	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	Organization *Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
 type FeatureName string
 
 const (
-	FeatureTerminal        FeatureName = "terminal"
-	FeatureFileManager     FeatureName = "file_manager"
-	FeatureMonitoring      FeatureName = "monitoring"
-	FeatureProxyConfig     FeatureName = "proxy_config"
-	FeatureGithubConnector FeatureName = "github_connector"
-	FeatureAudit           FeatureName = "audit"
-	FeatureNotifications   FeatureName = "notifications"
-	FeatureDomain          FeatureName = "domain"
-	FeatureSelfHosted      FeatureName = "self_hosted"
-	FeatureContainer       FeatureName = "container"
-	FeatureMCP             FeatureName = "mcp"
+	FeatureTerminal         FeatureName = "terminal"
+	FeatureFileManager      FeatureName = "file_manager"
+	FeatureMonitoring       FeatureName = "monitoring"
+	FeatureProxyConfig      FeatureName = "proxy_config"
+	FeatureGithubConnector  FeatureName = "github_connector"
+	FeatureAudit            FeatureName = "audit"
+	FeatureNotifications    FeatureName = "notifications"
+	FeatureDomain           FeatureName = "domain"
+	FeatureSelfHosted       FeatureName = "self_hosted"
+	FeatureContainer        FeatureName = "container"
+	FeatureMCP              FeatureName = "mcp"
+	FeatureMachineBYOS      FeatureName = "machine_byos"
+	FeatureMachineProvision FeatureName = "machine_provision"
 )
 
 type UpdateFeatureFlagRequest struct {

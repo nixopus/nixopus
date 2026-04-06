@@ -29,11 +29,11 @@ type Application struct {
 	FamilyID             *uuid.UUID               `json:"family_id,omitempty" bun:"family_id,type:uuid"`
 	CreatedAt            time.Time                `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt            time.Time                `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
-	User                 *User                    `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
+	User                 *User                    `json:"-" bun:"rel:belongs-to,join:user_id=id"`
 	Status               *ApplicationStatus       `json:"status,omitempty" bun:"rel:has-one,join:id=application_id"`
 	Logs                 []*ApplicationLogs       `json:"logs,omitempty" bun:"rel:has-many,join:id=application_id"`
 	Deployments          []*ApplicationDeployment `json:"deployments,omitempty" bun:"rel:has-many,join:id=application_id"`
-	Organization         *Organization            `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	Organization         *Organization            `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 	Labels               []string                 `json:"labels,omitempty" bun:"labels,array"`
 	Domains              []*ApplicationDomain     `json:"domains,omitempty" bun:"rel:has-many,join:id=application_id"`
 	ComposeServices      []*ComposeService        `json:"compose_services,omitempty" bun:"rel:has-many,join:id=application_id"`
@@ -72,7 +72,7 @@ type ApplicationStatus struct {
 	CreatedAt     time.Time `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt     time.Time `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 
-	Application *Application `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+	Application *Application `json:"-" bun:"rel:belongs-to,join:application_id=id"`
 }
 
 type ApplicationDeploymentStatus struct {
@@ -83,7 +83,7 @@ type ApplicationDeploymentStatus struct {
 	CreatedAt               time.Time `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt               time.Time `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 
-	ApplicationDeployment *ApplicationDeployment `json:"application_deployment,omitempty" bun:"rel:belongs-to,join:application_deployment_id=id"`
+	ApplicationDeployment *ApplicationDeployment `json:"-" bun:"rel:belongs-to,join:application_deployment_id=id"`
 }
 
 type ApplicationLogs struct {
@@ -95,8 +95,8 @@ type ApplicationLogs struct {
 	Log                     string    `json:"log" bun:"log,notnull"`
 	ApplicationDeploymentID uuid.UUID `json:"application_deployment_id" bun:"application_deployment_id,notnull,type:uuid"`
 
-	ApplicationDeployment *ApplicationDeployment `json:"application_deployment,omitempty" bun:"rel:belongs-to,join:application_deployment_id=id"`
-	Application           *Application           `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+	ApplicationDeployment *ApplicationDeployment `json:"-" bun:"rel:belongs-to,join:application_deployment_id=id"`
+	Application           *Application           `json:"-" bun:"rel:belongs-to,join:application_id=id"`
 }
 
 type ApplicationServer struct {
@@ -118,7 +118,7 @@ type ComposeService struct {
 	CreatedAt     time.Time `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt     time.Time `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 
-	Application *Application         `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+	Application *Application         `json:"-" bun:"rel:belongs-to,join:application_id=id"`
 	Domains     []*ApplicationDomain `json:"domains,omitempty" bun:"rel:has-many,join:id=compose_service_id"`
 }
 
@@ -131,7 +131,7 @@ type ApplicationDomain struct {
 	Port             *int       `json:"port,omitempty" bun:"port"`
 	CreatedAt        time.Time  `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 
-	Application    *Application    `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+	Application    *Application    `json:"-" bun:"rel:belongs-to,join:application_id=id"`
 	ComposeService *ComposeService `json:"compose_service,omitempty" bun:"rel:belongs-to,join:compose_service_id=id"`
 }
 

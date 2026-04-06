@@ -91,7 +91,7 @@ type ExtensionVariable struct {
 	ValidationPattern string          `json:"validation_pattern" bun:"validation_pattern"`
 	CreatedAt         time.Time       `json:"created_at" bun:"created_at,notnull,default:now()"`
 
-	Extension *Extension `json:"extension,omitempty" bun:"rel:belongs-to,join:extension_id=id"`
+	Extension *Extension `json:"-" bun:"rel:belongs-to,join:extension_id=id"`
 }
 
 type ExtensionExecution struct {
@@ -109,7 +109,7 @@ type ExtensionExecution struct {
 	LogSeq         int64           `json:"log_seq" bun:"log_seq"`
 	CreatedAt      time.Time       `json:"created_at" bun:"created_at,notnull,default:now()"`
 
-	Extension *Extension      `json:"extension,omitempty" bun:"rel:belongs-to,join:extension_id=id"`
+	Extension *Extension      `json:"-" bun:"rel:belongs-to,join:extension_id=id"`
 	Steps     []ExecutionStep `json:"steps,omitempty" bun:"rel:has-many,join:id=execution_id"`
 }
 
@@ -127,7 +127,7 @@ type ExecutionStep struct {
 	Output        string          `json:"output" bun:"output"`
 	CreatedAt     time.Time       `json:"created_at" bun:"created_at,notnull,default:now()"`
 
-	Execution *ExtensionExecution `json:"execution,omitempty" bun:"rel:belongs-to,join:execution_id=id"`
+	Execution *ExtensionExecution `json:"-" bun:"rel:belongs-to,join:execution_id=id"`
 }
 
 type ExtensionLog struct {

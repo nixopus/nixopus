@@ -9,8 +9,7 @@ Self-host on your own infrastructure or use [Nixopus Cloud][dashboard-link] to g
   <a href="https://nixopus.com"><b>Website</b></a> •
   <a href="https://docs.nixopus.com"><b>Documentation</b></a> •
   <a href="https://nixopus.com/blog"><b>Blog</b></a> •
-  <a href="https://discord.gg/skdcq39Wpv"><b>Discord</b></a> •
-  <a href="https://github.com/nixopus/nixopus/discussions/262"><b>Roadmap</b></a>
+  <a href="https://discord.gg/skdcq39Wpv"><b>Discord</b></a>
 </p>
 
 <!-- SHIELD GROUP -->
@@ -47,6 +46,7 @@ Self-host on your own infrastructure or use [Nixopus Cloud][dashboard-link] to g
   - [Requirements](#requirements)
 - [Contributing](#contributing)
 - [About the Name](#about-the-name)
+
 
 ####
 
@@ -135,10 +135,6 @@ Beyond these features, Nixopus also includes:
 
 ---
 
-> [!NOTE]
->
-> You can find our upcoming [Roadmap][github-roadmap-link] plans in the Discussions section.
-
 <div align="right">
 
 [![][back-to-top]](#readme-top)
@@ -174,7 +170,13 @@ curl -fsSL install.nixopus.com | sudo bash
 Or with a custom domain and admin email:
 
 ```bash
-DOMAIN=panel.example.com ADMIN_EMAIL=admin@example.com curl -fsSL install.nixopus.com | sudo bash
+curl -fsSL install.nixopus.com | sudo DOMAIN=panel.example.com ADMIN_EMAIL=admin@example.com OPENROUTER_API_KEY=sk-or-xxxxx bash
+```
+
+Or use a different LLM provider:
+
+```bash
+curl -fsSL install.nixopus.com | sudo LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-xxxxx bash
 ```
 
 <br/>
@@ -191,6 +193,13 @@ All parameters are optional. Pass them as environment variables before the insta
 | `CADDY_HTTP_PORT`    | No       | HTTP port                    | `80`                   |
 | `CADDY_HTTPS_PORT`   | No       | HTTPS port                   | `443`                  |
 | `NIXOPUS_HOME`       | No       | Installation directory       | `/opt/nixopus`         |
+| `LLM_PROVIDER`       | No       | LLM provider for the AI agent: `openrouter`, `openai`, `anthropic`, `google`, `deepseek`, or `groq` | `openrouter` |
+| `OPENROUTER_API_KEY`  | No       | [OpenRouter](https://openrouter.ai) API key (default provider, gives access to Claude, GPT-4, Gemini, and more via one key) | *(empty)* |
+| `OPENAI_API_KEY`     | No       | OpenAI API key               | *(empty)*              |
+| `ANTHROPIC_API_KEY`  | No       | Anthropic API key            | *(empty)*              |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | No | Google AI API key       | *(empty)*              |
+| `DEEPSEEK_API_KEY`   | No       | DeepSeek API key             | *(empty)*              |
+| `GROQ_API_KEY`       | No       | Groq API key                 | *(empty)*              |
 
 > [!NOTE]
 >
@@ -291,7 +300,6 @@ This project is [FSL-1.1-ALv2](./LICENSE.md) licensed.
 [github-issues-shield]: https://img.shields.io/github/issues/raghavyuva/nixopus?color=ff80eb&labelColor=black&style=flat-square
 [github-license-link]: https://github.com/raghavyuva/nixopus/blob/master/LICENSE.md
 [github-license-shield]: https://img.shields.io/badge/license-FSL--1.1--ALv2-white?labelColor=black&style=flat-square
-[github-roadmap-link]: https://github.com/raghavyuva/nixopus/discussions/262
 [github-stars-link]: https://github.com/raghavyuva/nixopus/stargazers
 [github-stars-shield]: https://img.shields.io/github/stars/raghavyuva/nixopus?color=ffcb47&labelColor=black&style=flat-square
 [github-trending-shield]: https://trendshift.io/api/badge/repositories/15336

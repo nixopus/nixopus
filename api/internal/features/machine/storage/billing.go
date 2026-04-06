@@ -213,6 +213,16 @@ func (s *BillingStorage) HasActiveSSHKey(orgID uuid.UUID) (bool, error) {
 	return exists, nil
 }
 
+func (s *BillingStorage) HasTrialWithoutActiveBilling(orgID uuid.UUID) (bool, error) {
+	exists, err := s.DB.NewSelect().
+		TableExpr("user_provision_details AS upd").
+		Where("upd.organization_id = ?", orgID).
+		Where("upd.type = 'trial'").
+		Where("NOT EXISTS (SELECT 1 FROM org_machine_billing AS omb WHERE omb.organization_id = upd.organization_id AND omb.status = 'active')").
+		Exists(s.Ctx)
+	return exists, err
+}
+
 type BillingWithPlan struct {
 	Billing types.OrgMachineBilling `bun:"embed:omb__"`
 	Plan    types.MachinePlan       `bun:"embed:mp__"`
@@ -306,11 +316,11 @@ func (s *BillingStorage) DeactivateSSHKey(ctx context.Context, sshKeyID uuid.UUI
 	return err
 }
 
-func (s *BillingStorage) ReactivateSSHKey(ctx context.Context, orgID uuid.UUID) error {
+func (s *BillingStorage) ReactivateSSHKey(ctx context.Context, sshKeyID uuid.UUID) error {
 	_, err := s.DB.NewUpdate().
 		Model((*SSHKey)(nil)).
 		Set("is_active = ?", true).
-		Where("organization_id = ? AND is_active = ?", orgID, false).
+		Where("id = ?", sshKeyID).
 		Exec(ctx)
 	return err
 }
@@ -329,13 +339,27 @@ type ProvisionInfo struct {
 	ServerID      string
 }
 
-func (s *BillingStorage) GetProvisionInfo(ctx context.Context, orgID uuid.UUID, sshKeyID *uuid.UUID) (*ProvisionInfo, error) {
+func (s *BillingStorage) IsServerUserOwned(orgID uuid.UUID, serverID uuid.UUID) (bool, error) {
+	exists, err := s.DB.NewSelect().
+		TableExpr("user_provision_details AS upd").
+		Where("upd.organization_id = ?", orgID).
+		Where("upd.ssh_key_id = ?", serverID).
+		Where("upd.type = 'user_owned'").
+		Exists(s.Ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to check server ownership: %w", err)
+	}
+	return exists, nil
+}
+
+func (s *BillingStorage) GetProvisionInfo(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (*ProvisionInfo, error) {
 	var row UserProvisionDetail
 	q := s.DB.NewSelect().Model(&row).Column("user_id", "lxd_container_name", "server_id")
-	if sshKeyID != nil {
-		q = q.Where("ssh_key_id = ?", *sshKeyID)
+	if serverID != nil {
+		q = q.Where("(upd.ssh_key_id = ? OR upd.server_id = ?) AND upd.organization_id = ?", *serverID, *serverID, orgID)
 	} else {
-		q = q.Where("organization_id = ?", orgID)
+		q = q.Where("organization_id = ?", orgID).
+			Where("upd.type != 'user_owned'")
 	}
 	err := q.OrderExpr("created_at DESC").Limit(1).Scan(ctx)
 	if err != nil {

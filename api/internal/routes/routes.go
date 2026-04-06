@@ -167,6 +167,11 @@ func (router *Router) initChannels() map[string]channel.Channel {
 		"discord": channel.NewDiscordChannel(db, ctx),
 	}
 
+	resendCfg := config.AppConfig.Resend
+	if resendCfg.APIKey != "" {
+		channels["system_email"] = channel.NewSystemEmailChannel(resendCfg.APIKey, resendCfg.FromEmail)
+	}
+
 	agentCfg := config.AppConfig.AgentChannel
 	authURL := strings.TrimRight(config.AppConfig.BetterAuth.URL, "/")
 
@@ -192,6 +197,9 @@ func (router *Router) SetupRoutes() {
 
 	if router.schedulers != nil && router.schedulers.HealthCheck != nil {
 		router.schedulers.HealthCheck.SetNotifier(dispatcher)
+	}
+	if router.schedulers != nil && router.schedulers.TrialExpiry != nil {
+		router.schedulers.TrialExpiry.SetNotifier(dispatcher)
 	}
 
 	PORT := config.AppConfig.Server.Port
@@ -290,6 +298,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 
 	fileManagerController := file_manager.NewFileManagerController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
 	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager")
+	fuego.Use(fileManagerGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(fileManagerGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "file_manager",
@@ -330,6 +339,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		log.Fatalf("Failed to create container controller: %v", err)
 	}
 	containerGroup := fuego.Group(server, apiV1.Path+"/container")
+	fuego.Use(containerGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(containerGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "container",
@@ -370,6 +380,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	machineTimescaleStore, _ := machine_storage.NewTimescaleStore(router.app.Ctx, config.AppConfig.Timescale.URL)
 	machineController := machine_controller.NewMachineController(router.app.Store, router.app.Ctx, router.logger, machineTimescaleStore)
 	machineGroup := fuego.Group(server, apiV1.Path+"/machine")
+	fuego.Use(machineGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(machineGroup, MiddlewareConfig{
 		RBAC:         true,
 		Audit:        true,
@@ -378,12 +389,32 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterMachineRoutes(machineGroup, machineController)
 
 	machineBillingGroup := fuego.Group(server, apiV1.Path+"/machine")
+	fuego.Use(machineBillingGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(machineBillingGroup, MiddlewareConfig{
 		RBAC:         false,
 		Audit:        true,
 		ResourceName: "machine",
 	})
 	router.RegisterMachineBillingRoutes(machineBillingGroup, machineController)
+
+	machinesGroup := fuego.Group(server, apiV1.Path+"/machines")
+	router.applyMiddleware(machinesGroup, MiddlewareConfig{
+		RBAC:         true,
+		Audit:        true,
+		ResourceName: "machine",
+	})
+	fuego.Get(machinesGroup, "", serverController.ListServers,
+		fuego.OptionSummary("List machines"),
+		fuego.OptionQueryInt("page", "Page number"),
+		fuego.OptionQueryInt("page_size", "Page size"),
+		fuego.OptionQuery("search", "Search by name"),
+		fuego.OptionQuery("sort_by", "Sort field"),
+		fuego.OptionQuery("sort_order", "Sort order"),
+		fuego.OptionQuery("status", "Status filter"),
+		fuego.OptionQueryBool("is_active", "Filter by active state"),
+	)
+
+	router.RegisterMachineRegistrationRoutes(machinesGroup, machineController)
 
 	trailController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	trailGroup := fuego.Group(server, apiV1.Path+"/trail")

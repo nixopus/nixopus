@@ -28,6 +28,7 @@ import { containerApi } from './services/container/containerApi';
 import { imagesApi } from './services/container/imagesApi';
 import { extensionsApi } from './services/extensions/extensionsApi';
 import { mcpApi } from './services/settings/mcpApi';
+import { machinesApi } from './services/servers/serversApi';
 import { getPluginReducers, getPluginMiddleware } from '@/plugins/registry-client';
 
 const createNoopStorage = () => ({
@@ -75,7 +76,8 @@ const coreReducers = {
   [containerApi.reducerPath]: containerApi.reducer,
   [imagesApi.reducerPath]: imagesApi.reducer,
   [extensionsApi.reducerPath]: extensionsApi.reducer,
-  [mcpApi.reducerPath]: mcpApi.reducer
+  [mcpApi.reducerPath]: mcpApi.reducer,
+  [machinesApi.reducerPath]: machinesApi.reducer
 };
 
 const rootReducer = combineReducers({
@@ -118,6 +120,7 @@ export const store = configureStore({
       imagesApi.middleware,
       extensionsApi.middleware,
       mcpApi.middleware,
+      machinesApi.middleware,
       ...getPluginMiddleware()
     ]),
   devTools: process.env.NODE_ENV === 'development'

@@ -1,9 +1,12 @@
 'use client';
 
-import { Layers, Box, Globe, type LucideIcon } from 'lucide-react';
+import { Layers, Box, Globe, GitFork, Plug, Server, type LucideIcon } from 'lucide-react';
 import { useGetApplicationsQuery } from '@/redux/services/deploy/applicationsApi';
 import { useGetContainersQuery } from '@/redux/services/container/containerApi';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
+import { useGetAllGithubRepositoriesQuery } from '@/redux/services/connector/githubConnectorApi';
+import { useGetMCPServersQuery } from '@/redux/services/settings/mcpApi';
+import { useGetServersQuery } from '@/redux/services/servers/serversApi';
 
 export interface ChatContext {
   type: string;
@@ -102,10 +105,79 @@ function useDomainsContextProvider(): ContextProviderData {
   };
 }
 
+function useRepositoriesContextProvider(): ContextProviderData {
+  const { data, isLoading } = useGetAllGithubRepositoriesQuery({ page: 1, page_size: 100 });
+
+  const items: ChatContext[] = (data?.repositories ?? []).map((repo) => ({
+    type: 'Repository',
+    id: repo.id.toString(),
+    label: repo.full_name,
+    meta: {
+      ...(repo.language && { Language: repo.language }),
+      ...(repo.default_branch && { Branch: repo.default_branch }),
+      Visibility: repo.private ? 'private' : 'public'
+    }
+  }));
+
+  return {
+    config: { type: 'Repository', icon: GitFork, labelKey: 'ai.context.repositories' },
+    items,
+    isLoading
+  };
+}
+
+function useIntegrationsContextProvider(): ContextProviderData {
+  const { data, isLoading } = useGetMCPServersQuery({ page: 1, limit: 100 });
+
+  const items: ChatContext[] = (data?.items ?? [])
+    .filter((s) => s.enabled)
+    .map((server) => ({
+      type: 'Integration',
+      id: server.id,
+      label: server.name,
+      meta: {
+        ID: server.id,
+        Provider: server.provider_id
+      }
+    }));
+
+  return {
+    config: { type: 'Integration', icon: Plug, labelKey: 'ai.context.integrations' },
+    items,
+    isLoading
+  };
+}
+
+function useMachinesContextProvider(): ContextProviderData {
+  const { data, isLoading } = useGetServersQuery({ page: 1, page_size: 100 });
+
+  const items: ChatContext[] = (data?.servers ?? []).map((server) => ({
+    type: 'Machine',
+    id: server.id,
+    label: server.name,
+    meta: {
+      ID: server.id,
+      ...(server.provision?.domain || server.host
+        ? { Hostname: (server.provision?.domain ?? server.host)! }
+        : {}),
+      Status: server.provision?.status ?? (server.is_active ? 'ACTIVE' : 'INACTIVE')
+    }
+  }));
+
+  return {
+    config: { type: 'Machine', icon: Server, labelKey: 'ai.context.machines' },
+    items,
+    isLoading
+  };
+}
+
 export function useChatContextProviders(): ContextProviderData[] {
   const apps = useAppsContextProvider();
   const containers = useContainersContextProvider();
   const domains = useDomainsContextProvider();
+  const repositories = useRepositoriesContextProvider();
+  const integrations = useIntegrationsContextProvider();
+  const machines = useMachinesContextProvider();
 
-  return [apps, containers, domains];
+  return [apps, containers, domains, repositories, integrations, machines];
 }

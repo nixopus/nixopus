@@ -26,12 +26,13 @@ func (c *MachineController) TriggerBackup(f fuego.ContextNoBody) (*types.Trigger
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.backupService.TriggerBackup(r.Context(), user.ID, orgID)
+	serverID := parseServerID(r)
+	resp, err := c.backupService.TriggerBackup(r.Context(), user.ID, orgID, serverID)
 	if err != nil {
 		return nil, mapBackupError(err)
 	}
 
-	return response, nil
+	return resp, nil
 }
 
 func (c *MachineController) ListBackups(f fuego.ContextNoBody) (*types.BackupListResponse, error) {
@@ -70,6 +71,9 @@ func (c *MachineController) ListBackups(f fuego.ContextNoBody) (*types.BackupLis
 	if v := f.QueryParam("status"); v != "" {
 		params.Status = strings.TrimSpace(v)
 	}
+	if v := f.QueryParam("server_id"); v != "" {
+		params.ServerID = strings.TrimSpace(v)
+	}
 
 	response, err := c.backupService.ListBackups(r.Context(), orgID, params)
 	if err != nil {
@@ -93,7 +97,8 @@ func (c *MachineController) GetBackupSchedule(f fuego.ContextNoBody) (*types.Bac
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.backupService.GetBackupSchedule(r.Context(), orgID)
+	serverID := parseServerID(r)
+	response, err := c.backupService.GetBackupSchedule(r.Context(), orgID, serverID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), orgID.String())
 		return nil, fuego.HTTPError{Detail: "failed to get backup schedule", Status: http.StatusInternalServerError}
@@ -120,7 +125,8 @@ func (c *MachineController) UpdateBackupSchedule(f fuego.ContextWithBody[types.B
 		return nil, fuego.BadRequestError{Detail: "invalid request body"}
 	}
 
-	response, err := c.backupService.UpdateBackupSchedule(r.Context(), orgID, body)
+	serverID := parseServerID(r)
+	response, err := c.backupService.UpdateBackupSchedule(r.Context(), orgID, serverID, body)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), orgID.String())
 		return nil, fuego.BadRequestError{Detail: err.Error()}

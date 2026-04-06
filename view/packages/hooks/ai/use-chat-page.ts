@@ -36,20 +36,18 @@ function useLocalStorageState(key: string, defaultValue: boolean) {
 }
 
 export const AVAILABLE_MODELS = [
+  { id: 'openrouter/anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
+  { id: 'openrouter/anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
+  { id: 'openrouter/anthropic/claude-3.7-sonnet', label: 'Claude 3.7 Sonnet' },
   { id: 'openrouter/openai/gpt-4.1', label: 'GPT-4.1' },
   { id: 'openrouter/openai/gpt-4.1-mini', label: 'GPT-4.1 Mini' },
   { id: 'openrouter/openai/gpt-4o-mini', label: 'GPT-4o Mini' },
-  { id: 'openrouter/anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
-  { id: 'openrouter/anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
-  { id: 'openrouter/anthropic/claude-3.7-sonnet', label: 'Claude 3.7 Sonnet' },
   { id: 'openrouter/google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' }
 ] as const;
 
 export type ModelId = (typeof AVAILABLE_MODELS)[number]['id'];
 
 export interface UseChatPageReturn {
-  sidebarCollapsed: boolean;
-  toggleSidebarCollapse: () => void;
   selectedContexts: ChatContext[];
   addContext: (ctx: ChatContext) => void;
   removeContext: (ctx: ChatContext) => void;
@@ -88,6 +86,9 @@ export interface UseChatPageReturn {
   dismissQuestion: () => void;
   stopStreaming: () => void;
   setInputValue: (value: string) => void;
+  readOnly: boolean;
+  refreshThreads: () => void;
+  isRefreshing: boolean;
 }
 
 export function useChatPage(): UseChatPageReturn {
@@ -95,12 +96,8 @@ export function useChatPage(): UseChatPageReturn {
   const searchParams = useSearchParams();
   const navRouter = useRouter();
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorageState(
-    'chat_sidebar_collapsed',
-    false
-  );
   const [selectedContexts, setSelectedContexts] = useState<ChatContext[]>([]);
-  const [autoRunTools, setAutoRunTools] = useLocalStorageState('chat_auto_run_tools', false);
+  const [autoRunTools, setAutoRunTools] = useLocalStorageState('chat_auto_run_tools', true);
   const [selectedModel, setSelectedModel] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('chat_selected_model') || AVAILABLE_MODELS[0].id;
@@ -121,12 +118,15 @@ export function useChatPage(): UseChatPageReturn {
 
   const contextProviders = useChatContextProviders();
   const threads = useChatThreads();
+  const activeThread = threads.activeThread;
   const chat = useAgentChat({
     threadId: threads.activeThreadId,
-    resourceId: threads.resourceId,
+    resourceId: activeThread?.threadResourceId || threads.resourceId,
+    agentId: activeThread?.agentId,
+    readOnly: activeThread?.isIncident ?? false,
     contexts: selectedContexts,
     autoRunTools,
-    model: isSelfHosted ? undefined : selectedModel,
+    model: selectedModel,
     waitForThread: threads.waitForThread,
     onFirstMessage: (content) => {
       if (threads.activeThreadId) {
@@ -153,6 +153,8 @@ export function useChatPage(): UseChatPageReturn {
     const language = searchParams.get('repo_language') || '';
     const description = searchParams.get('repo_description') || '';
     const htmlUrl = searchParams.get('repo_html_url') || '';
+    const serverId = searchParams.get('server_id') || '';
+    const serverName = searchParams.get('server_name') || '';
 
     threads.createThread(repoName);
 
@@ -163,34 +165,31 @@ export function useChatPage(): UseChatPageReturn {
     };
     if (cloneUrl) meta['Clone URL'] = cloneUrl;
     if (language) meta['Language'] = language;
+    if (description) meta['Description'] = description;
     if (htmlUrl) meta['GitHub URL'] = htmlUrl;
 
-    setSelectedContexts([
+    const contexts: ChatContext[] = [
       {
         type: 'Repository',
         id: repoId,
         label: repoFullName,
         meta
       }
-    ]);
-
-    const promptLines = [
-      `I want to deploy the GitHub repository "${repoFullName}" as a new application.`,
-      '',
-      `- GitHub Repository ID (numeric): ${repoId} — use this as the "repository" field when calling createProject`,
-      `- Repository name: ${repoFullName}`,
-      `- Default branch: ${defaultBranch}`,
-      `- Visibility: ${visibility}`
     ];
-    if (language) promptLines.push(`- Primary language: ${language}`);
-    if (description) promptLines.push(`- Description: ${description}`);
-    if (cloneUrl) promptLines.push(`- Clone URL: ${cloneUrl}`);
-    promptLines.push(
-      '',
-      'No application exists yet — please use createProject with the GitHub repository ID above to create and deploy it.'
-    );
 
-    setPendingDeployPrompt(promptLines.join('\n'));
+    if (serverId) {
+      contexts.push({
+        type: 'Machine',
+        id: serverId,
+        label: serverName || serverId,
+        meta: { ID: serverId }
+      });
+    }
+
+    setSelectedContexts(contexts);
+
+    const serverSuffix = serverName ? ` on server "${serverName}"` : '';
+    setPendingDeployPrompt(`Deploy "${repoFullName}" as a new application${serverSuffix}.`);
     navRouter.replace('/chats');
   }, [threads.isInitialized, searchParams]);
 
@@ -201,10 +200,6 @@ export function useChatPage(): UseChatPageReturn {
       setTimeout(() => chat.textareaRef.current?.focus(), 100);
     }
   }, [pendingDeployPrompt, threads.activeThreadId]);
-
-  const toggleSidebarCollapse = useCallback(() => {
-    setSidebarCollapsed((prev) => !prev);
-  }, [setSidebarCollapsed]);
 
   const handleNewChat = useCallback(() => {
     threads.createThread(t('ai.threads.untitledChat'));
@@ -222,8 +217,6 @@ export function useChatPage(): UseChatPageReturn {
   }, []);
 
   return {
-    sidebarCollapsed,
-    toggleSidebarCollapse,
     selectedContexts,
     addContext,
     removeContext,
@@ -261,7 +254,10 @@ export function useChatPage(): UseChatPageReturn {
     submitQuestionResponse: chat.submitQuestionResponse,
     dismissQuestion: chat.dismissQuestion,
     stopStreaming: chat.stopStreaming,
-    setInputValue: chat.setInputValue
+    setInputValue: chat.setInputValue,
+    readOnly: chat.readOnly,
+    refreshThreads: threads.refreshThreads,
+    isRefreshing: threads.isRefreshing
   };
 }
 

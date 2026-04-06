@@ -14,7 +14,17 @@ import { cn } from '@/lib/utils';
 import { Button } from '@nixopus/ui';
 import { Badge } from '@nixopus/ui';
 import { Input } from '@nixopus/ui';
-import { ExternalLink, RotateCcw, Trash2, Rocket, RefreshCw, X, Plus, Square } from 'lucide-react';
+import {
+  ExternalLink,
+  RotateCcw,
+  Trash2,
+  Rocket,
+  RefreshCw,
+  X,
+  Plus,
+  Square,
+  Server
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -243,6 +253,9 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
     [application]
   );
 
+  const primaryServer =
+    application?.servers?.find((s) => s.is_primary) ?? application?.servers?.[0];
+
   const metadata = useMemo(
     () => (
       <div className="flex flex-wrap items-center gap-2">
@@ -259,6 +272,15 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
         >
           {application?.environment}
         </Badge>
+        {primaryServer?.server?.name && (
+          <Badge
+            variant="outline"
+            className="text-xs gap-1 border-zinc-500/30 text-zinc-500 bg-zinc-500/10"
+          >
+            <Server size={10} />
+            {primaryServer.server.name}
+          </Badge>
+        )}
         {application?.labels && application.labels.length > 0 && (
           <>
             {application.labels.map((label, index) => (
@@ -295,7 +317,15 @@ export function useApplicationHeader({ application }: UseApplicationHeaderProps)
         </AnyPermissionGuard>
       </div>
     ),
-    [application, isAddingLabel, newLabel, isUpdatingLabels, handleLabelKeyDown, handleAddLabel]
+    [
+      application,
+      primaryServer,
+      isAddingLabel,
+      newLabel,
+      isUpdatingLabels,
+      handleLabelKeyDown,
+      handleAddLabel
+    ]
   );
 
   const primaryActions = useMemo(() => {

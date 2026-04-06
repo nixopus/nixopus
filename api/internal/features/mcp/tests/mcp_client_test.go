@@ -17,9 +17,10 @@ import (
 // ─── JSON-RPC helpers (local mirror of unexported types) ─────────────────────
 
 type jrpcRequest struct {
-	JSONRPC string `json:"jsonrpc"`
-	ID      int    `json:"id"`
-	Method  string `json:"method"`
+	JSONRPC string          `json:"jsonrpc"`
+	ID      int             `json:"id"`
+	Method  string          `json:"method"`
+	Params  json.RawMessage `json:"params,omitempty"`
 }
 
 type jrpcResponse struct {
@@ -30,6 +31,7 @@ type jrpcResponse struct {
 
 var toolsPayload = json.RawMessage(`{"tools":[{"name":"search_repos","description":"Search GitHub repos"},{"name":"create_issue","description":"Open an issue"}]}`)
 var initPayload = json.RawMessage(`{"protocolVersion":"2024-11-05","capabilities":{}}`)
+var callResultPayload = json.RawMessage(`{"content":[{"type":"text","text":"query result here"}]}`)
 
 // ─── HTTP transport mock server ───────────────────────────────────────────────
 
@@ -47,9 +49,12 @@ func newHTTPMockServer(t *testing.T) *httptest.Server {
 		var result json.RawMessage
 		switch req.Method {
 		case "initialize":
+			w.Header().Set("Mcp-Session-Id", "test-session-123")
 			result = initPayload
 		case "tools/list":
 			result = toolsPayload
+		case "tools/call":
+			result = callResultPayload
 		default:
 			http.Error(w, "unknown method", http.StatusNotFound)
 			return
@@ -230,4 +235,112 @@ func TestDiscoverServerTools_CustomHTTP(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Len(t, tools, 2)
+}
+
+func TestCallToolOnServer_HTTP(t *testing.T) {
+	srv := newHTTPMockServer(t)
+	defer srv.Close()
+
+	provider := &mcp.MCPProvider{
+		ID:        "supabase",
+		Name:      "Supabase",
+		URL:       srv.URL + "/",
+		Transport: "http",
+		Fields: []mcp.ProviderField{
+			{Key: "access_token", HeaderName: "Authorization", HeaderPrefix: "Bearer", Required: true},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), tenSeconds)
+	defer cancel()
+
+	result, err := service.CallToolOnServer(ctx, provider, "", map[string]string{
+		"access_token": "sbp_test_token",
+	}, service.CallToolParams{
+		Name:      "list_tables",
+		Arguments: map[string]any{"project_ref": "abc"},
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Len(t, result.Content, 1)
+	assert.Equal(t, "text", result.Content[0].Type)
+	assert.Equal(t, "query result here", result.Content[0].Text)
+}
+
+func TestCallToolOnServer_HTTP_ServerError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+	}))
+	defer srv.Close()
+
+	provider := &mcp.MCPProvider{
+		ID:        "supabase",
+		Name:      "Supabase",
+		URL:       srv.URL + "/",
+		Transport: "http",
+		Fields:    []mcp.ProviderField{},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), tenSeconds)
+	defer cancel()
+
+	_, err := service.CallToolOnServer(ctx, provider, "", map[string]string{}, service.CallToolParams{
+		Name: "list_tables",
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "initialize")
+}
+
+func TestCallToolOnServer_SessionHeader(t *testing.T) {
+	var receivedSessionID string
+	callCount := 0
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		var req jrpcRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "bad body", http.StatusBadRequest)
+			return
+		}
+
+		var result json.RawMessage
+		switch req.Method {
+		case "initialize":
+			w.Header().Set("Mcp-Session-Id", "sess-abc-123")
+			result = initPayload
+		case "tools/call":
+			receivedSessionID = r.Header.Get("Mcp-Session-Id")
+			result = callResultPayload
+		default:
+			http.Error(w, "unknown method", http.StatusNotFound)
+			return
+		}
+
+		resp := jrpcResponse{JSONRPC: "2.0", ID: req.ID, Result: result}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp) //nolint:errcheck
+	}))
+	defer srv.Close()
+
+	provider := &mcp.MCPProvider{
+		ID:        "supabase",
+		Name:      "Supabase",
+		URL:       srv.URL + "/",
+		Transport: "http",
+		Fields:    []mcp.ProviderField{},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), tenSeconds)
+	defer cancel()
+
+	result, err := service.CallToolOnServer(ctx, provider, "", map[string]string{}, service.CallToolParams{
+		Name: "execute_sql",
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	assert.Equal(t, 2, callCount)
+	assert.Equal(t, "sess-abc-123", receivedSessionID,
+		"tools/call must include the Mcp-Session-Id from initialize")
 }

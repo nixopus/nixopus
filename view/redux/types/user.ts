@@ -110,6 +110,7 @@ export interface OrganizationSettingsData {
   container_stop_timeout?: number;
   container_auto_prune_dangling_images?: boolean;
   container_auto_prune_build_cache?: boolean;
+  ai_incidents_enabled?: boolean;
 }
 
 export interface OrganizationSettings {

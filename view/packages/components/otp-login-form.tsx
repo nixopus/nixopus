@@ -139,7 +139,7 @@ export function OtpLoginForm({ CaptchaComponent, captchaSiteKey, ...props }: Otp
                       {t('auth.otpLogin.changeEmail' as translationKey)}
                     </Button>
                   </div>
-                  <div ref={otpContainerRef}>
+                  <div ref={otpContainerRef} className="[&>div]:!w-full [&>div]:!justify-between">
                     <OTPInput
                       value={props.otp}
                       onChange={props.handleOtpChange}
@@ -172,7 +172,7 @@ export function OtpLoginForm({ CaptchaComponent, captchaSiteKey, ...props }: Otp
                     </Alert>
                   )}
                   {captchaEnabled && CaptchaComponent && (
-                    <div className="flex justify-center">
+                    <div className="w-full [&>div]:!w-full [&_iframe]:!w-full">
                       <CaptchaComponent siteKey={captchaSiteKey!} onToken={handleToken} />
                     </div>
                   )}
@@ -199,7 +199,7 @@ export function OtpLoginForm({ CaptchaComponent, captchaSiteKey, ...props }: Otp
                     </Alert>
                   )}
                   {captchaEnabled && CaptchaComponent && (
-                    <div className="flex justify-center">
+                    <div className="w-full [&>div]:!w-full [&_iframe]:!w-full">
                       <CaptchaComponent siteKey={captchaSiteKey!} onToken={handleToken} />
                     </div>
                   )}

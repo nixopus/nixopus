@@ -32,7 +32,7 @@ type DeployRepository interface {
 	AddApplicationLogs(applicationLogs *shared_types.ApplicationLogs) error
 	AddApplicationLogsBatch(logs []shared_types.ApplicationLogs) error
 	AddApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
-	GetApplications(page int, pageSize int, sortBy string, sortDirection string, organizationID uuid.UUID) ([]shared_types.Application, int, error)
+	GetApplications(page int, pageSize int, sortBy string, sortDirection string, organizationID uuid.UUID, serverID *uuid.UUID) ([]shared_types.Application, int, error)
 	UpdateApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
 	GetApplicationById(id string, organizationID uuid.UUID) (shared_types.Application, error)
 	AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error
@@ -59,6 +59,7 @@ type DeployRepository interface {
 	CountFamilyMembers(familyID uuid.UUID) (int, error)
 	ClearFamilyIDIfSingleMember(familyID uuid.UUID) error
 	GetLatestDeployments(organizationID uuid.UUID, limit int) ([]shared_types.ApplicationDeployment, error)
+	GetLatestDeploymentsByServer(organizationID uuid.UUID, serverID uuid.UUID, limit int) ([]shared_types.ApplicationDeployment, error)
 	GetDeployedApplications(organizationID uuid.UUID) ([]shared_types.Application, error)
 	GetLatestS3Deployment(applicationID uuid.UUID) (*shared_types.ApplicationDeployment, error)
 	UpsertComposeServices(applicationID uuid.UUID, services []shared_types.ComposeService) error
@@ -243,21 +244,26 @@ func (s *DeployStorage) AddApplicationLogs(applicationLogs *shared_types.Applica
 	return nil
 }
 
-func (s *DeployStorage) GetApplications(page, pageSize int, sortBy string, sortDirection string, organizationID uuid.UUID) ([]shared_types.Application, int, error) {
+func (s *DeployStorage) GetApplications(page, pageSize int, sortBy string, sortDirection string, organizationID uuid.UUID, serverID *uuid.UUID) ([]shared_types.Application, int, error) {
 	var applications []shared_types.Application
 
 	offset := (page - 1) * pageSize
 
-	totalCount, err := s.DB.NewSelect().
+	countQ := s.DB.NewSelect().
 		Model((*shared_types.Application)(nil)).
-		Where("organization_id = ?", organizationID).
-		Count(s.Ctx)
+		Where("a.organization_id = ?", organizationID)
 
+	if serverID != nil {
+		countQ = countQ.
+			Join("JOIN application_servers aps ON aps.application_id = a.id").
+			Where("aps.server_id = ?", *serverID)
+	}
+
+	totalCount, err := countQ.Count(s.Ctx)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// Build order expression based on sort parameters
 	orderExpr := s.buildOrderExpression(sortBy, sortDirection)
 
 	query := s.DB.NewSelect().
@@ -267,14 +273,19 @@ func (s *DeployStorage) GetApplications(page, pageSize int, sortBy string, sortD
 		Relation("Domains.ComposeService").
 		Limit(pageSize).
 		Offset(offset).
-		Where("organization_id = ?", organizationID)
+		Where("a.organization_id = ?", organizationID)
+
+	if serverID != nil {
+		query = query.
+			Join("JOIN application_servers aps ON aps.application_id = a.id").
+			Where("aps.server_id = ?", *serverID)
+	}
 
 	if orderExpr != "" {
 		query = query.OrderExpr(orderExpr)
 	}
 
 	err = query.Scan(s.Ctx)
-
 	if err != nil {
 		return nil, 0, err
 	}
@@ -333,6 +344,7 @@ func (s *DeployStorage) GetApplicationById(id string, organizationID uuid.UUID) 
 		Model(&application).
 		Relation("Status").
 		Relation("Domains.ComposeService").
+		Relation("Servers.Server").
 		Where("a.id = ? AND a.organization_id = ?", id, organizationID).
 		Scan(s.Ctx)
 
@@ -351,9 +363,7 @@ func (s *DeployStorage) GetApplicationDeploymentById(deploymentID string) (share
 
 	err := s.DB.NewSelect().
 		Model(&deployment).
-		Relation("Application").
 		Relation("Status").
-		Relation("Logs").
 		Where("ad.id = ?", deploymentID).
 		Scan(s.Ctx)
 
@@ -682,6 +692,28 @@ func (s *DeployStorage) GetLatestDeployments(organizationID uuid.UUID, limit int
 		Relation("Status").
 		Join("JOIN applications a ON a.id = ad.application_id").
 		Where("a.organization_id = ?", organizationID).
+		Order("ad.created_at DESC").
+		Limit(limit).
+		Scan(s.Ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return deployments, nil
+}
+
+func (s *DeployStorage) GetLatestDeploymentsByServer(organizationID uuid.UUID, serverID uuid.UUID, limit int) ([]shared_types.ApplicationDeployment, error) {
+	var deployments []shared_types.ApplicationDeployment
+
+	err := s.DB.NewSelect().
+		Model(&deployments).
+		Relation("Application").
+		Relation("Status").
+		Join("JOIN applications a ON a.id = ad.application_id").
+		Join("JOIN application_servers aps ON aps.application_id = a.id").
+		Where("a.organization_id = ?", organizationID).
+		Where("aps.server_id = ?", serverID).
 		Order("ad.created_at DESC").
 		Limit(limit).
 		Scan(s.Ctx)

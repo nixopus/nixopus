@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -8,8 +9,21 @@ import (
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/machine/types"
+	sharedtypes "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/nixopus/nixopus/api/internal/utils"
 )
+
+func parseServerID(r *http.Request) *uuid.UUID {
+	s := r.URL.Query().Get("server_id")
+	if s == "" {
+		return nil
+	}
+	id, err := uuid.Parse(s)
+	if err != nil {
+		return nil
+	}
+	return &id
+}
 
 func (c *MachineController) GetMachineStatus(f fuego.ContextNoBody) (*types.MachineStateResponse, error) {
 	w, r := f.Response(), f.Request()
@@ -24,7 +38,23 @@ func (c *MachineController) GetMachineStatus(f fuego.ContextNoBody) (*types.Mach
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.lifecycleService.GetStatus(r.Context(), orgID)
+	serverID := parseServerID(r)
+	if serverID == nil {
+		return nil, fuego.BadRequestError{Detail: "server_id is required"}
+	}
+
+	userOwned, _ := c.billingService.IsServerUserOwned(orgID, *serverID)
+	if userOwned {
+		ctx := context.WithValue(r.Context(), sharedtypes.ServerIDKey, serverID.String())
+		response, err := c.service.GetMachineStatus(ctx, orgID)
+		if err != nil {
+			c.logger.Log(logger.Error, err.Error(), orgID.String())
+			return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
+		}
+		return response, nil
+	}
+
+	response, err := c.lifecycleService.GetStatus(r.Context(), orgID, serverID)
 	if err != nil {
 		return nil, mapLifecycleError(c.logger, err, orgID, "get status")
 	}
@@ -45,7 +75,12 @@ func (c *MachineController) RestartMachine(f fuego.ContextNoBody) (*types.Machin
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.lifecycleService.Restart(r.Context(), orgID)
+	serverID := parseServerID(r)
+	if serverID == nil {
+		return nil, fuego.BadRequestError{Detail: "server_id is required"}
+	}
+
+	response, err := c.lifecycleService.Restart(r.Context(), orgID, serverID)
 	if err != nil {
 		return nil, mapLifecycleError(c.logger, err, orgID, "restart")
 	}
@@ -66,7 +101,12 @@ func (c *MachineController) PauseMachine(f fuego.ContextNoBody) (*types.MachineA
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.lifecycleService.Pause(r.Context(), orgID)
+	serverID := parseServerID(r)
+	if serverID == nil {
+		return nil, fuego.BadRequestError{Detail: "server_id is required"}
+	}
+
+	response, err := c.lifecycleService.Pause(r.Context(), orgID, serverID)
 	if err != nil {
 		return nil, mapLifecycleError(c.logger, err, orgID, "pause")
 	}
@@ -87,7 +127,12 @@ func (c *MachineController) ResumeMachine(f fuego.ContextNoBody) (*types.Machine
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.lifecycleService.Resume(r.Context(), orgID)
+	serverID := parseServerID(r)
+	if serverID == nil {
+		return nil, fuego.BadRequestError{Detail: "server_id is required"}
+	}
+
+	response, err := c.lifecycleService.Resume(r.Context(), orgID, serverID)
 	if err != nil {
 		return nil, mapLifecycleError(c.logger, err, orgID, "resume")
 	}

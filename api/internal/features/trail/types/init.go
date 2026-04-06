@@ -91,10 +91,10 @@ const (
 type UserProvisionStatus string
 
 const (
-	UserProvisionStatusNotStarted   UserProvisionStatus = "NOT_STARTED"
-	UserProvisionStatusProvisioning UserProvisionStatus = "PROVISIONING"
-	UserProvisionStatusActive       UserProvisionStatus = "ACTIVE"
-	UserProvisionStatusFailed       UserProvisionStatus = "FAILED"
+	UserProvisionStatusPending      UserProvisionStatus = "pending"
+	UserProvisionStatusProvisioning UserProvisionStatus = "provisioning"
+	UserProvisionStatusCompleted    UserProvisionStatus = "completed"
+	UserProvisionStatusFailed       UserProvisionStatus = "failed"
 )
 
 // UserProvisionDetails represents the database model for provision details.

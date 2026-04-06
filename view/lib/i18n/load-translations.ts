@@ -19,7 +19,8 @@ const domainLoaders: Record<string, Record<string, () => Promise<any>>> = {
     user: () => import('@/lib/i18n/locales/en/user.json'),
     toasts: () => import('@/lib/i18n/locales/en/toasts.json'),
     ai: () => import('@/lib/i18n/locales/en/ai.json'),
-    workflows: () => import('@/lib/i18n/locales/en/workflows.json')
+    workflows: () => import('@/lib/i18n/locales/en/workflows.json'),
+    machines: () => import('@/lib/i18n/locales/en/machines.json')
   },
   es: {
     common: () => import('@/lib/i18n/locales/es/common.json'),
@@ -39,7 +40,8 @@ const domainLoaders: Record<string, Record<string, () => Promise<any>>> = {
     user: () => import('@/lib/i18n/locales/es/user.json'),
     toasts: () => import('@/lib/i18n/locales/es/toasts.json'),
     ai: () => import('@/lib/i18n/locales/es/ai.json'),
-    workflows: () => import('@/lib/i18n/locales/en/workflows.json')
+    workflows: () => import('@/lib/i18n/locales/en/workflows.json'),
+    machines: () => import('@/lib/i18n/locales/en/machines.json')
   },
   fr: {
     common: () => import('@/lib/i18n/locales/fr/common.json'),
@@ -59,7 +61,8 @@ const domainLoaders: Record<string, Record<string, () => Promise<any>>> = {
     user: () => import('@/lib/i18n/locales/fr/user.json'),
     toasts: () => import('@/lib/i18n/locales/fr/toasts.json'),
     ai: () => import('@/lib/i18n/locales/fr/ai.json'),
-    workflows: () => import('@/lib/i18n/locales/en/workflows.json')
+    workflows: () => import('@/lib/i18n/locales/en/workflows.json'),
+    machines: () => import('@/lib/i18n/locales/en/machines.json')
   },
   kn: {
     common: () => import('@/lib/i18n/locales/kn/common.json'),
@@ -79,7 +82,8 @@ const domainLoaders: Record<string, Record<string, () => Promise<any>>> = {
     user: () => import('@/lib/i18n/locales/kn/user.json'),
     toasts: () => import('@/lib/i18n/locales/kn/toasts.json'),
     ai: () => import('@/lib/i18n/locales/kn/ai.json'),
-    workflows: () => import('@/lib/i18n/locales/en/workflows.json')
+    workflows: () => import('@/lib/i18n/locales/en/workflows.json'),
+    machines: () => import('@/lib/i18n/locales/en/machines.json')
   },
   ml: {
     common: () => import('@/lib/i18n/locales/ml/common.json'),
@@ -99,7 +103,8 @@ const domainLoaders: Record<string, Record<string, () => Promise<any>>> = {
     user: () => import('@/lib/i18n/locales/ml/user.json'),
     toasts: () => import('@/lib/i18n/locales/ml/toasts.json'),
     ai: () => import('@/lib/i18n/locales/ml/ai.json'),
-    workflows: () => import('@/lib/i18n/locales/en/workflows.json')
+    workflows: () => import('@/lib/i18n/locales/en/workflows.json'),
+    machines: () => import('@/lib/i18n/locales/en/machines.json')
   }
 };
 
