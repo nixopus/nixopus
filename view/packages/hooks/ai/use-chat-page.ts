@@ -36,12 +36,12 @@ function useLocalStorageState(key: string, defaultValue: boolean) {
 }
 
 export const AVAILABLE_MODELS = [
+  { id: 'openrouter/anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
+  { id: 'openrouter/anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
+  { id: 'openrouter/anthropic/claude-3.7-sonnet', label: 'Claude 3.7 Sonnet' },
   { id: 'openrouter/openai/gpt-4.1', label: 'GPT-4.1' },
   { id: 'openrouter/openai/gpt-4.1-mini', label: 'GPT-4.1 Mini' },
   { id: 'openrouter/openai/gpt-4o-mini', label: 'GPT-4o Mini' },
-  { id: 'openrouter/anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
-  { id: 'openrouter/anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
-  { id: 'openrouter/anthropic/claude-3.7-sonnet', label: 'Claude 3.7 Sonnet' },
   { id: 'openrouter/google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' }
 ] as const;
 
