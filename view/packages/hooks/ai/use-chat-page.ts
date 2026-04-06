@@ -163,6 +163,7 @@ export function useChatPage(): UseChatPageReturn {
     };
     if (cloneUrl) meta['Clone URL'] = cloneUrl;
     if (language) meta['Language'] = language;
+    if (description) meta['Description'] = description;
     if (htmlUrl) meta['GitHub URL'] = htmlUrl;
 
     setSelectedContexts([
@@ -174,23 +175,7 @@ export function useChatPage(): UseChatPageReturn {
       }
     ]);
 
-    const promptLines = [
-      `I want to deploy the GitHub repository "${repoFullName}" as a new application.`,
-      '',
-      `- GitHub Repository ID (numeric): ${repoId} — use this as the "repository" field when calling createProject`,
-      `- Repository name: ${repoFullName}`,
-      `- Default branch: ${defaultBranch}`,
-      `- Visibility: ${visibility}`
-    ];
-    if (language) promptLines.push(`- Primary language: ${language}`);
-    if (description) promptLines.push(`- Description: ${description}`);
-    if (cloneUrl) promptLines.push(`- Clone URL: ${cloneUrl}`);
-    promptLines.push(
-      '',
-      'No application exists yet — please use createProject with the GitHub repository ID above to create and deploy it.'
-    );
-
-    setPendingDeployPrompt(promptLines.join('\n'));
+    setPendingDeployPrompt(`Deploy "${repoFullName}" as a new application.`);
     navRouter.replace('/chats');
   }, [threads.isInitialized, searchParams]);
 
