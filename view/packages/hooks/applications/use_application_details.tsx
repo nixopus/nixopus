@@ -14,14 +14,13 @@ import {
 } from '@/redux/types/applications';
 import { BuildPack } from '@/redux/types/deploy-form';
 import type { TabItem } from '@nixopus/ui';
-import { Activity, Settings, Layers, ScrollText, Box, Workflow } from 'lucide-react';
+import { Activity, Settings, Layers, ScrollText, Box } from 'lucide-react';
 import DeploymentsList, {
   ApplicationLogs,
   Monitor
 } from '@/packages/components/application-details';
 import { DeployConfigureForm } from '@/packages/components/application-form';
 import { ApplicationResources } from '@/packages/components/application-resources';
-import { WorkflowsList } from '@/packages/components/workflows';
 import { useTranslation } from '../shared/use-translation';
 
 interface WebSocketMessage {
@@ -172,12 +171,6 @@ function useApplicationDetails() {
           />
         )
       },
-      // {
-      //   value: 'workflows',
-      //   label: t('selfHost.application.tabs.workflows'),
-      //   icon: Workflow,
-      //   content: <WorkflowsList applicationId={applicationId} />
-      // },
       {
         value: 'resources',
         label: t('selfHost.application.tabs.resources'),
