@@ -57,7 +57,7 @@ export enum USER_NOTIFICATION_SETTINGS {
 
 export enum DOMAIN_SETTINGS {
   ADD_DOMAIN = 'v1/domain',
-  GET_DOMAINS = 'v1/domains',
+  GET_DOMAINS = 'v1/domain',
   UPDATE_DOMAIN = 'v1/domain',
   DELETE_DOMAIN = 'v1/domain',
   GENERATE_RANDOM_SUBDOMAIN = 'v1/domain/generate'

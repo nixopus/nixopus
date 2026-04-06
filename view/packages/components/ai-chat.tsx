@@ -1053,6 +1053,9 @@ function MessageBubble({
                 {ctx.meta?.Status && (
                   <span className="text-muted-foreground/60">{ctx.meta.Status}</span>
                 )}
+                {ctx.meta?.Language && (
+                  <span className="text-muted-foreground/60">{ctx.meta.Language}</span>
+                )}
               </span>
             ))}
           </div>
@@ -1226,6 +1229,11 @@ function ContextSubMenu({
                       {item.meta.Status}
                     </span>
                   )}
+                  {item.meta?.Language && (
+                    <span className="text-xs text-muted-foreground shrink-0">
+                      {item.meta.Language}
+                    </span>
+                  )}
                 </DropdownMenuItem>
               );
             })
@@ -1295,6 +1303,7 @@ function ChatInput({
                   <span className="text-primary/60">{ctx.meta.Environment}</span>
                 )}
                 {ctx.meta?.Status && <span className="text-primary/60">{ctx.meta.Status}</span>}
+                {ctx.meta?.Language && <span className="text-primary/60">{ctx.meta.Language}</span>}
                 <button
                   type="button"
                   onClick={() => onRemoveContext(ctx)}

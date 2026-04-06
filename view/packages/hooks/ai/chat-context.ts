@@ -1,9 +1,10 @@
 'use client';
 
-import { Layers, Box, Globe, type LucideIcon } from 'lucide-react';
+import { Layers, Box, Globe, GitFork, type LucideIcon } from 'lucide-react';
 import { useGetApplicationsQuery } from '@/redux/services/deploy/applicationsApi';
 import { useGetContainersQuery } from '@/redux/services/container/containerApi';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
+import { useGetAllGithubRepositoriesQuery } from '@/redux/services/connector/githubConnectorApi';
 
 export interface ChatContext {
   type: string;
@@ -102,10 +103,32 @@ function useDomainsContextProvider(): ContextProviderData {
   };
 }
 
+function useRepositoriesContextProvider(): ContextProviderData {
+  const { data, isLoading } = useGetAllGithubRepositoriesQuery({ page: 1, page_size: 100 });
+
+  const items: ChatContext[] = (data?.repositories ?? []).map((repo) => ({
+    type: 'Repository',
+    id: repo.id.toString(),
+    label: repo.full_name,
+    meta: {
+      ...(repo.language && { Language: repo.language }),
+      ...(repo.default_branch && { Branch: repo.default_branch }),
+      Visibility: repo.private ? 'private' : 'public'
+    }
+  }));
+
+  return {
+    config: { type: 'Repository', icon: GitFork, labelKey: 'ai.context.repositories' },
+    items,
+    isLoading
+  };
+}
+
 export function useChatContextProviders(): ContextProviderData[] {
   const apps = useAppsContextProvider();
   const containers = useContainersContextProvider();
   const domains = useDomainsContextProvider();
+  const repositories = useRepositoriesContextProvider();
 
-  return [apps, containers, domains];
+  return [apps, containers, domains, repositories];
 }
