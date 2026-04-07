@@ -2,14 +2,10 @@
 
 import React from 'react';
 import dynamic from 'next/dynamic';
-import { Skeleton } from '@nixopus/ui';
 
 const ChatPage = dynamic(
   () => import('@/packages/components/ai-chat').then((m) => ({ default: m.ChatPage })),
-  {
-    ssr: false,
-    loading: () => <Skeleton className="h-full w-full" />
-  }
+  { ssr: false }
 );
 
 export default function ChatsPage() {
