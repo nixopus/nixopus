@@ -30,8 +30,8 @@ var Catalog = []MCPProvider{
 		ID:          "supabase",
 		Name:        "Supabase",
 		Description: "Connect to your Supabase project via MCP",
-		URL:         "https://mcp.supabase.com/sse",
-		Transport:   "sse",
+		URL:         "https://mcp.supabase.com/mcp",
+		Transport:   "http",
 		Fields: []ProviderField{
 			{Key: "access_token", Label: "Access Token", Required: true,
 				HeaderName: "Authorization", HeaderPrefix: "Bearer", Sensitive: true},

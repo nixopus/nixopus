@@ -42,11 +42,11 @@ func TestGetProvider(t *testing.T) {
 // ─── Transport correctness ────────────────────────────────────────────────────
 
 func TestCatalogTransportFields(t *testing.T) {
-	t.Run("supabase uses SSE transport", func(t *testing.T) {
+	t.Run("supabase uses HTTP transport", func(t *testing.T) {
 		p := mcp.GetProvider("supabase")
 		require.NotNil(t, p)
-		assert.Equal(t, "sse", p.Transport,
-			"supabase must use SSE so discoverSSE is called for it")
+		assert.Equal(t, "http", p.Transport,
+			"supabase must use streamable HTTP transport")
 	})
 
 	t.Run("github uses HTTP transport", func(t *testing.T) {

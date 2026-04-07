@@ -1,6 +1,8 @@
 package service
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -48,11 +50,7 @@ func (s *MCPService) TestServer(req *validation.TestServerRequest) *TestResult {
 		rawURL = u.String()
 	}
 
-	httpReq, err := http.NewRequest(http.MethodGet, rawURL, nil)
-	if err != nil {
-		return &TestResult{OK: false, Error: "failed to build request"}
-	}
-
+	headers := map[string]string{}
 	for _, field := range provider.Fields {
 		if field.HeaderName == "" {
 			continue
@@ -65,11 +63,20 @@ func (s *MCPService) TestServer(req *validation.TestServerRequest) *TestResult {
 		if field.HeaderPrefix != "" {
 			headerValue = field.HeaderPrefix + " " + v
 		}
-		httpReq.Header.Set(field.HeaderName, headerValue)
+		headers[field.HeaderName] = headerValue
 	}
 
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(httpReq)
+
+	var resp *http.Response
+	var err error
+
+	if provider.Transport == "sse" {
+		resp, err = doTestGET(client, rawURL, headers)
+	} else {
+		resp, err = doTestRPC(client, rawURL, headers)
+	}
+
 	if err != nil {
 		if strings.Contains(err.Error(), "connection refused") {
 			return &TestResult{OK: false, Error: "connection refused"}
@@ -84,4 +91,42 @@ func (s *MCPService) TestServer(req *validation.TestServerRequest) *TestResult {
 	}
 
 	return &TestResult{OK: true}
+}
+
+func doTestGET(client *http.Client, rawURL string, headers map[string]string) (*http.Response, error) {
+	httpReq, err := http.NewRequest(http.MethodGet, rawURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	for k, v := range headers {
+		httpReq.Header.Set(k, v)
+	}
+	return client.Do(httpReq)
+}
+
+func doTestRPC(client *http.Client, rawURL string, headers map[string]string) (*http.Response, error) {
+	rpc := mcpRequest{
+		JSONRPC: "2.0",
+		ID:      1,
+		Method:  "initialize",
+		Params: mcpInitParams{
+			ProtocolVersion: "2024-11-05",
+			Capabilities:    map[string]any{},
+			ClientInfo:      map[string]any{"name": "nixopus", "version": "1.0"},
+		},
+	}
+	body, err := json.Marshal(rpc)
+	if err != nil {
+		return nil, err
+	}
+	httpReq, err := http.NewRequest(http.MethodPost, rawURL, bytes.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "application/json, text/event-stream")
+	for k, v := range headers {
+		httpReq.Header.Set(k, v)
+	}
+	return client.Do(httpReq)
 }

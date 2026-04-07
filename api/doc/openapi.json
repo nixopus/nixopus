@@ -2348,6 +2348,27 @@
 				},
 				"type": "object"
 			},
+			"CallToolRequest": {
+				"description": "CallToolRequest schema",
+				"properties": {
+					"arguments": {
+						"additionalProperties": {
+							"description": "Variable value (string, number, boolean, or JSON as string)",
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "object"
+					},
+					"server_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"tool_name": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"CancelDeploymentRequest": {
 				"description": "CancelDeploymentRequest schema",
 				"properties": {
@@ -30355,6 +30376,123 @@
 					}
 				},
 				"summary": "Agent: discover tools from all enabled MCP servers",
+				"tags": [
+					"tools",
+					"api/v1/mcp",
+					"internal"
+				]
+			}
+		},
+		"/api/v1/mcp/internal/tools/call": {
+			"post": {
+				"description": "Agent: invoke a tool on an MCP server.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "agentInvokeAToolOnAnMCPServer",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"arguments": {},
+								"server_id": "00000000-0000-0000-0000-000000000000",
+								"tool_name": "string"
+							},
+							"schema": {
+								"$ref": "#/components/schemas/CallToolRequest"
+							}
+						}
+					},
+					"description": "Request body for validation.CallToolRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/Response"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Agent: invoke a tool on an MCP server",
 				"tags": [
 					"tools",
 					"api/v1/mcp",

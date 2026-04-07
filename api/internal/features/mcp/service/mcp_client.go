@@ -31,8 +31,6 @@ type ServerToolSet struct {
 	Error      string    `json:"error,omitempty"`
 }
 
-// ─── JSON-RPC types ───────────────────────────────────────────────────────────
-
 type mcpRequest struct {
 	JSONRPC string `json:"jsonrpc"`
 	ID      int    `json:"id"`
@@ -55,8 +53,6 @@ type mcpInitParams struct {
 	Capabilities    map[string]any `json:"capabilities"`
 	ClientInfo      map[string]any `json:"clientInfo"`
 }
-
-// ─── Header / URL helpers ─────────────────────────────────────────────────────
 
 func buildServerHeaders(provider *mcp.MCPProvider, creds map[string]string) map[string]string {
 	h := map[string]string{"Content-Type": "application/json"}
@@ -97,13 +93,11 @@ func buildServerURL(provider *mcp.MCPProvider, customURL string, creds map[strin
 	return u.String(), nil
 }
 
-// ─── HTTP (Streamable HTTP) transport ────────────────────────────────────────
-
-func postRPC(ctx context.Context, client *http.Client, serverURL string, headers map[string]string, req mcpRequest) (*mcpResponse, error) {
+func postRPC(ctx context.Context, client *http.Client, serverURL string, headers map[string]string, req mcpRequest) (*mcpResponse, string, error) {
 	body, _ := json.Marshal(req)
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, serverURL, bytes.NewReader(body))
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	for k, v := range headers {
 		httpReq.Header.Set(k, v)
@@ -112,30 +106,33 @@ func postRPC(ctx context.Context, client *http.Client, serverURL string, headers
 
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		return nil, fmt.Errorf("server returned %d", resp.StatusCode)
+		return nil, "", fmt.Errorf("server returned %d", resp.StatusCode)
 	}
+
+	sessionID := resp.Header.Get("Mcp-Session-Id")
 
 	ct := resp.Header.Get("Content-Type")
 	if strings.HasPrefix(ct, "text/event-stream") {
-		return firstSSEMessage(resp.Body)
+		rpc, err := firstSSEMessage(resp.Body)
+		return rpc, sessionID, err
 	}
 
 	var rpc mcpResponse
 	if err := json.NewDecoder(resp.Body).Decode(&rpc); err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return &rpc, nil
+	return &rpc, sessionID, nil
 }
 
 func discoverHTTP(ctx context.Context, serverURL string, headers map[string]string) ([]MCPTool, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 
-	initResp, err := postRPC(ctx, client, serverURL, headers, mcpRequest{
+	initResp, sessionID, err := postRPC(ctx, client, serverURL, headers, mcpRequest{
 		JSONRPC: "2.0", ID: 1, Method: "initialize",
 		Params: mcpInitParams{
 			ProtocolVersion: "2024-11-05",
@@ -150,7 +147,11 @@ func discoverHTTP(ctx context.Context, serverURL string, headers map[string]stri
 		return nil, fmt.Errorf("initialize: %s", initResp.Error.Message)
 	}
 
-	listResp, err := postRPC(ctx, client, serverURL, headers, mcpRequest{
+	if sessionID != "" {
+		headers["Mcp-Session-Id"] = sessionID
+	}
+
+	listResp, _, err := postRPC(ctx, client, serverURL, headers, mcpRequest{
 		JSONRPC: "2.0", ID: 2, Method: "tools/list",
 		Params: map[string]any{},
 	})
@@ -163,8 +164,6 @@ func discoverHTTP(ctx context.Context, serverURL string, headers map[string]stri
 
 	return parseToolsResult(listResp.Result)
 }
-
-// ─── SSE (legacy) transport ───────────────────────────────────────────────────
 
 type sseEvent struct{ name, data string }
 
@@ -353,7 +352,70 @@ waitEndpoint:
 	return parseToolsResult(listResp.Result)
 }
 
-// ─── Shared ───────────────────────────────────────────────────────────────────
+type CallToolParams struct {
+	Name      string         `json:"name"`
+	Arguments map[string]any `json:"arguments,omitempty"`
+}
+
+type ToolContent struct {
+	Type string `json:"type"`
+	Text string `json:"text,omitempty"`
+}
+
+type CallToolResult struct {
+	Content []ToolContent `json:"content"`
+	IsError bool          `json:"isError,omitempty"`
+}
+
+func callToolHTTP(ctx context.Context, serverURL string, headers map[string]string, params CallToolParams) (*CallToolResult, error) {
+	client := &http.Client{Timeout: 30 * time.Second}
+
+	initResp, sessionID, err := postRPC(ctx, client, serverURL, headers, mcpRequest{
+		JSONRPC: "2.0", ID: 1, Method: "initialize",
+		Params: mcpInitParams{
+			ProtocolVersion: "2024-11-05",
+			Capabilities:    map[string]any{},
+			ClientInfo:      map[string]any{"name": "nixopus", "version": "1.0"},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("initialize: %w", err)
+	}
+	if initResp.Error != nil {
+		return nil, fmt.Errorf("initialize: %s", initResp.Error.Message)
+	}
+
+	if sessionID != "" {
+		headers["Mcp-Session-Id"] = sessionID
+	}
+
+	callResp, _, err := postRPC(ctx, client, serverURL, headers, mcpRequest{
+		JSONRPC: "2.0", ID: 2, Method: "tools/call",
+		Params: params,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("tools/call: %w", err)
+	}
+	if callResp.Error != nil {
+		return nil, fmt.Errorf("tools/call: %s", callResp.Error.Message)
+	}
+
+	var result CallToolResult
+	if err := json.Unmarshal(callResp.Result, &result); err != nil {
+		return nil, fmt.Errorf("tools/call: invalid result: %w", err)
+	}
+	return &result, nil
+}
+
+func CallToolOnServer(ctx context.Context, provider *mcp.MCPProvider, customURL string, creds map[string]string, params CallToolParams) (*CallToolResult, error) {
+	serverURL, err := buildServerURL(provider, customURL, creds)
+	if err != nil {
+		return nil, fmt.Errorf("bad server URL: %w", err)
+	}
+	headers := buildServerHeaders(provider, creds)
+
+	return callToolHTTP(ctx, serverURL, headers, params)
+}
 
 func parseToolsResult(raw json.RawMessage) ([]MCPTool, error) {
 	var result struct {
