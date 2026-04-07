@@ -65,11 +65,13 @@ Other Linux distributions may work if Docker and Compose V2 are already installe
 
 ## Configuration
 
-All parameters are optional. Pass them as environment variables before the install command.
+All parameters are optional. Pass them as environment variables to the installer.
 
 ```bash
-DOMAIN=panel.example.com ADMIN_EMAIL=admin@example.com curl -fsSL install.nixopus.com | sudo bash
+curl -fsSL install.nixopus.com | sudo DOMAIN=panel.example.com ADMIN_EMAIL=admin@example.com bash
 ```
+
+> **Note:** Variables must be placed after `sudo`, not before `curl`. Placing them before `curl` sets them for the download process, not the installer.
 
 | Variable | Default | Description |
 |---|---|---|
@@ -125,7 +127,7 @@ The SSH port on your host (default `22`) must also be accessible from the Docker
 If ports 80/443 are already in use (Apache, Nginx, another container), either stop the conflicting service or install with custom ports:
 
 ```bash
-CADDY_HTTP_PORT=8080 CADDY_HTTPS_PORT=8443 curl -fsSL install.nixopus.com | sudo bash
+curl -fsSL install.nixopus.com | sudo CADDY_HTTP_PORT=8080 CADDY_HTTPS_PORT=8443 bash
 ```
 
 Use `docker ps --format '{{.Ports}} {{.Names}}'` to find what's using a port.
@@ -176,7 +178,7 @@ During installation, you'll be prompted to choose an LLM provider. The agent sup
 You can also set the provider non-interactively:
 
 ```bash
-LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-xxxxx curl -fsSL install.nixopus.com | sudo bash
+curl -fsSL install.nixopus.com | sudo LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-xxxxx bash
 ```
 
 Or change the provider after installation:
@@ -276,7 +278,7 @@ docker exec -i nixopus-db psql -U nixopus nixopus < /opt/nixopus/backups/<timest
 # Option 1: Check the backup for the original password
 cat /opt/nixopus/.env.bak | grep DB_PASSWORD
 # Then reinstall with it
-DB_PASSWORD=<original_password> curl -fsSL install.nixopus.com | sudo bash
+curl -fsSL install.nixopus.com | sudo DB_PASSWORD=<original_password> bash
 
 # Option 2: Start fresh (destroys all data)
 docker volume rm $(docker volume ls -q --filter name=nixopus)

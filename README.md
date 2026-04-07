@@ -174,7 +174,7 @@ curl -fsSL install.nixopus.com | sudo bash
 Or with a custom domain and admin email:
 
 ```bash
-DOMAIN=panel.example.com ADMIN_EMAIL=admin@example.com curl -fsSL install.nixopus.com | sudo bash
+curl -fsSL install.nixopus.com | sudo DOMAIN=panel.example.com ADMIN_EMAIL=admin@example.com bash
 ```
 
 <br/>

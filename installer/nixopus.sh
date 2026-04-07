@@ -73,9 +73,9 @@ cmd_update() {
 cmd_restart() {
     local service="${1:-}"
     if [ -n "$service" ]; then
-        dc restart "$service"
+        dc up -d --no-deps "$service"
     else
-        dc restart
+        dc up -d --remove-orphans
     fi
 }
 
