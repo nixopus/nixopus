@@ -29,7 +29,8 @@
       "apps": "Apps",
       "containers": "Containers",
       "domains": "Domains",
-      "repositories": "Repositories"
+      "repositories": "Repositories",
+      "integrations": "Integrations"
     },
     "model": {
       "label": "Model",
