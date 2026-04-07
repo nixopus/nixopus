@@ -55,7 +55,7 @@ func (ac *AuthController) HandleBootstrap(c fuego.ContextNoBody) (*BootstrapResp
 		return nil, fuego.UnauthorizedError{Detail: err.Error(), Err: err}
 	}
 
-	provisionStatus := "not_started"
+	provisionStatus := "pending"
 	if user.ProvisionStatus != nil && *user.ProvisionStatus != "" {
 		provisionStatus = *user.ProvisionStatus
 	}

@@ -77,23 +77,23 @@ type ProvisionPayload struct {
 type ProvisionStep string
 
 const (
-	ProvisionStepInitializing       ProvisionStep = "initializing"
-	ProvisionStepCreatingContainer  ProvisionStep = "creating_container"
-	ProvisionStepSetupNetworking    ProvisionStep = "setup_networking"
-	ProvisionStepInstallingDeps     ProvisionStep = "installing_dependencies"
-	ProvisionStepConfiguringSSH     ProvisionStep = "configuring_ssh"
-	ProvisionStepSetupSSHForwarding ProvisionStep = "setup_ssh_forwarding"
-	ProvisionStepVerifyingSSH       ProvisionStep = "verifying_ssh"
-	ProvisionStepCompleted          ProvisionStep = "completed"
+	ProvisionStepInitializing       ProvisionStep = "INITIALIZING"
+	ProvisionStepCreatingContainer  ProvisionStep = "CREATING_CONTAINER"
+	ProvisionStepSetupNetworking    ProvisionStep = "SETUP_NETWORKING"
+	ProvisionStepInstallingDeps     ProvisionStep = "INSTALLING_DEPENDENCIES"
+	ProvisionStepConfiguringSSH     ProvisionStep = "CONFIGURING_SSH"
+	ProvisionStepSetupSSHForwarding ProvisionStep = "SETUP_SSH_FORWARDING"
+	ProvisionStepVerifyingSSH       ProvisionStep = "VERIFYING_SSH"
+	ProvisionStepCompleted          ProvisionStep = "COMPLETED"
 )
 
 // UserProvisionStatus represents the overall status of a user's provision.
 type UserProvisionStatus string
 
 const (
-	UserProvisionStatusNotStarted   UserProvisionStatus = "not_started"
+	UserProvisionStatusPending      UserProvisionStatus = "pending"
 	UserProvisionStatusProvisioning UserProvisionStatus = "provisioning"
-	UserProvisionStatusActive       UserProvisionStatus = "active"
+	UserProvisionStatusCompleted    UserProvisionStatus = "completed"
 	UserProvisionStatusFailed       UserProvisionStatus = "failed"
 )
 

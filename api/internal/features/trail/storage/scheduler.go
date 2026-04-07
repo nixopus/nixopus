@@ -20,7 +20,7 @@ type serverCandidate struct {
 }
 
 var activeProvisionStatuses = []string{
-	"provisioning", "active",
+	"provisioning", "completed",
 }
 
 // SelectBestServer picks the active infra server with the most remaining

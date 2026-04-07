@@ -158,13 +158,13 @@ func (s *TrailStorage) GetUserProvisionStatus(userID string) (types.UserProvisio
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return types.UserProvisionStatusNotStarted, nil
+			return types.UserProvisionStatusPending, nil
 		}
-		return types.UserProvisionStatusNotStarted, fmt.Errorf("failed to get user provision status: %w", err)
+		return types.UserProvisionStatusPending, fmt.Errorf("failed to get user provision status: %w", err)
 	}
 
 	if user.ProvisionStatus == nil {
-		return types.UserProvisionStatusNotStarted, nil
+		return types.UserProvisionStatusPending, nil
 	}
 
 	return types.UserProvisionStatus(*user.ProvisionStatus), nil

@@ -45,7 +45,7 @@ func (s *TrailStorage) GetExpiredTrialUsers(ctx context.Context, trialPeriodDays
 				SELECT 1 FROM applications app
 				WHERE app.organization_id = upd.organization_id
 			)
-	`, string(types.UserProvisionStatusActive), string(types.ProvisionStepCompleted), trialPeriodDays).Scan(ctx, &users)
+	`, string(types.UserProvisionStatusCompleted), string(types.ProvisionStepCompleted), trialPeriodDays).Scan(ctx, &users)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to query expired trial users: %w", err)
@@ -91,7 +91,7 @@ func (s *TrailStorage) DeleteProvisionAndResetStatus(ctx context.Context, provis
 		return fmt.Errorf("failed to delete provision details: %w", err)
 	}
 
-	statusStr := string(types.UserProvisionStatusNotStarted)
+	statusStr := string(types.UserProvisionStatusPending)
 	_, err = tx.NewRaw(
 		`UPDATE "user" SET provision_status = ?, updated_at = now() WHERE id = ?`,
 		statusStr, userID,
