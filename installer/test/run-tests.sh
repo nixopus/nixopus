@@ -83,7 +83,7 @@ cleanup() {
         label=$(echo "$distro" | tr ':/' '-')
         docker rm -f "nixopus-test-${label}" 2>/dev/null || true
     done
-    docker rm -f nixopus-db nixopus-redis nixopus-auth nixopus-api nixopus-view nixopus-caddy nixopus-agent nixopus-ollama 2>/dev/null || true
+    docker rm -f nixopus-db nixopus-redis nixopus-auth nixopus-api nixopus-view nixopus-caddy nixopus-agent 2>/dev/null || true
     log "  Done"
 }
 

@@ -363,21 +363,80 @@ gather_config() {
 
     # ── Agent / LLM configuration ──
     USE_AGENT="${USE_AGENT:-true}"
-    if [ -t 0 ] && [ -z "${OPENROUTER_API_KEY:-}" ]; then
+    LLM_PROVIDER="${LLM_PROVIDER:-}"
+    OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-}"
+    OPENAI_API_KEY="${OPENAI_API_KEY:-}"
+    ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
+    GOOGLE_GENERATIVE_AI_API_KEY="${GOOGLE_GENERATIVE_AI_API_KEY:-}"
+    DEEPSEEK_API_KEY="${DEEPSEEK_API_KEY:-}"
+    GROQ_API_KEY="${GROQ_API_KEY:-}"
+
+    has_any_llm_key() {
+        [ -n "${OPENROUTER_API_KEY:-}" ] || [ -n "${OPENAI_API_KEY:-}" ] || \
+        [ -n "${ANTHROPIC_API_KEY:-}" ] || [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ] || \
+        [ -n "${DEEPSEEK_API_KEY:-}" ] || [ -n "${GROQ_API_KEY:-}" ]
+    }
+
+    if [ -t 0 ] && ! has_any_llm_key; then
         echo ""
-        echo -e "  ${BOLD}AI Agent${NC}"
-        echo -e "  ${DIM}The agent uses an LLM for deployments and diagnostics.${NC}"
-        echo -e "  ${DIM}Leave blank to use Ollama (local, no API key needed).${NC}"
-        prompt_if_tty OPENROUTER_API_KEY "OpenRouter API key (or blank for Ollama)" ""
+        echo -e "  ${BOLD}AI Agent — LLM Provider${NC}"
+        echo -e "  ${DIM}The agent needs an LLM API key for deployments and diagnostics.${NC}"
+        echo ""
+        echo -e "  ${BOLD}1)${NC} OpenRouter  ${DIM}— access Claude, GPT-4, Gemini & more via one key${NC}"
+        echo -e "  ${BOLD}2)${NC} OpenAI      ${DIM}— GPT-4o, GPT-4.1${NC}"
+        echo -e "  ${BOLD}3)${NC} Anthropic   ${DIM}— Claude Sonnet, Haiku${NC}"
+        echo -e "  ${BOLD}4)${NC} Google      ${DIM}— Gemini 2.5 Flash${NC}"
+        echo -e "  ${BOLD}5)${NC} DeepSeek    ${DIM}— DeepSeek Chat${NC}"
+        echo -e "  ${BOLD}6)${NC} Groq        ${DIM}— Llama 3.3 70B${NC}"
+        echo ""
+        prompt_if_tty LLM_PROVIDER "Provider [1-6]" "1"
+
+        case "${LLM_PROVIDER}" in
+            1|openrouter|"")
+                LLM_PROVIDER="openrouter"
+                prompt_if_tty OPENROUTER_API_KEY "OpenRouter API key (https://openrouter.ai)" ""
+                ;;
+            2|openai)
+                LLM_PROVIDER="openai"
+                prompt_if_tty OPENAI_API_KEY "OpenAI API key" ""
+                AGENT_MODEL="${AGENT_MODEL:-openai/gpt-4o}"
+                AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-openai/gpt-4o-mini}"
+                ;;
+            3|anthropic)
+                LLM_PROVIDER="anthropic"
+                prompt_if_tty ANTHROPIC_API_KEY "Anthropic API key" ""
+                AGENT_MODEL="${AGENT_MODEL:-anthropic/claude-sonnet-4}"
+                AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-anthropic/claude-haiku-3.5}"
+                ;;
+            4|google)
+                LLM_PROVIDER="google"
+                prompt_if_tty GOOGLE_GENERATIVE_AI_API_KEY "Google AI API key" ""
+                AGENT_MODEL="${AGENT_MODEL:-google/gemini-2.5-flash}"
+                AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-google/gemini-2.0-flash}"
+                ;;
+            5|deepseek)
+                LLM_PROVIDER="deepseek"
+                prompt_if_tty DEEPSEEK_API_KEY "DeepSeek API key" ""
+                AGENT_MODEL="${AGENT_MODEL:-deepseek/deepseek-chat}"
+                AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-deepseek/deepseek-chat}"
+                ;;
+            6|groq)
+                LLM_PROVIDER="groq"
+                prompt_if_tty GROQ_API_KEY "Groq API key" ""
+                AGENT_MODEL="${AGENT_MODEL:-groq/llama-3.3-70b-versatile}"
+                AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-groq/llama-3.3-70b-versatile}"
+                ;;
+            *)
+                log_warn "Unknown provider '$LLM_PROVIDER', defaulting to OpenRouter"
+                LLM_PROVIDER="openrouter"
+                prompt_if_tty OPENROUTER_API_KEY "OpenRouter API key (https://openrouter.ai)" ""
+                ;;
+        esac
     fi
 
-    USE_OLLAMA=false
-    if [ -z "${OPENROUTER_API_KEY:-}" ]; then
-        USE_OLLAMA=true
-        OLLAMA_BASE_URL="${OLLAMA_BASE_URL:-http://nixopus-ollama:11434}"
-        # Default to the 1B variant (~1.3 GB) — 700 MB lighter than the 3B default.
-        # Users can override: OLLAMA_MODEL=llama3.2 bash get.sh
-        OLLAMA_MODEL="${OLLAMA_MODEL:-llama3.2:1b}"
+    if ! has_any_llm_key; then
+        log_warn "No LLM API key provided — the AI agent will not function without one"
+        log_warn "Set it later: nixopus config set <PROVIDER>_API_KEY=xxx && nixopus restart"
     fi
 
     check_firewall
@@ -465,13 +524,15 @@ NIXOPUS_TELEMETRY=${NIXOPUS_TELEMETRY:-on}
 LOG_LEVEL=${LOG_LEVEL:-debug}
 
 USE_AGENT=${USE_AGENT}
+LLM_PROVIDER=${LLM_PROVIDER:-openrouter}
 OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+OPENAI_API_KEY=${OPENAI_API_KEY:-}
+ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+GOOGLE_GENERATIVE_AI_API_KEY=${GOOGLE_GENERATIVE_AI_API_KEY:-}
+DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+GROQ_API_KEY=${GROQ_API_KEY:-}
 AGENT_MODEL=${AGENT_MODEL:-}
 AGENT_LIGHT_MODEL=${AGENT_LIGHT_MODEL:-}
-USE_OLLAMA=${USE_OLLAMA}
-OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
-OLLAMA_MODEL=${OLLAMA_MODEL:-llama3.2:1b}
-OLLAMA_IMAGE=${OLLAMA_IMAGE:-ghcr.io/nixopus/ollama:llama3.2-1b}
 EOF
     chmod 600 "$NIXOPUS_HOME/.env"
 }
@@ -483,13 +544,11 @@ copy_compose() {
         cp "$src/docker-compose.db.yml" "$NIXOPUS_HOME/"
         cp "$src/docker-compose.redis.yml" "$NIXOPUS_HOME/"
         [ -f "$src/docker-compose.agent.yml" ] && cp "$src/docker-compose.agent.yml" "$NIXOPUS_HOME/"
-        [ -f "$src/docker-compose.ollama.yml" ] && cp "$src/docker-compose.ollama.yml" "$NIXOPUS_HOME/"
     else
         curl -fsSL "$REPO_RAW/selfhost/docker-compose.yml" -o "$NIXOPUS_HOME/docker-compose.yml"
         curl -fsSL "$REPO_RAW/selfhost/docker-compose.db.yml" -o "$NIXOPUS_HOME/docker-compose.db.yml"
         curl -fsSL "$REPO_RAW/selfhost/docker-compose.redis.yml" -o "$NIXOPUS_HOME/docker-compose.redis.yml"
         curl -fsSL "$REPO_RAW/selfhost/docker-compose.agent.yml" -o "$NIXOPUS_HOME/docker-compose.agent.yml"
-        curl -fsSL "$REPO_RAW/selfhost/docker-compose.ollama.yml" -o "$NIXOPUS_HOME/docker-compose.ollama.yml"
     fi
 }
 
@@ -539,53 +598,10 @@ compose_files() {
     [ "$USE_BUNDLED_DB" = true ] && args="$args -f $NIXOPUS_HOME/docker-compose.db.yml"
     [ "$USE_BUNDLED_REDIS" = true ] && args="$args -f $NIXOPUS_HOME/docker-compose.redis.yml"
     [ "${USE_AGENT:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.agent.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.agent.yml"
-    [ "${USE_OLLAMA:-false}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.ollama.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.ollama.yml"
     echo "$args"
 }
 
 dc() { docker compose $(compose_files) --env-file "$NIXOPUS_HOME/.env" "$@"; }
-
-pull_ollama_model() {
-    [ "${USE_OLLAMA:-false}" = true ] || return 0
-    local model="${OLLAMA_MODEL:-llama3.2:1b}"
-    # Read from .env if not set in environment
-    if [ -f "$NIXOPUS_HOME/.env" ]; then
-        local env_model
-        env_model=$(grep '^OLLAMA_MODEL=' "$NIXOPUS_HOME/.env" 2>/dev/null | cut -d= -f2-)
-        model="${env_model:-$model}"
-    fi
-    log_info "Downloading AI model '${model}' — this may take a few minutes..."
-    local pull_output
-    if pull_output=$(docker exec nixopus-ollama ollama pull "$model" 2>&1); then
-        echo "$pull_output" | tail -1
-        log_ok "Model '${model}' ready"
-    else
-        log_warn "Model download failed — the agent will auto-download it on first request"
-        log_warn "You can manually retry later: docker exec nixopus-ollama ollama pull $model"
-    fi
-}
-
-# Background variant: starts the model pull in a subshell so the installer
-# can print the finish banner immediately. The model is still being fetched
-# while the user reads the summary; agent auto-downloads on first use anyway.
-pull_ollama_model_bg() {
-    [ "${USE_OLLAMA:-false}" = true ] || return 0
-    local model="${OLLAMA_MODEL:-llama3.2:1b}"
-    if [ -f "$NIXOPUS_HOME/.env" ]; then
-        local env_model
-        env_model=$(grep '^OLLAMA_MODEL=' "$NIXOPUS_HOME/.env" 2>/dev/null | cut -d= -f2-)
-        model="${env_model:-$model}"
-    fi
-    log_info "Pulling AI model '${model}' in background — nixopus will be ready to use while this finishes..."
-    (
-        if docker exec nixopus-ollama ollama pull "$model" > /tmp/nixopus-ollama-pull.log 2>&1; then
-            log_ok "Background model pull complete: '${model}'"
-        else
-            log_warn "Background model pull failed. Retry: docker exec nixopus-ollama ollama pull $model"
-        fi
-    ) &
-    disown
-}
 
 start_services() {
     cd "$NIXOPUS_HOME"
@@ -594,7 +610,6 @@ start_services() {
     [ "$USE_BUNDLED_DB" = true ] && expected=$((expected + 1))
     [ "$USE_BUNDLED_REDIS" = true ] && expected=$((expected + 1))
     [ "${USE_AGENT:-true}" = true ] && expected=$((expected + 1))
-    [ "${USE_OLLAMA:-false}" = true ] && expected=$((expected + 1))
 
     if [ "$USE_BUNDLED_DB" = false ]; then
         log_info "Using external database"
@@ -603,17 +618,10 @@ start_services() {
         log_info "Using external Redis"
     fi
     if [ "${USE_AGENT:-true}" = true ]; then
-        if [ "${USE_OLLAMA:-false}" = true ]; then
-            log_info "Agent enabled with Ollama (local LLM)"
-        else
-            log_info "Agent enabled with OpenRouter"
-        fi
+        log_info "Agent enabled with OpenRouter"
     fi
 
     log_info "Pulling container images (this may take several minutes on first install)..."
-    if [ "${USE_OLLAMA:-false}" = true ]; then
-        log_info "Ollama image (~2 GB) + model (~1.3 GB) will download in the background after startup"
-    fi
     # --parallel pulls all images concurrently (default in Compose v2, explicit for v1 compat)
     dc pull --parallel 2>&1 | while IFS= read -r line; do
         case "$line" in
@@ -637,13 +645,6 @@ start_services() {
 
         if [ "$healthy" -ge "$expected" ]; then
             log_ok "All services healthy"
-            # If using a pre-seeded image the model is already baked in; skip the pull.
-            local ollama_img="${OLLAMA_IMAGE:-ghcr.io/nixopus/ollama:llama3.2-1b}"
-            if echo "$ollama_img" | grep -q "nixopus/ollama"; then
-                log_info "Using pre-seeded Ollama image — model already available, no extra download needed"
-            else
-                pull_ollama_model_bg
-            fi
             return
         fi
 
@@ -689,7 +690,6 @@ compose_files() {
     [ "${USE_BUNDLED_DB:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.db.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.db.yml"
     [ "${USE_BUNDLED_REDIS:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.redis.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.redis.yml"
     [ "${USE_AGENT:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.agent.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.agent.yml"
-    [ "${USE_OLLAMA:-false}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.ollama.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.ollama.yml"
     echo "$args"
 }
 
@@ -809,11 +809,22 @@ cmd_config() {
     echo ""
     echo "Agent:        ${USE_AGENT:-true}"
     if [ "${USE_AGENT:-true}" = true ]; then
-        if [ -n "${OPENROUTER_API_KEY:-}" ]; then
-            echo "LLM:          OpenRouter ($(redact "${OPENROUTER_API_KEY}"))"
+        local provider="${LLM_PROVIDER:-openrouter}"
+        local key=""
+        case "$provider" in
+            openrouter) key="${OPENROUTER_API_KEY:-}" ;;
+            openai)     key="${OPENAI_API_KEY:-}" ;;
+            anthropic)  key="${ANTHROPIC_API_KEY:-}" ;;
+            google)     key="${GOOGLE_GENERATIVE_AI_API_KEY:-}" ;;
+            deepseek)   key="${DEEPSEEK_API_KEY:-}" ;;
+            groq)       key="${GROQ_API_KEY:-}" ;;
+        esac
+        if [ -n "$key" ]; then
+            echo "LLM:          $provider ($(redact "$key"))"
         else
-            echo "LLM:          Ollama (local)"
+            echo "LLM:          $provider (key not set)"
         fi
+        [ -n "${AGENT_MODEL:-}" ] && echo "Model:        ${AGENT_MODEL}"
     fi
 }
 

@@ -25,7 +25,6 @@ compose_files() {
     [ "${USE_BUNDLED_DB:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.db.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.db.yml"
     [ "${USE_BUNDLED_REDIS:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.redis.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.redis.yml"
     [ "${USE_AGENT:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.agent.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.agent.yml"
-    [ "${USE_OLLAMA:-false}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.ollama.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.ollama.yml"
     echo "$args"
 }
 
@@ -145,11 +144,22 @@ cmd_config() {
     echo ""
     echo "Agent:        ${USE_AGENT:-true}"
     if [ "${USE_AGENT:-true}" = true ]; then
-        if [ -n "${OPENROUTER_API_KEY:-}" ]; then
-            echo "LLM:          OpenRouter ($(redact "${OPENROUTER_API_KEY}"))"
+        local provider="${LLM_PROVIDER:-openrouter}"
+        local key=""
+        case "$provider" in
+            openrouter) key="${OPENROUTER_API_KEY:-}" ;;
+            openai)     key="${OPENAI_API_KEY:-}" ;;
+            anthropic)  key="${ANTHROPIC_API_KEY:-}" ;;
+            google)     key="${GOOGLE_GENERATIVE_AI_API_KEY:-}" ;;
+            deepseek)   key="${DEEPSEEK_API_KEY:-}" ;;
+            groq)       key="${GROQ_API_KEY:-}" ;;
+        esac
+        if [ -n "$key" ]; then
+            echo "LLM:          $provider ($(redact "$key"))"
         else
-            echo "LLM:          Ollama (local)"
+            echo "LLM:          $provider (key not set)"
         fi
+        [ -n "${AGENT_MODEL:-}" ] && echo "Model:        ${AGENT_MODEL}"
     fi
 }
 

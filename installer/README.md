@@ -88,7 +88,13 @@ DOMAIN=panel.example.com ADMIN_EMAIL=admin@example.com curl -fsSL install.nixopu
 | `AUTH_SERVICE_SECRET` | *(random)* | Auth service secret |
 | `JWT_SECRET` | *(random)* | JWT signing secret |
 | `NIXOPUS_HOME` | `/opt/nixopus` | Installation directory |
-| `OPENROUTER_API_KEY` | *(empty — Ollama)* | OpenRouter API key for cloud LLM models. Leave blank to use Ollama (local). |
+| `LLM_PROVIDER` | `openrouter` | LLM provider: `openrouter`, `openai`, `anthropic`, `google`, `deepseek`, or `groq` |
+| `OPENROUTER_API_KEY` | *(empty)* | OpenRouter API key ([openrouter.ai](https://openrouter.ai)) |
+| `OPENAI_API_KEY` | *(empty)* | OpenAI API key |
+| `ANTHROPIC_API_KEY` | *(empty)* | Anthropic API key |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | *(empty)* | Google AI API key |
+| `DEEPSEEK_API_KEY` | *(empty)* | DeepSeek API key |
+| `GROQ_API_KEY` | *(empty)* | Groq API key |
 | `NIXOPUS_TELEMETRY` | `on` | Set to `off` to disable anonymous install telemetry |
 | `DO_NOT_TRACK` | `0` | Set to `1` to disable telemetry ([consented.dev](https://consented.dev)) |
 | `LOG_LEVEL` | `debug` | Log level |
@@ -113,7 +119,6 @@ Internal services (Docker network only, not exposed to host):
 | `4090` | nixopus-agent |
 | `5432` | nixopus-db (bundled Postgres) |
 | `6379` | nixopus-redis (bundled Redis) |
-| `11434` | nixopus-ollama (when using local LLM) |
 
 The SSH port on your host (default `22`) must also be accessible from the Docker network — the API connects back to the host via SSH for deployments.
 
@@ -157,31 +162,33 @@ The installer includes an AI agent that assists with deployments, diagnostics, a
 
 ### LLM Provider
 
-During installation, you'll be prompted for an **OpenRouter API key**. This determines the LLM backend:
+During installation, you'll be prompted to choose an LLM provider. The agent supports:
 
-- **Blank (default):** The agent runs with **Ollama** for fully local inference. An Ollama container is started automatically — no API keys or external services needed.
-- **API key provided:** The agent uses **OpenRouter** to access cloud models (Claude, GPT-4o, etc.).
+| Provider | Env Variable | Models |
+|---|---|---|
+| **OpenRouter** (default) | `OPENROUTER_API_KEY` | Claude, GPT-4, Gemini, and more via one key |
+| **OpenAI** | `OPENAI_API_KEY` | GPT-4o, GPT-4o Mini |
+| **Anthropic** | `ANTHROPIC_API_KEY` | Claude Sonnet 4, Claude Haiku 3.5 |
+| **Google** | `GOOGLE_GENERATIVE_AI_API_KEY` | Gemini 2.5 Flash, Gemini 2.0 Flash |
+| **DeepSeek** | `DEEPSEEK_API_KEY` | DeepSeek Chat |
+| **Groq** | `GROQ_API_KEY` | Llama 3.3 70B |
 
-You can change the provider after installation:
+You can also set the provider non-interactively:
 
 ```bash
-# Switch to OpenRouter
-nixopus config set OPENROUTER_API_KEY=sk-or-v1-xxxxx
-nixopus config set USE_OLLAMA=false
-nixopus restart
+LLM_PROVIDER=anthropic ANTHROPIC_API_KEY=sk-ant-xxxxx curl -fsSL install.nixopus.com | sudo bash
+```
 
-# Switch to Ollama
-nixopus config set OPENROUTER_API_KEY=
-nixopus config set USE_OLLAMA=true
+Or change the provider after installation:
+
+```bash
+nixopus config set ANTHROPIC_API_KEY=sk-ant-xxxxx
+nixopus config set AGENT_MODEL=anthropic/claude-sonnet-4
+nixopus config set AGENT_LIGHT_MODEL=anthropic/claude-haiku-3.5
 nixopus restart
 ```
 
-### Resource requirements with Ollama
-
-When using Ollama (local LLM), the server needs additional resources:
-
-- **RAM:** 4 GB minimum (8 GB+ recommended for better models)
-- **Disk:** 5 GB+ additional for model weights
+Users can also switch models per-chat from the model dropdown in the UI.
 
 ## HTTPS
 
@@ -204,7 +211,7 @@ sudo nixopus status
 | Command | Description |
 |---|---|
 | `nixopus status` | Show service health |
-| `nixopus logs [service]` | Tail logs (services: `nixopus-api`, `nixopus-auth`, `nixopus-view`, `nixopus-caddy`, `nixopus-agent`, `nixopus-ollama`, `nixopus-db`, `nixopus-redis`) |
+| `nixopus logs [service]` | Tail logs (services: `nixopus-api`, `nixopus-auth`, `nixopus-view`, `nixopus-caddy`, `nixopus-agent`, `nixopus-db`, `nixopus-redis`) |
 | `nixopus update` | Pull latest images and restart |
 | `nixopus restart [service]` | Restart all or a specific service |
 | `nixopus stop` | Stop all services |
@@ -404,5 +411,5 @@ export DO_NOT_TRACK=1
 
 - `get.sh` - Installer script
 - `nixopus.sh` - Management CLI (installed to `/usr/local/bin/nixopus`)
-- `selfhost/` - Docker Compose files (base, db, redis, agent, ollama overlays)
+- `selfhost/` - Docker Compose files (base, db, redis, agent overlays)
 - `test/` - Cross-distro test suite

@@ -126,7 +126,7 @@ export function useChatPage(): UseChatPageReturn {
     resourceId: threads.resourceId,
     contexts: selectedContexts,
     autoRunTools,
-    model: isSelfHosted ? undefined : selectedModel,
+    model: selectedModel,
     waitForThread: threads.waitForThread,
     onFirstMessage: (content) => {
       if (threads.activeThreadId) {
