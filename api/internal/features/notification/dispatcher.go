@@ -219,7 +219,6 @@ func (d *Dispatcher) resolveUserEmail(userID string) (string, error) {
 		Model(&user).
 		Column("email").
 		Where("id = ?", userID).
-		Where("deleted_at IS NULL").
 		Scan(d.ctx)
 	if err != nil {
 		return "", fmt.Errorf("user not found: %w", err)
