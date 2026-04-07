@@ -29,6 +29,7 @@
         "togglePosition": "Cambiar Posición del Terminal (Ctrl+T)"
       }
     },
-    "integrations": "Integrations"
+    "integrations": "Integrations",
+    "manage": "Manage"
   }
 }

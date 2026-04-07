@@ -32,6 +32,10 @@ func (u *UserController) MarkOnboardingComplete(s fuego.ContextNoBody) (*types.M
 		}
 	}
 
+	if u.cache != nil {
+		_ = u.cache.InvalidateUserByID(u.ctx, user.ID.String())
+	}
+
 	return &types.MarkOnboardingCompleteResponse{
 		Data: types.IsOnboardedResponseData{
 			IsOnboarded: true,

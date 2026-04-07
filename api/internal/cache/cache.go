@@ -162,6 +162,15 @@ func (c *Cache) InvalidateUser(ctx context.Context, email string) error {
 	return c.client.Del(ctx, key).Err()
 }
 
+// InvalidateUserByID removes a cached user record keyed by UUID.
+// This must be called whenever user fields (name, avatar, is_onboarded,
+// provision_status, etc.) are modified so the auth middleware re-reads
+// the row from the database on the next request.
+func (c *Cache) InvalidateUserByID(ctx context.Context, userID string) error {
+	key := UserByIDCacheKeyPrefix + userID
+	return c.client.Del(ctx, key).Err()
+}
+
 func (c *Cache) InvalidateOrgMembership(ctx context.Context, userID, orgID string) error {
 	key := OrgMembershipCacheKeyPrefix + userID + ":" + orgID
 	return c.client.Del(ctx, key).Err()

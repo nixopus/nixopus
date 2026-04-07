@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { z } from 'zod';
 
 export interface UseOtpLoginFormProps {
@@ -18,7 +18,6 @@ export function useOtpLoginForm({
 }: UseOtpLoginFormProps) {
   const [emailError, setEmailError] = useState('');
   const [otpError, setOtpError] = useState('');
-  const hasAutoSubmittedRef = useRef(false);
 
   const emailSchema = z.object({
     email: z.string().min(1, 'Email is required').email('Please enter a valid Email')
@@ -27,18 +26,6 @@ export function useOtpLoginForm({
   const otpSchema = z.object({
     otp: z.string().min(1, 'OTP is required').length(6, 'OTP must be 6 digits')
   });
-
-  // Auto-submit when OTP is complete (6 digits)
-  useEffect(() => {
-    if (otp.length === 6 && !isVerifyingOtp && !hasAutoSubmittedRef.current) {
-      hasAutoSubmittedRef.current = true;
-      handleVerifyOtp();
-    }
-    // Reset auto-submit flag when OTP is cleared or incomplete
-    if (otp.length < 6) {
-      hasAutoSubmittedRef.current = false;
-    }
-  }, [otp, isVerifyingOtp, handleVerifyOtp]);
 
   const handleSendOtpClick = (): void => {
     setEmailError('');

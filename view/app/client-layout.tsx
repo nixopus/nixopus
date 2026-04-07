@@ -5,7 +5,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '@/redux/store';
 import { Toaster } from '@nixopus/ui';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import { initializeAuth } from '@/redux/features/users/authSlice';
 import { preloadBaseUrl } from '@/redux/base-query';
 import { usePathname, useRouter } from 'next/navigation';
@@ -14,14 +14,43 @@ import { FeatureFlagsProvider } from '@/packages/hooks/shared/features_provider'
 import { SystemStatsProvider } from '@/packages/hooks/shared/system-stats-provider';
 import { palette } from '@/packages/utils/colors';
 import { authClient } from '@/packages/lib/auth-client';
-import { SettingsModalProvider } from '@/packages/hooks/shared/use-settings-modal';
 import AppLayout from '@/packages/layouts/layout';
-import { SettingsModal } from '@/packages/components/settings';
 import { SudoModeProvider } from '@/packages/hooks/security/use-sudo-mode';
 import { CSPostHogProvider } from '@/packages/components/analytics/posthog-provider';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { Skeleton } from '@nixopus/ui';
+import {
+  getPluginProviders,
+  getPluginGuards,
+  getPluginGlobalComponents,
+  getPluginNoLayoutPaths
+} from '@/plugins/registry';
+import type { ReactElement } from 'react';
+
+function PluginProviderWrapper({ children }: { children: React.ReactNode }) {
+  const Providers = getPluginProviders();
+  if (!Providers) return <>{children}</>;
+  return <Providers>{children}</Providers>;
+}
+
+function PluginGuardWrapper({ children }: { children: React.ReactNode }) {
+  const guards = getPluginGuards();
+  if (guards.length === 0) return <>{children}</>;
+  return guards.reduceRight((acc, Guard) => <Guard>{acc}</Guard>, children) as ReactElement;
+}
+
+function PluginGlobalComponents() {
+  const components = getPluginGlobalComponents();
+  if (components.length === 0) return null;
+  return (
+    <>
+      {components.map((Component, i) => (
+        <Component key={i} />
+      ))}
+    </>
+  );
+}
 
 const AppLoadingScreen = () => {
   const { resolvedTheme } = useTheme();
@@ -148,7 +177,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if ((hasPersistedAuth || isAuthenticated) && (pathname === '/' || pathname === '/auth')) {
-      router.prefetch('/apps');
+      router.prefetch('/chats');
     }
   }, [hasPersistedAuth, isAuthenticated, pathname, router]);
 
@@ -188,10 +217,16 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
         pathname === '/login' ||
         pathname === '/register'
       ) {
-        router.push('/apps');
+        router.push('/chats');
       }
     }
   }, [pathname, isLoading, isInitialized, router, isPublicRoute, isAuthenticated]);
+
+  const noLayoutPaths = useMemo(() => getPluginNoLayoutPaths(), []);
+  const isNoLayoutRoute = useMemo(
+    () => noLayoutPaths.some((route) => pathname === route || pathname.startsWith(route + '/')),
+    [pathname, noLayoutPaths]
+  );
 
   return (
     <>
@@ -209,22 +244,32 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
             <AppShellSkeleton />
           )
         ) : (
-          <SettingsModalProvider>
-            <WebSocketProvider>
-              <FeatureFlagsProvider>
-                {isPublicRoute ? (
-                  <>{children}</>
-                ) : (
-                  <SystemStatsProvider>
-                    <SudoModeProvider>
-                      <AppLayout>{children}</AppLayout>
-                    </SudoModeProvider>
-                  </SystemStatsProvider>
-                )}
-              </FeatureFlagsProvider>
-            </WebSocketProvider>
-            <SettingsModal />
-          </SettingsModalProvider>
+          <WebSocketProvider>
+            <FeatureFlagsProvider>
+              {isPublicRoute ? (
+                <>{children}</>
+              ) : (
+                <>
+                  <PluginGlobalComponents />
+                  <Suspense fallback={<AppShellSkeleton />}>
+                    <PluginGuardWrapper>
+                      <SystemStatsProvider>
+                        <SudoModeProvider>
+                          {isNoLayoutRoute ? (
+                            <PluginProviderWrapper>{children}</PluginProviderWrapper>
+                          ) : (
+                            <AppLayout>
+                              <PluginProviderWrapper>{children}</PluginProviderWrapper>
+                            </AppLayout>
+                          )}
+                        </SudoModeProvider>
+                      </SystemStatsProvider>
+                    </PluginGuardWrapper>
+                  </Suspense>
+                </>
+              )}
+            </FeatureFlagsProvider>
+          </WebSocketProvider>
         )}
       </ThemeProvider>
       <Toaster />

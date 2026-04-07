@@ -3,17 +3,14 @@
 @import 'tailwindcss';
 @import 'streamdown/styles.css';
 @source "../node_modules/@nixopus/ui/dist/**/*.{js,jsx}";
+@source "../node_modules/@nixopus/ui/src/**/*.{ts,tsx}";
 @source "../node_modules/streamdown/dist/*.js";
 @source "../node_modules/@streamdown/code/dist/*.js";
 @source "../node_modules/@streamdown/mermaid/dist/*.js";
-
-/* Scan nixopus-ui npm package source files for Tailwind classes */
-/* Tailwind resolves @source paths from the project root (billing-view/) */
-@source "../node_modules/@nixopus/ui/src/**/*.{ts,tsx}";
-/* Ensure app's own files are also scanned (in case @source replaces default scanning) */
 @source "./**/*.{ts,tsx}";
 @source "../packages/**/*.{ts,tsx}";
 @source "../components/**/*.{ts,tsx}";
+@source "../plugins/**/*.{ts,tsx}";
 
 @plugin "tailwindcss-animate";
 
@@ -415,4 +412,35 @@
 /* Force border-border on all cards - outside layer system */
 div[data-slot='card'] {
   border-color: var(--color-border) !important;
+}
+
+[data-slot='table-head'] {
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  font-weight: 500;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  height: 2.5rem;
+}
+
+[data-slot='table-body'] {
+  background-color: color-mix(in oklch, var(--foreground) 3%, transparent);
+}
+
+[data-slot='table-cell'] {
+  padding: 1rem 1.25rem;
+}
+
+[data-slot='table-body'] > [data-slot='table-row'] {
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.15s;
+}
+
+[data-slot='table-body'] > [data-slot='table-row']:last-child {
+  border-bottom: none;
+}
+
+[data-slot='table-body'] > [data-slot='table-row']:hover {
+  background-color: color-mix(in oklch, var(--foreground) 5%, transparent);
 }

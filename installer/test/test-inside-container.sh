@@ -73,7 +73,8 @@ run_installer() {
     NIXOPUS_AUTH_IMAGE=nixopus-mock-auth \
     NIXOPUS_VIEW_IMAGE=nixopus-mock-view \
     NIXOPUS_AGENT_IMAGE=nixopus-mock-agent \
-    USE_OLLAMA=false \
+    LLM_PROVIDER=openrouter \
+    OPENROUTER_API_KEY=sk-or-v1-test-key \
     HOST_IP=127.0.0.1 \
     ADMIN_EMAIL=test@nixopus.dev \
     NIXOPUS_TELEMETRY=off \

@@ -36,12 +36,12 @@ function useLocalStorageState(key: string, defaultValue: boolean) {
 }
 
 export const AVAILABLE_MODELS = [
+  { id: 'openrouter/anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
+  { id: 'openrouter/anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
+  { id: 'openrouter/anthropic/claude-3.7-sonnet', label: 'Claude 3.7 Sonnet' },
   { id: 'openrouter/openai/gpt-4.1', label: 'GPT-4.1' },
   { id: 'openrouter/openai/gpt-4.1-mini', label: 'GPT-4.1 Mini' },
   { id: 'openrouter/openai/gpt-4o-mini', label: 'GPT-4o Mini' },
-  { id: 'openrouter/anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
-  { id: 'openrouter/anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
-  { id: 'openrouter/anthropic/claude-3.7-sonnet', label: 'Claude 3.7 Sonnet' },
   { id: 'openrouter/google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' }
 ] as const;
 
@@ -100,7 +100,7 @@ export function useChatPage(): UseChatPageReturn {
     false
   );
   const [selectedContexts, setSelectedContexts] = useState<ChatContext[]>([]);
-  const [autoRunTools, setAutoRunTools] = useLocalStorageState('chat_auto_run_tools', false);
+  const [autoRunTools, setAutoRunTools] = useLocalStorageState('chat_auto_run_tools', true);
   const [selectedModel, setSelectedModel] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('chat_selected_model') || AVAILABLE_MODELS[0].id;
@@ -126,7 +126,7 @@ export function useChatPage(): UseChatPageReturn {
     resourceId: threads.resourceId,
     contexts: selectedContexts,
     autoRunTools,
-    model: isSelfHosted ? undefined : selectedModel,
+    model: selectedModel,
     waitForThread: threads.waitForThread,
     onFirstMessage: (content) => {
       if (threads.activeThreadId) {
@@ -163,6 +163,7 @@ export function useChatPage(): UseChatPageReturn {
     };
     if (cloneUrl) meta['Clone URL'] = cloneUrl;
     if (language) meta['Language'] = language;
+    if (description) meta['Description'] = description;
     if (htmlUrl) meta['GitHub URL'] = htmlUrl;
 
     setSelectedContexts([
@@ -174,23 +175,7 @@ export function useChatPage(): UseChatPageReturn {
       }
     ]);
 
-    const promptLines = [
-      `I want to deploy the GitHub repository "${repoFullName}" as a new application.`,
-      '',
-      `- GitHub Repository ID (numeric): ${repoId} — use this as the "repository" field when calling createProject`,
-      `- Repository name: ${repoFullName}`,
-      `- Default branch: ${defaultBranch}`,
-      `- Visibility: ${visibility}`
-    ];
-    if (language) promptLines.push(`- Primary language: ${language}`);
-    if (description) promptLines.push(`- Description: ${description}`);
-    if (cloneUrl) promptLines.push(`- Clone URL: ${cloneUrl}`);
-    promptLines.push(
-      '',
-      'No application exists yet — please use createProject with the GitHub repository ID above to create and deploy it.'
-    );
-
-    setPendingDeployPrompt(promptLines.join('\n'));
+    setPendingDeployPrompt(`Deploy "${repoFullName}" as a new application.`);
     navRouter.replace('/chats');
   }, [threads.isInitialized, searchParams]);
 

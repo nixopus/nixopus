@@ -9,6 +9,7 @@ import Link from 'next/link';
 interface HoverMenuItem {
   title: string;
   url: string;
+  section?: string;
 }
 
 interface SidebarHoverMenuProps {
@@ -69,16 +70,27 @@ export function SidebarHoverMenu({ items, children, className }: SidebarHoverMen
       }}
     >
       <div className="space-y-1">
-        {items.map((item, index) => (
-          <React.Fragment key={item.title}>
-            <div className="px-2 py-1.5 rounded-sm hover:bg-background hover:text-muted-foreground transition-colors cursor-pointer">
-              <Link href={item.url} className="block text-sm font-medium">
-                {item.title}
-              </Link>
-            </div>
-            {index < items.length - 1 && <div className="border-t border-muted my-1"></div>}
-          </React.Fragment>
-        ))}
+        {items.map((item, index) => {
+          const prevSection = index > 0 ? items[index - 1].section : undefined;
+          const showSectionLabel = item.section && item.section !== prevSection;
+
+          return (
+            <React.Fragment key={item.title}>
+              {showSectionLabel && (
+                <div className={cn('pt-2 pb-1', index > 0 && 'border-t border-muted mt-1')}>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                    {item.section}
+                  </span>
+                </div>
+              )}
+              <div className="px-2 py-1.5 rounded-sm hover:bg-background hover:text-muted-foreground transition-colors cursor-pointer">
+                <Link href={item.url} className="block text-sm font-medium">
+                  {item.title}
+                </Link>
+              </div>
+            </React.Fragment>
+          );
+        })}
       </div>
     </div>
   );
