@@ -55,7 +55,7 @@ func (ac *AuthController) HandleBootstrap(c fuego.ContextNoBody) (*BootstrapResp
 		return nil, fuego.UnauthorizedError{Detail: err.Error(), Err: err}
 	}
 
-	provisionStatus := "NOT_STARTED"
+	provisionStatus := "not_started"
 	if user.ProvisionStatus != nil && *user.ProvisionStatus != "" {
 		provisionStatus = *user.ProvisionStatus
 	}
@@ -118,7 +118,7 @@ func (ac *AuthController) HandleBootstrap(c fuego.ContextNoBody) (*BootstrapResp
 	// provisionId and provisionStep when PROVISIONING (from user_provision_details)
 	var provisionID *string
 	var provisionStep *string
-	if provisionStatus == "PROVISIONING" {
+	if provisionStatus == "provisioning" {
 		var upd types.UserProvisionDetails
 		err = ac.store.DB.NewSelect().
 			Model(&upd).

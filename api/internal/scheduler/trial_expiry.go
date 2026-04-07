@@ -98,6 +98,18 @@ func (t *TrialExpiryScheduler) run() {
 			continue
 		}
 
+		hasApps, err := t.storage.HasApplications(t.ctx, user.OrganizationID)
+		if err != nil {
+			t.logger.Log(logger.Error, fmt.Sprintf("trial expiry: apps re-check failed for user %s: %v", user.UserID, err), user.UserID.String())
+			failed++
+			continue
+		}
+		if hasApps {
+			t.logger.Log(logger.Info, fmt.Sprintf("trial expiry: skipping user %s — has applications", user.UserID), user.UserID.String())
+			skipped++
+			continue
+		}
+
 		serverID := ""
 		if user.ServerID != nil {
 			serverID = user.ServerID.String()

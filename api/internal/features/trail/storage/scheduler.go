@@ -19,11 +19,8 @@ type serverCandidate struct {
 	UsedDiskGB int       `bun:"used_disk"`
 }
 
-// activeProvisionStatuses lists provision_status values where a VM is
-// consuming resources on the host (in-progress or running).
 var activeProvisionStatuses = []string{
-	"initializing", "creating_container",
-	"configuring_ssh", "setting_up_subdomain", "completed",
+	"provisioning", "active",
 }
 
 // SelectBestServer picks the active infra server with the most remaining

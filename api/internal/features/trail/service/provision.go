@@ -105,7 +105,7 @@ func (s *TrailService) ProvisionTrail(userID, orgID string, req types.ProvisionR
 	}
 
 	if err := s.storage.UpdateUserProvisionStatus(userID, types.UserProvisionStatusProvisioning); err != nil {
-		s.logger.Log(logger.Warning, fmt.Sprintf("Failed to set user provision_status=PROVISIONING: %v", err), userID)
+		s.logger.Log(logger.Warning, fmt.Sprintf("Failed to set user provision_status=provisioning: %v", err), userID)
 	}
 
 	serverID, err := s.storage.SelectBestServer(1, 1024, 25)

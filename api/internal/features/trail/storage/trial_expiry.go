@@ -41,6 +41,10 @@ func (s *TrailStorage) GetExpiredTrialUsers(ctx context.Context, trialPeriodDays
 				SELECT 1 FROM org_machine_billing omb
 				WHERE omb.organization_id = upd.organization_id
 			)
+			AND NOT EXISTS (
+				SELECT 1 FROM applications app
+				WHERE app.organization_id = upd.organization_id
+			)
 	`, string(types.UserProvisionStatusActive), string(types.ProvisionStepCompleted), trialPeriodDays).Scan(ctx, &users)
 
 	if err != nil {
@@ -57,6 +61,17 @@ func (s *TrailStorage) HasMachineBilling(ctx context.Context, orgID uuid.UUID) (
 		Exists(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to check machine billing: %w", err)
+	}
+	return exists, nil
+}
+
+func (s *TrailStorage) HasApplications(ctx context.Context, orgID uuid.UUID) (bool, error) {
+	exists, err := s.DB.NewSelect().
+		TableExpr("applications").
+		Where("organization_id = ?", orgID).
+		Exists(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to check applications: %w", err)
 	}
 	return exists, nil
 }

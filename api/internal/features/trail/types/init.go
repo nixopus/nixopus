@@ -77,24 +77,24 @@ type ProvisionPayload struct {
 type ProvisionStep string
 
 const (
-	ProvisionStepInitializing       ProvisionStep = "INITIALIZING"
-	ProvisionStepCreatingContainer  ProvisionStep = "CREATING_CONTAINER"
-	ProvisionStepSetupNetworking    ProvisionStep = "SETUP_NETWORKING"
-	ProvisionStepInstallingDeps     ProvisionStep = "INSTALLING_DEPENDENCIES"
-	ProvisionStepConfiguringSSH     ProvisionStep = "CONFIGURING_SSH"
-	ProvisionStepSetupSSHForwarding ProvisionStep = "SETUP_SSH_FORWARDING"
-	ProvisionStepVerifyingSSH       ProvisionStep = "VERIFYING_SSH"
-	ProvisionStepCompleted          ProvisionStep = "COMPLETED"
+	ProvisionStepInitializing       ProvisionStep = "initializing"
+	ProvisionStepCreatingContainer  ProvisionStep = "creating_container"
+	ProvisionStepSetupNetworking    ProvisionStep = "setup_networking"
+	ProvisionStepInstallingDeps     ProvisionStep = "installing_dependencies"
+	ProvisionStepConfiguringSSH     ProvisionStep = "configuring_ssh"
+	ProvisionStepSetupSSHForwarding ProvisionStep = "setup_ssh_forwarding"
+	ProvisionStepVerifyingSSH       ProvisionStep = "verifying_ssh"
+	ProvisionStepCompleted          ProvisionStep = "completed"
 )
 
 // UserProvisionStatus represents the overall status of a user's provision.
 type UserProvisionStatus string
 
 const (
-	UserProvisionStatusNotStarted   UserProvisionStatus = "NOT_STARTED"
-	UserProvisionStatusProvisioning UserProvisionStatus = "PROVISIONING"
-	UserProvisionStatusActive       UserProvisionStatus = "ACTIVE"
-	UserProvisionStatusFailed       UserProvisionStatus = "FAILED"
+	UserProvisionStatusNotStarted   UserProvisionStatus = "not_started"
+	UserProvisionStatusProvisioning UserProvisionStatus = "provisioning"
+	UserProvisionStatusActive       UserProvisionStatus = "active"
+	UserProvisionStatusFailed       UserProvisionStatus = "failed"
 )
 
 // UserProvisionDetails represents the database model for provision details.
