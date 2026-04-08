@@ -186,7 +186,7 @@ func tryM2MJWTAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, 
 		return false
 	}
 
-	orgID, err := validateM2MJWT(ctx, token)
+	orgID, err := validateM2MJWT(ctx, token, r.Header.Get("X-Organization-Id"))
 	if err != nil {
 		log.Printf("INFO AuthMiddleware: M2M JWT validation failed for path %s, falling through to session auth: %v", r.URL.Path, err)
 		return false

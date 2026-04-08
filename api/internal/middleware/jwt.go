@@ -24,7 +24,7 @@ func isJWT(token string) bool {
 	return len(parts) == 3
 }
 
-func validateM2MJWT(ctx context.Context, rawToken string) (orgID string, err error) {
+func validateM2MJWT(ctx context.Context, rawToken string, headerOrgID string) (orgID string, err error) {
 	keySet, err := fetchJWKS(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch JWKS: %w", err)
@@ -46,17 +46,17 @@ func validateM2MJWT(ctx context.Context, rawToken string) (orgID string, err err
 		return "", fmt.Errorf("JWT validation failed: %w", err)
 	}
 
-	orgClaim, ok := parsed.PrivateClaims()["https://nixopus.com/org"]
-	if !ok {
-		return "", fmt.Errorf("missing https://nixopus.com/org claim")
+	if orgClaim, ok := parsed.PrivateClaims()["https://nixopus.com/org"]; ok {
+		if orgStr, ok := orgClaim.(string); ok && orgStr != "" {
+			return orgStr, nil
+		}
 	}
 
-	orgStr, ok := orgClaim.(string)
-	if !ok {
-		return "", fmt.Errorf("https://nixopus.com/org claim is not a string")
+	if headerOrgID != "" {
+		return headerOrgID, nil
 	}
 
-	return orgStr, nil
+	return "", fmt.Errorf("missing organization: no https://nixopus.com/org claim and no X-Organization-Id header")
 }
 
 func fetchJWKS(ctx context.Context) (jwk.Set, error) {
