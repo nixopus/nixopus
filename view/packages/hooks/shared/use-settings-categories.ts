@@ -1,6 +1,6 @@
 'use client';
 
-import { Settings, Bell, Globe, Keyboard, Wifi, Bug, Terminal, Container } from 'lucide-react';
+import { Settings, Bell, Globe, Keyboard, Wifi, Bug, Terminal, Container, Bot } from 'lucide-react';
 import { useRBAC } from '@/packages/utils/rbac';
 import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
 import { FeatureNames } from '@/packages/types/feature-flags';
@@ -47,6 +47,7 @@ export function useSettingsCategories(): SettingsCategory[] {
     { id: 'network', label: 'Network', icon: Wifi, visible: true, scope: 'organization' },
     { id: 'terminal', label: 'Terminal', icon: Terminal, visible: true, scope: 'account' },
     { id: 'container', label: 'Container', icon: Container, visible: true, scope: 'organization' },
+    { id: 'agent', label: 'Agent', icon: Bot, visible: true, scope: 'organization' },
     { id: 'troubleshooting', label: 'Troubleshooting', icon: Bug, visible: true, scope: 'account' }
   ];
 }

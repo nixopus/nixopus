@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/notification/channel"
 	"github.com/nixopus/nixopus/api/internal/features/notification/helpers/preferences"
 	"github.com/nixopus/nixopus/api/internal/features/notification/tasks"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 	"github.com/uptrace/bun"
 )
 
@@ -78,6 +80,11 @@ func (d *Dispatcher) Emit(event shared_types.NotificationEvent) error {
 	for _, chName := range targetChannels {
 		if _, ok := d.channels[chName]; !ok {
 			d.logger.Log(logger.Error, fmt.Sprintf("channel %s not registered, skipping", chName), "")
+			continue
+		}
+
+		if chName == "agent" && !d.isAgentEnabledForOrg(event.OrganizationID) {
+			d.logger.Log(logger.Info, fmt.Sprintf("agent channel disabled for org %s, skipping", event.OrganizationID), event.UserID)
 			continue
 		}
 
@@ -224,6 +231,18 @@ func (d *Dispatcher) resolveUserEmail(userID string) (string, error) {
 		return "", fmt.Errorf("user not found: %w", err)
 	}
 	return user.Email, nil
+}
+
+func (d *Dispatcher) isAgentEnabledForOrg(orgIDStr string) bool {
+	orgID, err := uuid.Parse(orgIDStr)
+	if err != nil {
+		return false
+	}
+	settings, err := utils.GetOrganizationSettings(d.ctx, d.db, orgID)
+	if err != nil {
+		return false
+	}
+	return settings.AIIncidentsEnabled != nil && *settings.AIIncidentsEnabled
 }
 
 func getDataStr(data map[string]interface{}, key string) string {

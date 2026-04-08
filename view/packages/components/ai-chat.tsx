@@ -51,7 +51,12 @@ import {
   Pencil,
   Zap,
   AlertTriangle,
-  RotateCw
+  RotateCw,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Clock,
+  Type
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
@@ -271,6 +276,45 @@ interface ThreadSidebarProps {
   isRefreshing?: boolean;
 }
 
+type ThreadFilter = 'all' | 'chats' | 'incidents';
+type ThreadSortKey = 'updatedAt' | 'createdAt' | 'title';
+type ThreadSortDir = 'desc' | 'asc';
+
+function useThreadFilterSort(threads: ChatThread[]) {
+  const [filter, setFilter] = React.useState<ThreadFilter>('all');
+  const [sortKey, setSortKey] = React.useState<ThreadSortKey>('updatedAt');
+  const [sortDir, setSortDir] = React.useState<ThreadSortDir>('desc');
+
+  const filtered = React.useMemo(() => {
+    let result = threads;
+    if (filter === 'incidents') {
+      result = result.filter((t) => t.isIncident);
+    } else if (filter === 'chats') {
+      result = result.filter((t) => !t.isIncident);
+    }
+    return [...result].sort((a, b) => {
+      if (sortKey === 'title') {
+        const cmp = a.title.localeCompare(b.title);
+        return sortDir === 'asc' ? cmp : -cmp;
+      }
+      const aTime = a[sortKey].getTime();
+      const bTime = b[sortKey].getTime();
+      return sortDir === 'desc' ? bTime - aTime : aTime - bTime;
+    });
+  }, [threads, filter, sortKey, sortDir]);
+
+  const toggleSort = (key: ThreadSortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'desc' ? 'asc' : 'desc'));
+    } else {
+      setSortKey(key);
+      setSortDir('desc');
+    }
+  };
+
+  return { filter, setFilter, sortKey, sortDir, toggleSort, filtered };
+}
+
 function ThreadSidebar({
   threads,
   activeThreadId,
@@ -287,6 +331,8 @@ function ThreadSidebar({
 }: ThreadSidebarProps) {
   const { t } = useTranslation();
   const sidebarSearch = useThreadSidebarSearch(resourceId);
+  const fs = useThreadFilterSort(threads);
+  const hasIncidents = threads.some((t) => t.isIncident);
 
   if (isCollapsed) {
     return (
@@ -323,13 +369,52 @@ function ThreadSidebar({
             <TooltipContent side="right">Refresh</TooltipContent>
           </Tooltip>
         </TooltipProvider>
+        {hasIncidents && (
+          <>
+            <Separator className="my-1" />
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={fs.filter === 'incidents' ? 'secondary' : 'ghost'}
+                    size="icon"
+                    className="size-8"
+                    onClick={() => {
+                      const next: Record<ThreadFilter, ThreadFilter> = {
+                        all: 'chats',
+                        chats: 'incidents',
+                        incidents: 'all'
+                      };
+                      fs.setFilter(next[fs.filter]);
+                    }}
+                  >
+                    {fs.filter === 'incidents' ? (
+                      <AlertTriangle className="size-4 text-amber-500" />
+                    ) : fs.filter === 'chats' ? (
+                      <MessageSquareText className="size-4" />
+                    ) : (
+                      <ArrowUpDown className="size-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  {fs.filter === 'all'
+                    ? 'All threads'
+                    : fs.filter === 'chats'
+                      ? 'Chats only'
+                      : 'Incidents only'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </>
+        )}
         <Separator className="my-1" />
         <ScrollArea className="flex-1 w-full">
           <div className="flex flex-col items-center gap-0.5 px-1">
             <TooltipProvider delayDuration={0}>
               {isLoading
                 ? [...Array(3)].map((_, i) => <Skeleton key={i} className="size-8 rounded-md" />)
-                : threads.map((thread) => (
+                : fs.filtered.map((thread) => (
                     <Tooltip key={thread.id}>
                       <TooltipTrigger asChild>
                         <Button
@@ -410,13 +495,83 @@ function ThreadSidebar({
         </div>
       </div>
       <Separator />
-      <div className="px-3 py-2">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          {sidebarSearch.memorySearchResults.length > 0
-            ? t('ai.threads.searchResults' as Parameters<typeof t>[0])
-            : t('ai.threads.recentChats')}
-        </span>
-      </div>
+      {sidebarSearch.memorySearchResults.length > 0 ? (
+        <div className="px-3 py-2">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            {t('ai.threads.searchResults' as Parameters<typeof t>[0])}
+          </span>
+        </div>
+      ) : (
+        <div className="px-2 py-1.5 flex items-center gap-1">
+          <div className="flex-1 flex items-center gap-0.5 rounded-md bg-muted/50 p-0.5">
+            <button
+              type="button"
+              onClick={() => fs.setFilter('all')}
+              className={cn(
+                'flex-1 text-xs py-1 rounded-sm transition-colors',
+                fs.filter === 'all'
+                  ? 'bg-background shadow-sm font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              All
+            </button>
+            {hasIncidents && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fs.setFilter('chats')}
+                  className={cn(
+                    'flex-1 text-xs py-1 rounded-sm transition-colors',
+                    fs.filter === 'chats'
+                      ? 'bg-background shadow-sm font-medium'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Chats
+                </button>
+                <button
+                  type="button"
+                  onClick={() => fs.setFilter('incidents')}
+                  className={cn(
+                    'flex-1 text-xs py-1 rounded-sm transition-colors',
+                    fs.filter === 'incidents'
+                      ? 'bg-background shadow-sm font-medium'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  Incidents
+                </button>
+              </>
+            )}
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="size-7 shrink-0">
+                <ArrowUpDown className="size-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              {[
+                { key: 'updatedAt' as const, label: 'Last updated', icon: Clock },
+                { key: 'createdAt' as const, label: 'Date created', icon: Clock },
+                { key: 'title' as const, label: 'Title', icon: Type }
+              ].map(({ key, label, icon: Icon }) => (
+                <DropdownMenuItem key={key} onClick={() => fs.toggleSort(key)}>
+                  <Icon className="size-3.5 mr-2" />
+                  {label}
+                  {fs.sortKey === key &&
+                    (fs.sortDir === 'desc' ? (
+                      <ArrowDown className="size-3 ml-auto" />
+                    ) : (
+                      <ArrowUp className="size-3 ml-auto" />
+                    ))}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
       <ScrollArea className="flex-1 [&_[data-radix-scroll-area-viewport]>div]:!block [&_[data-radix-scroll-area-viewport]>div]:!min-w-0">
         <div className="px-2 pb-2 space-y-0.5">
           {sidebarSearch.memorySearchResults.length > 0 ? (
@@ -439,16 +594,26 @@ function ThreadSidebar({
             )
           ) : isLoading ? (
             <ThreadsSkeleton />
-          ) : threads.length === 0 ? (
+          ) : fs.filtered.length === 0 ? (
             <div className="px-3 py-8 text-center">
               <MessageSquare className="size-8 text-muted-foreground/40 mx-auto mb-2" />
-              <p className="text-xs text-muted-foreground">{t('ai.threads.emptyState.title')}</p>
-              <p className="text-xs text-muted-foreground/60 mt-1">
-                {t('ai.threads.emptyState.description')}
-              </p>
+              {fs.filter !== 'all' ? (
+                <p className="text-xs text-muted-foreground">
+                  {fs.filter === 'incidents' ? 'No incidents' : 'No chats'}
+                </p>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    {t('ai.threads.emptyState.title')}
+                  </p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    {t('ai.threads.emptyState.description')}
+                  </p>
+                </>
+              )}
             </div>
           ) : (
-            threads.map((thread) => (
+            fs.filtered.map((thread) => (
               <ThreadItem
                 key={thread.id}
                 thread={thread}

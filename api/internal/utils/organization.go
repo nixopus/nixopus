@@ -203,6 +203,7 @@ func GetOrganizationSettings(ctx context.Context, db *bun.DB, orgID uuid.UUID) (
 		BackupScheduleHourUTC:            defaults.BackupScheduleHourUTC,
 		BackupScheduleDayOfWeek:          defaults.BackupScheduleDayOfWeek,
 		BackupRetentionCount:             defaults.BackupRetentionCount,
+		AIIncidentsEnabled:               defaults.AIIncidentsEnabled,
 	}
 
 	if settings.Settings.ContainerLogTailLines != nil {
@@ -252,6 +253,9 @@ func GetOrganizationSettings(ctx context.Context, db *bun.DB, orgID uuid.UUID) (
 	}
 	if settings.Settings.BackupRetentionCount != nil {
 		result.BackupRetentionCount = settings.Settings.BackupRetentionCount
+	}
+	if settings.Settings.AIIncidentsEnabled != nil {
+		result.AIIncidentsEnabled = settings.Settings.AIIncidentsEnabled
 	}
 
 	return result, nil

@@ -61,6 +61,9 @@ type OrganizationSettingsData struct {
 	BackupScheduleHourUTC   *int    `json:"backup_schedule_hour_utc,omitempty"`
 	BackupScheduleDayOfWeek *int    `json:"backup_schedule_day_of_week,omitempty"`
 	BackupRetentionCount    *int    `json:"backup_retention_count,omitempty"`
+
+	// AI settings
+	AIIncidentsEnabled *bool `json:"ai_incidents_enabled,omitempty"`
 }
 
 // OrganizationSettings represents organization-level settings stored in the database
@@ -127,6 +130,8 @@ func DefaultOrganizationSettingsData() OrganizationSettingsData {
 	backupScheduleDayOfWeek := 0
 	backupRetentionCount := 7
 
+	aiIncidentsEnabled := false
+
 	return OrganizationSettingsData{
 		WebsocketReconnectAttempts:       5,
 		WebsocketReconnectInterval:       3000,
@@ -148,5 +153,6 @@ func DefaultOrganizationSettingsData() OrganizationSettingsData {
 		BackupScheduleHourUTC:            &backupScheduleHourUTC,
 		BackupScheduleDayOfWeek:          &backupScheduleDayOfWeek,
 		BackupRetentionCount:             &backupRetentionCount,
+		AIIncidentsEnabled:               &aiIncidentsEnabled,
 	}
 }
