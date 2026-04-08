@@ -88,6 +88,9 @@ export interface UseChatPageReturn {
   dismissQuestion: () => void;
   stopStreaming: () => void;
   setInputValue: (value: string) => void;
+  readOnly: boolean;
+  refreshThreads: () => void;
+  isRefreshing: boolean;
 }
 
 export function useChatPage(): UseChatPageReturn {
@@ -121,9 +124,12 @@ export function useChatPage(): UseChatPageReturn {
 
   const contextProviders = useChatContextProviders();
   const threads = useChatThreads();
+  const activeThread = threads.activeThread;
   const chat = useAgentChat({
     threadId: threads.activeThreadId,
-    resourceId: threads.resourceId,
+    resourceId: activeThread?.threadResourceId || threads.resourceId,
+    agentId: activeThread?.agentId,
+    readOnly: activeThread?.isIncident ?? false,
     contexts: selectedContexts,
     autoRunTools,
     model: selectedModel,
@@ -246,7 +252,10 @@ export function useChatPage(): UseChatPageReturn {
     submitQuestionResponse: chat.submitQuestionResponse,
     dismissQuestion: chat.dismissQuestion,
     stopStreaming: chat.stopStreaming,
-    setInputValue: chat.setInputValue
+    setInputValue: chat.setInputValue,
+    readOnly: chat.readOnly,
+    refreshThreads: threads.refreshThreads,
+    isRefreshing: threads.isRefreshing
   };
 }
 

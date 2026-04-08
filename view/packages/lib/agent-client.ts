@@ -1,6 +1,7 @@
 import { MastraClient } from '@mastra/client-js';
 
 export const AGENT_ID = 'deploy-agent';
+export const INCIDENT_AGENT_ID = 'incidentAgent';
 
 let cachedAgentBaseUrl: string | null = null;
 let agentBaseUrlPromise: Promise<string> | null = null;

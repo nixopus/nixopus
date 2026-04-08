@@ -49,7 +49,9 @@ import {
   ChevronDown,
   Copy,
   Pencil,
-  Zap
+  Zap,
+  AlertTriangle,
+  RotateCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
@@ -175,6 +177,8 @@ export function ChatPage() {
         onNewChat={page.handleNewChat}
         onDeleteThread={page.deleteThread}
         onRenameThread={page.renameThread}
+        onRefresh={page.refreshThreads}
+        isRefreshing={page.isRefreshing}
       />
       <div className="flex flex-1 flex-col min-w-0">
         {page.activeQuestion && (
@@ -198,23 +202,31 @@ export function ChatPage() {
               onDeclineToolCall={page.handleDeclineToolCall}
             />
             {page.omStatus && <ContextWindowBar omStatus={page.omStatus} />}
-            <ChatInput
-              inputValue={page.inputValue}
-              isStreaming={page.isStreaming}
-              textareaRef={page.textareaRef}
-              selectedContexts={page.selectedContexts}
-              contextProviders={page.contextProviders}
-              autoRunTools={page.autoRunTools}
-              onAutoRunToolsChange={page.setAutoRunTools}
-              selectedModel={page.selectedModel}
-              onModelChange={page.setSelectedModel}
-              onAddContext={page.addContext}
-              onRemoveContext={page.removeContext}
-              onSubmit={page.handleSubmit}
-              onKeyDown={page.handleKeyDown}
-              onChange={page.handleInputChange}
-              onStop={page.stopStreaming}
-            />
+            {page.readOnly ? (
+              <div className="shrink-0 border-t border-border/50 bg-amber-500/5 px-4 py-3 text-center">
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  This is an automated incident thread and is read-only.
+                </p>
+              </div>
+            ) : (
+              <ChatInput
+                inputValue={page.inputValue}
+                isStreaming={page.isStreaming}
+                textareaRef={page.textareaRef}
+                selectedContexts={page.selectedContexts}
+                contextProviders={page.contextProviders}
+                autoRunTools={page.autoRunTools}
+                onAutoRunToolsChange={page.setAutoRunTools}
+                selectedModel={page.selectedModel}
+                onModelChange={page.setSelectedModel}
+                onAddContext={page.addContext}
+                onRemoveContext={page.removeContext}
+                onSubmit={page.handleSubmit}
+                onKeyDown={page.handleKeyDown}
+                onChange={page.handleInputChange}
+                onStop={page.stopStreaming}
+              />
+            )}
           </>
         ) : page.isLoadingHistory && !justCreatedThreadRef.current ? (
           <MessagesSkeleton />
@@ -255,6 +267,8 @@ interface ThreadSidebarProps {
   onNewChat: () => void;
   onDeleteThread: (id: string) => void;
   onRenameThread: (id: string, title: string) => void;
+  onRefresh: () => void;
+  isRefreshing?: boolean;
 }
 
 function ThreadSidebar({
@@ -267,7 +281,9 @@ function ThreadSidebar({
   onSelectThread,
   onNewChat,
   onDeleteThread,
-  onRenameThread
+  onRenameThread,
+  onRefresh,
+  isRefreshing
 }: ThreadSidebarProps) {
   const { t } = useTranslation();
   const sidebarSearch = useThreadSidebarSearch(resourceId);
@@ -292,6 +308,20 @@ function ThreadSidebar({
             </TooltipTrigger>
             <TooltipContent side="right">{t('ai.threads.newChat')}</TooltipContent>
           </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={onRefresh}
+                disabled={isRefreshing}
+              >
+                <RotateCw className={cn('size-4', isRefreshing && 'animate-spin')} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Refresh</TooltipContent>
+          </Tooltip>
         </TooltipProvider>
         <Separator className="my-1" />
         <ScrollArea className="flex-1 w-full">
@@ -308,11 +338,17 @@ function ThreadSidebar({
                           className="size-8"
                           onClick={() => onSelectThread(thread.id)}
                         >
-                          <MessageSquareText className="size-4" />
+                          {thread.isIncident ? (
+                            <AlertTriangle className="size-4 text-amber-500" />
+                          ) : (
+                            <MessageSquareText className="size-4" />
+                          )}
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent side="right">
-                        {thread.title || t('ai.threads.untitledChat')}
+                        {thread.isIncident
+                          ? `[Incident] ${thread.title}`
+                          : thread.title || t('ai.threads.untitledChat')}
                       </TooltipContent>
                     </Tooltip>
                   ))}
@@ -332,6 +368,20 @@ function ThreadSidebar({
           {t('ai.threads.newChat')}
         </Button>
         <TooltipProvider delayDuration={0}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-9 shrink-0"
+                onClick={onRefresh}
+                disabled={isRefreshing}
+              >
+                <RotateCw className={cn('size-4', isRefreshing && 'animate-spin')} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Refresh</TooltipContent>
+          </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -461,7 +511,7 @@ function ThreadItem({ thread, isActive, onSelect, onDelete, onRename }: ThreadIt
     }
   };
 
-  if (isEditing) {
+  if (isEditing && !thread.isIncident) {
     return (
       <div
         className={cn(
@@ -485,7 +535,7 @@ function ThreadItem({ thread, isActive, onSelect, onDelete, onRename }: ThreadIt
   return (
     <button
       onClick={onSelect}
-      onDoubleClick={handleStartEditing}
+      onDoubleClick={thread.isIncident ? undefined : handleStartEditing}
       className={cn(
         'relative w-full min-w-0 flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group text-left',
         isActive
@@ -493,39 +543,50 @@ function ThreadItem({ thread, isActive, onSelect, onDelete, onRename }: ThreadIt
           : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
       )}
     >
-      <MessageSquare className="size-4 shrink-0" />
+      {thread.isIncident ? (
+        <AlertTriangle className="size-4 shrink-0 text-amber-500" />
+      ) : (
+        <MessageSquare className="size-4 shrink-0" />
+      )}
       <span className="flex-1 min-w-0 truncate text-left">{thread.title}</span>
-      <TooltipProvider delayDuration={0}>
-        <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-muted/80 backdrop-blur-sm rounded">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                role="button"
-                onClick={handleStartEditing}
-                className="p-1 rounded hover:bg-muted hover:text-foreground"
-              >
-                <Pencil className="size-3.5" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="right">Rename</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                role="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete();
-                }}
-                className="p-1 rounded hover:bg-destructive/10 hover:text-destructive"
-              >
-                <Trash2 className="size-3.5" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent side="right">Delete</TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
+      {thread.isIncident && (
+        <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium leading-none bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+          Incident
+        </span>
+      )}
+      {!thread.isIncident && (
+        <TooltipProvider delayDuration={0}>
+          <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-muted/80 backdrop-blur-sm rounded">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  role="button"
+                  onClick={handleStartEditing}
+                  className="p-1 rounded hover:bg-muted hover:text-foreground"
+                >
+                  <Pencil className="size-3.5" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="right">Rename</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  role="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete();
+                  }}
+                  className="p-1 rounded hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 className="size-3.5" />
+                </span>
+              </TooltipTrigger>
+              <TooltipContent side="right">Delete</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
+      )}
     </button>
   );
 }

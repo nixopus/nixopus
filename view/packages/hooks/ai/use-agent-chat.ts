@@ -47,6 +47,8 @@ export interface ChatMessage {
 interface UseAgentChatOptions {
   threadId: string | null;
   resourceId?: string;
+  agentId?: string;
+  readOnly?: boolean;
   contexts?: ChatContext[];
   autoRunTools?: boolean;
   model?: string;
@@ -204,12 +206,15 @@ export interface OmStatus {
 export function useAgentChat({
   threadId,
   resourceId,
+  agentId: overrideAgentId,
+  readOnly = false,
   contexts = [],
   autoRunTools = false,
   model,
   onFirstMessage,
   waitForThread
 }: UseAgentChatOptions) {
+  const effectiveAgentId = overrideAgentId || AGENT_ID;
   const subscribe = useCallback(
     (cb: () => void) => chatStreamStore.subscribe(threadId, cb),
     [threadId]
@@ -261,7 +266,7 @@ export function useAgentChat({
 
         const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
         const client = createAgentClient(headers);
-        const thread = client.getMemoryThread({ threadId, agentId: AGENT_ID });
+        const thread = client.getMemoryThread({ threadId, agentId: effectiveAgentId });
         const result = await thread.listMessages({
           resourceId: resourceId || threadId
         });
@@ -307,7 +312,7 @@ export function useAgentChat({
     return () => {
       cancelled = true;
     };
-  }, [threadId, resourceId, token, organizationId, waitForThread]);
+  }, [threadId, resourceId, effectiveAgentId, token, organizationId, waitForThread]);
 
   const streamResponse = useCallback(
     async (userContent: string) => {
@@ -412,6 +417,7 @@ export function useAgentChat({
   const handleSubmit = useCallback(
     (e?: React.FormEvent) => {
       e?.preventDefault();
+      if (readOnly) return;
       if (!inputValue.trim() || !threadId) return;
       if (chatStreamStore.getSnapshot(threadId).isStreaming) return;
 
@@ -512,6 +518,7 @@ export function useAgentChat({
     setInputValue,
     isStreaming,
     isLoadingHistory,
+    readOnly,
     pendingToolApproval,
     activeQuestion,
     omStatus,

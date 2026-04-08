@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppSelector } from '@/redux/hooks';
 import { authClient } from '@/packages/lib/auth-client';
-import { createAgentClient, AGENT_ID } from '@/packages/lib/agent-client';
+import { createAgentClient, AGENT_ID, INCIDENT_AGENT_ID } from '@/packages/lib/agent-client';
 import { v4 as uuid } from 'uuid';
 
 export interface ChatThread {
@@ -11,6 +11,9 @@ export interface ChatThread {
   title: string;
   createdAt: Date;
   updatedAt: Date;
+  isIncident?: boolean;
+  agentId?: string;
+  threadResourceId?: string;
 }
 
 const ACTIVE_THREAD_KEY = 'nixopus_active_thread';
@@ -48,10 +51,46 @@ async function getAuthHeaders(
   return headers;
 }
 
+function mapThreads(
+  raw: unknown,
+  incident: boolean,
+  agent: string,
+  resource: string
+): ChatThread[] {
+  const list = Array.isArray(raw)
+    ? raw
+    : (((raw as Record<string, unknown>)?.threads ?? []) as Array<{
+        id: string;
+        title?: string;
+        createdAt: string | Date;
+        updatedAt: string | Date;
+      }>);
+  return list.map((t) => {
+    let title = t.title || 'New Chat';
+    if (incident && !t.title) {
+      const parts = t.id.replace(/^incident-/, '').split('-');
+      const source = parts[0] || 'unknown';
+      const eventId = parts.slice(1).join('-') || t.id;
+      title = `${source}: ${eventId}`;
+    }
+    return {
+      id: t.id,
+      title,
+      createdAt: new Date(t.createdAt),
+      updatedAt: new Date(t.updatedAt),
+      agentId: agent,
+      threadResourceId: resource,
+      ...(incident ? { isIncident: true } : {})
+    };
+  });
+}
+
 export function useChatThreads() {
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [activeThreadId, setActiveThreadIdState] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const token = useAppSelector((state) => state.auth.token);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
@@ -68,6 +107,11 @@ export function useChatThreads() {
     })();
   }, [token, organizationId]);
 
+  const refreshThreads = useCallback(() => {
+    setIsRefreshing(true);
+    setRefreshKey((k) => k + 1);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -75,41 +119,38 @@ export function useChatThreads() {
       try {
         const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
         const client = createAgentClient(headers);
-        const result = await client.listMemoryThreads({
-          resourceId,
-          agentId: AGENT_ID
-        });
+
+        const [chatResult, incidentResult] = await Promise.all([
+          client.listMemoryThreads({ resourceId, agentId: AGENT_ID }),
+          organizationId
+            ? client
+                .listMemoryThreads({ resourceId: organizationId, agentId: INCIDENT_AGENT_ID })
+                .catch(() => [])
+            : Promise.resolve([])
+        ]);
 
         if (cancelled) return;
 
-        const threadList = Array.isArray(result) ? result : (result?.threads ?? []);
-        const mapped: ChatThread[] = threadList.map(
-          (t: {
-            id: string;
-            title?: string;
-            createdAt: string | Date;
-            updatedAt: string | Date;
-          }) => ({
-            id: t.id,
-            title: t.title || 'New Chat',
-            createdAt: new Date(t.createdAt),
-            updatedAt: new Date(t.updatedAt)
-          })
-        );
-
-        mapped.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
-        setThreads(mapped);
+        const all = [
+          ...mapThreads(chatResult, false, AGENT_ID, resourceId),
+          ...mapThreads(incidentResult, true, INCIDENT_AGENT_ID, organizationId!)
+        ];
+        all.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+        setThreads(all);
       } catch {
         // agent may be unreachable
       } finally {
-        if (!cancelled) setIsInitialized(true);
+        if (!cancelled) {
+          setIsInitialized(true);
+          setIsRefreshing(false);
+        }
       }
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [token, organizationId, resourceId]);
+  }, [token, organizationId, resourceId, refreshKey]);
 
   const setActiveThreadId = useCallback((id: string | null) => {
     setActiveThreadIdState(id);
@@ -220,6 +261,8 @@ export function useChatThreads() {
     deleteThread,
     updateThreadTitle,
     touchThread,
-    waitForThread
+    waitForThread,
+    refreshThreads,
+    isRefreshing
   };
 }
