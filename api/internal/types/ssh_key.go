@@ -33,5 +33,5 @@ type SSHKey struct {
 	UpdatedAt           time.Time  `json:"updated_at" bun:"updated_at,notnull,default:now()"`
 	DeletedAt           *time.Time `json:"deleted_at,omitempty" bun:"deleted_at"`
 
-	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	Organization *Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 }

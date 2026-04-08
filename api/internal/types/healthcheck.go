@@ -28,7 +28,7 @@ type HealthCheck struct {
 	RetentionDays    int                  `json:"retention_days" bun:"retention_days,notnull,default:30"`
 	CreatedAt        time.Time            `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt        time.Time            `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
-	Application      *Application         `json:"application,omitempty" bun:"rel:belongs-to,join:application_id=id"`
+	Application      *Application         `json:"-" bun:"rel:belongs-to,join:application_id=id"`
 	Results          []*HealthCheckResult `json:"results,omitempty" bun:"rel:has-many,join:id=health_check_id"`
 }
 
@@ -42,7 +42,7 @@ type HealthCheckResult struct {
 	StatusCode     int          `json:"status_code,omitempty" bun:"status_code"`
 	ErrorMessage   string       `json:"error_message,omitempty" bun:"error_message"`
 	CheckedAt      time.Time    `json:"checked_at" bun:"checked_at,notnull,default:current_timestamp"`
-	HealthCheck    *HealthCheck `json:"health_check,omitempty" bun:"rel:belongs-to,join:health_check_id=id"`
+	HealthCheck    *HealthCheck `json:"-" bun:"rel:belongs-to,join:health_check_id=id"`
 }
 
 // HealthCheckStatus represents the current status of a health check

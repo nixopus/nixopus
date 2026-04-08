@@ -351,9 +351,7 @@ func (s *DeployStorage) GetApplicationDeploymentById(deploymentID string) (share
 
 	err := s.DB.NewSelect().
 		Model(&deployment).
-		Relation("Application").
 		Relation("Status").
-		Relation("Logs").
 		Where("ad.id = ?", deploymentID).
 		Scan(s.Ctx)
 

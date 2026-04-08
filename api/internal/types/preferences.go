@@ -32,7 +32,7 @@ type UserPreferences struct {
 	CreatedAt     time.Time           `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt     time.Time           `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 
-	User *User `json:"user,omitempty" bun:"rel:belongs-to,join:user_id=id"`
+	User *User `json:"-" bun:"rel:belongs-to,join:user_id=id"`
 }
 
 // OrganizationSettingsData represents the JSONB data for organization settings
@@ -75,7 +75,7 @@ type OrganizationSettings struct {
 	CreatedAt      time.Time                `json:"created_at" bun:"created_at,notnull,default:current_timestamp"`
 	UpdatedAt      time.Time                `json:"updated_at" bun:"updated_at,notnull,default:current_timestamp"`
 
-	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	Organization *Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
 // DefaultUserPreferencesData returns default values for user preferences
