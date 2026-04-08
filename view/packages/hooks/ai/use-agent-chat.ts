@@ -399,7 +399,10 @@ export function useAgentChat({
       lastAutoApprovedRef.current = null;
       return;
     }
-    if (!autoRunTools) return;
+    const isInternalTool =
+      pendingToolApproval.toolName === 'search_tools' ||
+      pendingToolApproval.toolName === 'load_tool';
+    if (!autoRunTools && !isInternalTool) return;
     const key = `${pendingToolApproval.runId}-${pendingToolApproval.toolCallId}`;
     if (lastAutoApprovedRef.current === key) return;
     lastAutoApprovedRef.current = key;

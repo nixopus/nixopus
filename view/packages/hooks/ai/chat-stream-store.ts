@@ -281,28 +281,37 @@ class ChatStreamStore {
       const toolName = (p?.toolName as string) ?? 'tool';
 
       if (toolName === 'ask_user' || toolName === 'askUser') return;
-      if (HIDDEN_TOOLS.has(toolName)) return;
+
+      const isHidden = HIDDEN_TOOLS.has(toolName);
+      if (isHidden && chunk.type !== 'tool-call-approval') return;
+
+      if (chunk.runId) {
+        s.runId = chunk.runId;
+      }
 
       if (toolCallId) {
-        s.needsNewTextPart = true;
         const tcId = String(toolCallId);
-        s.snapshot = {
-          ...s.snapshot,
-          messages: s.snapshot.messages.map((m) => {
-            if (m.id !== amId) return m;
-            const parts = [...(m.parts || [])];
-            if (!parts.some((pt) => pt.type === 'tool-call' && pt.toolCallId === tcId)) {
-              parts.push({
-                type: 'tool-call' as const,
-                toolName,
-                toolCallId: tcId,
-                args: p?.args,
-                status: 'running' as const
-              });
-            }
-            return { ...m, parts };
-          })
-        };
+
+        if (!isHidden) {
+          s.needsNewTextPart = true;
+          s.snapshot = {
+            ...s.snapshot,
+            messages: s.snapshot.messages.map((m) => {
+              if (m.id !== amId) return m;
+              const parts = [...(m.parts || [])];
+              if (!parts.some((pt) => pt.type === 'tool-call' && pt.toolCallId === tcId)) {
+                parts.push({
+                  type: 'tool-call' as const,
+                  toolName,
+                  toolCallId: tcId,
+                  args: p?.args,
+                  status: 'running' as const
+                });
+              }
+              return { ...m, parts };
+            })
+          };
+        }
 
         if (chunk.type === 'tool-call-approval') {
           s.pendingApproval = true;
@@ -360,14 +369,16 @@ class ChatStreamStore {
         }
       }
 
-      const finishReason = finishPayload.finishReason as string | undefined;
+      const stepResult = finishPayload.stepResult as Record<string, unknown> | undefined;
+      const finishReason = (finishPayload.finishReason ?? stepResult?.reason) as string | undefined;
       const sp = finishPayload.suspendPayload as Record<string, unknown> | undefined;
+      const runId = chunk.runId ?? (sp?.runId as string) ?? s.runId;
       if (finishReason === 'suspended' && sp) {
         s.pendingApproval = true;
         s.snapshot = {
           ...s.snapshot,
           pendingToolApproval: {
-            runId: (sp.runId as string) ?? '',
+            runId: runId ?? '',
             toolCallId: (sp.toolCallId as string) ?? '',
             toolName: (sp.toolName as string) ?? 'tool',
             args: sp.args ?? {}
