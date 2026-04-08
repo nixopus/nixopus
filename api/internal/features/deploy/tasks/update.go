@@ -130,7 +130,6 @@ func (s *TaskService) HandleUpdateDockerfileDeployment(ctx context.Context, Task
 			return ctx.Err()
 		}
 		taskCtx.LogAndUpdateStatus("Failed to build image: "+err.Error(), shared_types.Failed)
-		s.emitDeployFailed(TaskPayload, err)
 		return err
 	}
 

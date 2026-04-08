@@ -94,7 +94,7 @@ func AuthMiddleware(next http.Handler, app *storage.App, c *cache.Cache) http.Ha
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		if handled := tryM2MJWTAuth(ctx, w, r, next); handled {
+		if handled := tryM2MJWTAuth(ctx, w, r, next, app); handled {
 			return
 		}
 
@@ -175,7 +175,7 @@ func AuthMiddleware(next http.Handler, app *storage.App, c *cache.Cache) http.Ha
 	})
 }
 
-func tryM2MJWTAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, next http.Handler) bool {
+func tryM2MJWTAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, next http.Handler, app *storage.App) bool {
 	authHeader := r.Header.Get("Authorization")
 	if !strings.HasPrefix(authHeader, "Bearer ") {
 		return false
@@ -192,6 +192,30 @@ func tryM2MJWTAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, 
 		return false
 	}
 
+	userIDStr := r.Header.Get("X-User-Id")
+	if userIDStr == "" {
+		log.Printf("ERROR AuthMiddleware: M2M request missing X-User-Id header for path %s", r.URL.Path)
+		utils.SendErrorResponse(w, "M2M requests require X-User-Id header", http.StatusUnauthorized)
+		return true
+	}
+
+	userUUID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		log.Printf("ERROR AuthMiddleware: Invalid X-User-Id format %q for path %s", userIDStr, r.URL.Path)
+		utils.SendErrorResponse(w, "Invalid X-User-Id format", http.StatusUnauthorized)
+		return true
+	}
+
+	var user types.User
+	err = app.Store.DB.NewSelect().Model(&user).Where("id = ?", userUUID).Scan(ctx)
+	if err != nil {
+		log.Printf("ERROR AuthMiddleware: M2M user lookup failed for ID %s: %v", userIDStr, err)
+		utils.SendErrorResponse(w, "User not found", http.StatusUnauthorized)
+		return true
+	}
+	user.ComputeCompatibilityFields()
+
+	ctx = context.WithValue(ctx, types.UserContextKey, &user)
 	ctx = context.WithValue(ctx, types.OrganizationIDKey, orgID)
 	r = r.WithContext(ctx)
 	next.ServeHTTP(w, r)
