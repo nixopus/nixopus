@@ -10,7 +10,7 @@ const ChatPage = dynamic(
 
 export default function ChatsPage() {
   return (
-    <div className="h-[calc(100vh-4rem)] w-full">
+    <div className="h-full w-full">
       <ChatPage />
     </div>
   );

@@ -91,7 +91,7 @@ function Layout({ children }: LayoutProps) {
   } = useLayout();
 
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <AppSidebar
         user={user}
         activeOrg={
@@ -134,7 +134,7 @@ function Layout({ children }: LayoutProps) {
           handleTeamDescriptionChange={handleTeamDescriptionChange}
           isLoading={isLoading}
         />
-        <div className="w-full flex-1 min-h-0">
+        <div className="w-full flex-1 min-h-0 flex flex-col">
           <ResizablePanelLayout
             TerminalPosition={TerminalPosition}
             isTerminalOpen={isTerminalOpen}
