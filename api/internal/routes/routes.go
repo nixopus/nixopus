@@ -393,7 +393,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterMachineBillingRoutes(machineBillingGroup, machineController)
 
-	machineRegGroup := fuego.Group(server, apiV1.Path)
+	machineRegGroup := fuego.Group(server, apiV1.Path+"/machines")
 	router.applyMiddleware(machineRegGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "machine_byos",
