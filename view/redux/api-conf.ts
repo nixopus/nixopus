@@ -175,3 +175,7 @@ export enum MCP_SETTINGS {
   DELETE_SERVER = 'v1/mcp/servers',
   TEST_SERVER = 'v1/mcp/servers/test'
 }
+
+export enum SERVERURLS {
+  GET_SERVERS = 'v1/servers'
+}
