@@ -47,7 +47,8 @@ function useGetDeployedApplications() {
   const {
     data: applications,
     refetch: GetApplications,
-    isLoading: isLoadingApplications
+    isLoading: isLoadingApplications,
+    isFetching: isFetchingApplications
   } = useGetApplicationsQuery({
     page: currentPage,
     limit
@@ -273,6 +274,7 @@ function useGetDeployedApplications() {
     applications: paginatedApplications,
     GetApplications,
     isLoadingApplications,
+    isFetchingApplications,
     searchTerm,
     handleSearchChange,
     onSortChange,
