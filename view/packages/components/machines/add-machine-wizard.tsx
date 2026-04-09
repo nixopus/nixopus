@@ -58,7 +58,6 @@ export function AddMachineWizard({ open, onOpenChange }: AddMachineWizardProps) 
         <DialogHeader>
           <DialogTitle>{t('machines.addMachine')}</DialogTitle>
           <DialogDescription>
-            {step === 'enter-details' && t('machines.enterDetails')}
             {step === 'copy-key' && t('machines.copyKey')}
             {step === 'verify-connection' && t('machines.verifyConnection')}
           </DialogDescription>

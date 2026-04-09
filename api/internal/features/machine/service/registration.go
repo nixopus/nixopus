@@ -17,6 +17,7 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/machine/types"
 	"github.com/nixopus/nixopus/api/internal/queue"
 	api_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/uptrace/bun"
 	cryptossh "golang.org/x/crypto/ssh"
 )
 
@@ -110,12 +111,16 @@ func (s *RegistrationService) CreateMachine(orgID uuid.UUID, userID uuid.UUID, r
 		IsDefault:           false,
 	}
 
-	if err := s.storage.InsertSSHKey(sshKey); err != nil {
-		return nil, fmt.Errorf("failed to insert ssh key: %w", err)
-	}
-
-	if err := s.storage.InsertProvisionDetails(userID, orgID, sshKey.ID, "user_owned", "COMPLETED"); err != nil {
-		return nil, fmt.Errorf("failed to insert provision details: %w", err)
+	if err := s.storage.RunInTx(func(tx bun.Tx) error {
+		if err := s.storage.InsertSSHKeyTx(tx, sshKey); err != nil {
+			return fmt.Errorf("failed to insert ssh key: %w", err)
+		}
+		if err := s.storage.InsertProvisionDetailsTx(tx, userID, orgID, sshKey.ID, "user_owned", api_types.ProvisionStepCompleted); err != nil {
+			return fmt.Errorf("failed to insert provision details: %w", err)
+		}
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	return &types.CreateMachineResponse{

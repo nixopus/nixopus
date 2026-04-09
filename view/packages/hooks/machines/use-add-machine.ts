@@ -74,7 +74,7 @@ export function useAddMachine(onSuccess?: () => void) {
     if (verificationStatus !== 'polling' || !machineId) return;
 
     let attempts = 0;
-    const maxAttempts = 30;
+    const maxAttempts = 10;
 
     pollRef.current = setInterval(async () => {
       attempts++;

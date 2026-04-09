@@ -20,9 +20,11 @@ func NewRegistrationStorage(db *bun.DB, ctx context.Context) *RegistrationStorag
 
 func (s *RegistrationStorage) CountUserOwnedMachines(orgID uuid.UUID) (int, error) {
 	count, err := s.db.NewSelect().
-		TableExpr("user_provision_details").
-		Where("organization_id = ?", orgID).
-		Where("type = 'user_owned'").
+		TableExpr("user_provision_details AS upd").
+		Join("JOIN ssh_keys AS sk ON sk.id = upd.ssh_key_id").
+		Where("upd.organization_id = ?", orgID).
+		Where("upd.type = 'user_owned'").
+		Where("sk.deleted_at IS NULL").
 		Count(s.ctx)
 	return count, err
 }
@@ -43,18 +45,40 @@ func (s *RegistrationStorage) InsertSSHKey(key *api_types.SSHKey) error {
 	return err
 }
 
-func (s *RegistrationStorage) InsertProvisionDetails(userID, orgID, sshKeyID uuid.UUID, provisionType, step string) error {
-	_, err := s.db.NewInsert().
-		TableExpr("user_provision_details").
-		Value("id", "uuid_generate_v4()").
-		Value("user_id", "?", userID).
-		Value("organization_id", "?", orgID).
-		Value("ssh_key_id", "?", sshKeyID).
-		Value("type", "?", provisionType).
-		Value("step", "?", step).
-		Value("created_at", "NOW()").
-		Value("updated_at", "NOW()").
-		Exec(s.ctx)
+func (s *RegistrationStorage) InsertProvisionDetails(userID, orgID, sshKeyID uuid.UUID, provisionType string, step api_types.ProvisionStep) error {
+	detail := &api_types.UserProvisionDetails{
+		ID:             uuid.New(),
+		UserID:         userID,
+		OrganizationID: orgID,
+		SSHKeyID:       &sshKeyID,
+		Type:           provisionType,
+		Step:           &step,
+	}
+	_, err := s.db.NewInsert().Model(detail).Exec(s.ctx)
+	return err
+}
+
+func (s *RegistrationStorage) RunInTx(fn func(tx bun.Tx) error) error {
+	return s.db.RunInTx(s.ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		return fn(tx)
+	})
+}
+
+func (s *RegistrationStorage) InsertSSHKeyTx(tx bun.Tx, key *api_types.SSHKey) error {
+	_, err := tx.NewInsert().Model(key).Exec(s.ctx)
+	return err
+}
+
+func (s *RegistrationStorage) InsertProvisionDetailsTx(tx bun.Tx, userID, orgID, sshKeyID uuid.UUID, provisionType string, step api_types.ProvisionStep) error {
+	detail := &api_types.UserProvisionDetails{
+		ID:             uuid.New(),
+		UserID:         userID,
+		OrganizationID: orgID,
+		SSHKeyID:       &sshKeyID,
+		Type:           provisionType,
+		Step:           &step,
+	}
+	_, err := tx.NewInsert().Model(detail).Exec(s.ctx)
 	return err
 }
 
@@ -125,11 +149,11 @@ func (s *RegistrationStorage) GetActiveUserOwnedMachines(orgID uuid.UUID) ([]api
 	var keys []api_types.SSHKey
 	err := s.db.NewSelect().
 		Model(&keys).
-		Join("JOIN user_provision_details AS upd ON upd.ssh_key_id = ssh_key.id").
+		Join("JOIN user_provision_details AS upd ON upd.ssh_key_id = sk.id").
 		Where("upd.organization_id = ?", orgID).
 		Where("upd.type = 'user_owned'").
-		Where("ssh_key.is_active = true").
-		Where("ssh_key.deleted_at IS NULL").
+		Where("sk.is_active = true").
+		Where("sk.deleted_at IS NULL").
 		Scan(s.ctx)
 	return keys, err
 }

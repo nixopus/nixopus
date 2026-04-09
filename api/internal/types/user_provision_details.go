@@ -33,6 +33,7 @@ type UserProvisionDetails struct {
 	GuestIP          *string        `json:"guest_ip,omitempty" bun:"guest_ip"`
 	LXDContainerName *string        `json:"lxd_container_name,omitempty" bun:"lxd_container_name"`
 	SSHKeyID         *uuid.UUID     `json:"ssh_key_id,omitempty" bun:"ssh_key_id,type:uuid"`
+	Type             string         `json:"type" bun:"type,notnull,default:'trial'"`
 	Subdomain        *string        `json:"subdomain,omitempty" bun:"subdomain"`
 	Domain           *string        `json:"domain,omitempty" bun:"domain"`
 	VcpuCount        int            `json:"vcpu_count" bun:"vcpu_count"`
