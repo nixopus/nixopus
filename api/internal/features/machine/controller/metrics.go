@@ -52,8 +52,9 @@ func (c *MachineController) GetMachineMetrics(f fuego.ContextNoBody) (*machine_t
 
 	from, to := parseTimeRange(r)
 	limit := parseLimit(r, 500)
+	serverID := parseServerID(r)
 
-	resp, err := c.metricsService.GetMetrics(r.Context(), orgID, from, to, limit)
+	resp, err := c.metricsService.GetMetrics(r.Context(), orgID, serverID, from, to, limit)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), orgID.String())
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
@@ -74,8 +75,9 @@ func (c *MachineController) GetMachineEvents(f fuego.ContextNoBody) (*machine_ty
 
 	from, to := parseTimeRange(r)
 	limit := parseLimit(r, 200)
+	serverID := parseServerID(r)
 
-	resp, err := c.metricsService.GetEvents(r.Context(), orgID, from, to, limit)
+	resp, err := c.metricsService.GetEvents(r.Context(), orgID, serverID, from, to, limit)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), orgID.String())
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
@@ -95,8 +97,9 @@ func (c *MachineController) GetMachineMetricsSummary(f fuego.ContextNoBody) (*ma
 	}
 
 	from, to := parseTimeRange(r)
+	serverID := parseServerID(r)
 
-	resp, err := c.metricsService.GetSummary(r.Context(), orgID, from, to)
+	resp, err := c.metricsService.GetSummary(r.Context(), orgID, serverID, from, to)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), orgID.String())
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}

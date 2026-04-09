@@ -48,6 +48,7 @@ type OrgPoller struct {
 	dockerService  docker.DockerRepository
 	deployService  DeployServiceProvider
 	organizationID string
+	pollerKey      string
 	log            logger.Logger
 
 	runMu   sync.Mutex

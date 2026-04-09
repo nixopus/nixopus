@@ -4,6 +4,7 @@ import { ContainerData, SystemStatsType } from '@/redux/types/monitor';
 import { ApplicationDeployment } from '@/redux/types/applications';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAppSelector } from '@/redux/hooks';
+import { selectSelectedServerId } from '@/redux/features/servers/selectedServerSlice';
 
 function use_monitor() {
   const { sendJsonMessage, message, isReady } = useWebSocket();
@@ -22,6 +23,8 @@ function use_monitor() {
     return activeId || fallbackId;
   });
 
+  const serverId = useAppSelector(selectSelectedServerId);
+
   const startMonitoring = useCallback(() => {
     if (!isReady || !organizationId) return;
 
@@ -31,12 +34,13 @@ function use_monitor() {
       data: {
         interval: 10,
         operations: ['get_containers', 'get_system_stats', 'get_deployments'],
-        organization_id: organizationId
+        organization_id: organizationId,
+        ...(serverId ? { server_id: serverId } : {})
       }
     });
     setIsMonitoring(true);
     setLastError(null);
-  }, [isReady, sendJsonMessage, organizationId]);
+  }, [isReady, sendJsonMessage, organizationId, serverId]);
 
   const stopMonitoring = useCallback(() => {
     console.log('Stopping dashboard monitoring');

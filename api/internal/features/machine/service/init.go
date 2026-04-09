@@ -28,8 +28,8 @@ func NewMachineService(store *shared_storage.Store, ctx context.Context, l logge
 	}
 }
 
-func (s *MachineService) GetSystemStats(orgID uuid.UUID) (*types.SystemStatsResponse, error) {
-	sshMgr, err := sshpkg.GetSSHManagerForOrganization(s.ctx, orgID)
+func (s *MachineService) GetSystemStats(ctx context.Context, orgID uuid.UUID) (*types.SystemStatsResponse, error) {
+	sshMgr, err := sshpkg.GetSSHManagerFromContext(ctx)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH manager: %s", err.Error()), orgID.String())
 		return nil, fmt.Errorf("failed to connect to server: %w", err)
@@ -50,8 +50,8 @@ func (s *MachineService) GetSystemStats(orgID uuid.UUID) (*types.SystemStatsResp
 	}, nil
 }
 
-func (s *MachineService) ExecCommand(orgID uuid.UUID, command string) (*types.HostExecResponse, error) {
-	sshMgr, err := sshpkg.GetSSHManagerForOrganization(s.ctx, orgID)
+func (s *MachineService) ExecCommand(ctx context.Context, orgID uuid.UUID, command string) (*types.HostExecResponse, error) {
+	sshMgr, err := sshpkg.GetSSHManagerFromContext(ctx)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH manager: %s", err.Error()), orgID.String())
 		return nil, fmt.Errorf("failed to connect to server: %w", err)

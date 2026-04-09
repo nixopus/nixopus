@@ -33,7 +33,7 @@ func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.Con
 	}
 
 	decodedLogs, err := service.GetContainerLogs(
-		c.ctx,
+		ctx,
 		c.store,
 		dockerService,
 		c.logger,

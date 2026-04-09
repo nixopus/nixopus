@@ -12,6 +12,7 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/machine/types"
 	"github.com/nixopus/nixopus/api/internal/queue"
 	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	sharedtypes "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/nixopus/nixopus/api/internal/utils"
 
 	ff_service "github.com/nixopus/nixopus/api/internal/features/feature-flags/service"
@@ -69,7 +70,12 @@ func (c *MachineController) GetSystemStats(f fuego.ContextNoBody) (*types.System
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.service.GetSystemStats(orgID)
+	ctx := r.Context()
+	if sid := parseServerID(r); sid != nil {
+		ctx = context.WithValue(ctx, sharedtypes.ServerIDKey, sid.String())
+	}
+
+	response, err := c.service.GetSystemStats(ctx, orgID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), orgID.String())
 		return nil, fuego.HTTPError{
@@ -105,7 +111,12 @@ func (c *MachineController) ExecCommand(f fuego.ContextWithBody[types.HostExecRe
 		return nil, fuego.BadRequestError{Detail: "command is required"}
 	}
 
-	response, err := c.service.ExecCommand(orgID, body.Command)
+	ctx := r.Context()
+	if sid := parseServerID(r); sid != nil {
+		ctx = context.WithValue(ctx, sharedtypes.ServerIDKey, sid.String())
+	}
+
+	response, err := c.service.ExecCommand(ctx, orgID, body.Command)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), orgID.String())
 		return nil, fuego.HTTPError{

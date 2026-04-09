@@ -24,8 +24,8 @@ func NewBackupService(p ProvisionInfoProvider, bs *storage.BackupStorage, db *bu
 	return &BackupService{provisionInfo: p, backupStore: bs, db: db}
 }
 
-func (s *BackupService) TriggerBackup(ctx context.Context, userID uuid.UUID, orgID uuid.UUID) (*types.TriggerBackupResponse, error) {
-	info, err := s.provisionInfo.GetProvisionInfo(ctx, orgID, nil)
+func (s *BackupService) TriggerBackup(ctx context.Context, userID, orgID uuid.UUID, serverID *uuid.UUID) (*types.TriggerBackupResponse, error) {
+	info, err := s.provisionInfo.GetProvisionInfo(ctx, orgID, serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve machine: %w", err)
 	}

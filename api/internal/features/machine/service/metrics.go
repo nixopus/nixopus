@@ -24,18 +24,20 @@ func NewMetricsService(ts *storage.TimescaleStore, db *bun.DB) *MetricsService {
 	return &MetricsService{ts: ts, db: db}
 }
 
-// resolveMachineName looks up the lxd_container_name for the org's provisioned machine.
-// This name maps to vm_name in the Timescale schema.
-func (s *MetricsService) resolveMachineName(ctx context.Context, orgID uuid.UUID) (string, error) {
+func (s *MetricsService) resolveMachineName(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (string, error) {
 	var row api_types.UserProvisionDetails
-	err := s.db.NewSelect().
+	q := s.db.NewSelect().
 		Model(&row).
 		Column("lxd_container_name").
-		Where("organization_id = ?", orgID).
 		Where("lxd_container_name IS NOT NULL").
 		OrderExpr("created_at DESC").
-		Limit(1).
-		Scan(ctx)
+		Limit(1)
+	if serverID != nil {
+		q = q.Where("ssh_key_id = ?", *serverID)
+	} else {
+		q = q.Where("organization_id = ?", orgID)
+	}
+	err := q.Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", fmt.Errorf("no provisioned machine found for org")
@@ -48,8 +50,8 @@ func (s *MetricsService) resolveMachineName(ctx context.Context, orgID uuid.UUID
 	return *row.LXDContainerName, nil
 }
 
-func (s *MetricsService) GetMetrics(ctx context.Context, orgID uuid.UUID, from, to time.Time, limit int) (*machine_types.MachineMetricsResponse, error) {
-	machineName, err := s.resolveMachineName(ctx, orgID)
+func (s *MetricsService) GetMetrics(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID, from, to time.Time, limit int) (*machine_types.MachineMetricsResponse, error) {
+	machineName, err := s.resolveMachineName(ctx, orgID, serverID)
 	if err != nil {
 		return nil, err
 	}
@@ -64,8 +66,8 @@ func (s *MetricsService) GetMetrics(ctx context.Context, orgID uuid.UUID, from, 
 	}, nil
 }
 
-func (s *MetricsService) GetEvents(ctx context.Context, orgID uuid.UUID, from, to time.Time, limit int) (*machine_types.MachineEventsResponse, error) {
-	machineName, err := s.resolveMachineName(ctx, orgID)
+func (s *MetricsService) GetEvents(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID, from, to time.Time, limit int) (*machine_types.MachineEventsResponse, error) {
+	machineName, err := s.resolveMachineName(ctx, orgID, serverID)
 	if err != nil {
 		return nil, err
 	}
@@ -80,8 +82,8 @@ func (s *MetricsService) GetEvents(ctx context.Context, orgID uuid.UUID, from, t
 	}, nil
 }
 
-func (s *MetricsService) GetSummary(ctx context.Context, orgID uuid.UUID, from, to time.Time) (*machine_types.MachineSummaryResponse, error) {
-	machineName, err := s.resolveMachineName(ctx, orgID)
+func (s *MetricsService) GetSummary(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID, from, to time.Time) (*machine_types.MachineSummaryResponse, error) {
+	machineName, err := s.resolveMachineName(ctx, orgID, serverID)
 	if err != nil {
 		return nil, err
 	}

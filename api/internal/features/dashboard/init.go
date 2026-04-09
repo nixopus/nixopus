@@ -30,15 +30,17 @@ func getDockerService(ctx context.Context) (docker.DockerRepository, error) {
 // subscribe when the first monitor joins.
 func getOrCreateOrgPoller(
 	organizationID string,
+	serverID string,
 	sshManager *sshpkg.SSHManager,
 	dockerService docker.DockerRepository,
 	deployService DeployServiceProvider,
 	log logger.Logger,
 ) *OrgPoller {
+	key := organizationID + ":" + serverID
 	orgPollersMu.Lock()
 	defer orgPollersMu.Unlock()
 
-	if poller, ok := orgPollers[organizationID]; ok {
+	if poller, ok := orgPollers[key]; ok {
 		return poller
 	}
 
@@ -48,9 +50,10 @@ func getOrCreateOrgPoller(
 		dockerService:  dockerService,
 		deployService:  deployService,
 		organizationID: organizationID,
+		pollerKey:      key,
 		log:            log,
 	}
-	orgPollers[organizationID] = poller
+	orgPollers[key] = poller
 	return poller
 }
 
@@ -101,7 +104,7 @@ func (p *OrgPoller) stop() {
 	p.running = false
 
 	orgPollersMu.Lock()
-	delete(orgPollers, p.organizationID)
+	delete(orgPollers, p.pollerKey)
 	orgPollersMu.Unlock()
 }
 
@@ -149,13 +152,16 @@ func (p *OrgPoller) handleOperation(operation DashboardOperation) {
 
 // NewDashboardMonitor creates a monitor that subscribes to the shared per-org
 // poller. Call Start to begin receiving data and Stop to unsubscribe.
-func NewDashboardMonitor(conn *websocket.Conn, wsMu *sync.Mutex, log logger.Logger, organizationID string, deployService DeployServiceProvider) (*DashboardMonitor, error) {
+func NewDashboardMonitor(conn *websocket.Conn, wsMu *sync.Mutex, log logger.Logger, organizationID string, serverID string, deployService DeployServiceProvider) (*DashboardMonitor, error) {
 	orgID, err := uuid.Parse(organizationID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid organization ID: %w", err)
 	}
 
 	ctx := context.WithValue(context.Background(), shared_types.OrganizationIDKey, orgID.String())
+	if serverID != "" {
+		ctx = context.WithValue(ctx, shared_types.ServerIDKey, serverID)
+	}
 
 	manager, err := sshpkg.GetSSHManagerFromContext(ctx)
 	if err != nil {
@@ -167,7 +173,7 @@ func NewDashboardMonitor(conn *websocket.Conn, wsMu *sync.Mutex, log logger.Logg
 		return nil, fmt.Errorf("failed to get docker service: %w", err)
 	}
 
-	poller := getOrCreateOrgPoller(organizationID, manager, dockerService, deployService, log)
+	poller := getOrCreateOrgPoller(organizationID, serverID, manager, dockerService, deployService, log)
 
 	monitor := &DashboardMonitor{
 		conn:       conn,

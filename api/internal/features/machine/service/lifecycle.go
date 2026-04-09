@@ -27,8 +27,8 @@ func NewLifecycleService(p ProvisionInfoProvider, rpc LifecycleExecutor) *Lifecy
 	return &LifecycleService{provisionInfo: p, executeRPC: rpc}
 }
 
-func (s *LifecycleService) resolveInstance(ctx context.Context, orgID uuid.UUID) (string, string, error) {
-	info, err := s.provisionInfo.GetProvisionInfo(ctx, orgID, nil)
+func (s *LifecycleService) resolveInstance(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (string, string, error) {
+	info, err := s.provisionInfo.GetProvisionInfo(ctx, orgID, serverID)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to resolve machine: %w", err)
 	}
@@ -38,8 +38,8 @@ func (s *LifecycleService) resolveInstance(ctx context.Context, orgID uuid.UUID)
 	return info.ContainerName, info.ServerID, nil
 }
 
-func (s *LifecycleService) executeAction(ctx context.Context, orgID uuid.UUID, action string) (*queue.MachineLifecycleResult, error) {
-	instanceName, serverID, err := s.resolveInstance(ctx, orgID)
+func (s *LifecycleService) executeAction(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID, action string) (*queue.MachineLifecycleResult, error) {
+	instanceName, rpcServerID, err := s.resolveInstance(ctx, orgID, serverID)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +47,7 @@ func (s *LifecycleService) executeAction(ctx context.Context, orgID uuid.UUID, a
 	result, err := s.executeRPC(ctx, queue.MachineLifecyclePayload{
 		InstanceName: instanceName,
 		Action:       action,
-		ServerID:     serverID,
+		ServerID:     rpcServerID,
 	})
 	if err != nil {
 		if strings.Contains(err.Error(), "timed out") {
@@ -63,8 +63,8 @@ func (s *LifecycleService) executeAction(ctx context.Context, orgID uuid.UUID, a
 	return result, nil
 }
 
-func (s *LifecycleService) GetStatus(ctx context.Context, orgID uuid.UUID) (*types.MachineStateResponse, error) {
-	result, err := s.executeAction(ctx, orgID, "status")
+func (s *LifecycleService) GetStatus(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (*types.MachineStateResponse, error) {
+	result, err := s.executeAction(ctx, orgID, serverID, "status")
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +81,8 @@ func (s *LifecycleService) GetStatus(ctx context.Context, orgID uuid.UUID) (*typ
 	}, nil
 }
 
-func (s *LifecycleService) Restart(ctx context.Context, orgID uuid.UUID) (*types.MachineActionResponse, error) {
-	_, err := s.executeAction(ctx, orgID, "restart")
+func (s *LifecycleService) Restart(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (*types.MachineActionResponse, error) {
+	_, err := s.executeAction(ctx, orgID, serverID, "restart")
 	if err != nil {
 		return nil, err
 	}
@@ -92,8 +92,8 @@ func (s *LifecycleService) Restart(ctx context.Context, orgID uuid.UUID) (*types
 	}, nil
 }
 
-func (s *LifecycleService) Pause(ctx context.Context, orgID uuid.UUID) (*types.MachineActionResponse, error) {
-	_, err := s.executeAction(ctx, orgID, "pause")
+func (s *LifecycleService) Pause(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (*types.MachineActionResponse, error) {
+	_, err := s.executeAction(ctx, orgID, serverID, "pause")
 	if err != nil {
 		return nil, err
 	}
@@ -103,8 +103,8 @@ func (s *LifecycleService) Pause(ctx context.Context, orgID uuid.UUID) (*types.M
 	}, nil
 }
 
-func (s *LifecycleService) Resume(ctx context.Context, orgID uuid.UUID) (*types.MachineActionResponse, error) {
-	_, err := s.executeAction(ctx, orgID, "resume")
+func (s *LifecycleService) Resume(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (*types.MachineActionResponse, error) {
+	_, err := s.executeAction(ctx, orgID, serverID, "resume")
 	if err != nil {
 		return nil, err
 	}

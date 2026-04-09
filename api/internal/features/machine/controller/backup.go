@@ -26,7 +26,8 @@ func (c *MachineController) TriggerBackup(f fuego.ContextNoBody) (*types.Trigger
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.backupService.TriggerBackup(r.Context(), user.ID, orgID)
+	serverID := parseServerID(r)
+	response, err := c.backupService.TriggerBackup(r.Context(), user.ID, orgID, serverID)
 	if err != nil {
 		return nil, mapBackupError(err)
 	}

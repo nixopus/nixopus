@@ -176,6 +176,18 @@ export enum MCP_SETTINGS {
   TEST_SERVER = 'v1/mcp/servers/test'
 }
 
+export enum MACHINEHOSTURLS {
+  STATUS = 'v1/machine/status',
+  STATS = 'v1/machine/stats',
+  EXEC = 'v1/machine/exec',
+  RESTART = 'v1/machine/restart',
+  PAUSE = 'v1/machine/pause',
+  RESUME = 'v1/machine/resume',
+  BACKUP = 'v1/machine/backup',
+  METRICS = 'v1/machine/metrics',
+  EVENTS = 'v1/machine/events'
+}
+
 export enum SERVERURLS {
   GET_SERVERS = 'v1/servers',
   CREATE_MACHINE = 'v1/machines',

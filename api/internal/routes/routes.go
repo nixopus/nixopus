@@ -298,6 +298,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 
 	fileManagerController := file_manager.NewFileManagerController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
 	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager")
+	fuego.Use(fileManagerGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(fileManagerGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "file_manager",
@@ -338,6 +339,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		log.Fatalf("Failed to create container controller: %v", err)
 	}
 	containerGroup := fuego.Group(server, apiV1.Path+"/container")
+	fuego.Use(containerGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(containerGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "container",
@@ -378,6 +380,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	machineTimescaleStore, _ := machine_storage.NewTimescaleStore(router.app.Ctx, config.AppConfig.Timescale.URL)
 	machineController := machine_controller.NewMachineController(router.app.Store, router.app.Ctx, router.logger, machineTimescaleStore)
 	machineGroup := fuego.Group(server, apiV1.Path+"/machine")
+	fuego.Use(machineGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(machineGroup, MiddlewareConfig{
 		RBAC:         true,
 		Audit:        true,
@@ -386,6 +389,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterMachineRoutes(machineGroup, machineController)
 
 	machineBillingGroup := fuego.Group(server, apiV1.Path+"/machine")
+	fuego.Use(machineBillingGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(machineBillingGroup, MiddlewareConfig{
 		RBAC:         false,
 		Audit:        true,

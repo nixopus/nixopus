@@ -316,11 +316,11 @@ func (s *BillingStorage) DeactivateSSHKey(ctx context.Context, sshKeyID uuid.UUI
 	return err
 }
 
-func (s *BillingStorage) ReactivateSSHKey(ctx context.Context, orgID uuid.UUID) error {
+func (s *BillingStorage) ReactivateSSHKey(ctx context.Context, sshKeyID uuid.UUID) error {
 	_, err := s.DB.NewUpdate().
 		Model((*SSHKey)(nil)).
 		Set("is_active = ?", true).
-		Where("organization_id = ? AND is_active = ?", orgID, false).
+		Where("id = ?", sshKeyID).
 		Exec(ctx)
 	return err
 }
@@ -345,7 +345,8 @@ func (s *BillingStorage) GetProvisionInfo(ctx context.Context, orgID uuid.UUID, 
 	if sshKeyID != nil {
 		q = q.Where("ssh_key_id = ?", *sshKeyID)
 	} else {
-		q = q.Where("organization_id = ?", orgID)
+		q = q.Where("organization_id = ?", orgID).
+			Where("upd.type != 'user_owned'")
 	}
 	err := q.OrderExpr("created_at DESC").Limit(1).Scan(ctx)
 	if err != nil {

@@ -36,7 +36,7 @@ func TestLifecycleService_GetStatus_NotProvisioned(t *testing.T) {
 		mockRPC(nil, nil),
 	)
 
-	_, err := svc.GetStatus(context.Background(), uuid.New())
+	_, err := svc.GetStatus(context.Background(), uuid.New(), nil)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, types.ErrMachineNotProvisioned)
 }
@@ -61,7 +61,7 @@ func TestLifecycleService_GetStatus_Success(t *testing.T) {
 		}, nil),
 	)
 
-	resp, err := svc.GetStatus(context.Background(), uuid.New())
+	resp, err := svc.GetStatus(context.Background(), uuid.New(), nil)
 	require.NoError(t, err)
 	assert.Equal(t, "success", resp.Status)
 	assert.True(t, resp.Data.Active)
@@ -77,7 +77,7 @@ func TestLifecycleService_Restart_Success(t *testing.T) {
 		mockRPC(&queue.MachineLifecycleResult{Success: true, Action: "restart"}, nil),
 	)
 
-	resp, err := svc.Restart(context.Background(), uuid.New())
+	resp, err := svc.Restart(context.Background(), uuid.New(), nil)
 	require.NoError(t, err)
 	assert.Equal(t, "success", resp.Status)
 	assert.Contains(t, resp.Message, "restart")
@@ -91,7 +91,7 @@ func TestLifecycleService_Pause_Success(t *testing.T) {
 		mockRPC(&queue.MachineLifecycleResult{Success: true, Action: "pause"}, nil),
 	)
 
-	resp, err := svc.Pause(context.Background(), uuid.New())
+	resp, err := svc.Pause(context.Background(), uuid.New(), nil)
 	require.NoError(t, err)
 	assert.Equal(t, "success", resp.Status)
 }
@@ -104,7 +104,7 @@ func TestLifecycleService_Resume_Success(t *testing.T) {
 		mockRPC(&queue.MachineLifecycleResult{Success: true, Action: "resume"}, nil),
 	)
 
-	resp, err := svc.Resume(context.Background(), uuid.New())
+	resp, err := svc.Resume(context.Background(), uuid.New(), nil)
 	require.NoError(t, err)
 	assert.Equal(t, "success", resp.Status)
 }
@@ -117,7 +117,7 @@ func TestLifecycleService_RPCTimeout(t *testing.T) {
 		mockRPC(nil, fmt.Errorf("machine operation timed out")),
 	)
 
-	_, err := svc.Restart(context.Background(), uuid.New())
+	_, err := svc.Restart(context.Background(), uuid.New(), nil)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, types.ErrMachineOperationTimeout)
 }
@@ -134,7 +134,7 @@ func TestLifecycleService_RPCFailure(t *testing.T) {
 		}, nil),
 	)
 
-	_, err := svc.Pause(context.Background(), uuid.New())
+	_, err := svc.Pause(context.Background(), uuid.New(), nil)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, types.ErrMachineOperationLocked)
 }
@@ -147,7 +147,7 @@ func TestLifecycleService_EmptyContainerName(t *testing.T) {
 		mockRPC(nil, nil),
 	)
 
-	_, err := svc.GetStatus(context.Background(), uuid.New())
+	_, err := svc.GetStatus(context.Background(), uuid.New(), nil)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, types.ErrMachineNotProvisioned)
 }

@@ -1,6 +1,9 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { baseQueryWithReauth } from '@/redux/base-query';
-import { SERVERURLS } from '@/redux/api-conf';
+import { MACHINEHOSTURLS, SERVERURLS } from '@/redux/api-conf';
+
+const machineHostQuery = (server_id?: string) =>
+  server_id ? `?server_id=${encodeURIComponent(server_id)}` : '';
 import type {
   GetServersResponse,
   GetServersParams,
@@ -74,6 +77,85 @@ export const machinesApi = createApi({
       }),
       transformResponse: (response: { status: string; data: MachineSshStatusResponse }) =>
         response.data
+    }),
+    getMachineStatus: builder.query<unknown, { server_id?: string } | void>({
+      query: (params) => ({
+        url: `${MACHINEHOSTURLS.STATUS}${machineHostQuery(params?.server_id)}`,
+        method: 'GET'
+      })
+    }),
+    getMachineStats: builder.query<unknown, { server_id?: string } | void>({
+      query: (params) => ({
+        url: `${MACHINEHOSTURLS.STATS}${machineHostQuery(params?.server_id)}`,
+        method: 'GET'
+      })
+    }),
+    execMachine: builder.mutation<unknown, { command: string; server_id?: string }>({
+      query: ({ command, server_id }) => ({
+        url: `${MACHINEHOSTURLS.EXEC}${machineHostQuery(server_id)}`,
+        method: 'POST',
+        body: { command }
+      })
+    }),
+    restartMachine: builder.mutation<unknown, { server_id?: string } | void>({
+      query: (params) => ({
+        url: `${MACHINEHOSTURLS.RESTART}${machineHostQuery(params?.server_id)}`,
+        method: 'POST'
+      })
+    }),
+    pauseMachine: builder.mutation<unknown, { server_id?: string } | void>({
+      query: (params) => ({
+        url: `${MACHINEHOSTURLS.PAUSE}${machineHostQuery(params?.server_id)}`,
+        method: 'POST'
+      })
+    }),
+    resumeMachine: builder.mutation<unknown, { server_id?: string } | void>({
+      query: (params) => ({
+        url: `${MACHINEHOSTURLS.RESUME}${machineHostQuery(params?.server_id)}`,
+        method: 'POST'
+      })
+    }),
+    triggerMachineBackup: builder.mutation<unknown, { server_id?: string } | void>({
+      query: (params) => ({
+        url: `${MACHINEHOSTURLS.BACKUP}${machineHostQuery(params?.server_id)}`,
+        method: 'POST'
+      })
+    }),
+    getMachineMetrics: builder.query<
+      unknown,
+      { server_id?: string; from?: string; to?: string; limit?: number } | void
+    >({
+      query: (params) => {
+        const { server_id, from, to, limit } = params ?? {};
+        const p = new URLSearchParams();
+        if (from) p.set('from', from);
+        if (to) p.set('to', to);
+        if (limit != null) p.set('limit', String(limit));
+        if (server_id) p.set('server_id', server_id);
+        const qs = p.toString();
+        return {
+          url: `${MACHINEHOSTURLS.METRICS}${qs ? `?${qs}` : ''}`,
+          method: 'GET'
+        };
+      }
+    }),
+    getMachineEvents: builder.query<
+      unknown,
+      { server_id?: string; from?: string; to?: string; limit?: number } | void
+    >({
+      query: (params) => {
+        const { server_id, from, to, limit } = params ?? {};
+        const p = new URLSearchParams();
+        if (from) p.set('from', from);
+        if (to) p.set('to', to);
+        if (limit != null) p.set('limit', String(limit));
+        if (server_id) p.set('server_id', server_id);
+        const qs = p.toString();
+        return {
+          url: `${MACHINEHOSTURLS.EVENTS}${qs ? `?${qs}` : ''}`,
+          method: 'GET'
+        };
+      }
     })
   })
 });
@@ -87,5 +169,18 @@ export const {
   useGetProvisionStatusQuery,
   useDeleteMachineMutation,
   useGetMachineSshStatusQuery,
-  useLazyGetMachineSshStatusQuery
+  useLazyGetMachineSshStatusQuery,
+  useGetMachineStatusQuery,
+  useLazyGetMachineStatusQuery,
+  useGetMachineStatsQuery,
+  useLazyGetMachineStatsQuery,
+  useExecMachineMutation,
+  useRestartMachineMutation,
+  usePauseMachineMutation,
+  useResumeMachineMutation,
+  useTriggerMachineBackupMutation,
+  useGetMachineMetricsQuery,
+  useLazyGetMachineMetricsQuery,
+  useGetMachineEventsQuery,
+  useLazyGetMachineEventsQuery
 } = machinesApi;

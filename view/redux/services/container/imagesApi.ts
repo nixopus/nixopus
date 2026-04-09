@@ -7,9 +7,12 @@ export const imagesApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ['Images'],
   endpoints: (builder) => ({
-    getImages: builder.query<any[], { containerId: string; imagePrefix: string }>({
-      query: ({ containerId, imagePrefix }) => ({
-        url: IMAGEURLS.GET_IMAGES,
+    getImages: builder.query<
+      any[],
+      { containerId: string; imagePrefix: string; server_id?: string }
+    >({
+      query: ({ containerId, imagePrefix, server_id }) => ({
+        url: `${IMAGEURLS.GET_IMAGES}${server_id ? `?server_id=${encodeURIComponent(server_id)}` : ''}`,
         method: 'POST',
         body: {
           all: true,
@@ -20,17 +23,20 @@ export const imagesApi = createApi({
       providesTags: ['Images'],
       transformResponse: (response: any) => response.data
     }),
-    pruneImages: builder.mutation<any, { dangling?: boolean; until?: string; label?: string }>({
-      query: (body) => ({
-        url: IMAGEURLS.PRUNE_IMAGES,
+    pruneImages: builder.mutation<
+      any,
+      { dangling?: boolean; until?: string; label?: string; server_id?: string }
+    >({
+      query: ({ server_id, ...body }) => ({
+        url: `${IMAGEURLS.PRUNE_IMAGES}${server_id ? `?server_id=${encodeURIComponent(server_id)}` : ''}`,
         method: 'POST',
         body
       }),
       invalidatesTags: ['Images']
     }),
-    pruneBuildCache: builder.mutation<any, { all?: boolean }>({
-      query: (body) => ({
-        url: IMAGEURLS.PRUNE_BUILD_CACHE,
+    pruneBuildCache: builder.mutation<any, { all?: boolean; server_id?: string }>({
+      query: ({ server_id, ...body }) => ({
+        url: `${IMAGEURLS.PRUNE_BUILD_CACHE}${server_id ? `?server_id=${encodeURIComponent(server_id)}` : ''}`,
         method: 'POST',
         body
       }),

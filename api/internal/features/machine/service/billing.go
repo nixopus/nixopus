@@ -100,11 +100,16 @@ func (s *BillingService) SelectPlan(ctx context.Context, orgID uuid.UUID, planTi
 		return nil, err
 	}
 
-	if wasSuspended {
-		_ = s.storage.ReactivateSSHKey(ctx, orgID)
+	var billingSSHKeyID *uuid.UUID
+	if existing != nil {
+		billingSSHKeyID = existing.SSHKeyID
 	}
 
-	s.enqueueResourceUpgrade(ctx, orgID, plan)
+	if wasSuspended && existing.SSHKeyID != nil {
+		_ = s.storage.ReactivateSSHKey(ctx, *existing.SSHKeyID)
+	}
+
+	s.enqueueResourceUpgrade(ctx, orgID, plan, billingSSHKeyID)
 
 	newBalance, _ := s.storage.GetWalletBalance(orgID)
 
@@ -119,8 +124,8 @@ func (s *BillingService) SelectPlan(ctx context.Context, orgID uuid.UUID, planTi
 	}, nil
 }
 
-func (s *BillingService) enqueueResourceUpgrade(ctx context.Context, orgID uuid.UUID, plan *types.MachinePlan) {
-	info, err := s.storage.GetProvisionInfo(ctx, orgID, nil)
+func (s *BillingService) enqueueResourceUpgrade(ctx context.Context, orgID uuid.UUID, plan *types.MachinePlan, sshKeyID *uuid.UUID) {
+	info, err := s.storage.GetProvisionInfo(ctx, orgID, sshKeyID)
 	if err != nil || info == nil || info.ContainerName == "" {
 		return
 	}

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { useAppSelector } from '@/redux/hooks';
+import { selectSelectedServerId } from '@/redux/features/servers/selectedServerSlice';
 import { useTerminal } from '@/packages/hooks/terminal/use-terminal';
 import { useContainerReady } from '@/packages/hooks/terminal/use-container-ready';
 import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
@@ -7,6 +9,7 @@ import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 export const useContainerTerminal = (containerId: string) => {
   const sessionId = useMemo(() => `container-${containerId}-${uuidv4()}`, [containerId]);
   const { sendJsonMessage, isReady } = useWebSocket();
+  const serverId = useAppSelector(selectSelectedServerId);
 
   const {
     terminalRef: termRef,
@@ -40,7 +43,11 @@ export const useContainerTerminal = (containerId: string) => {
           () => {
             sendJsonMessage({
               action: 'terminal',
-              data: { value: `${dockerCmd}\r`, terminalId: sessionId }
+              data: {
+                value: `${dockerCmd}\r`,
+                terminalId: sessionId,
+                ...(serverId ? { serverId } : {})
+              }
             });
           },
           initialDelay + i * retryDelay
@@ -52,13 +59,17 @@ export const useContainerTerminal = (containerId: string) => {
         () => {
           sendJsonMessage({
             action: 'terminal',
-            data: { value: 'clear\r', terminalId: sessionId }
+            data: {
+              value: 'clear\r',
+              terminalId: sessionId,
+              ...(serverId ? { serverId } : {})
+            }
           });
         },
         initialDelay + (maxRetries - 1) * retryDelay + clearDelay
       );
     }
-  }, [terminalInstance, isReady, sendJsonMessage, containerId, sessionId]);
+  }, [terminalInstance, isReady, sendJsonMessage, containerId, sessionId, serverId]);
 
   return {
     terminalRef: termRef,
