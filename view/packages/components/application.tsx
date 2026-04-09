@@ -115,10 +115,11 @@ function AppItem(application: Application) {
               variant="secondary"
               className={cn(
                 'uppercase text-[10px] rounded-sm border px-1.5 py-0',
-                STATUS_BADGE[currentStatus] || 'bg-foreground/5 text-muted-foreground border-border'
+                (currentStatus && STATUS_BADGE[currentStatus]) ||
+                  'bg-foreground/5 text-muted-foreground border-border'
               )}
             >
-              {STATUS_LABEL[currentStatus] || 'Inactive'}
+              {(currentStatus && STATUS_LABEL[currentStatus]) || 'Inactive'}
             </Badge>
             <Badge
               variant="outline"

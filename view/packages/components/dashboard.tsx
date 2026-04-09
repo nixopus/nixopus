@@ -20,6 +20,7 @@ import { DataTable } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useRouter } from 'next/navigation';
 import { ContainersWidgetProps } from '@/packages/types/containers';
+import { DATA_TABLE_CLASS } from '@/components/ui/list-page-chrome';
 import useClock from '@/packages/hooks/dashboard/use-clock';
 import {
   createCPUChartData,
@@ -132,15 +133,16 @@ export const ContainersWidget: React.FC<ContainersWidgetProps> = ({ containersDa
   const { t } = useTranslation();
 
   return (
-    <CardWrapper title={t('dashboard.containers.title')} icon={Package} compact>
+    <div className="overflow-hidden rounded-md border">
       <DataTable
         data={containersData}
         columns={columns}
         emptyMessage={t('dashboard.containers.table.noContainers')}
         showBorder={false}
-        hoverable={false}
+        hoverable
+        tableClassName={DATA_TABLE_CLASS}
       />
-    </CardWrapper>
+    </div>
   );
 };
 
