@@ -105,4 +105,5 @@ type MachineBillingStatusData struct {
 	GraceDeadline    string `json:"grace_deadline,omitempty"`
 	DaysRemaining    *int   `json:"days_remaining,omitempty"`
 	Message          string `json:"message,omitempty"`
+	HasUnpaidTrial   bool   `json:"has_unpaid_trial"`
 }

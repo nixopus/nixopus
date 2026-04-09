@@ -23,10 +23,8 @@ import user from '@/lib/i18n/locales/en/user.json';
 import toasts from '@/lib/i18n/locales/en/toasts.json';
 import ai from '@/lib/i18n/locales/en/ai.json';
 import workflows from '@/lib/i18n/locales/en/workflows.json';
+import machines from '@/lib/i18n/locales/en/machines.json';
 
-// Merge all domain translations for type inference
-// Each domain file exports { domainName: { ... } }, so we merge them
-// Using a utility type to properly merge object types
 type Merge<T> = {
   [K in keyof T]: T[K];
 };
@@ -49,7 +47,8 @@ type EnTranslations = Merge<
     typeof user &
     typeof toasts &
     typeof ai &
-    typeof workflows
+    typeof workflows &
+    typeof machines
 >;
 
 // Recursive way to infer types from nested json keys
@@ -82,7 +81,8 @@ const defaultTranslations: Record<string, any> = {
   ...user,
   ...toasts,
   ...ai,
-  ...workflows
+  ...workflows,
+  ...machines
 };
 
 export function useTranslation() {

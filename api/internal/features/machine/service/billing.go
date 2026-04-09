@@ -141,6 +141,8 @@ func (s *BillingService) GetBillingStatus(orgID uuid.UUID) (*types.MachineBillin
 		return nil, err
 	}
 
+	hasUnpaidTrial := s.checkUnpaidTrial(orgID)
+
 	if billing != nil {
 		plan, err := s.storage.GetPlanByID(billing.MachinePlanID)
 		if err != nil {
@@ -148,9 +150,10 @@ func (s *BillingService) GetBillingStatus(orgID uuid.UUID) (*types.MachineBillin
 		}
 
 		data := &types.MachineBillingStatusData{
-			HasMachine:    true,
-			BillingStatus: string(billing.Status),
-			PeriodEnd:     billing.CurrentPeriodEnd.Format(time.RFC3339),
+			HasMachine:     true,
+			BillingStatus:  string(billing.Status),
+			PeriodEnd:      billing.CurrentPeriodEnd.Format(time.RFC3339),
+			HasUnpaidTrial: hasUnpaidTrial,
 		}
 
 		if plan != nil {
@@ -186,15 +189,24 @@ func (s *BillingService) GetBillingStatus(orgID uuid.UUID) (*types.MachineBillin
 		return &types.MachineBillingResponse{
 			Status: "success",
 			Data: &types.MachineBillingStatusData{
-				HasMachine:    true,
-				BillingStatus: "unbilled",
-				Message:       "Your machine does not have a billing plan configured.",
+				HasMachine:     true,
+				BillingStatus:  "unbilled",
+				Message:        "Your machine does not have a billing plan configured.",
+				HasUnpaidTrial: hasUnpaidTrial,
 			},
 		}, nil
 	}
 
 	return &types.MachineBillingResponse{
 		Status: "success",
-		Data:   &types.MachineBillingStatusData{HasMachine: false},
+		Data:   &types.MachineBillingStatusData{HasMachine: false, HasUnpaidTrial: hasUnpaidTrial},
 	}, nil
+}
+
+func (s *BillingService) checkUnpaidTrial(orgID uuid.UUID) bool {
+	hasTrialWithoutBilling, err := s.storage.HasTrialWithoutActiveBilling(orgID)
+	if err != nil {
+		return false
+	}
+	return hasTrialWithoutBilling
 }

@@ -23,17 +23,19 @@ type FeatureFlag struct {
 type FeatureName string
 
 const (
-	FeatureTerminal        FeatureName = "terminal"
-	FeatureFileManager     FeatureName = "file_manager"
-	FeatureMonitoring      FeatureName = "monitoring"
-	FeatureProxyConfig     FeatureName = "proxy_config"
-	FeatureGithubConnector FeatureName = "github_connector"
-	FeatureAudit           FeatureName = "audit"
-	FeatureNotifications   FeatureName = "notifications"
-	FeatureDomain          FeatureName = "domain"
-	FeatureSelfHosted      FeatureName = "self_hosted"
-	FeatureContainer       FeatureName = "container"
-	FeatureMCP             FeatureName = "mcp"
+	FeatureTerminal         FeatureName = "terminal"
+	FeatureFileManager      FeatureName = "file_manager"
+	FeatureMonitoring       FeatureName = "monitoring"
+	FeatureProxyConfig      FeatureName = "proxy_config"
+	FeatureGithubConnector  FeatureName = "github_connector"
+	FeatureAudit            FeatureName = "audit"
+	FeatureNotifications    FeatureName = "notifications"
+	FeatureDomain           FeatureName = "domain"
+	FeatureSelfHosted       FeatureName = "self_hosted"
+	FeatureContainer        FeatureName = "container"
+	FeatureMCP              FeatureName = "mcp"
+	FeatureMachineBYOS      FeatureName = "machine_byos"
+	FeatureMachineProvision FeatureName = "machine_provision"
 )
 
 type UpdateFeatureFlagRequest struct {

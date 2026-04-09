@@ -13,17 +13,21 @@ import (
 	"github.com/nixopus/nixopus/api/internal/queue"
 	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 	"github.com/nixopus/nixopus/api/internal/utils"
+
+	ff_service "github.com/nixopus/nixopus/api/internal/features/feature-flags/service"
+	ff_storage "github.com/nixopus/nixopus/api/internal/features/feature-flags/storage"
 )
 
 type MachineController struct {
-	store            *shared_storage.Store
-	service          *service.MachineService
-	billingService   *service.BillingService
-	lifecycleService *service.LifecycleService
-	backupService    *service.BackupService
-	metricsService   *service.MetricsService
-	ctx              context.Context
-	logger           logger.Logger
+	store               *shared_storage.Store
+	service             *service.MachineService
+	billingService      *service.BillingService
+	lifecycleService    *service.LifecycleService
+	backupService       *service.BackupService
+	metricsService      *service.MetricsService
+	registrationService *service.RegistrationService
+	ctx                 context.Context
+	logger              logger.Logger
 }
 
 func NewMachineController(
@@ -34,15 +38,20 @@ func NewMachineController(
 ) *MachineController {
 	bs := machine_storage.NewBillingStorage(store.DB, ctx)
 	backupStore := machine_storage.NewBackupStorage(store.DB, ctx)
+	regStore := machine_storage.NewRegistrationStorage(store.DB, ctx)
+	ffStorage := ff_storage.NewFeatureFlagStorage(store.DB, ctx)
+	ffService := ff_service.NewFeatureFlagService(ffStorage, l, ctx)
+	regService := service.NewRegistrationService(regStore, ffService, nil, l, ctx)
 	return &MachineController{
-		store:            store,
-		service:          service.NewMachineService(store, ctx, l),
-		billingService:   service.NewBillingService(bs),
-		lifecycleService: service.NewLifecycleService(bs, queue.ExecuteMachineLifecycle),
-		backupService:    service.NewBackupService(bs, backupStore, store.DB),
-		metricsService:   service.NewMetricsService(ts, store.DB),
-		ctx:              ctx,
-		logger:           l,
+		store:               store,
+		service:             service.NewMachineService(store, ctx, l),
+		billingService:      service.NewBillingService(bs),
+		lifecycleService:    service.NewLifecycleService(bs, queue.ExecuteMachineLifecycle),
+		backupService:       service.NewBackupService(bs, backupStore, store.DB),
+		metricsService:      service.NewMetricsService(ts, store.DB),
+		registrationService: regService,
+		ctx:                 ctx,
+		logger:              l,
 	}
 }
 

@@ -111,6 +111,17 @@ func (router *Router) RegisterMachineRoutes(machineGroup *fuego.Server, machineC
 	)
 }
 
+func (router *Router) RegisterMachineRegistrationRoutes(regGroup *fuego.Server, machineController *machine_controller.MachineController) {
+	fuego.Post(regGroup, "/machines", machineController.CreateMachine,
+		fuego.OptionSummary("Register a BYOS machine"))
+	fuego.Post(regGroup, "/machines/{id}/verify", machineController.VerifyMachine,
+		fuego.OptionSummary("Verify SSH connection"))
+	fuego.Delete(regGroup, "/machines/{id}", machineController.DeleteMachine,
+		fuego.OptionSummary("Remove a machine"))
+	fuego.Get(regGroup, "/machines/{id}/ssh/status", machineController.GetSSHStatus,
+		fuego.OptionSummary("SSH connection status"))
+}
+
 func (router *Router) RegisterMachineBillingRoutes(billingGroup *fuego.Server, machineController *machine_controller.MachineController) {
 	fuego.Get(
 		billingGroup,

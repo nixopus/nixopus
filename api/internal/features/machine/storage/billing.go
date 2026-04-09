@@ -213,6 +213,16 @@ func (s *BillingStorage) HasActiveSSHKey(orgID uuid.UUID) (bool, error) {
 	return exists, nil
 }
 
+func (s *BillingStorage) HasTrialWithoutActiveBilling(orgID uuid.UUID) (bool, error) {
+	exists, err := s.DB.NewSelect().
+		TableExpr("user_provision_details AS upd").
+		Where("upd.organization_id = ?", orgID).
+		Where("upd.type = 'trial'").
+		Where("NOT EXISTS (SELECT 1 FROM org_machine_billing AS omb WHERE omb.organization_id = upd.organization_id AND omb.status = 'active')").
+		Exists(s.Ctx)
+	return exists, err
+}
+
 type BillingWithPlan struct {
 	Billing types.OrgMachineBilling `bun:"embed:omb__"`
 	Plan    types.MachinePlan       `bun:"embed:mp__"`

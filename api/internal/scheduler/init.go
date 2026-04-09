@@ -13,11 +13,13 @@ import (
 )
 
 type Schedulers struct {
-	Main        *Scheduler
-	HealthCheck *HealthCheckScheduler
-	Billing     *BillingScheduler
-	Backup      *BackupScheduler
-	TrialExpiry *TrialExpiryScheduler
+	Main                *Scheduler
+	HealthCheck         *HealthCheckScheduler
+	Billing             *BillingScheduler
+	Backup              *BackupScheduler
+	TrialExpiry         *TrialExpiryScheduler
+	StaleMachineCleanup *StaleMachineCleanupScheduler
+	MachineHealthCheck  *MachineHealthCheckScheduler
 }
 
 // InitSchedulers creates and configures all schedulers
@@ -40,12 +42,16 @@ func InitSchedulers(store *shared_storage.Store, ctx context.Context) *Scheduler
 	billingScheduler := NewBillingScheduler(store.DB, ctx, l)
 	backupScheduler := NewBackupScheduler(store.DB, ctx, l)
 	trialExpiryScheduler := NewTrialExpiryScheduler(store.DB, ctx, l, config.AppConfig.Trail.TrialPeriodDays)
+	staleMachineCleanup := NewStaleMachineCleanupScheduler(store.DB, ctx, l)
+	machineHealthCheck := NewMachineHealthCheckScheduler(store.DB, ctx, l)
 
 	return &Schedulers{
-		Main:        sched,
-		HealthCheck: healthCheckScheduler,
-		Billing:     billingScheduler,
-		Backup:      backupScheduler,
-		TrialExpiry: trialExpiryScheduler,
+		Main:                sched,
+		HealthCheck:         healthCheckScheduler,
+		Billing:             billingScheduler,
+		Backup:              backupScheduler,
+		TrialExpiry:         trialExpiryScheduler,
+		StaleMachineCleanup: staleMachineCleanup,
+		MachineHealthCheck:  machineHealthCheck,
 	}
 }

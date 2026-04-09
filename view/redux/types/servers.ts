@@ -60,3 +60,43 @@ export interface GetServersParams {
   status?: 'NOT_STARTED' | 'PROVISIONING' | 'ACTIVE' | 'FAILED';
   is_active?: boolean;
 }
+
+export interface CreateMachineRequest {
+  name: string;
+  host: string;
+  port?: number;
+  user?: string;
+}
+
+export interface CreateMachineResponse {
+  id: string;
+  name: string;
+  host: string;
+  port: number;
+  user: string;
+  public_key: string;
+}
+
+export interface ProvisionMachineRequest {
+  name?: string;
+}
+
+export interface ProvisionStatusResponse {
+  provision_id: string;
+  step: string;
+  status: string;
+  error?: string;
+}
+
+export interface MachineVerifyResponse {
+  status: string;
+}
+
+export interface MachineSshStatusResponse {
+  is_active: boolean;
+  last_used_at?: string;
+}
+
+export interface DeleteMachineResponse {
+  status: string;
+}

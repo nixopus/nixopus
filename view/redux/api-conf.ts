@@ -177,5 +177,11 @@ export enum MCP_SETTINGS {
 }
 
 export enum SERVERURLS {
-  GET_SERVERS = 'v1/servers'
+  GET_SERVERS = 'v1/servers',
+  CREATE_MACHINE = 'v1/machines',
+  VERIFY_MACHINE = 'v1/machines',
+  PROVISION_MACHINE = 'v1/machines/provision',
+  PROVISION_STATUS = 'v1/machines/provision',
+  DELETE_MACHINE = 'v1/machines',
+  SSH_STATUS = 'v1/machines'
 }
