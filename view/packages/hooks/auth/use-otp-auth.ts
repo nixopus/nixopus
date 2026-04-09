@@ -200,9 +200,7 @@ function useOtpAuth() {
             }
           }
 
-          setTimeout(() => {
-            router.push('/chats');
-          }, 200);
+          router.push('/chats');
         }
       } catch (error: any) {
         toast.error(error?.message || t('auth.otpLogin.errors.verifyFailed'));

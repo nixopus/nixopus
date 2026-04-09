@@ -148,7 +148,7 @@ export function LoginForm({ CaptchaComponent, captchaSiteKey, ...props }: LoginF
                 </div>
               )}
               {captchaEnabled && CaptchaComponent && !props.showTwoFactor && (
-                <div className="flex justify-center">
+                <div className="w-full [&>div]:!w-full [&_iframe]:!w-full">
                   <CaptchaComponent siteKey={captchaSiteKey!} onToken={handleToken} />
                 </div>
               )}
