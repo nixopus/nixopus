@@ -1,11 +1,12 @@
 'use client';
 
-import { Layers, Box, Globe, GitFork, Plug, type LucideIcon } from 'lucide-react';
+import { Layers, Box, Globe, GitFork, Plug, Server, type LucideIcon } from 'lucide-react';
 import { useGetApplicationsQuery } from '@/redux/services/deploy/applicationsApi';
 import { useGetContainersQuery } from '@/redux/services/container/containerApi';
 import { useGetAllDomainsQuery } from '@/redux/services/settings/domainsApi';
 import { useGetAllGithubRepositoriesQuery } from '@/redux/services/connector/githubConnectorApi';
 import { useGetMCPServersQuery } from '@/redux/services/settings/mcpApi';
+import { useGetServersQuery } from '@/redux/services/servers/serversApi';
 
 export interface ChatContext {
   type: string;
@@ -147,12 +148,36 @@ function useIntegrationsContextProvider(): ContextProviderData {
   };
 }
 
+function useMachinesContextProvider(): ContextProviderData {
+  const { data, isLoading } = useGetServersQuery({ page: 1, page_size: 100 });
+
+  const items: ChatContext[] = (data?.servers ?? []).map((server) => ({
+    type: 'Machine',
+    id: server.id,
+    label: server.name,
+    meta: {
+      ID: server.id,
+      ...(server.provision?.domain || server.host
+        ? { Hostname: (server.provision?.domain ?? server.host)! }
+        : {}),
+      Status: server.provision?.status ?? (server.is_active ? 'ACTIVE' : 'INACTIVE')
+    }
+  }));
+
+  return {
+    config: { type: 'Machine', icon: Server, labelKey: 'ai.context.machines' },
+    items,
+    isLoading
+  };
+}
+
 export function useChatContextProviders(): ContextProviderData[] {
   const apps = useAppsContextProvider();
   const containers = useContainersContextProvider();
   const domains = useDomainsContextProvider();
   const repositories = useRepositoriesContextProvider();
   const integrations = useIntegrationsContextProvider();
+  const machines = useMachinesContextProvider();
 
-  return [apps, containers, domains, repositories, integrations];
+  return [apps, containers, domains, repositories, integrations, machines];
 }

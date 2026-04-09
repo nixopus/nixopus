@@ -30,7 +30,8 @@
       "containers": "Containers",
       "domains": "Domains",
       "repositories": "Repositories",
-      "integrations": "Integrations"
+      "integrations": "Integrations",
+      "machines": "Machines"
     },
     "model": {
       "label": "Model",
