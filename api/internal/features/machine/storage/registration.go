@@ -167,3 +167,17 @@ func (s *RegistrationStorage) GetProvisionDetailsBySSHKeyID(sshKeyID uuid.UUID) 
 		Scan(s.ctx, &id)
 	return id, err
 }
+
+func (s *RegistrationStorage) GetAnyActiveInfraServerID() (string, error) {
+	var serverID string
+	err := s.db.NewSelect().
+		TableExpr("infra_servers").
+		ColumnExpr("id::text").
+		Where("status = ?", "active").
+		Limit(1).
+		Scan(s.ctx, &serverID)
+	if err != nil {
+		return "", err
+	}
+	return serverID, nil
+}

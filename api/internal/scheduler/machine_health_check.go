@@ -57,6 +57,8 @@ func (s *MachineHealthCheckScheduler) run() {
 		return
 	}
 
+	serverID, _ := s.storage.GetAnyActiveInfraServerID()
+
 	recentCutoff := time.Now().Add(-25 * time.Minute)
 	enqueued := 0
 
@@ -75,6 +77,7 @@ func (s *MachineHealthCheckScheduler) run() {
 			payload := queue.MachineVerifyPayload{
 				MachineID: machine.ID.String(),
 				OrgID:     org.OrganizationID.String(),
+				ServerID:  serverID,
 			}
 			if err := queue.EnqueueMachineVerifyTask(s.ctx, payload); err != nil {
 				s.logger.Log(logger.Error, fmt.Sprintf("machine health check: enqueue failed for %s: %v", machine.ID, err), "")

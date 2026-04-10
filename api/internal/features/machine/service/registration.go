@@ -139,9 +139,12 @@ func (s *RegistrationService) VerifyMachine(orgID uuid.UUID, machineID uuid.UUID
 		return fmt.Errorf("machine not found: %w", err)
 	}
 
+	serverID, _ := s.storage.GetAnyActiveInfraServerID()
+
 	return queue.EnqueueMachineVerifyTask(s.ctx, queue.MachineVerifyPayload{
 		MachineID: machineID.String(),
 		OrgID:     orgID.String(),
+		ServerID:  serverID,
 	})
 }
 

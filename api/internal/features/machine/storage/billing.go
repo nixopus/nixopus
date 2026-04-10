@@ -343,7 +343,7 @@ func (s *BillingStorage) GetProvisionInfo(ctx context.Context, orgID uuid.UUID, 
 	var row UserProvisionDetail
 	q := s.DB.NewSelect().Model(&row).Column("user_id", "lxd_container_name", "server_id")
 	if serverID != nil {
-		q = q.Where("server_id = ? AND organization_id = ?", *serverID, orgID)
+		q = q.Where("(upd.ssh_key_id = ? OR upd.server_id = ?) AND upd.organization_id = ?", *serverID, *serverID, orgID)
 	} else {
 		q = q.Where("organization_id = ?", orgID).
 			Where("upd.type != 'user_owned'")
