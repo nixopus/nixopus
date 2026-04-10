@@ -4,7 +4,7 @@ import { ContainerData, SystemStatsType } from '@/redux/types/monitor';
 import { ApplicationDeployment } from '@/redux/types/applications';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useAppSelector } from '@/redux/hooks';
-import { selectSelectedServerId } from '@/redux/features/servers/selectedServerSlice';
+import { useMachineId } from '@/packages/contexts/machine-context';
 
 function use_monitor() {
   const { sendJsonMessage, message, isReady } = useWebSocket();
@@ -23,7 +23,7 @@ function use_monitor() {
     return activeId || fallbackId;
   });
 
-  const serverId = useAppSelector(selectSelectedServerId);
+  const serverId = useMachineId();
 
   const startMonitoring = useCallback(() => {
     if (!isReady || !organizationId) return;

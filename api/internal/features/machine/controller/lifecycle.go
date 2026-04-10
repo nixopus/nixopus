@@ -36,7 +36,12 @@ func (c *MachineController) GetMachineStatus(f fuego.ContextNoBody) (*types.Mach
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.lifecycleService.GetStatus(r.Context(), orgID, parseServerID(r))
+	serverID := parseServerID(r)
+	if serverID == nil {
+		return nil, fuego.BadRequestError{Detail: "server_id is required"}
+	}
+
+	response, err := c.lifecycleService.GetStatus(r.Context(), orgID, serverID)
 	if err != nil {
 		return nil, mapLifecycleError(c.logger, err, orgID, "get status")
 	}
@@ -57,7 +62,12 @@ func (c *MachineController) RestartMachine(f fuego.ContextNoBody) (*types.Machin
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.lifecycleService.Restart(r.Context(), orgID, parseServerID(r))
+	serverID := parseServerID(r)
+	if serverID == nil {
+		return nil, fuego.BadRequestError{Detail: "server_id is required"}
+	}
+
+	response, err := c.lifecycleService.Restart(r.Context(), orgID, serverID)
 	if err != nil {
 		return nil, mapLifecycleError(c.logger, err, orgID, "restart")
 	}
@@ -78,7 +88,12 @@ func (c *MachineController) PauseMachine(f fuego.ContextNoBody) (*types.MachineA
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.lifecycleService.Pause(r.Context(), orgID, parseServerID(r))
+	serverID := parseServerID(r)
+	if serverID == nil {
+		return nil, fuego.BadRequestError{Detail: "server_id is required"}
+	}
+
+	response, err := c.lifecycleService.Pause(r.Context(), orgID, serverID)
 	if err != nil {
 		return nil, mapLifecycleError(c.logger, err, orgID, "pause")
 	}
@@ -99,7 +114,12 @@ func (c *MachineController) ResumeMachine(f fuego.ContextNoBody) (*types.Machine
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
-	response, err := c.lifecycleService.Resume(r.Context(), orgID, parseServerID(r))
+	serverID := parseServerID(r)
+	if serverID == nil {
+		return nil, fuego.BadRequestError{Detail: "server_id is required"}
+	}
+
+	response, err := c.lifecycleService.Resume(r.Context(), orgID, serverID)
 	if err != nil {
 		return nil, mapLifecycleError(c.logger, err, orgID, "resume")
 	}

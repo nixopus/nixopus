@@ -13,7 +13,7 @@ import (
 )
 
 type ProvisionInfoProvider interface {
-	GetProvisionInfo(ctx context.Context, orgID uuid.UUID, sshKeyID *uuid.UUID) (*storage.ProvisionInfo, error)
+	GetProvisionInfo(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (*storage.ProvisionInfo, error)
 }
 
 type LifecycleExecutor func(ctx context.Context, payload queue.MachineLifecyclePayload) (*queue.MachineLifecycleResult, error)

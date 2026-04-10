@@ -397,14 +397,24 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterMachineBillingRoutes(machineBillingGroup, machineController)
 
-	machineRegGroup := fuego.Group(server, apiV1.Path+"/machines")
-	router.applyMiddleware(machineRegGroup, MiddlewareConfig{
+	machinesGroup := fuego.Group(server, apiV1.Path+"/machines")
+	router.applyMiddleware(machinesGroup, MiddlewareConfig{
 		RBAC:         true,
-		FeatureFlag:  "machine_byos",
 		Audit:        true,
 		ResourceName: "machine",
 	})
-	router.RegisterMachineRegistrationRoutes(machineRegGroup, machineController)
+	fuego.Get(machinesGroup, "", serverController.ListServers,
+		fuego.OptionSummary("List machines"),
+		fuego.OptionQueryInt("page", "Page number"),
+		fuego.OptionQueryInt("page_size", "Page size"),
+		fuego.OptionQuery("search", "Search by name"),
+		fuego.OptionQuery("sort_by", "Sort field"),
+		fuego.OptionQuery("sort_order", "Sort order"),
+		fuego.OptionQuery("status", "Status filter"),
+		fuego.OptionQueryBool("is_active", "Filter by active state"),
+	)
+
+	router.RegisterMachineRegistrationRoutes(machinesGroup, machineController)
 
 	trailController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	trailGroup := fuego.Group(server, apiV1.Path+"/trail")

@@ -30,10 +30,12 @@ export function NavMain({ items, onItemClick }: TopNavMainProps) {
     router.push(url);
   };
 
+  const machineMatch = pathname.match(/^\/machines\/[^/]+/);
+  const effectivePath = machineMatch ? pathname.replace(machineMatch[0], '') || '/' : pathname;
+
   const isItemActive = (url: string) => {
-    if (pathname === url) return true;
-    if (pathname.startsWith(url + '/')) return true;
-    return false;
+    const checkPath = url.startsWith('/machines/') ? pathname : effectivePath;
+    return checkPath === url || checkPath.startsWith(url + '/');
   };
 
   return (

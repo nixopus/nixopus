@@ -126,6 +126,8 @@ function buildNavItems() {
   return [...topLevel, settingsGroup].sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
 }
 
+const MACHINE_SCOPED_PATHS = ['/charts', '/apps', '/backups'];
+
 const data = {
   navMain: buildNavItems()
 };
@@ -139,6 +141,8 @@ export function useAppSidebar() {
   const dispatch = useAppDispatch();
   const { canAccessResource } = useRBAC();
   const pathname = usePathname();
+  const machineMatch = pathname?.match(/^\/machines\/([^/]+)/);
+  const machineUrlPrefix = machineMatch ? `/machines/${machineMatch[1]}` : '';
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const hasAnyPermission = useMemo(() => {
@@ -307,9 +311,14 @@ Add any other context about the problem here.`;
           return hasAnyPermission(item.resource);
         })
         .map((item) => {
+          const shouldPrefix =
+            machineUrlPrefix &&
+            MACHINE_SCOPED_PATHS.some((p) => item.url === p || item.url.startsWith(p + '/'));
+
           const baseItem = {
             ...item,
-            title: t(item.title as any)
+            title: t(item.title as any),
+            url: shouldPrefix ? `${machineUrlPrefix}${item.url}` : item.url
           };
 
           if ('items' in item && item.items && Array.isArray(item.items)) {
@@ -326,7 +335,7 @@ Add any other context about the problem here.`;
 
           return baseItem;
         }),
-    [data.navMain, hasAnyPermission, t]
+    [data.navMain, hasAnyPermission, t, machineUrlPrefix]
   );
 
   useEffect(() => {
@@ -341,24 +350,38 @@ Add any other context about the problem here.`;
     }
   }, [activeOrg?.id, refetch]);
 
-  // Sync activeNav with current pathname to prevent multiple active menu items
   useEffect(() => {
     if (pathname) {
+      const effectivePath = machineUrlPrefix ? pathname.replace(machineUrlPrefix, '') : pathname;
+
       const matchingNavItem = data.navMain.find((item) => {
-        if (pathname === item.url || pathname.startsWith(item.url + '/')) return true;
+        if (effectivePath === item.url || effectivePath.startsWith(item.url + '/')) return true;
         if ('items' in item && item.items) {
           return item.items.some(
-            (sub: { url: string }) => pathname === sub.url || pathname.startsWith(sub.url + '/')
+            (sub: { url: string }) =>
+              effectivePath === sub.url || effectivePath.startsWith(sub.url + '/')
           );
         }
         return false;
       });
 
-      if (matchingNavItem && matchingNavItem.url !== activeNav) {
-        setActiveNav(matchingNavItem.url);
+      const isMachineScoped =
+        matchingNavItem &&
+        MACHINE_SCOPED_PATHS.some(
+          (p) => matchingNavItem.url === p || matchingNavItem.url.startsWith(p + '/')
+        );
+
+      const targetUrl = matchingNavItem
+        ? machineUrlPrefix && isMachineScoped
+          ? `${machineUrlPrefix}${matchingNavItem.url}`
+          : matchingNavItem.url
+        : undefined;
+
+      if (targetUrl && targetUrl !== activeNav) {
+        setActiveNav(targetUrl);
       }
     }
-  }, [pathname, activeNav, setActiveNav]);
+  }, [pathname, activeNav, setActiveNav, machineUrlPrefix]);
 
   return {
     user,

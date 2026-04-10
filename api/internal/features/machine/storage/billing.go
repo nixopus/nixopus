@@ -339,11 +339,11 @@ type ProvisionInfo struct {
 	ServerID      string
 }
 
-func (s *BillingStorage) GetProvisionInfo(ctx context.Context, orgID uuid.UUID, sshKeyID *uuid.UUID) (*ProvisionInfo, error) {
+func (s *BillingStorage) GetProvisionInfo(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (*ProvisionInfo, error) {
 	var row UserProvisionDetail
 	q := s.DB.NewSelect().Model(&row).Column("user_id", "lxd_container_name", "server_id")
-	if sshKeyID != nil {
-		q = q.Where("ssh_key_id = ?", *sshKeyID)
+	if serverID != nil {
+		q = q.Where("server_id = ? AND organization_id = ?", *serverID, orgID)
 	} else {
 		q = q.Where("organization_id = ?", orgID).
 			Where("upd.type != 'user_owned'")

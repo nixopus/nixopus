@@ -20,7 +20,7 @@ type mockProvisionInfoProvider struct {
 	err  error
 }
 
-func (m *mockProvisionInfoProvider) GetProvisionInfo(ctx context.Context, orgID uuid.UUID, sshKeyID *uuid.UUID) (*storage.ProvisionInfo, error) {
+func (m *mockProvisionInfoProvider) GetProvisionInfo(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (*storage.ProvisionInfo, error) {
 	return m.info, m.err
 }
 
@@ -67,6 +67,34 @@ func TestLifecycleService_GetStatus_Success(t *testing.T) {
 	assert.True(t, resp.Data.Active)
 	assert.Equal(t, "Running", resp.Data.State)
 	assert.Equal(t, 1234, resp.Data.PID)
+}
+
+func TestLifecycleService_GetStatus_WithServerID(t *testing.T) {
+	statusData, _ := json.Marshal(map[string]interface{}{
+		"name": "trail-abc", "active": true, "state": "Running", "pid": 5678, "uptime_sec": 7200,
+	})
+
+	serverID := uuid.New()
+	svc := service.NewLifecycleService(
+		&mockProvisionInfoProvider{
+			info: &storage.ProvisionInfo{
+				UserID:        uuid.New(),
+				ContainerName: "trail-abc",
+				ServerID:      serverID.String(),
+			},
+		},
+		mockRPC(&queue.MachineLifecycleResult{
+			Success: true,
+			Action:  "status",
+			Data:    statusData,
+		}, nil),
+	)
+
+	resp, err := svc.GetStatus(context.Background(), uuid.New(), &serverID)
+	require.NoError(t, err)
+	assert.Equal(t, "success", resp.Status)
+	assert.True(t, resp.Data.Active)
+	assert.Equal(t, 5678, resp.Data.PID)
 }
 
 func TestLifecycleService_Restart_Success(t *testing.T) {

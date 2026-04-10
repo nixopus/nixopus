@@ -15,7 +15,6 @@ import authReducer from '@/redux/features/users/authSlice';
 import { userApi } from '@/redux/services/users/userApi';
 import userSlice from '@/redux/features/users/userSlice';
 import orgSlice from '@/redux/features/users/orgSlice';
-import selectedServerReducer from '@/redux/features/servers/selectedServerSlice';
 import { notificationApi } from '@/redux/services/settings/notificationApi';
 import { domainsApi } from '@/redux/services/settings/domainsApi';
 import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
@@ -71,7 +70,6 @@ const coreReducers = {
   [healthcheckApi.reducerPath]: healthcheckApi.reducer,
   user: userSlice,
   orgs: orgSlice,
-  selectedServer: selectedServerReducer,
   fileManagersApi: fileManagersApi.reducer,
   [auditApi.reducerPath]: auditApi.reducer,
   [FeatureFlagsApi.reducerPath]: FeatureFlagsApi.reducer,

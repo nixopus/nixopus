@@ -47,7 +47,8 @@ export const machinesApi = createApi({
       query: (id) => ({
         url: `${SERVERURLS.VERIFY_MACHINE}/${id}/verify`,
         method: 'POST'
-      })
+      }),
+      invalidatesTags: ['Server']
     }),
     provisionMachine: builder.mutation<ProvisionStatusResponse, ProvisionMachineRequest>({
       query: (data) => ({

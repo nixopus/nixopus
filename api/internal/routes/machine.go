@@ -112,7 +112,7 @@ func (router *Router) RegisterMachineRoutes(machineGroup *fuego.Server, machineC
 }
 
 func (router *Router) RegisterMachineRegistrationRoutes(regGroup *fuego.Server, machineController *machine_controller.MachineController) {
-	fuego.Post(regGroup, "/", machineController.CreateMachine,
+	fuego.Post(regGroup, "", machineController.CreateMachine,
 		fuego.OptionSummary("Register a BYOS machine"))
 	fuego.Post(regGroup, "/{id}/verify", machineController.VerifyMachine,
 		fuego.OptionSummary("Verify SSH connection"))

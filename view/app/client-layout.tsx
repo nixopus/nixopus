@@ -16,6 +16,7 @@ import { palette } from '@/packages/utils/colors';
 import { authClient } from '@/packages/lib/auth-client';
 import AppLayout from '@/packages/layouts/layout';
 import { SudoModeProvider } from '@/packages/hooks/security/use-sudo-mode';
+import { MachineProvider } from '@/packages/contexts/machine-context';
 import { CSPostHogProvider } from '@/packages/components/analytics/posthog-provider';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
@@ -255,13 +256,15 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
                     <PluginGuardWrapper>
                       <SystemStatsProvider>
                         <SudoModeProvider>
-                          {isNoLayoutRoute ? (
-                            <PluginProviderWrapper>{children}</PluginProviderWrapper>
-                          ) : (
-                            <AppLayout>
+                          <MachineProvider>
+                            {isNoLayoutRoute ? (
                               <PluginProviderWrapper>{children}</PluginProviderWrapper>
-                            </AppLayout>
-                          )}
+                            ) : (
+                              <AppLayout>
+                                <PluginProviderWrapper>{children}</PluginProviderWrapper>
+                              </AppLayout>
+                            )}
+                          </MachineProvider>
                         </SudoModeProvider>
                       </SystemStatsProvider>
                     </PluginGuardWrapper>

@@ -2381,6 +2381,53 @@
 				],
 				"type": "object"
 			},
+			"CreateMachineRequest": {
+				"description": "CreateMachineRequest schema",
+				"properties": {
+					"host": {
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"port": {
+						"type": "integer"
+					},
+					"user": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"host",
+					"name"
+				],
+				"type": "object"
+			},
+			"CreateMachineResponse": {
+				"description": "CreateMachineResponse schema",
+				"properties": {
+					"host": {
+						"type": "string"
+					},
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"port": {
+						"type": "integer"
+					},
+					"public_key": {
+						"type": "string"
+					},
+					"user": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"CreateProjectRequest": {
 				"description": "CreateProjectRequest schema",
 				"properties": {
@@ -2774,6 +2821,15 @@
 				"required": [
 					"id"
 				],
+				"type": "object"
+			},
+			"DeleteMachineResponse": {
+				"description": "DeleteMachineResponse schema",
+				"properties": {
+					"status": {
+						"type": "string"
+					}
+				},
 				"type": "object"
 			},
 			"DeleteSMTPConfigRequest": {
@@ -6980,6 +7036,9 @@
 													"nullable": true,
 													"type": "string"
 												},
+												"type": {
+													"type": "string"
+												},
 												"updated_at": {
 													"format": "date-time",
 													"type": "string"
@@ -7146,6 +7205,9 @@
 								"type": "string"
 							},
 							"has_machine": {
+								"type": "boolean"
+							},
+							"has_unpaid_trial": {
 								"type": "boolean"
 							},
 							"message": {
@@ -8524,6 +8586,19 @@
 						"type": "string"
 					},
 					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"SSHStatusResponse": {
+				"description": "SSHStatusResponse schema",
+				"properties": {
+					"is_active": {
+						"type": "boolean"
+					},
+					"last_used_at": {
+						"nullable": true,
 						"type": "string"
 					}
 				},
@@ -10124,6 +10199,15 @@
 				"properties": {
 					"id": {
 						"format": "uuid",
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"VerifyMachineResponse": {
+				"description": "VerifyMachineResponse schema",
+				"properties": {
+					"status": {
 						"type": "string"
 					}
 				},
@@ -21482,6 +21566,610 @@
 				]
 			}
 		},
+		"/api/v1/machines": {
+			"get": {
+				"description": "List machines.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "listMachines",
+				"parameters": [
+					{
+						"description": "Page number",
+						"example": 1,
+						"in": "query",
+						"name": "page",
+						"schema": {
+							"default": 1,
+							"minimum": 1,
+							"type": "integer"
+						}
+					},
+					{
+						"description": "Page size",
+						"example": 20,
+						"in": "query",
+						"name": "page_size",
+						"schema": {
+							"default": 20,
+							"maximum": 100,
+							"minimum": 1,
+							"type": "integer"
+						}
+					},
+					{
+						"description": "Search by name",
+						"example": "nginx",
+						"in": "query",
+						"name": "search",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Sort field",
+						"example": "created_at",
+						"in": "query",
+						"name": "sort_by",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Sort order",
+						"example": "desc",
+						"in": "query",
+						"name": "sort_order",
+						"schema": {
+							"enum": [
+								"asc",
+								"desc"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"description": "Status filter",
+						"in": "query",
+						"name": "status",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Filter by active state",
+						"example": true,
+						"in": "query",
+						"name": "is_active",
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ListServersResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ListServersResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "List machines",
+				"tags": [
+					"api/v1/machines"
+				]
+			},
+			"post": {
+				"description": "Register a BYOS machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "registerABYOSMachine",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"host": "string",
+								"name": "string",
+								"port": 1,
+								"user": "string"
+							},
+							"schema": {
+								"$ref": "#/components/schemas/CreateMachineRequest"
+							}
+						}
+					},
+					"description": "Request body for types.CreateMachineRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"host": "string",
+									"id": "00000000-0000-0000-0000-000000000000",
+									"name": "string",
+									"port": 1,
+									"public_key": "string",
+									"user": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/CreateMachineResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"host": "string",
+									"id": "00000000-0000-0000-0000-000000000000",
+									"name": "string",
+									"port": 1,
+									"public_key": "string",
+									"user": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/CreateMachineResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Register a BYOS machine",
+				"tags": [
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/{id}": {
+			"delete": {
+				"description": "Remove a machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "removeAMachine",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/DeleteMachineResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/DeleteMachineResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Remove a machine",
+				"tags": [
+					"{id}",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/{id}/ssh/status": {
+			"get": {
+				"description": "SSH connection status.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "sSHConnectionStatus",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"is_active": true,
+									"last_used_at": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SSHStatusResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"is_active": true,
+									"last_used_at": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SSHStatusResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "SSH connection status",
+				"tags": [
+					"{id}",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/{id}/verify": {
+			"post": {
+				"description": "Verify SSH connection.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "verifySSHConnection",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/VerifyMachineResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/VerifyMachineResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Verify SSH connection",
+				"tags": [
+					"{id}",
+					"api/v1/machines"
+				]
+			}
+		},
 		"/api/v1/mcp/catalog": {
 			"get": {
 				"description": "List MCP provider catalog.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
@@ -26179,6 +26867,9 @@
 		},
 		{
 			"name": "api/v1/machine"
+		},
+		{
+			"name": "api/v1/machines"
 		},
 		{
 			"name": "api/v1/mcp"

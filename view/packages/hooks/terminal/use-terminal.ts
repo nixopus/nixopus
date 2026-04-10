@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useAppSelector } from '@/redux/hooks';
-import { selectSelectedServerId } from '@/redux/features/servers/selectedServerSlice';
+import { useMachineId } from '@/packages/contexts/machine-context';
 import { useWebSocket } from '@/packages/hooks/shared/socket-provider';
 import { getAdvancedSettings } from '@/packages/utils/advanced-settings';
 import type { ExitHandler, TerminalOutput } from '../../types/terminal';
@@ -75,8 +74,8 @@ export const useTerminal = (
   exitHandler?: ExitHandler,
   serverId?: string | null
 ) => {
-  const selectedServerId = useAppSelector(selectSelectedServerId);
-  const serverIdForWs = serverId !== undefined ? serverId : selectedServerId;
+  const contextMachineId = useMachineId();
+  const serverIdForWs = serverId !== undefined ? serverId : contextMachineId;
   const terminalRef = useRef<HTMLDivElement | null>(null);
   const fitAddonRef = useRef<any | null>(null);
   const { isStopped, setIsStopped } = StopExecution();

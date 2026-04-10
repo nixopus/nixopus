@@ -30,6 +30,7 @@ import { LogoutDialog } from '@/components/ui/logout-dialog';
 import { Separator } from '@/components/ui/separator';
 import { AnyPermissionGuard } from '@/packages/components/rbac';
 import { CreateTeam } from '@/packages/components/team-settings';
+import { MachineSwitcher } from '@/packages/components/machine-switcher';
 import { NavMain } from '@/packages/components/nav-main';
 import { Terminal } from '@/packages/components/terminal';
 import {
@@ -230,7 +231,9 @@ function BreadCrumbs({ breadcrumbs }: BreadCrumbsProps) {
           breadcrumbs?.map((breadcrumb, idx) => (
             <React.Fragment key={idx}>
               <BreadcrumbItem className="hidden md:block">
-                {breadcrumb.external ? (
+                {(breadcrumb as any).isMachineSwitcher ? (
+                  <MachineSwitcher />
+                ) : breadcrumb.external ? (
                   <BreadcrumbLink asChild>
                     <a href={breadcrumb.href}>{breadcrumb.label}</a>
                   </BreadcrumbLink>
