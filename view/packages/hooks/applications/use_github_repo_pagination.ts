@@ -6,6 +6,8 @@ import { GithubRepository } from '@/redux/types/github';
 import { SortOption } from '@/components/ui/sort-selector';
 import { useAppSelector } from '@/redux/hooks';
 import { useDebounce } from '@/packages/hooks/shared/use-debounce';
+import { useMachineId } from '@/packages/contexts/machine-context';
+import { useGetServersQuery } from '@/redux/services/servers/serversApi';
 
 /**
  * @function useGithubRepoPagination
@@ -33,6 +35,9 @@ function useGithubRepoPagination() {
   const [currentPage, setCurrentPage] = useState(1);
   const PAGE_SIZE = 16;
   const router = useRouter();
+  const machineId = useMachineId();
+  const { data: serversData } = useGetServersQuery({ page: 1, page_size: 100 });
+  const currentServer = serversData?.servers?.find((s) => s.id === machineId);
   const [selectedRepository, setSelectedRepository] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState<{
@@ -119,7 +124,9 @@ function useGithubRepoPagination() {
         ...(repo.clone_url && { repo_clone_url: repo.clone_url }),
         ...(repo.language && { repo_language: repo.language }),
         ...(repo.description && { repo_description: repo.description }),
-        ...(repo.html_url && { repo_html_url: repo.html_url })
+        ...(repo.html_url && { repo_html_url: repo.html_url }),
+        ...(machineId && { server_id: machineId }),
+        ...(currentServer?.name && { server_name: currentServer.name })
       });
       router.push(`/chats?${params.toString()}`);
     } else {

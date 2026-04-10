@@ -41,21 +41,28 @@ func (s *SocketServer) handleStopDashboardMonitor(conn *websocket.Conn) {
 // Returns:
 //   - nil
 func (s *SocketServer) handleDashboardMonitor(conn *websocket.Conn, msg types.Payload) {
-	s.dashboardMutex.Lock()
-	monitor, exists := s.dashboardMonitors[conn]
-	if !exists {
-		var organizationID, serverID string
-		if msg.Data != nil {
-			if dataMap, ok := msg.Data.(map[string]interface{}); ok {
-				if orgID, ok := dataMap["organization_id"].(string); ok {
-					organizationID = orgID
-				}
-				if sid, ok := dataMap["server_id"].(string); ok {
-					serverID = sid
-				}
+	var organizationID, serverID string
+	if msg.Data != nil {
+		if dataMap, ok := msg.Data.(map[string]interface{}); ok {
+			if orgID, ok := dataMap["organization_id"].(string); ok {
+				organizationID = orgID
+			}
+			if sid, ok := dataMap["server_id"].(string); ok {
+				serverID = sid
 			}
 		}
+	}
 
+	s.dashboardMutex.Lock()
+	monitor, exists := s.dashboardMonitors[conn]
+
+	if exists && monitor.ServerID != serverID {
+		monitor.Stop()
+		delete(s.dashboardMonitors, conn)
+		exists = false
+	}
+
+	if !exists {
 		newMonitor, err := dashboard.NewDashboardMonitor(conn, s.getConnWriteMu(conn), logger.NewLogger(), organizationID, serverID, s.deployController.Service())
 		if err != nil {
 			s.dashboardMutex.Unlock()

@@ -39,11 +39,12 @@ function useBreadCrumbs() {
       result = pathname.startsWith('/chats')
         ? [dashboardCrumb, ...crumblist]
         : [dashboardCrumb, { href: '/chats', label: 'Chats' }, ...crumblist];
+    } else if (isInMachineContext) {
+      result = [...crumblist];
     } else {
-      result =
-        pathname.startsWith('/chats') || (isInMachineContext && effectivePath.startsWith('/chats'))
-          ? [...crumblist]
-          : [{ href: '/chats', label: 'Chats' }, ...crumblist];
+      result = pathname.startsWith('/chats')
+        ? [...crumblist]
+        : [{ href: '/chats', label: 'Chats' }, ...crumblist];
     }
 
     const machineScopedPaths = ['/charts', '/apps', '/backups'];

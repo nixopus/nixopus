@@ -7,7 +7,7 @@ import (
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
-func (s *DeployService) GetApplications(page string, pageSize string, sortBy string, sortDirection string, organizationID uuid.UUID) ([]shared_types.Application, int, error) {
+func (s *DeployService) GetApplications(page string, pageSize string, sortBy string, sortDirection string, organizationID uuid.UUID, serverID *uuid.UUID) ([]shared_types.Application, int, error) {
 	pageNum, err := strconv.Atoi(page)
 	if err != nil {
 		return nil, 0, err
@@ -16,7 +16,7 @@ func (s *DeployService) GetApplications(page string, pageSize string, sortBy str
 	if err != nil {
 		return nil, 0, err
 	}
-	applications, totalCount, err := s.storage.GetApplications(pageNum, pageSizeNum, sortBy, sortDirection, organizationID)
+	applications, totalCount, err := s.storage.GetApplications(pageNum, pageSizeNum, sortBy, sortDirection, organizationID, serverID)
 	if err != nil {
 		return nil, 0, err
 	}

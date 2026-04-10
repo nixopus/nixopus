@@ -20,3 +20,15 @@ func (s *DeployService) GetLatestDeployments(organizationID string, limit int) (
 	}
 	return s.storage.GetLatestDeployments(orgUUID, limit)
 }
+
+func (s *DeployService) GetLatestDeploymentsByServer(organizationID string, serverID string, limit int) ([]shared_types.ApplicationDeployment, error) {
+	orgUUID, err := uuid.Parse(organizationID)
+	if err != nil {
+		return nil, err
+	}
+	serverUUID, err := uuid.Parse(serverID)
+	if err != nil {
+		return nil, err
+	}
+	return s.storage.GetLatestDeploymentsByServer(orgUUID, serverUUID, limit)
+}

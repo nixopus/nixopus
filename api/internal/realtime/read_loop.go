@@ -2,7 +2,7 @@ package realtime
 
 import (
 	"encoding/json"
-	"fmt"
+
 	"github.com/gorilla/websocket"
 	"github.com/nixopus/nixopus/api/internal/types"
 )
@@ -11,13 +11,11 @@ func (s *SocketServer) readLoop(conn *websocket.Conn) {
 	for {
 		_, message, err := conn.ReadMessage()
 		if err != nil {
-			fmt.Printf("[ws] readLoop: read error (conn closing): %v\n", err)
 			return
 		}
 
 		var msg types.Payload
 		if err := json.Unmarshal(message, &msg); err != nil {
-			fmt.Printf("[ws] readLoop: unmarshal error: %v\n", err)
 			s.sendError(conn, "Invalid message format")
 			continue
 		}

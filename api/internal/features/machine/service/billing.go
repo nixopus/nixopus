@@ -140,6 +140,10 @@ func (s *BillingService) enqueueResourceUpgrade(ctx context.Context, orgID uuid.
 	})
 }
 
+func (s *BillingService) IsServerUserOwned(orgID uuid.UUID, serverID uuid.UUID) (bool, error) {
+	return s.storage.IsServerUserOwned(orgID, serverID)
+}
+
 func (s *BillingService) GetBillingStatus(orgID uuid.UUID) (*types.MachineBillingResponse, error) {
 	billing, err := s.storage.GetBillingByOrgID(orgID)
 	if err != nil {

@@ -13,6 +13,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { setActiveConnectorId } from '@/redux/features/github-connector/githubConnectorSlice';
 import { useLabelFilter } from './use_label_filter';
 import { getSelfHosted } from '@/redux/conf';
+import { useMachineId } from '@/packages/contexts/machine-context';
 
 /**
  * Hook to get the deployed applications.
@@ -39,6 +40,7 @@ import { getSelfHosted } from '@/redux/conf';
 function useGetDeployedApplications() {
   const [limit, setLimit] = React.useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const machineId = useMachineId();
   const {
     data: connectors,
     refetch: GetGithubConnectors,
@@ -51,7 +53,8 @@ function useGetDeployedApplications() {
     isFetching: isFetchingApplications
   } = useGetApplicationsQuery({
     page: currentPage,
-    limit
+    limit,
+    ...(machineId ? { server_id: machineId } : {})
   });
   const {
     filteredAndSortedData: filteredAndSortedApplications,

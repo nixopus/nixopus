@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"context"
 	"errors"
 	"net/http"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/machine/types"
+	sharedtypes "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
@@ -39,6 +41,17 @@ func (c *MachineController) GetMachineStatus(f fuego.ContextNoBody) (*types.Mach
 	serverID := parseServerID(r)
 	if serverID == nil {
 		return nil, fuego.BadRequestError{Detail: "server_id is required"}
+	}
+
+	userOwned, _ := c.billingService.IsServerUserOwned(orgID, *serverID)
+	if userOwned {
+		ctx := context.WithValue(r.Context(), sharedtypes.ServerIDKey, serverID.String())
+		response, err := c.service.GetMachineStatus(ctx, orgID)
+		if err != nil {
+			c.logger.Log(logger.Error, err.Error(), orgID.String())
+			return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
+		}
+		return response, nil
 	}
 
 	response, err := c.lifecycleService.GetStatus(r.Context(), orgID, serverID)

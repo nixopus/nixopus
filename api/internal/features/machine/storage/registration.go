@@ -158,6 +158,38 @@ func (s *RegistrationStorage) GetActiveUserOwnedMachines(orgID uuid.UUID) ([]api
 	return keys, err
 }
 
+func (s *RegistrationStorage) GetProvisionResources(sshKeyID uuid.UUID) (vcpu, memMB, diskGB int, err error) {
+	var row struct {
+		VcpuCount  int `bun:"vcpu_count"`
+		MemoryMB   int `bun:"memory_mb"`
+		DiskSizeGB int `bun:"disk_size_gb"`
+	}
+	err = s.db.NewSelect().
+		TableExpr("user_provision_details").
+		Column("vcpu_count", "memory_mb", "disk_size_gb").
+		Where("ssh_key_id = ?", sshKeyID).
+		Where("type = 'user_owned'").
+		Limit(1).
+		Scan(s.ctx, &row)
+	if err != nil {
+		return 0, 0, 0, err
+	}
+	return row.VcpuCount, row.MemoryMB, row.DiskSizeGB, nil
+}
+
+func (s *RegistrationStorage) UpdateProvisionResources(sshKeyID uuid.UUID, vcpu, memMB, diskGB int) error {
+	_, err := s.db.NewUpdate().
+		TableExpr("user_provision_details").
+		Set("vcpu_count = ?", vcpu).
+		Set("memory_mb = ?", memMB).
+		Set("disk_size_gb = ?", diskGB).
+		Set("updated_at = ?", time.Now()).
+		Where("ssh_key_id = ?", sshKeyID).
+		Where("type = 'user_owned'").
+		Exec(s.ctx)
+	return err
+}
+
 func (s *RegistrationStorage) GetProvisionDetailsBySSHKeyID(sshKeyID uuid.UUID) (uuid.UUID, error) {
 	var id uuid.UUID
 	err := s.db.NewSelect().

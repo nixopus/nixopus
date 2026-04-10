@@ -2,7 +2,6 @@ package realtime
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
 	"sync"
@@ -152,7 +151,6 @@ func (s *SocketServer) HandleHTTP(w http.ResponseWriter, r *http.Request) {
 // Returns:
 //   - nil
 func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
-	fmt.Println("[ws] handleDisconnect: client disconnected, cleaning up")
 	s.conns.Delete(conn)
 	s.orgIDs.Delete(conn)
 
@@ -170,9 +168,7 @@ func (s *SocketServer) handleDisconnect(conn *websocket.Conn) {
 
 	s.terminalMutex.Lock()
 	if terminalSessions, exists := s.terminals[conn]; exists {
-		fmt.Printf("[ws] handleDisconnect: closing %d terminal session(s)\n", len(terminalSessions))
-		for id, terminalSession := range terminalSessions {
-			fmt.Printf("[ws] handleDisconnect: closing terminal %s\n", id)
+		for _, terminalSession := range terminalSessions {
 			terminalSession.Close()
 		}
 		delete(s.terminals, conn)

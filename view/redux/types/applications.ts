@@ -20,6 +20,19 @@ export type ApplicationDomain = {
   compose_service?: ComposeService;
 };
 
+export type ApplicationServer = {
+  id: string;
+  application_id: string;
+  server_id: string;
+  is_primary: boolean;
+  created_at: string;
+  server?: {
+    id: string;
+    name: string;
+    host?: string;
+  };
+};
+
 export type Application = {
   id: string;
   name: string;
@@ -42,6 +55,7 @@ export type Application = {
   status?: ApplicationStatus;
   logs?: ApplicationLogs[];
   deployments?: ApplicationDeployment[];
+  servers?: ApplicationServer[];
   dockerfile_path?: string;
   base_path?: string;
   labels?: string[];
@@ -183,6 +197,7 @@ export interface CreateProjectRequest {
   port?: number;
   dockerfile_path?: string;
   base_path?: string;
+  server_ids?: string[];
 }
 
 // DeployProjectRequest is used to trigger deployment of an existing project.
