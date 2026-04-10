@@ -113,7 +113,7 @@ func (b *BackupScheduler) run() {
 }
 
 func (b *BackupScheduler) enqueueIfDue(orgID uuid.UUID, freq string, now time.Time) error {
-	hasRunning, err := b.backupStore.HasInProgressBackup(b.ctx, orgID)
+	hasRunning, err := b.backupStore.HasInProgressBackup(b.ctx, orgID, nil)
 	if err != nil {
 		return fmt.Errorf("check in-progress: %w", err)
 	}

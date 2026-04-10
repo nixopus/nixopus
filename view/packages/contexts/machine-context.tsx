@@ -1,6 +1,14 @@
 'use client';
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import { useGetServersQuery } from '@/redux/services/servers/serversApi';
+import { useAppDispatch } from '@/redux/hooks';
+import { deployApi } from '@/redux/services/deploy/applicationsApi';
+import { containerApi } from '@/redux/services/container/containerApi';
+import { imagesApi } from '@/redux/services/container/imagesApi';
+import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
+
+const PLUGIN_MACHINE_APIS = ['machineLifecycleApi', 'machineBackupApi', 'machineBillingApi'];
 
 interface MachineContextValue {
   machineId: string | null;
@@ -18,10 +26,31 @@ interface MachineProviderProps {
 }
 
 export function MachineProvider({ machineId, children }: MachineProviderProps) {
-  const isExplicit = !!machineId;
+  const pathname = usePathname();
+  const dispatch = useAppDispatch();
+
+  const urlMachineId = useMemo(() => {
+    const match = pathname.match(/^\/machines\/([^/]+)/);
+    return match ? match[1] : null;
+  }, [pathname]);
+
+  const explicitId = machineId ?? urlMachineId;
+  const isExplicit = !!explicitId;
   const { data } = useGetServersQuery({ page: 1, page_size: 1 }, { skip: isExplicit });
 
-  const resolvedId = isExplicit ? machineId! : (data?.servers?.[0]?.id ?? null);
+  const resolvedId = isExplicit ? explicitId! : (data?.servers?.[0]?.id ?? null);
+
+  const prevMachineIdRef = useRef<string | null>(resolvedId);
+  useEffect(() => {
+    if (resolvedId && resolvedId !== prevMachineIdRef.current) {
+      prevMachineIdRef.current = resolvedId;
+      dispatch(deployApi.util.resetApiState());
+      dispatch(containerApi.util.resetApiState());
+      dispatch(imagesApi.util.resetApiState());
+      dispatch(fileManagersApi.util.resetApiState());
+      PLUGIN_MACHINE_APIS.forEach((path) => dispatch({ type: `${path}/resetApiState` }));
+    }
+  }, [resolvedId, dispatch]);
 
   const value = useMemo(() => ({ machineId: resolvedId, isExplicit }), [resolvedId, isExplicit]);
 

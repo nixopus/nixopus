@@ -339,6 +339,19 @@ type ProvisionInfo struct {
 	ServerID      string
 }
 
+func (s *BillingStorage) IsServerUserOwned(orgID uuid.UUID, serverID uuid.UUID) (bool, error) {
+	exists, err := s.DB.NewSelect().
+		TableExpr("user_provision_details AS upd").
+		Where("upd.organization_id = ?", orgID).
+		Where("upd.ssh_key_id = ?", serverID).
+		Where("upd.type = 'user_owned'").
+		Exists(s.Ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to check server ownership: %w", err)
+	}
+	return exists, nil
+}
+
 func (s *BillingStorage) GetProvisionInfo(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (*ProvisionInfo, error) {
 	var row UserProvisionDetail
 	q := s.DB.NewSelect().Model(&row).Column("user_id", "lxd_container_name", "server_id")

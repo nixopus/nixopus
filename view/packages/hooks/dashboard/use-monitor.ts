@@ -28,22 +28,21 @@ function use_monitor() {
   const startMonitoring = useCallback(() => {
     if (!isReady || !organizationId) return;
 
-    console.log('Starting dashboard monitoring');
+    const payload = {
+      interval: 10,
+      operations: ['get_containers', 'get_system_stats', 'get_deployments'],
+      organization_id: organizationId,
+      ...(serverId ? { server_id: serverId } : {})
+    };
     sendJsonMessage({
       action: 'dashboard_monitor',
-      data: {
-        interval: 10,
-        operations: ['get_containers', 'get_system_stats', 'get_deployments'],
-        organization_id: organizationId,
-        ...(serverId ? { server_id: serverId } : {})
-      }
+      data: payload
     });
     setIsMonitoring(true);
     setLastError(null);
   }, [isReady, sendJsonMessage, organizationId, serverId]);
 
   const stopMonitoring = useCallback(() => {
-    console.log('Stopping dashboard monitoring');
     sendJsonMessage({
       action: 'stop_dashboard_monitor'
     });
@@ -86,10 +85,8 @@ function use_monitor() {
     }
   }, [message, isReady, startMonitoring]);
 
-  // Initialize monitoring when WebSocket is ready
   useEffect(() => {
     if (isReady && !isInitializedRef.current) {
-      console.log('WebSocket ready, initializing monitoring');
       startMonitoring();
       isInitializedRef.current = true;
     }
@@ -106,10 +103,21 @@ function use_monitor() {
     };
   }, [isReady, startMonitoring]);
 
+  const prevServerIdRef = useRef(serverId);
+  useEffect(() => {
+    if (prevServerIdRef.current !== serverId && isReady && isInitializedRef.current) {
+      prevServerIdRef.current = serverId;
+      setContainersData([]);
+      setSystemStats(null);
+      setDeploymentsData([]);
+      stopMonitoring();
+      setTimeout(() => startMonitoring(), 100);
+    }
+  }, [serverId, isReady, startMonitoring, stopMonitoring]);
+
   // Retry monitoring on error
   useEffect(() => {
     if (isReady && !isMonitoring && lastError) {
-      console.log('Retrying monitoring after error');
       reconnectTimeoutRef.current = setTimeout(() => {
         startMonitoring();
       }, 5000);

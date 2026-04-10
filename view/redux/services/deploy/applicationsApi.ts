@@ -24,12 +24,13 @@ export const deployApi = createApi({
   endpoints: (builder) => ({
     getApplications: builder.query<
       { applications: Application[]; total_count: number },
-      { page: number; limit: number }
+      { page: number; limit: number; server_id?: string }
     >({
-      query: ({ page, limit }) => ({
-        url: `${DEPLOY.GET_APPLICATIONS}?page=${page}&page_size=${limit}`,
-        method: 'GET'
-      }),
+      query: ({ page, limit, server_id }) => {
+        const params = new URLSearchParams({ page: String(page), page_size: String(limit) });
+        if (server_id) params.set('server_id', server_id);
+        return { url: `${DEPLOY.GET_APPLICATIONS}?${params}`, method: 'GET' };
+      },
       providesTags: [{ type: 'Deploy', id: 'LIST' }],
       transformResponse: (response: {
         data: { applications: Application[]; total_count: number };

@@ -159,6 +159,8 @@ export function useChatPage(): UseChatPageReturn {
     const language = searchParams.get('repo_language') || '';
     const description = searchParams.get('repo_description') || '';
     const htmlUrl = searchParams.get('repo_html_url') || '';
+    const serverId = searchParams.get('server_id') || '';
+    const serverName = searchParams.get('server_name') || '';
 
     threads.createThread(repoName);
 
@@ -172,16 +174,28 @@ export function useChatPage(): UseChatPageReturn {
     if (description) meta['Description'] = description;
     if (htmlUrl) meta['GitHub URL'] = htmlUrl;
 
-    setSelectedContexts([
+    const contexts: ChatContext[] = [
       {
         type: 'Repository',
         id: repoId,
         label: repoFullName,
         meta
       }
-    ]);
+    ];
 
-    setPendingDeployPrompt(`Deploy "${repoFullName}" as a new application.`);
+    if (serverId) {
+      contexts.push({
+        type: 'Machine',
+        id: serverId,
+        label: serverName || serverId,
+        meta: { ID: serverId }
+      });
+    }
+
+    setSelectedContexts(contexts);
+
+    const serverSuffix = serverName ? ` on server "${serverName}"` : '';
+    setPendingDeployPrompt(`Deploy "${repoFullName}" as a new application${serverSuffix}.`);
     navRouter.replace('/chats');
   }, [threads.isInitialized, searchParams]);
 

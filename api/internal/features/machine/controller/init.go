@@ -45,7 +45,7 @@ func NewMachineController(
 	regService := service.NewRegistrationService(regStore, ffService, nil, l, ctx)
 	return &MachineController{
 		store:               store,
-		service:             service.NewMachineService(store, ctx, l),
+		service:             service.NewMachineService(store, ctx, l, regStore),
 		billingService:      service.NewBillingService(bs),
 		lifecycleService:    service.NewLifecycleService(bs, queue.ExecuteMachineLifecycle),
 		backupService:       service.NewBackupService(bs, backupStore, store.DB),

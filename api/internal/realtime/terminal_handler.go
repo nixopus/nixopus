@@ -41,9 +41,7 @@ func (s *SocketServer) handleTerminal(conn *websocket.Conn, msg types.Payload) {
 		return
 	}
 
-	if err := term.WriteMessage(input); err != nil {
-		fmt.Printf("[ws] handleTerminal: WriteMessage failed for terminal %s: %v\n", terminalId, err)
-	}
+	term.WriteMessage(input)
 }
 
 // getOrCreateTerminal returns the existing terminal for the given ID or creates
@@ -58,20 +56,21 @@ func (s *SocketServer) getOrCreateTerminal(conn *websocket.Conn, terminalId stri
 	}
 
 	if term, exists := s.terminals[conn][terminalId]; exists {
-		if !term.IsDone() {
+		if term.IsDone() {
+			term.Close()
+			delete(s.terminals[conn], terminalId)
+		} else if term.ServerID != serverID {
+			term.Close()
+			delete(s.terminals[conn], terminalId)
+		} else {
 			return term
 		}
-		fmt.Printf("[ws] getOrCreateTerminal: terminal %s is dead, cleaning up and recreating\n", terminalId)
-		term.Close()
-		delete(s.terminals[conn], terminalId)
 	}
 
 	return s.createTerminal(conn, terminalId, serverID)
 }
 
 func (s *SocketServer) createTerminal(conn *websocket.Conn, terminalId string, serverID string) *terminal.Terminal {
-	fmt.Printf("[ws] createTerminal: creating terminal %s\n", terminalId)
-
 	orgIDVal, ok := s.orgIDs.Load(conn)
 	if !ok || orgIDVal == nil {
 		s.sendError(conn, "Organization ID not found for this connection")
@@ -97,13 +96,11 @@ func (s *SocketServer) createTerminal(conn *websocket.Conn, terminalId string, s
 	log := logger.NewLogger()
 	newTerminal, err := terminal.NewTerminal(ctx, conn, s.getConnWriteMu(conn), &log, terminalId)
 	if err != nil {
-		fmt.Printf("[ws] createTerminal: failed to create terminal %s: %v\n", terminalId, err)
 		s.sendError(conn, fmt.Sprintf("Failed to start terminal: %v", err))
 		return nil
 	}
 	s.terminals[conn][terminalId] = newTerminal
 	go newTerminal.Start()
-	fmt.Printf("[ws] createTerminal: terminal %s started\n", terminalId)
 	return newTerminal
 }
 

@@ -50,6 +50,7 @@ func getOrCreateOrgPoller(
 		dockerService:  dockerService,
 		deployService:  deployService,
 		organizationID: organizationID,
+		serverID:       serverID,
 		pollerKey:      key,
 		log:            log,
 	}
@@ -180,6 +181,7 @@ func NewDashboardMonitor(conn *websocket.Conn, wsMu *sync.Mutex, log logger.Logg
 		connMutex:  wsMu,
 		log:        log,
 		poller:     poller,
+		ServerID:   serverID,
 		Interval:   defaultPollerInterval,
 		Operations: AllOperations,
 	}

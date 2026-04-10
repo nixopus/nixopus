@@ -21,7 +21,7 @@ func NewBackupStorage(db *bun.DB, ctx context.Context) *BackupStorage {
 	return &BackupStorage{DB: db, Ctx: ctx}
 }
 
-func (s *BackupStorage) ListByOrg(ctx context.Context, orgID uuid.UUID, params types.BackupListParams) ([]types.MachineBackup, int, error) {
+func (s *BackupStorage) ListByOrg(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID, params types.BackupListParams) ([]types.MachineBackup, int, error) {
 	query := s.DB.NewSelect().
 		Model((*types.MachineBackup)(nil)).
 		Where("mb.organization_id = ?", orgID)
@@ -29,6 +29,15 @@ func (s *BackupStorage) ListByOrg(ctx context.Context, orgID uuid.UUID, params t
 	countQuery := s.DB.NewSelect().
 		Model((*types.MachineBackup)(nil)).
 		Where("mb.organization_id = ?", orgID)
+
+	if serverID != nil {
+		serverFilter := func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Join("JOIN user_provision_details upd ON upd.id = mb.provision_id").
+				Where("(upd.ssh_key_id = ? OR upd.server_id = ?)", *serverID, *serverID)
+		}
+		query = serverFilter(query)
+		countQuery = serverFilter(countQuery)
+	}
 
 	if params.Search != "" {
 		searchPattern := "%" + strings.ToLower(params.Search) + "%"
@@ -80,15 +89,21 @@ func (s *BackupStorage) ListByOrg(ctx context.Context, orgID uuid.UUID, params t
 	return backups, totalCount, nil
 }
 
-func (s *BackupStorage) HasInProgressBackup(ctx context.Context, orgID uuid.UUID) (bool, error) {
-	exists, err := s.DB.NewSelect().
+func (s *BackupStorage) HasInProgressBackup(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (bool, error) {
+	q := s.DB.NewSelect().
 		Model((*types.MachineBackup)(nil)).
-		Where("organization_id = ?", orgID).
-		Where("status IN (?)", bun.In([]types.MachineBackupStatus{
+		Where("mb.organization_id = ?", orgID).
+		Where("mb.status IN (?)", bun.In([]types.MachineBackupStatus{
 			types.BackupStatusPending,
 			types.BackupStatusInProgress,
-		})).
-		Exists(ctx)
+		}))
+
+	if serverID != nil {
+		q = q.Join("JOIN user_provision_details upd ON upd.id = mb.provision_id").
+			Where("(upd.ssh_key_id = ? OR upd.server_id = ?)", *serverID, *serverID)
+	}
+
+	exists, err := q.Exists(ctx)
 	if err != nil {
 		return false, fmt.Errorf("failed to check in-progress backups: %w", err)
 	}

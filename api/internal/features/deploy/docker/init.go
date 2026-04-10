@@ -160,10 +160,9 @@ func newDockerClientWithSSHTunnel(lgr logger.Logger, ctx context.Context, organi
 		return nil, nil
 	}
 
-	// Get SSH manager for organization
-	sshManager, err := ssh.GetSSHManagerForOrganization(ctx, organizationID)
+	sshManager, err := ssh.GetSSHManagerFromContext(ctx)
 	if err != nil {
-		lgr.Log(logger.Error, "Failed to get SSH manager for organization", err.Error())
+		lgr.Log(logger.Error, "Failed to get SSH manager", err.Error())
 		return nil, nil
 	}
 
@@ -216,8 +215,8 @@ func NewDockerServiceWithClient(cli *client.Client, ctx context.Context, logger 
 	}
 }
 
-func getOrgMutex(orgID uuid.UUID) *sync.Mutex {
-	v, _ := orgMutexes.LoadOrStore(orgID.String(), &sync.Mutex{})
+func getCacheMutex(key string) *sync.Mutex {
+	v, _ := orgMutexes.LoadOrStore(key, &sync.Mutex{})
 	return v.(*sync.Mutex)
 }
 
@@ -227,6 +226,17 @@ func getOrgMutex(orgID uuid.UUID) *sync.Mutex {
 // A per-org mutex serializes all callers so concurrent HandleFileWritten goroutines
 // don't race on cache invalidation (avoiding multiple Close) and only one creation runs.
 func GetDockerServiceForOrganization(ctx context.Context, orgID uuid.UUID) (*DockerService, error) {
+	cacheKey := orgID.String()
+	return getOrCreateDockerService(ctx, cacheKey, orgID)
+}
+
+func GetDockerServiceForServer(ctx context.Context, orgID uuid.UUID, serverID uuid.UUID) (*DockerService, error) {
+	serverCtx := context.WithValue(ctx, shared_types.ServerIDKey, serverID.String())
+	cacheKey := orgID.String() + ":" + serverID.String()
+	return getOrCreateDockerService(serverCtx, cacheKey, orgID)
+}
+
+func getOrCreateDockerService(ctx context.Context, cacheKey string, orgID uuid.UUID) (*DockerService, error) {
 	if config.GlobalStore == nil {
 		return nil, fmt.Errorf("global store not initialized, ensure config.Init() has been called")
 	}
@@ -235,20 +245,18 @@ func GetDockerServiceForOrganization(ctx context.Context, orgID uuid.UUID) (*Doc
 		return nil, fmt.Errorf("database not initialized")
 	}
 
-	mu := getOrgMutex(orgID)
+	mu := getCacheMutex(cacheKey)
 	mu.Lock()
 	defer mu.Unlock()
 
-	// Check cache (fast path when valid)
-	if cached, ok := dockerServiceCache.Load(orgID); ok {
+	if cached, ok := dockerServiceCache.Load(cacheKey); ok {
 		entry := cached.(*cachedDockerService)
 		if time.Since(entry.createdAt) < cacheMaxAge && entry.service != nil && entry.service.Cli != nil {
 			if _, err := entry.service.Cli.Ping(ctx); err == nil {
 				return entry.service, nil
 			}
 		}
-		// Invalid or expired: atomically remove and close (only we can do this while holding lock)
-		if old, ok := dockerServiceCache.LoadAndDelete(orgID); ok {
+		if old, ok := dockerServiceCache.LoadAndDelete(cacheKey); ok {
 			oldEntry := old.(*cachedDockerService)
 			if oldEntry.service != nil {
 				_ = oldEntry.service.Close()
@@ -256,13 +264,12 @@ func GetDockerServiceForOrganization(ctx context.Context, orgID uuid.UUID) (*Doc
 		}
 	}
 
-	// Cache miss: create (we hold the lock, so only one creation per org at a time)
 	svc := NewDockerServiceWithServer(config.GlobalStore.DB, ctx, orgID)
 	if svc == nil {
 		return nil, fmt.Errorf("failed to create Docker service via SSH tunnel for organization %s", orgID.String())
 	}
 
-	dockerServiceCache.Store(orgID, &cachedDockerService{
+	dockerServiceCache.Store(cacheKey, &cachedDockerService{
 		service:   svc,
 		createdAt: time.Now(),
 	})
@@ -272,12 +279,22 @@ func GetDockerServiceForOrganization(ctx context.Context, orgID uuid.UUID) (*Doc
 // InvalidateDockerServiceCache removes a cached DockerService for the given organization,
 // closing the underlying SSH tunnel. Use this when the SSH connection is known to be broken.
 func InvalidateDockerServiceCache(orgID uuid.UUID) {
-	if cached, ok := dockerServiceCache.LoadAndDelete(orgID); ok {
-		entry := cached.(*cachedDockerService)
-		if entry.service != nil {
-			entry.service.Close()
+	prefix := orgID.String()
+	dockerServiceCache.Range(func(key, value interface{}) bool {
+		keyStr, ok := key.(string)
+		if !ok {
+			return true
 		}
-	}
+		if keyStr == prefix || strings.HasPrefix(keyStr, prefix+":") {
+			if old, ok := dockerServiceCache.LoadAndDelete(key); ok {
+				entry := old.(*cachedDockerService)
+				if entry.service != nil {
+					entry.service.Close()
+				}
+			}
+		}
+		return true
+	})
 }
 
 // CloseAllDockerServiceCaches closes and removes all cached Docker services.
@@ -313,6 +330,12 @@ func GetDockerServiceFromContext(ctx context.Context) (DockerRepository, error) 
 		orgID = v
 	default:
 		return nil, fmt.Errorf("unexpected organization ID type in context: %T", v)
+	}
+
+	if serverIDStr, _ := ctx.Value(shared_types.ServerIDKey).(string); serverIDStr != "" {
+		if serverID, err := uuid.Parse(serverIDStr); err == nil && serverID != uuid.Nil {
+			return GetDockerServiceForServer(ctx, orgID, serverID)
+		}
 	}
 
 	return GetDockerServiceForOrganization(ctx, orgID)

@@ -36,6 +36,7 @@ type MonitoringConfig struct {
 // DeployServiceProvider defines the interface for fetching latest deployments.
 type DeployServiceProvider interface {
 	GetLatestDeployments(organizationID string, limit int) ([]shared_types.ApplicationDeployment, error)
+	GetLatestDeploymentsByServer(organizationID string, serverID string, limit int) ([]shared_types.ApplicationDeployment, error)
 }
 
 // OrgPoller runs a single polling loop per organization. All DashboardMonitors
@@ -48,6 +49,7 @@ type OrgPoller struct {
 	dockerService  docker.DockerRepository
 	deployService  DeployServiceProvider
 	organizationID string
+	serverID       string
 	pollerKey      string
 	log            logger.Logger
 
@@ -72,6 +74,8 @@ type DashboardMonitor struct {
 
 	subMu      sync.Mutex
 	subscribed bool
+
+	ServerID string
 
 	// Kept for API compatibility with the realtime package.
 	Interval   time.Duration

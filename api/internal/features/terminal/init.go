@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	sshpkg "github.com/nixopus/nixopus/api/internal/features/ssh"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -45,6 +46,7 @@ type Terminal struct {
 	startedAt time.Time
 
 	TerminalId string
+	ServerID   string
 }
 
 // signalDone closes the done channel exactly once, regardless of which
@@ -98,6 +100,8 @@ func NewTerminal(ctx context.Context, conn *websocket.Conn, wsMu *sync.Mutex, lo
 	if err != nil {
 		return nil, fmt.Errorf("failed to get SSH client: %w", err)
 	}
+	serverIDStr, _ := ctx.Value(shared_types.ServerIDKey).(string)
+
 	terminal := &Terminal{
 		sshManager: sshManager,
 		conn:       conn,
@@ -108,6 +112,7 @@ func NewTerminal(ctx context.Context, conn *websocket.Conn, wsMu *sync.Mutex, lo
 		log:        *log,
 		wsLock:     wsMu,
 		TerminalId: terminalId,
+		ServerID:   serverIDStr,
 		startedAt:  time.Now(),
 	}
 
