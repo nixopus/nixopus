@@ -51,6 +51,7 @@ export interface ThreadSidebarProps {
   onRenameThread: (id: string, title: string) => void;
   onRefresh: () => void;
   isRefreshing?: boolean;
+  hideCollapseToggle?: boolean;
 }
 
 type ThreadFilter = 'all' | 'chats' | 'incidents';
@@ -246,7 +247,8 @@ export function ThreadSidebar({
   onDeleteThread,
   onRenameThread,
   onRefresh,
-  isRefreshing
+  isRefreshing,
+  hideCollapseToggle
 }: ThreadSidebarProps) {
   const { t } = useTranslation();
   const sidebarSearch = useThreadSidebarSearch(resourceId);
@@ -365,7 +367,12 @@ export function ThreadSidebar({
   }
 
   return (
-    <div className="w-64 shrink-0 border-r border-border/50 flex flex-col bg-muted/20">
+    <div
+      className={cn(
+        'shrink-0 flex flex-col',
+        isCollapsed ? 'w-12 border-r border-border/50 bg-muted/20' : 'w-full'
+      )}
+    >
       <div className="p-3 flex items-center gap-2">
         <Button onClick={onNewChat} variant="outline" className="flex-1 gap-2 justify-start">
           <Plus className="size-4" />
@@ -386,19 +393,21 @@ export function ThreadSidebar({
             </TooltipTrigger>
             <TooltipContent side="right">Refresh</TooltipContent>
           </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-9 shrink-0"
-                onClick={onToggleCollapse}
-              >
-                <PanelLeftClose className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right">{t('ai.threads.collapseSidebar')}</TooltipContent>
-          </Tooltip>
+          {!hideCollapseToggle && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-9 shrink-0"
+                  onClick={onToggleCollapse}
+                >
+                  <PanelLeftClose className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{t('ai.threads.collapseSidebar')}</TooltipContent>
+            </Tooltip>
+          )}
         </TooltipProvider>
       </div>
       <div className="px-2 py-2">
