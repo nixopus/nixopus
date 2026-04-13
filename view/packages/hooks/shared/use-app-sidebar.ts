@@ -16,16 +16,16 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, ChartColumnDecreasing, MessageSquare, Settings } from 'lucide-react';
+import { Layers, Globe, Settings } from 'lucide-react';
 import { getPluginNavItems } from '@/plugins/registry';
 
 const coreNavItems = [
   {
-    title: 'navigation.chats',
-    url: '/chats',
-    icon: MessageSquare,
-    resource: 'ai',
-    order: 10
+    title: 'navigation.domains',
+    url: '/domains',
+    icon: Globe,
+    resource: 'domain',
+    order: 15
   },
   {
     title: 'navigation.selfHost',
@@ -33,13 +33,6 @@ const coreNavItems = [
     icon: Layers,
     resource: 'deploy',
     order: 20
-  },
-  {
-    title: 'navigation.dashboard',
-    url: '/charts',
-    icon: ChartColumnDecreasing,
-    resource: 'dashboard',
-    order: 30
   },
   {
     title: 'navigation.integrations',
@@ -126,7 +119,7 @@ function buildNavItems() {
   return [...topLevel, settingsGroup].sort((a, b) => (a.order ?? 50) - (b.order ?? 50));
 }
 
-const MACHINE_SCOPED_PATHS = ['/charts', '/apps', '/backups'];
+const MACHINE_SCOPED_PATHS: string[] = [];
 
 const data = {
   navMain: buildNavItems()
@@ -146,7 +139,7 @@ export function useAppSidebar() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const hasAnyPermission = useMemo(() => {
-    const allowedResources = ['dashboard', 'settings', 'extensions', 'ai'];
+    const allowedResources = ['dashboard', 'settings', 'extensions', 'ai', 'domain'];
 
     return (resource: string) => {
       if (!user || !activeOrg) return false;
