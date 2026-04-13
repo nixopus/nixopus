@@ -33,6 +33,7 @@ import { AnyPermissionGuard } from '@/packages/components/rbac';
 import { CreateTeam } from '@/packages/components/team-settings';
 import { MachineSwitcher } from '@/packages/components/machine-switcher';
 import { NavMain } from '@/packages/components/nav-main';
+import { SidebarChatTab } from '@/packages/components/sidebar-chat-tab';
 import { Terminal } from '@/packages/components/terminal';
 import {
   AppSidebarProps,
@@ -419,7 +420,7 @@ export function AppSidebar({
       </SidebarHeader>
       <SidebarContent>
         {activeTab === 'chat' ? (
-          <div className="flex-1 overflow-hidden" />
+          <SidebarChatTab />
         ) : (
           <NavMain
             items={filteredNavItems.map((item) => ({
