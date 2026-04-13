@@ -341,7 +341,7 @@ function SidebarTabToggle({
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-lg bg-muted p-1 mx-2">
+    <div className="flex items-center gap-1 rounded-lg bg-muted p-1.5 mx-2">
       <button
         onClick={() => onTabChange('browse')}
         className={cn(
