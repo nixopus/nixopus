@@ -48,8 +48,6 @@ export const AVAILABLE_MODELS = [
 export type ModelId = (typeof AVAILABLE_MODELS)[number]['id'];
 
 export interface UseChatPageReturn {
-  sidebarCollapsed: boolean;
-  toggleSidebarCollapse: () => void;
   selectedContexts: ChatContext[];
   addContext: (ctx: ChatContext) => void;
   removeContext: (ctx: ChatContext) => void;
@@ -98,10 +96,6 @@ export function useChatPage(): UseChatPageReturn {
   const searchParams = useSearchParams();
   const navRouter = useRouter();
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorageState(
-    'chat_sidebar_collapsed',
-    false
-  );
   const [selectedContexts, setSelectedContexts] = useState<ChatContext[]>([]);
   const [autoRunTools, setAutoRunTools] = useLocalStorageState('chat_auto_run_tools', true);
   const [selectedModel, setSelectedModel] = useState<string>(() => {
@@ -207,10 +201,6 @@ export function useChatPage(): UseChatPageReturn {
     }
   }, [pendingDeployPrompt, threads.activeThreadId]);
 
-  const toggleSidebarCollapse = useCallback(() => {
-    setSidebarCollapsed((prev) => !prev);
-  }, [setSidebarCollapsed]);
-
   const handleNewChat = useCallback(() => {
     threads.createThread(t('ai.threads.untitledChat'));
   }, [threads, t]);
@@ -227,8 +217,6 @@ export function useChatPage(): UseChatPageReturn {
   }, []);
 
   return {
-    sidebarCollapsed,
-    toggleSidebarCollapse,
     selectedContexts,
     addContext,
     removeContext,
