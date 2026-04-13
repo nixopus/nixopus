@@ -19,7 +19,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Layers, Settings } from 'lucide-react';
 import { getPluginNavItems } from '@/plugins/registry';
 
-const BROWSE_HIDDEN_URLS = ['/machines', '/backups'];
+const BROWSE_HIDDEN_URLS = ['/machines', '/backups', '/chats'];
 
 const coreNavItems = [
   {

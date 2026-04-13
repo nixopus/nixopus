@@ -14,7 +14,6 @@ import {
 } from '@nixopus/ui';
 import {
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -49,103 +48,104 @@ export function NavMain({ items, onItemClick }: TopNavMainProps) {
     return checkPath === url || checkPath.startsWith(url + '/');
   };
 
-  return (
-    <>
-      <SidebarGroup>
-        <SidebarMenu>
-          {items.map((item) => {
-            const hasNestedItems = (item.items?.length || 0) > 0;
-            const isCollapsed = state === 'collapsed';
-            const itemIsActive = item.isActive || isItemActive(item.url);
+  const settingsItem = items.find((item) => (item.items?.length || 0) > 0);
+  const topItems = items.filter((item) => (item.items?.length || 0) === 0);
 
-            const hasActiveSubItem =
-              hasNestedItems && item.items?.some((subItem) => isItemActive(subItem.url));
+  const renderNavItem = (item: (typeof items)[number]) => {
+    const hasNestedItems = (item.items?.length || 0) > 0;
+    const isCollapsedSidebar = state === 'collapsed';
+    const itemIsActive = item.isActive || isItemActive(item.url);
+    const hasActiveSubItem =
+      hasNestedItems && item.items?.some((subItem) => isItemActive(subItem.url));
 
-            if (hasNestedItems && isCollapsed) {
-              return (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarHoverMenu items={item.items || []}>
-                    <SidebarMenuButton
-                      className="cursor-pointer"
-                      tooltip={item.title}
-                      isActive={itemIsActive || hasActiveSubItem}
-                      onClick={() => handleClick(item.url)}
-                    >
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarHoverMenu>
-                </SidebarMenuItem>
-              );
-            }
+    if (hasNestedItems && isCollapsedSidebar) {
+      return (
+        <SidebarMenuItem key={item.title}>
+          <SidebarHoverMenu items={item.items || []}>
+            <SidebarMenuButton
+              className="cursor-pointer"
+              tooltip={item.title}
+              isActive={itemIsActive || hasActiveSubItem}
+              onClick={() => handleClick(item.url)}
+            >
+              {item.icon && <item.icon />}
+              <span>{item.title}</span>
+            </SidebarMenuButton>
+          </SidebarHoverMenu>
+        </SidebarMenuItem>
+      );
+    }
 
-            return (
-              <Collapsible
-                key={item.title}
-                asChild
-                open={!isItemCollapsed(item.title)}
-                onOpenChange={() => toggleItem(item.title)}
-                className="group/collapsible"
-              >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      className="cursor-pointer"
-                      tooltip={item.title}
-                      isActive={itemIsActive || hasActiveSubItem}
-                      onClick={() => handleClick(item.url)}
-                    >
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                      {hasNestedItems && (
-                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+    return (
+      <Collapsible
+        key={item.title}
+        asChild
+        open={!isItemCollapsed(item.title)}
+        onOpenChange={() => toggleItem(item.title)}
+        className="group/collapsible"
+      >
+        <SidebarMenuItem>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton
+              className="cursor-pointer"
+              tooltip={item.title}
+              isActive={itemIsActive || hasActiveSubItem}
+              onClick={() => handleClick(item.url)}
+            >
+              {item.icon && <item.icon />}
+              <span>{item.title}</span>
+              {hasNestedItems && (
+                <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+              )}
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+          {hasNestedItems && (
+            <CollapsibleContent>
+              <SidebarMenuSub>
+                {item.items?.map((subItem, index) => {
+                  const subItemIsActive = isItemActive(subItem.url);
+                  const prevSection = index > 0 ? item.items?.[index - 1]?.section : undefined;
+                  const showSectionLabel = subItem.section && subItem.section !== prevSection;
+
+                  return (
+                    <React.Fragment key={subItem.title}>
+                      {showSectionLabel && (
+                        <li className="pt-3 pb-1 first:pt-1">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                            {subItem.section}
+                          </span>
+                        </li>
                       )}
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  {hasNestedItems && (
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {item.items?.map((subItem, index) => {
-                          const subItemIsActive = isItemActive(subItem.url);
-                          const prevSection =
-                            index > 0 ? item.items?.[index - 1]?.section : undefined;
-                          const showSectionLabel =
-                            subItem.section && subItem.section !== prevSection;
+                      <SidebarMenuSubItem>
+                        <SidebarMenuSubButton asChild isActive={subItemIsActive}>
+                          <Link href={subItem.url}>
+                            <span>{subItem.title}</span>
+                          </Link>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    </React.Fragment>
+                  );
+                })}
+              </SidebarMenuSub>
+            </CollapsibleContent>
+          )}
+        </SidebarMenuItem>
+      </Collapsible>
+    );
+  };
 
-                          return (
-                            <React.Fragment key={subItem.title}>
-                              {showSectionLabel && (
-                                <li className="pt-3 pb-1 first:pt-1">
-                                  <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-                                    {subItem.section}
-                                  </span>
-                                </li>
-                              )}
-                              <SidebarMenuSubItem>
-                                <SidebarMenuSubButton asChild isActive={subItemIsActive}>
-                                  <Link href={subItem.url}>
-                                    <span>{subItem.title}</span>
-                                  </Link>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
-                            </React.Fragment>
-                          );
-                        })}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  )}
-                </SidebarMenuItem>
-              </Collapsible>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarGroup>
-      <MachineNav />
-    </>
+  return (
+    <SidebarGroup>
+      <SidebarMenu>
+        {topItems.map(renderNavItem)}
+        <MachineItems />
+        {settingsItem && renderNavItem(settingsItem)}
+      </SidebarMenu>
+    </SidebarGroup>
   );
 }
 
-function MachineNav() {
+function MachineItems() {
   const router = useRouter();
   const { data } = useGetServersQuery({ page: 1, page_size: 100 });
   const servers = data?.servers ?? [];
@@ -159,40 +159,37 @@ function MachineNav() {
   ];
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>Machines</SidebarGroupLabel>
-      <SidebarMenu>
-        {servers.map((server) => (
-          <SidebarMenuItem key={server.id}>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton className="cursor-pointer">
-                  <Server className="size-4" />
-                  <span className="truncate">{server.name || server.host}</span>
-                  <span
-                    className={cn(
-                      'ml-auto size-2 rounded-full shrink-0',
-                      server.is_active ? 'bg-green-500' : 'bg-red-500'
-                    )}
-                  />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="right" align="start" className="w-48">
-                {machineOptions.map((opt) => (
-                  <DropdownMenuItem
-                    key={opt.path}
-                    onClick={() => router.push(`/machines/${server.id}/${opt.path}`)}
-                    className="cursor-pointer"
-                  >
-                    <opt.icon className="mr-2 size-4" />
-                    {opt.label}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        ))}
-      </SidebarMenu>
-    </SidebarGroup>
+    <>
+      {servers.map((server) => (
+        <SidebarMenuItem key={server.id}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton className="cursor-pointer">
+                <Server className="size-4" />
+                <span className="truncate">{server.name || server.host}</span>
+                <span
+                  className={cn(
+                    'ml-auto size-2 rounded-full shrink-0',
+                    server.is_active ? 'bg-green-500' : 'bg-red-500'
+                  )}
+                />
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" align="start" className="w-48">
+              {machineOptions.map((opt) => (
+                <DropdownMenuItem
+                  key={opt.path}
+                  onClick={() => router.push(`/machines/${server.id}/${opt.path}`)}
+                  className="cursor-pointer"
+                >
+                  <opt.icon className="mr-2 size-4" />
+                  {opt.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      ))}
+    </>
   );
 }
