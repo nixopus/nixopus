@@ -2,7 +2,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
-import { Blocks, ChevronRight } from 'lucide-react';
+import { Blocks, ChevronRight, LayoutGrid, MessageSquare } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +14,8 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarRail,
-  SidebarTrigger
+  SidebarTrigger,
+  useSidebar
 } from '@/components/ui/sidebar';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@nixopus/ui';
 import {
@@ -40,6 +41,7 @@ import {
   TERMINAL_POSITION
 } from '@/packages/types/layout';
 import { cn } from '@/lib/utils';
+import { useSidebarTab, type SidebarTab } from '@/packages/hooks/shared/use-sidebar-tab';
 import { useLayout } from '@/packages/hooks/use-layout';
 import { getPluginBanners } from '@/plugins/registry';
 
@@ -298,6 +300,75 @@ function AppTopBar({
   );
 }
 
+function SidebarTabToggle({
+  activeTab,
+  onTabChange
+}: {
+  activeTab: SidebarTab;
+  onTabChange: (tab: SidebarTab) => void;
+}) {
+  const { state } = useSidebar();
+  const isCollapsed = state === 'collapsed';
+
+  if (isCollapsed) {
+    return (
+      <div className="flex flex-col items-center gap-1 px-1">
+        <button
+          onClick={() => onTabChange('chat')}
+          className={cn(
+            'flex items-center justify-center size-8 rounded-md transition-colors',
+            activeTab === 'chat'
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+          )}
+        >
+          <MessageSquare className="size-4" />
+        </button>
+        <button
+          onClick={() => onTabChange('browse')}
+          className={cn(
+            'flex items-center justify-center size-8 rounded-md transition-colors',
+            activeTab === 'browse'
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+          )}
+        >
+          <LayoutGrid className="size-4" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1 rounded-lg bg-muted p-1 mx-2">
+      <button
+        onClick={() => onTabChange('chat')}
+        className={cn(
+          'flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+          activeTab === 'chat'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
+        )}
+      >
+        <MessageSquare className="size-4" />
+        Chat
+      </button>
+      <button
+        onClick={() => onTabChange('browse')}
+        className={cn(
+          'flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+          activeTab === 'browse'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
+        )}
+      >
+        <LayoutGrid className="size-4" />
+        Browse
+      </button>
+    </div>
+  );
+}
+
 export function AppSidebar({
   user,
   activeOrg,
@@ -311,6 +382,7 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
+  const { activeTab, setActiveTab } = useSidebarTab();
 
   if (!user || !activeOrg) {
     return null;
@@ -343,21 +415,26 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        <SidebarTabToggle activeTab={activeTab} onTabChange={setActiveTab} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain
-          items={filteredNavItems.map((item) => ({
-            ...item,
-            isActive: item.url === activeNav,
-            items:
-              'items' in item && item.items
-                ? item.items.filter(
-                    (subItem) => subItem.resource && hasAnyPermission(subItem.resource)
-                  )
-                : undefined
-          }))}
-          onItemClick={(url) => setActiveNav(url)}
-        />
+        {activeTab === 'chat' ? (
+          <div className="flex-1 overflow-hidden" />
+        ) : (
+          <NavMain
+            items={filteredNavItems.map((item) => ({
+              ...item,
+              isActive: item.url === activeNav,
+              items:
+                'items' in item && item.items
+                  ? item.items.filter(
+                      (subItem) => subItem.resource && hasAnyPermission(subItem.resource)
+                    )
+                  : undefined
+            }))}
+            onItemClick={(url) => setActiveNav(url)}
+          />
+        )}
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
