@@ -19,7 +19,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { Layers, Settings } from 'lucide-react';
 import { getPluginNavItems } from '@/plugins/registry';
 
-const BROWSE_HIDDEN_URLS = ['/machines', '/backups', '/chats'];
+const BROWSE_HIDDEN_URLS = ['/backups', '/chats'];
 
 const coreNavItems = [
   {
@@ -27,7 +27,7 @@ const coreNavItems = [
     url: '/apps',
     icon: Layers,
     resource: 'deploy',
-    order: 20
+    order: 10
   },
   {
     title: 'navigation.integrations',
