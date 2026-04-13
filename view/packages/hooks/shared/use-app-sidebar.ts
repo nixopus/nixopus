@@ -16,17 +16,12 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, Globe, Settings } from 'lucide-react';
+import { Layers, Settings } from 'lucide-react';
 import { getPluginNavItems } from '@/plugins/registry';
 
+const BROWSE_HIDDEN_URLS = ['/machines', '/backups'];
+
 const coreNavItems = [
-  {
-    title: 'navigation.domains',
-    url: '/domains',
-    icon: Globe,
-    resource: 'domain',
-    order: 15
-  },
   {
     title: 'navigation.selfHost',
     url: '/apps',
@@ -93,7 +88,8 @@ const coreNavItems = [
 ];
 
 function buildNavItems() {
-  const allItems = [...coreNavItems, ...getPluginNavItems()].sort(
+  const pluginItems = getPluginNavItems().filter((item) => !BROWSE_HIDDEN_URLS.includes(item.url));
+  const allItems = [...coreNavItems, ...pluginItems].sort(
     (a, b) => (a.order ?? 50) - (b.order ?? 50)
   );
 
