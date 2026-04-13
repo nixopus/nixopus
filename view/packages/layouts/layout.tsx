@@ -315,17 +315,6 @@ function SidebarTabToggle({
     return (
       <div className="flex flex-col items-center gap-1 px-1">
         <button
-          onClick={() => onTabChange('chat')}
-          className={cn(
-            'flex items-center justify-center size-8 rounded-md transition-colors',
-            activeTab === 'chat'
-              ? 'bg-primary text-primary-foreground'
-              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-          )}
-        >
-          <MessageSquare className="size-4" />
-        </button>
-        <button
           onClick={() => onTabChange('browse')}
           className={cn(
             'flex items-center justify-center size-8 rounded-md transition-colors',
@@ -336,24 +325,23 @@ function SidebarTabToggle({
         >
           <LayoutGrid className="size-4" />
         </button>
+        <button
+          onClick={() => onTabChange('chat')}
+          className={cn(
+            'flex items-center justify-center size-8 rounded-md transition-colors',
+            activeTab === 'chat'
+              ? 'bg-primary text-primary-foreground'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+          )}
+        >
+          <MessageSquare className="size-4" />
+        </button>
       </div>
     );
   }
 
   return (
     <div className="flex items-center gap-1 rounded-lg bg-muted p-1 mx-2">
-      <button
-        onClick={() => onTabChange('chat')}
-        className={cn(
-          'flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-          activeTab === 'chat'
-            ? 'bg-background text-foreground shadow-sm'
-            : 'text-muted-foreground hover:text-foreground'
-        )}
-      >
-        <MessageSquare className="size-4" />
-        Chat
-      </button>
       <button
         onClick={() => onTabChange('browse')}
         className={cn(
@@ -365,6 +353,18 @@ function SidebarTabToggle({
       >
         <LayoutGrid className="size-4" />
         Browse
+      </button>
+      <button
+        onClick={() => onTabChange('chat')}
+        className={cn(
+          'flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+          activeTab === 'chat'
+            ? 'bg-background text-foreground shadow-sm'
+            : 'text-muted-foreground hover:text-foreground'
+        )}
+      >
+        <MessageSquare className="size-4" />
+        Chat
       </button>
     </div>
   );

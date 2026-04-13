@@ -36,7 +36,7 @@ export function SidebarChatTab() {
   }
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden px-1">
       <ThreadSidebar
         threads={threads.threads}
         activeThreadId={threads.activeThreadId}
