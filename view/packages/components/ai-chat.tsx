@@ -52,7 +52,6 @@ import {
   type AgentQuestionField
 } from '@/packages/hooks/ai/use-agent-chat';
 import { ContextWindowBar } from './context-window-bar';
-import { ThreadSidebar } from './thread-sidebar';
 import {
   type ChatContext,
   type ContextProviderData,
@@ -153,20 +152,6 @@ export function ChatPage() {
 
   return (
     <div className="flex h-full w-full overflow-hidden">
-      <ThreadSidebar
-        threads={page.threads}
-        activeThreadId={page.activeThreadId}
-        resourceId={page.resourceId}
-        isLoading={!page.isThreadsInitialized}
-        isCollapsed={page.sidebarCollapsed}
-        onToggleCollapse={page.toggleSidebarCollapse}
-        onSelectThread={page.setActiveThreadId}
-        onNewChat={page.handleNewChat}
-        onDeleteThread={page.deleteThread}
-        onRenameThread={page.renameThread}
-        onRefresh={page.refreshThreads}
-        isRefreshing={page.isRefreshing}
-      />
       <div className="flex flex-1 flex-col min-w-0">
         {page.activeQuestion && (
           <AgentQuestionModal
