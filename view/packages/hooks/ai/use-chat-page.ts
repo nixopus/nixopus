@@ -19,6 +19,13 @@ import {
 } from './chat-context';
 import { useMemorySearch, type MemorySearchResult } from './use-memory-search';
 import { getSelfHosted } from '@/redux/conf';
+import { useGetAllGithubConnectorQuery } from '@/redux/services/connector/githubConnectorApi';
+import { useGetApplicationsQuery } from '@/redux/services/deploy/applicationsApi';
+import {
+  buildSampleRepoContext,
+  getDefaultGuidedPrompt,
+  matchesGuidedPrefillSnapshot
+} from './guided-prefill';
 
 function useLocalStorageState(key: string, defaultValue: boolean) {
   const [value, setValue] = useState(() => {
@@ -89,6 +96,7 @@ export interface UseChatPageReturn {
   readOnly: boolean;
   refreshThreads: () => void;
   isRefreshing: boolean;
+  showGuidedPrefillHint: boolean;
 }
 
 export function useChatPage(): UseChatPageReturn {
@@ -107,6 +115,20 @@ export function useChatPage(): UseChatPageReturn {
   const [pendingDeployPrompt, setPendingDeployPrompt] = useState<string | null>(null);
   const repoParamsHandledRef = useRef(false);
   const [isSelfHosted, setIsSelfHosted] = useState(false);
+
+  const { data: githubConnectors, isLoading: isGithubConnectorsLoading } =
+    useGetAllGithubConnectorQuery();
+  const { data: applicationsData, isLoading: isApplicationsLoading } = useGetApplicationsQuery({
+    page: 1,
+    limit: 1
+  });
+  const githubConnected = Boolean(githubConnectors && githubConnectors.length > 0);
+  const hasDeployedApps = Boolean(
+    (applicationsData?.total_count ?? applicationsData?.applications?.length ?? 0) > 0
+  );
+
+  const guidedPrefillInjectedSessionRef = useRef(false);
+  const [showGuidedPrefillHint, setShowGuidedPrefillHint] = useState(false);
 
   useEffect(() => {
     getSelfHosted().then(setIsSelfHosted);
@@ -201,6 +223,72 @@ export function useChatPage(): UseChatPageReturn {
     }
   }, [pendingDeployPrompt, threads.activeThreadId]);
 
+  useEffect(() => {
+    setShowGuidedPrefillHint(false);
+  }, [threads.activeThreadId]);
+
+  useEffect(() => {
+    if (!showGuidedPrefillHint) return;
+    const translate = (key: string) =>
+      key === 'ai.guidedPrefill.defaultPrompt'
+        ? t('ai.guidedPrefill.defaultPrompt')
+        : key === 'ai.guidedPrefill.sampleRepo.label'
+          ? t('ai.guidedPrefill.sampleRepo.label')
+          : key;
+    if (!matchesGuidedPrefillSnapshot(chat.inputValue, selectedContexts, translate)) {
+      setShowGuidedPrefillHint(false);
+    }
+  }, [showGuidedPrefillHint, chat.inputValue, selectedContexts, t]);
+
+  useEffect(() => {
+    if (!threads.isInitialized) return;
+    if (chat.isLoadingHistory) return;
+    if (chat.messages.length > 0) return;
+    if (chat.inputValue.trim() !== '') return;
+    if (guidedPrefillInjectedSessionRef.current) return;
+    if (pendingDeployPrompt) return;
+    if (isGithubConnectorsLoading) return;
+    if (isApplicationsLoading) return;
+    if (githubConnected || hasDeployedApps) return;
+
+    const promptText = getDefaultGuidedPrompt((key) =>
+      key === 'ai.guidedPrefill.defaultPrompt' ? t('ai.guidedPrefill.defaultPrompt') : key
+    );
+    const sampleRepoContext = buildSampleRepoContext((key) =>
+      key === 'ai.guidedPrefill.sampleRepo.label' ? t('ai.guidedPrefill.sampleRepo.label') : key
+    );
+
+    chat.setInputValue(promptText);
+    setSelectedContexts((prev) => {
+      if (prev.some((c) => c.type === sampleRepoContext.type && c.id === sampleRepoContext.id)) {
+        return prev;
+      }
+      return [...prev, sampleRepoContext];
+    });
+    setShowGuidedPrefillHint(true);
+    guidedPrefillInjectedSessionRef.current = true;
+  }, [
+    threads.isInitialized,
+    chat.messages.length,
+    chat.inputValue,
+    chat.isLoadingHistory,
+    chat.setInputValue,
+    pendingDeployPrompt,
+    isGithubConnectorsLoading,
+    isApplicationsLoading,
+    githubConnected,
+    hasDeployedApps,
+    t
+  ]);
+
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setShowGuidedPrefillHint(false);
+      chat.handleInputChange(e);
+    },
+    [chat.handleInputChange]
+  );
+
   const handleNewChat = useCallback(() => {
     threads.createThread(t('ai.threads.untitledChat'));
   }, [threads, t]);
@@ -248,7 +336,7 @@ export function useChatPage(): UseChatPageReturn {
     handleSubmit: chat.handleSubmit,
     handleKeyDown: chat.handleKeyDown,
     handleSuggestionClick: chat.handleSuggestionClick,
-    handleInputChange: chat.handleInputChange,
+    handleInputChange,
     handleApproveToolCall: chat.handleApproveToolCall,
     handleDeclineToolCall: chat.handleDeclineToolCall,
     submitQuestionResponse: chat.submitQuestionResponse,
@@ -257,7 +345,8 @@ export function useChatPage(): UseChatPageReturn {
     setInputValue: chat.setInputValue,
     readOnly: chat.readOnly,
     refreshThreads: threads.refreshThreads,
-    isRefreshing: threads.isRefreshing
+    isRefreshing: threads.isRefreshing,
+    showGuidedPrefillHint
   };
 }
 

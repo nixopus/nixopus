@@ -485,6 +485,7 @@ export function ChatPage() {
             inputValue={page.inputValue}
             setInputValue={page.setInputValue}
             textareaRef={page.textareaRef}
+            showGuidedPrefillHint={page.showGuidedPrefillHint}
             selectedContexts={page.selectedContexts}
             contextProviders={page.contextProviders}
             autoRunTools={page.autoRunTools}
@@ -610,6 +611,7 @@ interface ChatWelcomeViewProps {
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   onSuggestionClick: (text: string) => void;
   onInputFocus?: () => void;
+  showGuidedPrefillHint: boolean;
 }
 
 function ChatWelcomeView({
@@ -628,7 +630,8 @@ function ChatWelcomeView({
   onKeyDown,
   onChange,
   onSuggestionClick,
-  onInputFocus
+  onInputFocus,
+  showGuidedPrefillHint
 }: ChatWelcomeViewProps) {
   const { t } = useTranslation();
   const mentions = useChatTextareaMentions({
@@ -643,11 +646,19 @@ function ChatWelcomeView({
   const currentModelLabel =
     AVAILABLE_MODELS.find((m) => m.id === selectedModel)?.label ?? selectedModel;
 
-  const suggestions = [
-    t('ai.suggestions.deploy'),
-    t('ai.suggestions.logs'),
-    t('ai.suggestions.envVars')
-  ];
+  const suggestions = showGuidedPrefillHint
+    ? [
+        t('ai.guidedPrefill.suggestions.overview'),
+        t('ai.guidedPrefill.suggestions.deploy'),
+        t('ai.guidedPrefill.suggestions.tour')
+      ]
+    : [t('ai.suggestions.deploy'), t('ai.suggestions.logs'), t('ai.suggestions.envVars')];
+  const welcomeTitle = showGuidedPrefillHint
+    ? t('ai.emptyState.title')
+    : t('ai.emptyState.returningTitle');
+  const welcomePlaceholder = showGuidedPrefillHint
+    ? t('ai.input.placeholder')
+    : t('ai.input.returningPlaceholder');
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-4 pb-12">
@@ -656,7 +667,7 @@ function ChatWelcomeView({
           <div className="flex items-center justify-center size-12 rounded-2xl bg-primary/10">
             <NixopusIcon className="size-6" />
           </div>
-          <h2 className="text-xl font-semibold text-foreground">{t('ai.emptyState.title')}</h2>
+          <h2 className="text-xl font-semibold text-foreground">{welcomeTitle}</h2>
         </div>
 
         <div className="rounded-2xl border border-border bg-muted/20 shadow-sm focus-within:border-primary/30 focus-within:shadow-md transition-all">
@@ -668,8 +679,8 @@ function ChatWelcomeView({
               onKeyDown={mentions.textareaHandlers.onKeyDown}
               onSelect={mentions.textareaHandlers.onSelect}
               onFocus={onInputFocus}
-              placeholder={t('ai.input.placeholder')}
-              className="min-h-[52px] max-h-[160px] resize-none border-0 bg-transparent px-4 pt-4 pb-2 text-base focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+              placeholder={welcomePlaceholder}
+              className="min-h-[72px] max-h-[220px] resize-none overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden border-0 bg-transparent px-4 pt-4 pb-2 text-base focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               rows={1}
             />
             <div className="px-4">{mentions.mentionList}</div>
@@ -1411,7 +1422,7 @@ function ChatInput({
               onKeyDown={mentions.textareaHandlers.onKeyDown}
               onSelect={mentions.textareaHandlers.onSelect}
               placeholder={t('ai.input.placeholder')}
-              className="min-h-[44px] max-h-[120px] resize-none bg-muted/50 border-border/50 focus-visible:ring-primary/30"
+              className="min-h-[64px] max-h-[220px] resize-none overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden bg-muted/50 border-border/50 focus-visible:ring-primary/30"
               disabled={isStreaming}
               rows={1}
             />
