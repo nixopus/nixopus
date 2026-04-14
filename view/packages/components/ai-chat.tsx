@@ -88,18 +88,36 @@ function ChatMentionSuggestions({
   onPick: (item: MentionItem) => void;
   noResultsText: string;
 }) {
+  const listRef = React.useRef<HTMLDivElement | null>(null);
+  const optionRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+
+  React.useEffect(() => {
+    if (!open || items.length === 0) return;
+    const option = optionRefs.current[highlightIndex];
+    if (!option) return;
+    option.scrollIntoView({ block: 'nearest' });
+  }, [open, highlightIndex, items.length]);
+
+  React.useEffect(() => {
+    optionRefs.current = optionRefs.current.slice(0, items.length);
+  }, [items.length]);
+
   if (!open) return null;
 
   return (
     <div
+      ref={listRef}
       role="listbox"
-      className="z-10 mt-1 max-h-48 overflow-y-auto rounded-lg border border-border bg-popover text-popover-foreground shadow-md"
+      className="z-10 mt-1 max-h-48 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md"
     >
       {items.length === 0 ? (
         <div className="px-3 py-2.5 text-xs text-muted-foreground">{noResultsText}</div>
       ) : (
         items.map((item, index) => (
           <button
+            ref={(el) => {
+              optionRefs.current[index] = el;
+            }}
             key={item.key}
             type="button"
             role="option"
@@ -111,7 +129,9 @@ function ChatMentionSuggestions({
             }}
             className={cn(
               'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
-              index === highlightIndex ? 'bg-muted' : 'hover:bg-muted/60'
+              index === highlightIndex
+                ? 'bg-primary/10 text-foreground ring-1 ring-primary/30'
+                : 'hover:bg-muted/60'
             )}
           >
             <span className="min-w-0 flex-1 truncate">{item.label}</span>
