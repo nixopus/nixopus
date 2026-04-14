@@ -13,6 +13,13 @@
     "input": {
       "placeholder": "Demandez n'importe quoi...",
       "hint": "Appuyez sur Entrée pour envoyer, Shift + Entrée pour nouvelle ligne"
+    },
+    "guidedPrefill": {
+      "defaultPrompt": "I am new to Nixopus. Use this sample repository to guide me step by step: what Nixopus does, how deployments work, and what I can do next.",
+      "helperText": "Starter prompt loaded - edit before sending.",
+      "sampleRepo": {
+        "label": "nixopus/sample-app"
+      }
     }
   }
 }
