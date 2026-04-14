@@ -2,7 +2,8 @@
   "ai": {
     "title": "Nixopus AI",
     "emptyState": {
-      "title": "How can I help you?",
+      "title": "New to Nixopus? Start with a guided sample app deployment.",
+      "returningTitle": "What do you want to do next?",
       "description": "Ask me anything about your deployments, configurations, or get help with troubleshooting.",
       "tryAskingAbout": "Try asking about"
     },
@@ -12,7 +13,8 @@
       "envVars": "Help me configure environment variables"
     },
     "input": {
-      "placeholder": "Ask me anything...",
+      "placeholder": "Type: \"Guide me through deploying the sample app and explain each step.\"",
+      "returningPlaceholder": "Ask about deployments, logs, domains, backups, or troubleshooting.",
       "hint": "Press Enter to send, Shift + Enter for new line",
       "attachFile": "Attach file",
       "sendMessage": "Send message"
@@ -50,6 +52,18 @@
       "title": "Tool approval required",
       "approve": "Approve",
       "decline": "Decline"
+    },
+    "guidedPrefill": {
+      "defaultPrompt": "I am new to Nixopus. Use this sample repository to guide me step by step: what Nixopus does, how deployments work, and what I can do next.",
+      "helperText": "Starter prompt loaded - edit before sending.",
+      "suggestions": {
+        "overview": "Explain what this sample repo does in Nixopus",
+        "deploy": "Deploy this sample app step by step",
+        "tour": "Give me a beginner tour from repo to live URL"
+      },
+      "sampleRepo": {
+        "label": "nixopus/sample-app"
+      }
     },
     "threads": {
       "newChat": "New Chat",
