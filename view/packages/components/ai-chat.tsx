@@ -58,12 +58,289 @@ import {
   stripContextFromMessageText
 } from '@/packages/hooks/ai/chat-context';
 import {
+  getActiveMentionToken,
+  flattenMentionItems,
+  filterMentionItems,
+  replaceMentionTokenWithCaret,
+  type MentionItem,
+  type MentionMatch
+} from '@/packages/hooks/ai/chat-mentions';
+import {
   useChatPage,
   useChatMessagesScroll,
   useContextSearch,
   formatTime,
   AVAILABLE_MODELS
 } from '@/packages/hooks/ai/use-chat-page';
+
+function ChatMentionSuggestions({
+  open,
+  items,
+  highlightIndex,
+  onHoverIndex,
+  onPick,
+  noResultsText
+}: {
+  open: boolean;
+  items: MentionItem[];
+  highlightIndex: number;
+  onHoverIndex: (index: number) => void;
+  onPick: (item: MentionItem) => void;
+  noResultsText: string;
+}) {
+  const listRef = React.useRef<HTMLDivElement | null>(null);
+  const optionRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
+
+  React.useEffect(() => {
+    if (!open || items.length === 0) return;
+    const option = optionRefs.current[highlightIndex];
+    if (!option) return;
+    option.scrollIntoView({ block: 'nearest' });
+  }, [open, highlightIndex, items.length]);
+
+  React.useEffect(() => {
+    optionRefs.current = optionRefs.current.slice(0, items.length);
+  }, [items.length]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      ref={listRef}
+      role="listbox"
+      className="z-10 mt-1 max-h-48 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rounded-lg border border-border bg-popover text-popover-foreground shadow-md"
+    >
+      {items.length === 0 ? (
+        <div className="px-3 py-2.5 text-xs text-muted-foreground">{noResultsText}</div>
+      ) : (
+        items.map((item, index) => (
+          <button
+            ref={(el) => {
+              optionRefs.current[index] = el;
+            }}
+            key={item.key}
+            type="button"
+            role="option"
+            aria-selected={index === highlightIndex}
+            onMouseEnter={() => onHoverIndex(index)}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onPick(item);
+            }}
+            className={cn(
+              'flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors',
+              index === highlightIndex
+                ? 'bg-primary/10 text-foreground ring-1 ring-primary/30'
+                : 'hover:bg-muted/60'
+            )}
+          >
+            <span className="min-w-0 flex-1 truncate">{item.label}</span>
+            <span className="shrink-0 text-xs text-muted-foreground">{item.type}</span>
+          </button>
+        ))
+      )}
+    </div>
+  );
+}
+
+function useChatTextareaMentions({
+  inputValue,
+  setInputValue,
+  contextProviders,
+  onAddContext,
+  textareaRef,
+  onChange,
+  onKeyDown
+}: {
+  inputValue: string;
+  setInputValue: (value: string) => void;
+  contextProviders: ContextProviderData[];
+  onAddContext: (ctx: ChatContext) => void;
+  textareaRef: React.RefObject<HTMLTextAreaElement | null>;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
+}) {
+  const { t } = useTranslation();
+  const noResultsText = t('ai.mentions.noResults' as Parameters<typeof t>[0]);
+
+  const [liveMatch, setLiveMatch] = React.useState<MentionMatch | null>(null);
+  const [highlightIndex, setHighlightIndex] = React.useState(0);
+  const highlightIndexRef = React.useRef(0);
+  const [dismissedMentionStart, setDismissedMentionStart] = React.useState<number | null>(null);
+  const pendingCaretAfterPickRef = React.useRef<{ pos: number; expectedValue: string } | null>(
+    null
+  );
+
+  React.useEffect(() => {
+    highlightIndexRef.current = highlightIndex;
+  }, [highlightIndex]);
+
+  const allMentionItems = React.useMemo(
+    () => flattenMentionItems(contextProviders),
+    [contextProviders]
+  );
+
+  const filteredItems = React.useMemo(() => {
+    if (!liveMatch) return [];
+    return filterMentionItems(allMentionItems, liveMatch.query);
+  }, [allMentionItems, liveMatch]);
+
+  const listOpen =
+    liveMatch !== null &&
+    !(dismissedMentionStart !== null && liveMatch.start === dismissedMentionStart);
+
+  React.useEffect(() => {
+    setHighlightIndex(0);
+  }, [liveMatch?.start, liveMatch?.query]);
+
+  const reconcileFromValueAndCursor = React.useCallback((value: string, cursor: number) => {
+    const c = Math.max(0, Math.min(cursor, value.length));
+    const m = getActiveMentionToken(value, c);
+    setLiveMatch(m);
+    setDismissedMentionStart((ds) => {
+      if (ds === null) return null;
+      if (!m || m.start !== ds) return null;
+      return ds;
+    });
+  }, []);
+
+  const syncLiveMatch = React.useCallback(
+    (el: HTMLTextAreaElement) => {
+      reconcileFromValueAndCursor(el.value, el.selectionStart ?? 0);
+    },
+    [reconcileFromValueAndCursor]
+  );
+
+  React.useLayoutEffect(() => {
+    const pending = pendingCaretAfterPickRef.current;
+    if (pending && inputValue !== pending.expectedValue) {
+      pendingCaretAfterPickRef.current = null;
+    }
+
+    const el = textareaRef.current;
+    const stillPending = pendingCaretAfterPickRef.current;
+
+    if (stillPending && inputValue === stillPending.expectedValue) {
+      pendingCaretAfterPickRef.current = null;
+      const p = Math.max(0, Math.min(stillPending.pos, inputValue.length));
+      if (el) {
+        el.focus();
+        el.setSelectionRange(p, p);
+      }
+      reconcileFromValueAndCursor(inputValue, p);
+      return;
+    }
+
+    let cursor = inputValue.length;
+    if (el && el.value === inputValue) {
+      cursor = Math.min(el.selectionStart ?? inputValue.length, inputValue.length);
+    }
+    reconcileFromValueAndCursor(inputValue, cursor);
+  }, [inputValue, reconcileFromValueAndCursor, textareaRef]);
+
+  const pickItem = React.useCallback(
+    (item: MentionItem) => {
+      const el = textareaRef.current;
+      if (!el) return;
+      const match = getActiveMentionToken(el.value, el.selectionStart ?? 0);
+      if (!match) return;
+
+      const value = el.value;
+      const { value: next, caret: pos } = replaceMentionTokenWithCaret(value, match);
+      onAddContext(item.ctx);
+      setDismissedMentionStart(null);
+
+      pendingCaretAfterPickRef.current = { pos, expectedValue: next };
+      setInputValue(next);
+    },
+    [onAddContext, setInputValue, textareaRef]
+  );
+
+  const wrappedOnChange = React.useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      onChange(e);
+      syncLiveMatch(e.currentTarget);
+    },
+    [onChange, syncLiveMatch]
+  );
+
+  const wrappedOnKeyDown = React.useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      const el = e.currentTarget;
+      const match = getActiveMentionToken(el.value, el.selectionStart ?? 0);
+      const dismissed =
+        dismissedMentionStart !== null && match && match.start === dismissedMentionStart;
+      const active = Boolean(match && !dismissed);
+      const items = match ? filterMentionItems(allMentionItems, match.query) : [];
+
+      if (active && e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        if (match) setDismissedMentionStart(match.start);
+        return;
+      }
+
+      if (active && items.length > 0) {
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          e.stopPropagation();
+          setHighlightIndex((i) => Math.min(i + 1, items.length - 1));
+          return;
+        }
+        if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          e.stopPropagation();
+          setHighlightIndex((i) => Math.max(i - 1, 0));
+          return;
+        }
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          e.stopPropagation();
+          const idx = Math.min(highlightIndexRef.current, items.length - 1);
+          const item = items[idx];
+          if (item) pickItem(item);
+          return;
+        }
+      }
+
+      onKeyDown(e);
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'Home' || e.key === 'End') {
+        queueMicrotask(() => {
+          const ta = textareaRef.current;
+          if (ta) syncLiveMatch(ta);
+        });
+      }
+    },
+    [allMentionItems, dismissedMentionStart, onKeyDown, pickItem, syncLiveMatch, textareaRef]
+  );
+
+  const wrappedOnSelect = React.useCallback(
+    (e: React.SyntheticEvent<HTMLTextAreaElement>) => {
+      syncLiveMatch(e.currentTarget);
+    },
+    [syncLiveMatch]
+  );
+
+  const mentionList = (
+    <ChatMentionSuggestions
+      open={listOpen}
+      items={filteredItems}
+      highlightIndex={Math.min(highlightIndex, Math.max(filteredItems.length - 1, 0))}
+      onHoverIndex={setHighlightIndex}
+      onPick={pickItem}
+      noResultsText={noResultsText}
+    />
+  );
+
+  return {
+    mentionList,
+    textareaHandlers: {
+      onChange: wrappedOnChange,
+      onKeyDown: wrappedOnKeyDown,
+      onSelect: wrappedOnSelect
+    }
+  };
+}
 
 function NixopusIcon({ className }: { className?: string }) {
   const { resolvedTheme } = useTheme();
@@ -183,6 +460,7 @@ export function ChatPage() {
             ) : (
               <ChatInput
                 inputValue={page.inputValue}
+                setInputValue={page.setInputValue}
                 isStreaming={page.isStreaming}
                 textareaRef={page.textareaRef}
                 selectedContexts={page.selectedContexts}
@@ -205,6 +483,7 @@ export function ChatPage() {
         ) : showWelcome ? (
           <ChatWelcomeView
             inputValue={page.inputValue}
+            setInputValue={page.setInputValue}
             textareaRef={page.textareaRef}
             selectedContexts={page.selectedContexts}
             contextProviders={page.contextProviders}
@@ -316,6 +595,7 @@ function ToolApprovalBanner({ pending, onApprove, onDecline }: ToolApprovalBanne
 
 interface ChatWelcomeViewProps {
   inputValue: string;
+  setInputValue: (value: string) => void;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   selectedContexts: ChatContext[];
   contextProviders: ContextProviderData[];
@@ -334,6 +614,7 @@ interface ChatWelcomeViewProps {
 
 function ChatWelcomeView({
   inputValue,
+  setInputValue,
   textareaRef,
   selectedContexts,
   contextProviders,
@@ -350,6 +631,15 @@ function ChatWelcomeView({
   onInputFocus
 }: ChatWelcomeViewProps) {
   const { t } = useTranslation();
+  const mentions = useChatTextareaMentions({
+    inputValue,
+    setInputValue,
+    contextProviders,
+    onAddContext,
+    textareaRef,
+    onChange,
+    onKeyDown
+  });
   const currentModelLabel =
     AVAILABLE_MODELS.find((m) => m.id === selectedModel)?.label ?? selectedModel;
 
@@ -374,13 +664,15 @@ function ChatWelcomeView({
             <Textarea
               ref={textareaRef}
               value={inputValue}
-              onChange={onChange}
-              onKeyDown={onKeyDown}
+              onChange={mentions.textareaHandlers.onChange}
+              onKeyDown={mentions.textareaHandlers.onKeyDown}
+              onSelect={mentions.textareaHandlers.onSelect}
               onFocus={onInputFocus}
               placeholder={t('ai.input.placeholder')}
               className="min-h-[52px] max-h-[160px] resize-none border-0 bg-transparent px-4 pt-4 pb-2 text-base focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
               rows={1}
             />
+            <div className="px-4">{mentions.mentionList}</div>
             <div className="flex items-center justify-between px-3 pb-3">
               <div className="flex items-center gap-2 flex-wrap">
                 {selectedContexts.map((ctx) => {
@@ -946,6 +1238,7 @@ function ContextSubMenu({
 
 interface ChatInputProps {
   inputValue: string;
+  setInputValue: (value: string) => void;
   isStreaming: boolean;
   textareaRef: React.RefObject<HTMLTextAreaElement | null>;
   selectedContexts: ChatContext[];
@@ -964,6 +1257,7 @@ interface ChatInputProps {
 
 function ChatInput({
   inputValue,
+  setInputValue,
   isStreaming,
   textareaRef,
   selectedContexts,
@@ -980,6 +1274,15 @@ function ChatInput({
   onStop
 }: ChatInputProps) {
   const { t } = useTranslation();
+  const mentions = useChatTextareaMentions({
+    inputValue,
+    setInputValue,
+    contextProviders,
+    onAddContext,
+    textareaRef,
+    onChange,
+    onKeyDown
+  });
   const currentModelLabel =
     AVAILABLE_MODELS.find((m) => m.id === selectedModel)?.label ?? selectedModel;
 
@@ -1100,16 +1403,20 @@ function ChatInput({
           </DropdownMenu>
         </div>
         <form onSubmit={onSubmit} className="flex gap-3 items-end">
-          <Textarea
-            ref={textareaRef}
-            value={inputValue}
-            onChange={onChange}
-            onKeyDown={onKeyDown}
-            placeholder={t('ai.input.placeholder')}
-            className="min-h-[44px] max-h-[120px] resize-none bg-muted/50 border-border/50 focus-visible:ring-primary/30"
-            disabled={isStreaming}
-            rows={1}
-          />
+          <div className="min-w-0 flex-1 flex flex-col gap-0">
+            <Textarea
+              ref={textareaRef}
+              value={inputValue}
+              onChange={mentions.textareaHandlers.onChange}
+              onKeyDown={mentions.textareaHandlers.onKeyDown}
+              onSelect={mentions.textareaHandlers.onSelect}
+              placeholder={t('ai.input.placeholder')}
+              className="min-h-[44px] max-h-[120px] resize-none bg-muted/50 border-border/50 focus-visible:ring-primary/30"
+              disabled={isStreaming}
+              rows={1}
+            />
+            {mentions.mentionList}
+          </div>
           {isStreaming ? (
             <Button
               type="button"
