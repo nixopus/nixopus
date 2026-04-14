@@ -152,12 +152,15 @@ function useChatTextareaMentions({
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 }) {
   const { t } = useTranslation();
-  const noResultsText = t('ai.mentions.noResults' as Parameters<typeof t>[0]);
+  const noResultsText = t('ai.context.noItems' as Parameters<typeof t>[0]);
 
   const [liveMatch, setLiveMatch] = React.useState<MentionMatch | null>(null);
   const [highlightIndex, setHighlightIndex] = React.useState(0);
   const highlightIndexRef = React.useRef(0);
   const [dismissedMentionStart, setDismissedMentionStart] = React.useState<number | null>(null);
+  const pendingCaretAfterPickRef = React.useRef<{ pos: number; expectedValue: string } | null>(
+    null
+  );
 
   React.useEffect(() => {
     highlightIndexRef.current = highlightIndex;
@@ -181,8 +184,9 @@ function useChatTextareaMentions({
     setHighlightIndex(0);
   }, [liveMatch?.start, liveMatch?.query]);
 
-  const syncLiveMatch = React.useCallback((el: HTMLTextAreaElement) => {
-    const m = getActiveMentionToken(el.value, el.selectionStart ?? 0);
+  const reconcileFromValueAndCursor = React.useCallback((value: string, cursor: number) => {
+    const c = Math.max(0, Math.min(cursor, value.length));
+    const m = getActiveMentionToken(value, c);
     setLiveMatch(m);
     setDismissedMentionStart((ds) => {
       if (ds === null) return null;
@@ -191,28 +195,57 @@ function useChatTextareaMentions({
     });
   }, []);
 
+  const syncLiveMatch = React.useCallback(
+    (el: HTMLTextAreaElement) => {
+      reconcileFromValueAndCursor(el.value, el.selectionStart ?? 0);
+    },
+    [reconcileFromValueAndCursor]
+  );
+
+  React.useLayoutEffect(() => {
+    const pending = pendingCaretAfterPickRef.current;
+    if (pending && inputValue !== pending.expectedValue) {
+      pendingCaretAfterPickRef.current = null;
+    }
+
+    const el = textareaRef.current;
+    const stillPending = pendingCaretAfterPickRef.current;
+
+    if (stillPending && inputValue === stillPending.expectedValue) {
+      pendingCaretAfterPickRef.current = null;
+      const p = Math.max(0, Math.min(stillPending.pos, inputValue.length));
+      if (el) {
+        el.focus();
+        el.setSelectionRange(p, p);
+      }
+      reconcileFromValueAndCursor(inputValue, p);
+      return;
+    }
+
+    let cursor = inputValue.length;
+    if (el && el.value === inputValue) {
+      cursor = Math.min(el.selectionStart ?? inputValue.length, inputValue.length);
+    }
+    reconcileFromValueAndCursor(inputValue, cursor);
+  }, [inputValue, reconcileFromValueAndCursor, textareaRef]);
+
   const pickItem = React.useCallback(
     (item: MentionItem) => {
       const el = textareaRef.current;
-      const match = el ? getActiveMentionToken(el.value, el.selectionStart ?? 0) : liveMatch;
+      if (!el) return;
+      const match = getActiveMentionToken(el.value, el.selectionStart ?? 0);
       if (!match) return;
 
-      const value = el?.value ?? inputValue;
+      const value = el.value;
       const next = replaceMentionToken(value, match);
       onAddContext(item.ctx);
-      setInputValue(next);
       setDismissedMentionStart(null);
 
       const pos = cursorAfterMentionReplace(value, match);
-      requestAnimationFrame(() => {
-        const ta = textareaRef.current;
-        if (!ta) return;
-        ta.focus();
-        ta.setSelectionRange(pos, pos);
-        syncLiveMatch(ta);
-      });
+      pendingCaretAfterPickRef.current = { pos, expectedValue: next };
+      setInputValue(next);
     },
-    [inputValue, liveMatch, onAddContext, setInputValue, syncLiveMatch, textareaRef]
+    [onAddContext, setInputValue]
   );
 
   const wrappedOnChange = React.useCallback(
