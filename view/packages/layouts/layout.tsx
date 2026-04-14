@@ -95,7 +95,7 @@ function Layout({ children }: LayoutProps) {
   } = useLayout();
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={false}>
       <AppSidebar
         user={user}
         activeOrg={
