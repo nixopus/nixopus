@@ -209,7 +209,7 @@ export function useAgentChat({
   agentId: overrideAgentId,
   readOnly = false,
   contexts = [],
-  autoRunTools = false,
+  autoRunTools = true,
   model,
   onFirstMessage,
   waitForThread
