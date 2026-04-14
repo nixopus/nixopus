@@ -23,6 +23,8 @@ function loadActiveThreadId(): string | null {
   return localStorage.getItem(ACTIVE_THREAD_KEY);
 }
 
+const THREAD_CHANGE_EVENT = 'nixopus_active_thread_change';
+
 function saveActiveThreadId(id: string | null) {
   if (typeof window === 'undefined') return;
   if (id) {
@@ -30,6 +32,7 @@ function saveActiveThreadId(id: string | null) {
   } else {
     localStorage.removeItem(ACTIVE_THREAD_KEY);
   }
+  window.dispatchEvent(new CustomEvent(THREAD_CHANGE_EVENT, { detail: id }));
 }
 
 async function getAuthHeaders(
@@ -87,7 +90,7 @@ function mapThreads(
 
 export function useChatThreads() {
   const [threads, setThreads] = useState<ChatThread[]>([]);
-  const [activeThreadId, setActiveThreadIdState] = useState<string | null>(null);
+  const [activeThreadId, setActiveThreadIdState] = useState<string | null>(loadActiveThreadId);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -131,10 +134,14 @@ export function useChatThreads() {
 
         if (cancelled) return;
 
+        const EMPTY_TITLES = new Set(['new chat', 'untitled chat']);
         const all = [
           ...mapThreads(chatResult, false, AGENT_ID, resourceId),
           ...mapThreads(incidentResult, true, INCIDENT_AGENT_ID, organizationId!)
-        ];
+        ].filter((t) => {
+          if (!EMPTY_TITLES.has(t.title.toLowerCase())) return true;
+          return Math.abs(t.updatedAt.getTime() - t.createdAt.getTime()) > 1000;
+        });
         all.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
         setThreads(all);
       } catch {
@@ -155,6 +162,15 @@ export function useChatThreads() {
   const setActiveThreadId = useCallback((id: string | null) => {
     setActiveThreadIdState(id);
     saveActiveThreadId(id);
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const newId = (e as CustomEvent<string | null>).detail;
+      setActiveThreadIdState((prev) => (prev === newId ? prev : newId));
+    };
+    window.addEventListener(THREAD_CHANGE_EVENT, handler);
+    return () => window.removeEventListener(THREAD_CHANGE_EVENT, handler);
   }, []);
 
   const createThread = useCallback(
