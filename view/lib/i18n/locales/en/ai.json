@@ -17,6 +17,9 @@
       "attachFile": "Attach file",
       "sendMessage": "Send message"
     },
+    "mentions": {
+      "noResults": "No matching context found"
+    },
     "toolExecution": {
       "label": "Tool execution",
       "askBefore": "Ask before executing",

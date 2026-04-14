@@ -141,7 +141,7 @@ function useChatTextareaMentions({
   onKeyDown: (e: React.KeyboardEvent<HTMLTextAreaElement>) => void;
 }) {
   const { t } = useTranslation();
-  const noResultsText = t('ai.context.noItems' as Parameters<typeof t>[0]);
+  const noResultsText = t('ai.mentions.noResults' as Parameters<typeof t>[0]);
 
   const [liveMatch, setLiveMatch] = React.useState<MentionMatch | null>(null);
   const [highlightIndex, setHighlightIndex] = React.useState(0);
