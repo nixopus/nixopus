@@ -16,7 +16,7 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, Settings } from 'lucide-react';
+import { Layers, Plug, Settings } from 'lucide-react';
 import { getPluginNavItems } from '@/plugins/registry';
 
 const BROWSE_HIDDEN_URLS = ['/backups', '/chats'];
@@ -32,10 +32,9 @@ const coreNavItems = [
   {
     title: 'navigation.integrations',
     url: '/integrations',
+    icon: Plug,
     resource: 'notification',
-    group: 'settings',
-    section: 'Organization',
-    order: 94
+    order: 41
   },
   {
     title: 'General',
