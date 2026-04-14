@@ -97,14 +97,25 @@ export function filterMentionItems(items: MentionItem[], query: string, limit = 
   return scored.slice(0, limit).map((s) => s.item);
 }
 
-/** Remove the matched @token span and collapse spaces at the join. */
-export function replaceMentionToken(input: string, match: MentionMatch): string {
+/**
+ * Remove the matched @token span, collapse spaces at the join, and return the
+ * caret index suitable for continuing typing after the join.
+ */
+export function replaceMentionTokenWithCaret(
+  input: string,
+  match: MentionMatch
+): { value: string; caret: number } {
   const left = input.slice(0, match.start);
   const right = input.slice(match.end);
   const leftTrim = left.replace(/\s+$/, '');
   const rightTrim = right.replace(/^\s+/, '');
   if (leftTrim.length > 0 && rightTrim.length > 0) {
-    return `${leftTrim} ${rightTrim}`;
+    return { value: `${leftTrim} ${rightTrim}`, caret: leftTrim.length + 1 };
   }
-  return `${leftTrim}${rightTrim}`;
+  return { value: `${leftTrim}${rightTrim}`, caret: leftTrim.length };
+}
+
+/** Remove the matched @token span and collapse spaces at the join. */
+export function replaceMentionToken(input: string, match: MentionMatch): string {
+  return replaceMentionTokenWithCaret(input, match).value;
 }

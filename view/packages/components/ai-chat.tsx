@@ -61,7 +61,7 @@ import {
   getActiveMentionToken,
   flattenMentionItems,
   filterMentionItems,
-  replaceMentionToken,
+  replaceMentionTokenWithCaret,
   type MentionItem,
   type MentionMatch
 } from '@/packages/hooks/ai/chat-mentions';
@@ -72,17 +72,6 @@ import {
   formatTime,
   AVAILABLE_MODELS
 } from '@/packages/hooks/ai/use-chat-page';
-
-function cursorAfterMentionReplace(input: string, match: MentionMatch): number {
-  const left = input.slice(0, match.start);
-  const right = input.slice(match.end);
-  const leftTrim = left.replace(/\s+$/, '');
-  const rightTrim = right.replace(/^\s+/, '');
-  if (leftTrim.length > 0 && rightTrim.length > 0) {
-    return leftTrim.length + 1;
-  }
-  return leftTrim.length;
-}
 
 function ChatMentionSuggestions({
   open,
@@ -237,15 +226,14 @@ function useChatTextareaMentions({
       if (!match) return;
 
       const value = el.value;
-      const next = replaceMentionToken(value, match);
+      const { value: next, caret: pos } = replaceMentionTokenWithCaret(value, match);
       onAddContext(item.ctx);
       setDismissedMentionStart(null);
 
-      const pos = cursorAfterMentionReplace(value, match);
       pendingCaretAfterPickRef.current = { pos, expectedValue: next };
       setInputValue(next);
     },
-    [onAddContext, setInputValue]
+    [onAddContext, setInputValue, textareaRef]
   );
 
   const wrappedOnChange = React.useCallback(
