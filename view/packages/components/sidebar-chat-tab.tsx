@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { useChatThreads } from '@/packages/hooks/ai/use-chat-threads';
 import { ThreadSidebar } from '@/packages/components/thread-sidebar';
@@ -12,17 +12,24 @@ export function SidebarChatTab() {
   const { state } = useSidebar();
   const isCollapsed = state === 'collapsed';
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useTranslation();
   const threads = useChatThreads();
 
+  const navigateToChats = () => {
+    if (!pathname.startsWith('/chats')) {
+      router.push('/chats');
+    }
+  };
+
   const handleSelectThread = (id: string) => {
     threads.setActiveThreadId(id);
-    router.push('/chats');
+    navigateToChats();
   };
 
   const handleNewChat = () => {
     threads.createThread(t('ai.threads.untitledChat'));
-    router.push('/chats');
+    navigateToChats();
   };
 
   if (isCollapsed) {

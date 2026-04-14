@@ -176,12 +176,16 @@ function ThreadItem({ thread, isActive, onSelect, onDelete, onRename }: ThreadIt
     );
   }
 
+  const [isHovered, setIsHovered] = React.useState(false);
+
   return (
     <button
       onClick={onSelect}
       onDoubleClick={thread.isIncident ? undefined : handleStartEditing}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'relative w-full min-w-0 flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group text-left',
+        'relative w-full min-w-0 flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors text-left overflow-hidden',
         isActive
           ? 'bg-primary/10 text-primary font-medium'
           : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
@@ -198,9 +202,9 @@ function ThreadItem({ thread, isActive, onSelect, onDelete, onRename }: ThreadIt
           Incident
         </span>
       )}
-      {!thread.isIncident && (
+      {!thread.isIncident && isHovered && (
         <TooltipProvider delayDuration={0}>
-          <div className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-muted/80 backdrop-blur-sm rounded">
+          <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5 bg-muted/80 backdrop-blur-sm rounded">
             <Tooltip>
               <TooltipTrigger asChild>
                 <span
@@ -369,7 +373,7 @@ export function ThreadSidebar({
   return (
     <div
       className={cn(
-        'shrink-0 flex flex-col',
+        'flex flex-col min-h-0 flex-1',
         isCollapsed ? 'w-12 border-r border-border/50 bg-muted/20' : 'w-full'
       )}
     >
