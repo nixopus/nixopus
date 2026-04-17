@@ -13,7 +13,8 @@ const CORE_PRIVATE_PATHS = [
   '/extensions',
   '/settings',
   '/activities',
-  '/api-keys'
+  '/api-keys',
+  '/security'
 ];
 
 const PUBLIC_PATHS = [...CORE_PUBLIC_PATHS, ...getPluginPublicPaths()];

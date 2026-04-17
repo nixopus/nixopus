@@ -14,6 +14,7 @@
     "chats": "Chats",
     "integrations": "Integrations",
     "manage": "Manage",
-    "apiKeys": "API Keys"
+    "apiKeys": "API Keys",
+    "security": "Security"
   }
 }
