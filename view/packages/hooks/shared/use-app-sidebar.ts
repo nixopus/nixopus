@@ -16,7 +16,7 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, Plug, Settings } from 'lucide-react';
+import { Layers, Plug, Settings, Shield } from 'lucide-react';
 import { getPluginNavItems } from '@/plugins/registry';
 
 const BROWSE_HIDDEN_URLS = ['/backups', '/chats'];
@@ -35,6 +35,15 @@ const coreNavItems = [
     icon: Plug,
     resource: 'notification',
     order: 41
+  },
+  {
+    title: 'navigation.security',
+    url: '/security',
+    icon: Shield,
+    resource: 'security',
+    order: 101,
+    group: 'settings',
+    section: 'Account'
   },
   {
     title: 'General',
@@ -134,7 +143,7 @@ export function useAppSidebar() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const hasAnyPermission = useMemo(() => {
-    const allowedResources = ['dashboard', 'settings', 'extensions', 'ai', 'domain'];
+    const allowedResources = ['dashboard', 'settings', 'extensions', 'ai', 'domain', 'security'];
 
     return (resource: string) => {
       if (!user || !activeOrg) return false;

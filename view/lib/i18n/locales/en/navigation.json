@@ -13,6 +13,7 @@
     "containers": "Containers",
     "chats": "Chats",
     "integrations": "Integrations",
-    "manage": "Manage"
+    "manage": "Manage",
+    "security": "Security"
   }
 }
