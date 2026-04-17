@@ -204,6 +204,30 @@ check_firewall() {
 
 gen_secret() { openssl rand -hex 32; }
 
+# gen_password generates a 16-char password that satisfies Better Auth's
+# validation rules (>=8 chars, 1 upper, 1 lower, 1 digit, 1 special).
+# Special set is restricted to characters that are JSON- and shell-safe so
+# the resulting value can be embedded in .env and curl payloads without
+# escaping headaches.
+gen_password() {
+    local upper lower digit special rest combined
+    upper=$(LC_ALL=C tr -dc 'A-Z'             </dev/urandom 2>/dev/null | head -c 1)
+    lower=$(LC_ALL=C tr -dc 'a-z'             </dev/urandom 2>/dev/null | head -c 1)
+    digit=$(LC_ALL=C tr -dc '0-9'             </dev/urandom 2>/dev/null | head -c 1)
+    special=$(LC_ALL=C tr -dc '!@#%^&*'       </dev/urandom 2>/dev/null | head -c 1)
+    rest=$(LC_ALL=C tr -dc 'A-Za-z0-9!@#%^&*' </dev/urandom 2>/dev/null | head -c 12)
+    combined="${upper}${lower}${digit}${special}${rest}"
+    echo "$combined" | fold -w1 | shuf | tr -d '\n'
+}
+
+# json_escape escapes a string for embedding inside a JSON double-quoted value.
+json_escape() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    printf '%s' "$s"
+}
+
 prompt_if_tty() {
     local var_name="$1" prompt="$2" default="${3:-}"
     local current_val="${!var_name:-}"
@@ -335,6 +359,16 @@ gather_config() {
         echo -e "  ${BOLD}Admin Account${NC}"
     fi
     prompt_if_tty ADMIN_EMAIL "Admin email" ""
+
+    # Admin password — only relevant when an email is present. Auto-generate
+    # if not supplied so the installer can bootstrap the admin account
+    # non-interactively. The generated value is printed at the end.
+    if [ -n "${ADMIN_EMAIL:-}" ] && [ -z "${ADMIN_PASSWORD:-}" ]; then
+        ADMIN_PASSWORD="$(gen_password)"
+        ADMIN_PASSWORD_GENERATED=true
+    else
+        ADMIN_PASSWORD_GENERATED=false
+    fi
 
     SSH_HOST="${SSH_HOST:-${HOST_IP:-host.docker.internal}}"
     SSH_USER="${SSH_USER:-root}"
@@ -519,6 +553,7 @@ USE_BUNDLED_DB=${USE_BUNDLED_DB}
 USE_BUNDLED_REDIS=${USE_BUNDLED_REDIS}
 
 ADMIN_EMAIL=${ADMIN_EMAIL:-}
+ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
 SELF_HOSTED=true
 NIXOPUS_TELEMETRY=${NIXOPUS_TELEMETRY:-on}
 LOG_LEVEL=${LOG_LEVEL:-debug}
@@ -657,6 +692,89 @@ start_services() {
     log_warn "Health check timed out. Services may still be starting."
     log_info "Check status: nixopus status"
     log_info "Check logs:   nixopus logs"
+}
+
+# bootstrap_admin creates the initial admin user via Better Auth's sign-up
+# endpoint so the operator does not have to register through the browser.
+# Skipped when ADMIN_EMAIL is empty. Treats "user already exists" as success
+# so re-running the installer is idempotent.
+ADMIN_BOOTSTRAPPED=false
+bootstrap_admin() {
+    if [ -z "${ADMIN_EMAIL:-}" ] || [ -z "${ADMIN_PASSWORD:-}" ]; then
+        return 0
+    fi
+
+    local url="$BASE_URL/api/auth/sign-up/email"
+    local name="${ADMIN_EMAIL%@*}"
+    local payload
+    payload=$(printf '{"email":"%s","password":"%s","name":"%s"}' \
+        "$(json_escape "$ADMIN_EMAIL")" \
+        "$(json_escape "$ADMIN_PASSWORD")" \
+        "$(json_escape "$name")")
+
+    log_info "Bootstrapping admin account ($ADMIN_EMAIL)"
+
+    local timeout="${ADMIN_BOOTSTRAP_TIMEOUT:-60}" elapsed=0 interval=3
+    local http_code="000" body code tmp
+    tmp=$(mktemp)
+    while [ "$elapsed" -lt "$timeout" ]; do
+        http_code=$(curl -sS -k -o "$tmp" -w "%{http_code}" \
+            --connect-timeout 5 --max-time 15 \
+            -X POST "$url" \
+            -H "Content-Type: application/json" \
+            -H "Origin: $BASE_URL" \
+            -d "$payload" 2>/dev/null || echo "000")
+
+        body=$(cat "$tmp" 2>/dev/null || true)
+        code=$(printf '%s' "$body" | grep -oE '"code"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n1 | sed -E 's/.*"code"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
+
+        case "$http_code" in
+            200|201)
+                rm -f "$tmp"
+                log_ok "Admin account created"
+                ADMIN_BOOTSTRAPPED=true
+                return 0
+                ;;
+            422)
+                if [ "$code" = "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL" ] || [ "$code" = "USER_ALREADY_EXISTS" ]; then
+                    rm -f "$tmp"
+                    log_info "Admin account already exists — skipping bootstrap"
+                    return 0
+                fi
+                ;;
+            400|403)
+                case "$code" in
+                    EMAIL_PASSWORD_SIGN_UP_DISABLED)
+                        rm -f "$tmp"
+                        log_warn "Email/password sign-up is disabled in the auth service — cannot bootstrap admin"
+                        return 0
+                        ;;
+                    INVALID_ORIGIN|MISSING_OR_NULL_ORIGIN|CROSS_SITE_NAVIGATION_LOGIN_BLOCKED)
+                        rm -f "$tmp"
+                        log_warn "Auth service rejected origin '$BASE_URL' ($code). Check ALLOWED_ORIGIN in $NIXOPUS_HOME/.env"
+                        return 0
+                        ;;
+                    PASSWORD_TOO_SHORT|PASSWORD_TOO_LONG|INVALID_PASSWORD|INVALID_EMAIL)
+                        rm -f "$tmp"
+                        log_warn "Auth service rejected credentials ($code). Adjust ADMIN_EMAIL / ADMIN_PASSWORD and re-run: nixopus admin-bootstrap"
+                        return 0
+                        ;;
+                esac
+                ;;
+        esac
+
+        sleep "$interval"
+        elapsed=$((elapsed + interval))
+    done
+
+    rm -f "$tmp"
+    if [ -n "$code" ]; then
+        log_warn "Could not auto-create admin (HTTP $http_code, code: $code). Retry: nixopus admin-bootstrap"
+    else
+        log_warn "Could not auto-create admin (HTTP $http_code). Retry: nixopus admin-bootstrap"
+    fi
+    [ -n "$body" ] && log_warn "Response: $(printf '%s' "$body" | head -c 200)"
+    return 0
 }
 
 # ── Step 6: Management Script ────────────────────────────────────────────────
@@ -972,6 +1090,94 @@ cmd_info() {
     cmd_status
 }
 
+# cmd_admin_bootstrap creates (or recreates) the initial admin account by
+# calling Better Auth's POST /api/auth/sign-up/email through Caddy. Uses
+# ADMIN_EMAIL/ADMIN_PASSWORD from .env unless overridden by env vars or
+# CLI args:  nixopus admin-bootstrap [email] [password]
+cmd_admin_bootstrap() {
+    load_env
+
+    local email="${1:-${ADMIN_EMAIL:-}}"
+    local password="${2:-${ADMIN_PASSWORD:-}}"
+
+    if [ -z "$email" ]; then
+        echo "ADMIN_EMAIL is not set. Usage: nixopus admin-bootstrap <email> <password>" >&2
+        return 1
+    fi
+    if [ -z "$password" ]; then
+        echo "ADMIN_PASSWORD is not set. Usage: nixopus admin-bootstrap <email> <password>" >&2
+        return 1
+    fi
+
+    local base="${ALLOWED_ORIGIN:-${AUTH_PUBLIC_URL:-}}"
+    if [ -z "$base" ]; then
+        echo "Cannot determine BASE_URL (ALLOWED_ORIGIN missing in .env)" >&2
+        return 1
+    fi
+
+    json_escape() {
+        local s="$1"
+        s="${s//\\/\\\\}"
+        s="${s//\"/\\\"}"
+        printf '%s' "$s"
+    }
+
+    local name="${email%@*}"
+    local payload
+    payload=$(printf '{"email":"%s","password":"%s","name":"%s"}' \
+        "$(json_escape "$email")" "$(json_escape "$password")" "$(json_escape "$name")")
+
+    local timeout="${ADMIN_BOOTSTRAP_TIMEOUT:-30}" elapsed=0 interval=3
+    local http_code="000" body code tmp
+    tmp=$(mktemp)
+    echo "Bootstrapping admin ($email) at $base ..."
+
+    while [ "$elapsed" -lt "$timeout" ]; do
+        http_code=$(curl -sS -k -o "$tmp" -w "%{http_code}" \
+            --connect-timeout 5 --max-time 15 \
+            -X POST "$base/api/auth/sign-up/email" \
+            -H "Content-Type: application/json" \
+            -H "Origin: $base" \
+            -d "$payload" 2>/dev/null || echo "000")
+
+        body=$(cat "$tmp" 2>/dev/null || true)
+        code=$(printf '%s' "$body" | grep -oE '"code"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n1 | sed -E 's/.*"code"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
+
+        case "$http_code" in
+            200|201)
+                rm -f "$tmp"
+                echo "Admin account created."
+                return 0
+                ;;
+            422)
+                if [ "$code" = "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL" ] || [ "$code" = "USER_ALREADY_EXISTS" ]; then
+                    rm -f "$tmp"
+                    echo "Admin account already exists — nothing to do."
+                    return 0
+                fi
+                ;;
+            400|403)
+                case "$code" in
+                    EMAIL_PASSWORD_SIGN_UP_DISABLED|INVALID_ORIGIN|MISSING_OR_NULL_ORIGIN|CROSS_SITE_NAVIGATION_LOGIN_BLOCKED|PASSWORD_TOO_SHORT|PASSWORD_TOO_LONG|INVALID_PASSWORD|INVALID_EMAIL)
+                        rm -f "$tmp"
+                        echo "Auth service rejected request: $code" >&2
+                        echo "Response: $(printf '%s' "$body" | head -c 200)" >&2
+                        return 1
+                        ;;
+                esac
+                ;;
+        esac
+
+        sleep "$interval"
+        elapsed=$((elapsed + interval))
+    done
+
+    rm -f "$tmp"
+    echo "Failed to create admin after ${timeout}s (HTTP $http_code${code:+, code: $code})." >&2
+    [ -n "$body" ] && echo "Response: $(printf '%s' "$body" | head -c 200)" >&2
+    return 1
+}
+
 cmd_help() {
     echo "Usage: nixopus <command> [args]"
     echo ""
@@ -991,6 +1197,7 @@ cmd_help() {
     echo "  port set <type> <n> Change port (http, https, ssh)"
     echo "  backup              Backup database and config"
     echo "  info                Show install info and status"
+    echo "  admin-bootstrap     Create admin account via auth API (uses ADMIN_EMAIL/ADMIN_PASSWORD)"
     echo "  help                Show this help"
 }
 
@@ -1007,6 +1214,7 @@ case "${1:-help}" in
     port)      shift; cmd_port "$@" ;;
     backup)    cmd_backup ;;
     info)      cmd_info ;;
+    admin-bootstrap) shift; cmd_admin_bootstrap "$@" ;;
     help|--help|-h) cmd_help ;;
     *)         echo "Unknown command: $1"; cmd_help; exit 1 ;;
 esac
@@ -1051,6 +1259,19 @@ show_complete() {
     echo -e "  ${BOLD}Access:${NC}    $BASE_URL"
     echo -e "  ${BOLD}Config:${NC}    $NIXOPUS_HOME/.env"
     echo -e "  ${BOLD}Installed:${NC} ${duration}s"
+    if [ -n "${ADMIN_EMAIL:-}" ] && [ "${ADMIN_BOOTSTRAPPED:-false}" = true ]; then
+        echo ""
+        echo -e "  ${BOLD}Admin credentials:${NC}"
+        echo -e "    ${BOLD}Email:${NC}    $ADMIN_EMAIL"
+        echo -e "    ${BOLD}Password:${NC} $ADMIN_PASSWORD"
+        if [ "${ADMIN_PASSWORD_GENERATED:-false}" = true ]; then
+            echo -e "    ${YELLOW}Auto-generated. Save it now and change it after first login.${NC}"
+        fi
+        echo -e "    ${DIM}Also stored in $NIXOPUS_HOME/.env (ADMIN_PASSWORD)${NC}"
+    elif [ -n "${ADMIN_EMAIL:-}" ]; then
+        echo ""
+        echo -e "  ${BOLD}Admin:${NC}     register at $BASE_URL/register"
+    fi
     echo ""
     echo -e "  ${BOLD}Commands:${NC}"
     echo "    nixopus status     Show service health"
@@ -1094,6 +1315,7 @@ main() {
 
     log_step 5 "Starting services"
     start_services
+    bootstrap_admin
 
     log_step 6 "Installing management CLI"
     install_management_script
