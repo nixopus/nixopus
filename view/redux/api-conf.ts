@@ -63,6 +63,14 @@ export enum DOMAIN_SETTINGS {
   GENERATE_RANDOM_SUBDOMAIN = 'v1/domain/generate'
 }
 
+export enum CUSTOM_DOMAIN_URLS {
+  LIST = 'v1/domain',
+  ADD = 'v1/domain/custom',
+  VERIFY = 'v1/domain/verify',
+  REMOVE = 'v1/domain/custom',
+  DNS_CHECK = 'v1/domain/dns-check'
+}
+
 export enum GITHUB_CONNECTOR {
   ADD_GITHUB_CONNECTOR = 'v1/github-connector',
   GET_GITHUB_CONNECTORS = 'v1/github-connector/all',
