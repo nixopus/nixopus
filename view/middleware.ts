@@ -13,6 +13,7 @@ const CORE_PRIVATE_PATHS = [
   '/extensions',
   '/settings',
   '/activities',
+  '/api-keys',
   '/security'
 ];
 
