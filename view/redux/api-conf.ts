@@ -192,6 +192,9 @@ export enum MACHINEHOSTURLS {
   PAUSE = 'v1/machine/pause',
   RESUME = 'v1/machine/resume',
   BACKUP = 'v1/machine/backup',
+  LIST_BACKUPS = 'v1/machine/backups',
+  GET_BACKUP_SCHEDULE = 'v1/machine/backup/schedule',
+  UPDATE_BACKUP_SCHEDULE = 'v1/machine/backup/schedule',
   METRICS = 'v1/machine/metrics',
   EVENTS = 'v1/machine/events'
 }

@@ -15,6 +15,7 @@
     "integrations": "Integrations",
     "manage": "Manage",
     "apiKeys": "API Keys",
-    "security": "Security"
+    "security": "Security",
+    "backups": "Backups"
   }
 }
