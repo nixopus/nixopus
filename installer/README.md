@@ -79,7 +79,9 @@ curl -fsSL install.nixopus.com | sudo DOMAIN=panel.example.com ADMIN_EMAIL=admin
 | `HOST_IP` | *(auto-detected)* | Public IP of the server |
 | `CADDY_HTTP_PORT` | `80` | HTTP port |
 | `CADDY_HTTPS_PORT` | `443` | HTTPS port |
-| `ADMIN_EMAIL` | *(empty)* | Admin account email |
+| `ADMIN_EMAIL` | *(empty)* | Admin account email. When set, the installer pre-creates the admin via the auth API after services start. |
+| `ADMIN_PASSWORD` | *(auto-generated)* | Admin password. Used only when `ADMIN_EMAIL` is set. Auto-generated to satisfy the password rules below if omitted; printed in the install summary and persisted to `.env` (mode `600`). |
+| `ADMIN_BOOTSTRAP_TIMEOUT` | `60` | Seconds the installer waits for the admin sign-up call to succeed. Retry later with `nixopus admin-bootstrap`. |
 | `SSH_HOST` | `$HOST_IP` | SSH host the API connects to |
 | `SSH_PORT` | `22` | SSH port (auto-detected from sshd_config if non-standard) |
 | `SSH_USER` | `root` | SSH user |
@@ -100,6 +102,45 @@ curl -fsSL install.nixopus.com | sudo DOMAIN=panel.example.com ADMIN_EMAIL=admin
 | `NIXOPUS_TELEMETRY` | `on` | Set to `off` to disable anonymous install telemetry |
 | `DO_NOT_TRACK` | `0` | Set to `1` to disable telemetry ([consented.dev](https://consented.dev)) |
 | `LOG_LEVEL` | `debug` | Log level |
+
+## Admin account
+
+When you pass `ADMIN_EMAIL`, the installer creates the initial admin user for you by calling the auth service after the stack is healthy — no need to visit `/register` manually.
+
+```bash
+curl -fsSL install.nixopus.com | sudo \
+  DOMAIN=panel.example.com \
+  ADMIN_EMAIL=admin@example.com \
+  ADMIN_PASSWORD='ChangeMe!23' bash
+```
+
+If you omit `ADMIN_PASSWORD`, the installer generates a 16-character password that satisfies all rules below and prints it once at the end of the install. The same value is written to `/opt/nixopus/.env` so re-runs preserve it.
+
+### Password rules
+
+The auth service enforces these on every credential, including the auto-generated one:
+
+- At least 8 characters
+- At least one uppercase letter (A–Z)
+- At least one lowercase letter (a–z)
+- At least one digit (0–9)
+- At least one special character: `!@#$%^&*(),.?":{}|<>`
+
+### Skipping the bootstrap
+
+If you don't pass `ADMIN_EMAIL`, the installer doesn't create any account. On first visit, the dashboard sends you to `/register` and the first person to sign up becomes the admin.
+
+### Retrying the bootstrap
+
+If the auth service was still warming up when the installer gave up, or you need to recreate the admin, retry without reinstalling:
+
+```bash
+sudo nixopus admin-bootstrap
+# or override the stored values:
+sudo nixopus admin-bootstrap admin@example.com 'NewPass!23'
+```
+
+The retry uses the values stored in `.env` by default, treats `USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL` as success, and surfaces the auth service's `code` field on validation failures (`PASSWORD_TOO_SHORT`, `INVALID_ORIGIN`, `EMAIL_PASSWORD_SIGN_UP_DISABLED`, etc.).
 
 ## Ports
 
@@ -224,6 +265,7 @@ sudo nixopus status
 | `nixopus ip set <ip>` | Change host IP |
 | `nixopus port set <http\|https\|ssh> <port>` | Change a port |
 | `nixopus backup` | Backup database and config |
+| `nixopus admin-bootstrap [email] [password]` | Create the initial admin via the auth API (uses `ADMIN_EMAIL`/`ADMIN_PASSWORD` from `.env` unless overridden) |
 | `nixopus uninstall` | Remove containers (keeps data) |
 | `nixopus uninstall --purge` | Remove everything including data |
 
@@ -297,6 +339,54 @@ nixopus logs
 ```
 
 Common causes: port conflict (see [Ports](#ports)), DNS not configured (see [HTTPS](#https)), or insufficient resources (see [Requirements](#requirements)).
+
+### Admin bootstrap failed during install
+
+**Symptom:** Install summary shows `Could not auto-create admin (HTTP …)` or `Auth service rejected request: …`.
+
+The installer creates the admin via the auth service after the stack starts. If the auth service is slow, the origin is misconfigured, or the credentials don't pass validation, the bootstrap is skipped — but the install itself succeeds.
+
+**Fix:** Retry without reinstalling.
+
+```bash
+sudo nixopus admin-bootstrap
+```
+
+Common error codes printed by the auth service:
+
+| Code | Meaning | Fix |
+|---|---|---|
+| `USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL` | Admin already exists | Nothing — log in with the existing credentials |
+| `EMAIL_PASSWORD_SIGN_UP_DISABLED` | Email/password sign-up turned off in the auth service | Enable it in the auth service config or seed via DB |
+| `INVALID_ORIGIN` / `MISSING_OR_NULL_ORIGIN` | Origin header rejected | Check `ALLOWED_ORIGIN` matches your `BASE_URL` in `/opt/nixopus/.env` |
+| `PASSWORD_TOO_SHORT` / `PASSWORD_TOO_LONG` / `INVALID_PASSWORD` | Password rules failed | Pick a password matching the [rules](#password-rules) and re-run with `nixopus admin-bootstrap <email> <password>` |
+| `INVALID_EMAIL` | Email malformed | Re-run with a valid email |
+
+If the auth service is just slow to come up, increase the timeout:
+
+```bash
+sudo ADMIN_BOOTSTRAP_TIMEOUT=120 nixopus admin-bootstrap
+```
+
+### Lost the admin password
+
+The auto-generated admin password is stored in `/opt/nixopus/.env` as `ADMIN_PASSWORD`:
+
+```bash
+sudo grep '^ADMIN_PASSWORD=' /opt/nixopus/.env
+```
+
+If that's missing or the account is locked out, recreate the admin by deleting the existing credential row and re-running the bootstrap:
+
+```bash
+docker exec -it nixopus-db psql -U nixopus -d nixopus -c \
+  "DELETE FROM account WHERE user_id = (SELECT id FROM \"user\" WHERE email='admin@example.com');
+   DELETE FROM \"user\" WHERE email='admin@example.com';"
+
+sudo nixopus admin-bootstrap admin@example.com 'NewPass!23'
+```
+
+> **Warning:** Deleting the user row drops anything tied to that user (org memberships, API keys, audit ownership). Only do this if you understand the impact.
 
 ### Cannot access the dashboard
 
