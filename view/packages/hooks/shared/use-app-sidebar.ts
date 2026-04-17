@@ -16,8 +16,9 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { apiKeysApi } from '@/redux/services/api-keys/apiKeysApi';
+import { customDomainsApi } from '@/redux/services/domains/customDomainsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { KeyRound, Layers, Plug, Settings, Shield } from 'lucide-react';
+import { Globe, KeyRound, Layers, Plug, Settings, Shield } from 'lucide-react';
 import { getPluginNavItems } from '@/plugins/registry';
 
 const BROWSE_HIDDEN_URLS = ['/backups', '/chats'];
@@ -36,6 +37,13 @@ const coreNavItems = [
     icon: Plug,
     resource: 'notification',
     order: 41
+  },
+  {
+    title: 'navigation.domains',
+    url: '/domains',
+    icon: Globe,
+    resource: 'domain',
+    order: 40
   },
   {
     title: 'navigation.apiKeys',
@@ -194,7 +202,8 @@ export function useAppSidebar() {
       fileManagersApi,
       auditApi,
       FeatureFlagsApi,
-      apiKeysApi
+      apiKeysApi,
+      customDomainsApi
     ];
     apis.forEach((api) => dispatch(api.util.resetApiState()));
   };
