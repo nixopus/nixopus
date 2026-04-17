@@ -7,8 +7,9 @@ import { deployApi } from '@/redux/services/deploy/applicationsApi';
 import { containerApi } from '@/redux/services/container/containerApi';
 import { imagesApi } from '@/redux/services/container/imagesApi';
 import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
+import { machineBackupApi } from '@/redux/services/machine/machineBackupApi';
 
-const PLUGIN_MACHINE_APIS = ['machineLifecycleApi', 'machineBackupApi', 'machineBillingApi'];
+const PLUGIN_MACHINE_APIS = ['machineLifecycleApi', 'machineBillingApi'];
 
 interface MachineContextValue {
   machineId: string | null;
@@ -48,6 +49,7 @@ export function MachineProvider({ machineId, children }: MachineProviderProps) {
       dispatch(containerApi.util.resetApiState());
       dispatch(imagesApi.util.resetApiState());
       dispatch(fileManagersApi.util.resetApiState());
+      dispatch(machineBackupApi.util.resetApiState());
       PLUGIN_MACHINE_APIS.forEach((path) => dispatch({ type: `${path}/resetApiState` }));
     }
   }, [resolvedId, dispatch]);

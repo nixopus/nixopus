@@ -16,9 +16,10 @@ import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { apiKeysApi } from '@/redux/services/api-keys/apiKeysApi';
+import { machineBackupApi } from '@/redux/services/machine/machineBackupApi';
 import { customDomainsApi } from '@/redux/services/domains/customDomainsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Globe, KeyRound, Layers, Plug, Settings, Shield } from 'lucide-react';
+import { Globe, HardDrive, KeyRound, Layers, Plug, Settings, Shield } from 'lucide-react';
 import { getPluginNavItems } from '@/plugins/registry';
 
 const BROWSE_HIDDEN_URLS = ['/backups', '/chats'];
@@ -44,6 +45,13 @@ const coreNavItems = [
     icon: Globe,
     resource: 'domain',
     order: 40
+  },
+  {
+    title: 'navigation.backups',
+    url: '/backups',
+    icon: HardDrive,
+    resource: 'backup',
+    order: 50
   },
   {
     title: 'navigation.apiKeys',
@@ -161,7 +169,7 @@ export function useAppSidebar() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const hasAnyPermission = useMemo(() => {
-    const allowedResources = ['dashboard', 'settings', 'extensions', 'ai', 'domain', 'api-key', 'security'];
+    const allowedResources = ['dashboard', 'settings', 'extensions', 'ai', 'domain', 'api-key', 'security', 'backup'];
 
     return (resource: string) => {
       if (!user || !activeOrg) return false;
@@ -203,6 +211,7 @@ export function useAppSidebar() {
       auditApi,
       FeatureFlagsApi,
       apiKeysApi,
+      machineBackupApi,
       customDomainsApi
     ];
     apis.forEach((api) => dispatch(api.util.resetApiState()));

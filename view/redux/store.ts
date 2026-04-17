@@ -30,6 +30,7 @@ import { extensionsApi } from './services/extensions/extensionsApi';
 import { mcpApi } from './services/settings/mcpApi';
 import { machinesApi } from './services/servers/serversApi';
 import { apiKeysApi } from './services/api-keys/apiKeysApi';
+import { machineBackupApi } from './services/machine/machineBackupApi';
 import { customDomainsApi } from './services/domains/customDomainsApi';
 import { getPluginReducers, getPluginMiddleware } from '@/plugins/registry-client';
 
@@ -81,6 +82,7 @@ const coreReducers = {
   [mcpApi.reducerPath]: mcpApi.reducer,
   [machinesApi.reducerPath]: machinesApi.reducer,
   [apiKeysApi.reducerPath]: apiKeysApi.reducer,
+  [machineBackupApi.reducerPath]: machineBackupApi.reducer,
   [customDomainsApi.reducerPath]: customDomainsApi.reducer
 };
 
@@ -126,6 +128,7 @@ export const store = configureStore({
       mcpApi.middleware,
       machinesApi.middleware,
       apiKeysApi.middleware,
+      machineBackupApi.middleware,
       customDomainsApi.middleware,
       ...getPluginMiddleware()
     ]),
