@@ -14,7 +14,8 @@ const CORE_PRIVATE_PATHS = [
   '/settings',
   '/activities',
   '/api-keys',
-  '/security'
+  '/security',
+  '/backups'
 ];
 
 const PUBLIC_PATHS = [...CORE_PUBLIC_PATHS, ...getPluginPublicPaths()];
