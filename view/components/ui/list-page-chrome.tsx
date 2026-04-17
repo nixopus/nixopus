@@ -61,9 +61,15 @@ interface RefreshButtonProps {
   onClick: () => void;
   isFetching?: boolean;
   ariaLabel?: string;
+  disabled?: boolean;
 }
 
-export function RefreshButton({ onClick, isFetching, ariaLabel = 'Refresh' }: RefreshButtonProps) {
+export function RefreshButton({
+  onClick,
+  isFetching,
+  ariaLabel = 'Refresh',
+  disabled,
+}: RefreshButtonProps) {
   return (
     <Button
       variant="ghost"
@@ -71,7 +77,7 @@ export function RefreshButton({ onClick, isFetching, ariaLabel = 'Refresh' }: Re
       onClick={onClick}
       className="h-8 w-8"
       aria-label={ariaLabel}
-      disabled={isFetching}
+      disabled={disabled ?? isFetching}
     >
       <RotateCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
     </Button>
