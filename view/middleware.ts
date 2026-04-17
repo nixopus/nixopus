@@ -6,7 +6,15 @@ const AUTH_COOKIE = 'better-auth.session_token';
 const BASE_PATH = process.env.BASE_PATH || '';
 
 const CORE_PUBLIC_PATHS = ['/auth', '/login', '/register', '/reset-password', '/verify-email'];
-const CORE_PRIVATE_PATHS = ['/apps', '/charts', '/chats', '/extensions', '/settings', '/activities'];
+const CORE_PRIVATE_PATHS = [
+  '/apps',
+  '/charts',
+  '/chats',
+  '/extensions',
+  '/settings',
+  '/activities',
+  '/api-keys'
+];
 
 const PUBLIC_PATHS = [...CORE_PUBLIC_PATHS, ...getPluginPublicPaths()];
 const PRIVATE_PATHS = [...CORE_PRIVATE_PATHS, ...getPluginPrivatePaths()];

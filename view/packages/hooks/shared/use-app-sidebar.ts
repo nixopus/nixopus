@@ -15,8 +15,9 @@ import { deployApi } from '@/redux/services/deploy/applicationsApi';
 import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
+import { apiKeysApi } from '@/redux/services/api-keys/apiKeysApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Layers, Plug, Settings } from 'lucide-react';
+import { KeyRound, Layers, Plug, Settings } from 'lucide-react';
 import { getPluginNavItems } from '@/plugins/registry';
 
 const BROWSE_HIDDEN_URLS = ['/backups', '/chats'];
@@ -35,6 +36,15 @@ const coreNavItems = [
     icon: Plug,
     resource: 'notification',
     order: 41
+  },
+  {
+    title: 'navigation.apiKeys',
+    url: '/api-keys',
+    icon: KeyRound,
+    resource: 'api-key',
+    order: 92,
+    group: 'settings',
+    section: 'Organization'
   },
   {
     title: 'General',
@@ -134,7 +144,7 @@ export function useAppSidebar() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const hasAnyPermission = useMemo(() => {
-    const allowedResources = ['dashboard', 'settings', 'extensions', 'ai', 'domain'];
+    const allowedResources = ['dashboard', 'settings', 'extensions', 'ai', 'domain', 'api-key'];
 
     return (resource: string) => {
       if (!user || !activeOrg) return false;
@@ -174,7 +184,8 @@ export function useAppSidebar() {
       deployApi,
       fileManagersApi,
       auditApi,
-      FeatureFlagsApi
+      FeatureFlagsApi,
+      apiKeysApi
     ];
     apis.forEach((api) => dispatch(api.util.resetApiState()));
   };

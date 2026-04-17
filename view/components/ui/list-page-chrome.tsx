@@ -1,8 +1,17 @@
 'use client';
 
 import React from 'react';
-import { Button, Skeleton, CardWrapper } from '@nixopus/ui';
-import { LayoutGrid, List, RotateCw } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  Skeleton,
+  CardWrapper,
+} from '@nixopus/ui';
+import { LayoutGrid, List, RotateCw, MoreVertical } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 export const DATA_TABLE_CLASS = [
   '[&_thead_tr]:border-b [&_thead_tr]:border-border',
@@ -62,6 +71,7 @@ export function RefreshButton({ onClick, isFetching, ariaLabel = 'Refresh' }: Re
       onClick={onClick}
       className="h-8 w-8"
       aria-label={ariaLabel}
+      disabled={isFetching}
     >
       <RotateCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
     </Button>
@@ -108,6 +118,133 @@ export function CardSkeleton({ count = 6 }: { count?: number }) {
             <Skeleton className="h-3.5 w-20" />
           </div>
         </CardWrapper>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// TablePanel — bordered container for data tables
+// ---------------------------------------------------------------------------
+
+interface TablePanelProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function TablePanel({ children, className }: TablePanelProps) {
+  return (
+    <div className={cn('overflow-x-auto rounded-md border', className)}>
+      {children}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// RowActionsDropdown — 3-dot menu for table row actions
+// ---------------------------------------------------------------------------
+
+interface RowActionsDropdownProps {
+  trigger?: React.ReactNode;
+  ariaLabel?: string;
+  children: React.ReactNode;
+}
+
+export function RowActionsDropdown({
+  trigger,
+  ariaLabel = 'Actions',
+  children,
+}: RowActionsDropdownProps) {
+  const resolvedTrigger = trigger ?? (
+    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={ariaLabel}>
+      <MoreVertical className="h-4 w-4" />
+    </Button>
+  );
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>{resolvedTrigger}</DropdownMenuTrigger>
+      <DropdownMenuContent align="end">{children}</DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// EmptyState — icon + message + optional retry button
+// ---------------------------------------------------------------------------
+
+interface EmptyStateProps {
+  icon: LucideIcon;
+  message: string;
+  description?: string;
+  onRetry?: () => void;
+  retryLabel?: string;
+  bordered?: boolean;
+}
+
+export function EmptyState({
+  icon: Icon,
+  message,
+  description,
+  onRetry,
+  retryLabel = 'Retry',
+  bordered = true,
+}: EmptyStateProps) {
+  const inner = (
+    <div className="text-center py-16 text-muted-foreground space-y-3">
+      <Icon className="h-10 w-10 mx-auto mb-2 opacity-40" />
+      <p className="text-sm font-medium">{message}</p>
+      {description && (
+        <p className="text-xs mt-1 text-muted-foreground/80">{description}</p>
+      )}
+      {onRetry && (
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          {retryLabel}
+        </Button>
+      )}
+    </div>
+  );
+
+  if (!bordered) return inner;
+  return <div className="overflow-hidden rounded-md border">{inner}</div>;
+}
+
+// ---------------------------------------------------------------------------
+// TableSkeleton — loading placeholder matching a data table
+// ---------------------------------------------------------------------------
+
+interface SkeletonRowConfig {
+  widths: string[];
+  gap?: string;
+}
+
+interface TableSkeletonProps {
+  headerWidths: string[];
+  rows?: number;
+  rowConfig?: SkeletonRowConfig;
+}
+
+export function TableSkeleton({ headerWidths, rows = 3, rowConfig }: TableSkeletonProps) {
+  const gap = rowConfig?.gap ?? 'gap-6';
+
+  return (
+    <div className="overflow-hidden rounded-md border">
+      <div
+        className={`flex items-center ${gap} px-5 py-3 bg-foreground/3 border-b border-border`}
+      >
+        {headerWidths.map((w, i) => (
+          <Skeleton key={i} className={`h-2.5 ${w} rounded-sm`} />
+        ))}
+      </div>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div
+          key={i}
+          className={`flex items-center ${gap} px-5 py-5 border-b border-border last:border-0`}
+        >
+          {rowConfig?.widths.map((w, j) => (
+            <Skeleton key={j} className={w} />
+          ))}
+        </div>
       ))}
     </div>
   );
