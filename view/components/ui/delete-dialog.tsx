@@ -1,6 +1,6 @@
 import { DialogWrapper, DialogAction } from '@nixopus/ui';
 import { LucideIcon } from 'lucide-react';
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 
 interface ConfirmationDialogProps {
   title: string;
@@ -29,10 +29,21 @@ export function DeleteDialog({
   open,
   onOpenChange
 }: ConfirmationDialogProps) {
+  const isControlled = open !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const currentOpen = isControlled ? open : internalOpen;
+
+  const handleOpenChange = (next: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(next);
+    }
+    onOpenChange?.(next);
+  };
+
   const actions: DialogAction[] = [
     {
       label: cancelText,
-      onClick: () => onOpenChange?.(false),
+      onClick: () => handleOpenChange(false),
       variant: 'outline'
     },
     {
@@ -48,8 +59,8 @@ export function DeleteDialog({
 
   return (
     <DialogWrapper
-      open={open}
-      onOpenChange={onOpenChange}
+      open={currentOpen}
+      onOpenChange={handleOpenChange}
       title={title}
       description={description}
       trigger={trigger}
