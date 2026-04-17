@@ -28,12 +28,16 @@ import {
 } from './guided-prefill';
 
 function useLocalStorageState(key: string, defaultValue: boolean) {
-  const [value, setValue] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem(key) === 'true';
+  const [value, setValue] = useState(defaultValue);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(key);
+    if (stored === 'true' || stored === 'false') {
+      setValue(stored === 'true');
+    } else {
+      localStorage.setItem(key, String(defaultValue));
     }
-    return defaultValue;
-  });
+  }, [key]);
 
   useEffect(() => {
     localStorage.setItem(key, String(value));
