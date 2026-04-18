@@ -169,11 +169,11 @@ func TestGetContainerErrorScenarios(t *testing.T) {
 
 	t.Run("Container ID with special characters", func(t *testing.T) {
 		Test(t,
-			Description("Should handle container ID with special characters"),
+			Description("Non-UUID container ID returns 400"),
 			Get(tests.GetContainerURL("container-special")),
 			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
-			Expect().Status().Equal(http.StatusInternalServerError),
+			Expect().Status().Equal(http.StatusBadRequest),
 		)
 	})
 
@@ -190,11 +190,11 @@ func TestGetContainerErrorScenarios(t *testing.T) {
 	t.Run("Very long container ID", func(t *testing.T) {
 		longID := "abcdefghijklmnopqrstuvwxyz1234567890abcdefghijklmnopqrstuvwxyz1234567890"
 		Test(t,
-			Description("Should handle very long container ID"),
+			Description("Non-UUID container ID returns 400"),
 			Get(tests.GetContainerURL(longID)),
 			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
-			Expect().Status().Equal(http.StatusInternalServerError),
+			Expect().Status().Equal(http.StatusBadRequest),
 		)
 	})
 }
