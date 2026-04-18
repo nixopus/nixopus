@@ -31,7 +31,7 @@ export default function useSshBanner() {
         const sshController = new AbortController();
         const sshTimeout = setTimeout(() => sshController.abort(), 10000);
 
-        const response = await fetch(`${apiBaseUrl}/v1/servers/ssh/status`, {
+        const response = await fetch(`${apiBaseUrl}/v1/machines/ssh/status`, {
           credentials: 'include',
           headers: {
             'Content-Type': 'application/json'

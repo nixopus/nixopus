@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	"github.com/nixopus/nixopus/api/internal/features/logger"
-	trail_storage "github.com/nixopus/nixopus/api/internal/features/trail/storage"
+	trail_storage "github.com/nixopus/nixopus/api/internal/features/machine/storage"
 	"github.com/nixopus/nixopus/api/internal/queue"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/robfig/cron/v3"
