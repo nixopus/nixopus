@@ -33,9 +33,7 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/notification"
 	"github.com/nixopus/nixopus/api/internal/features/notification/channel"
 	notificationController "github.com/nixopus/nixopus/api/internal/features/notification/controller"
-	server_controller "github.com/nixopus/nixopus/api/internal/features/server/controller"
 	telemetry "github.com/nixopus/nixopus/api/internal/features/telemetry/controller"
-	trail "github.com/nixopus/nixopus/api/internal/features/trail/controller"
 	"github.com/nixopus/nixopus/api/internal/openapi"
 
 	update "github.com/nixopus/nixopus/api/internal/features/update/controller"
@@ -241,7 +239,7 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 
 	router.RegisterWebSocketRoutes(server, deployController, router.schedulers.HealthCheck)
 
-	trailInternalController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
+	trailInternalController := machine_controller.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	trailInternalGroup := fuego.Group(server, apiV1.Path+"/trail")
 	router.RegisterTrailInternalRoutes(trailInternalGroup, trailInternalController)
 
@@ -368,34 +366,8 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterExtensionRoutes(extensionGroup, extensionController)
 
-	serverController := server_controller.NewServerController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
-	serverGroup := fuego.Group(server, apiV1.Path+"/servers")
-	router.applyMiddleware(serverGroup, MiddlewareConfig{
-		RBAC:         true,
-		Audit:        true,
-		ResourceName: "server",
-	})
-	router.RegisterServerRoutes(serverGroup, serverController)
-
 	machineTimescaleStore, _ := machine_storage.NewTimescaleStore(router.app.Ctx, config.AppConfig.Timescale.URL)
 	machineController := machine_controller.NewMachineController(router.app.Store, router.app.Ctx, router.logger, machineTimescaleStore)
-	machineGroup := fuego.Group(server, apiV1.Path+"/machine")
-	fuego.Use(machineGroup, middleware.ServerIDMiddleware)
-	router.applyMiddleware(machineGroup, MiddlewareConfig{
-		RBAC:         true,
-		Audit:        true,
-		ResourceName: "machine",
-	})
-	router.RegisterMachineRoutes(machineGroup, machineController)
-
-	machineBillingGroup := fuego.Group(server, apiV1.Path+"/machine")
-	fuego.Use(machineBillingGroup, middleware.ServerIDMiddleware)
-	router.applyMiddleware(machineBillingGroup, MiddlewareConfig{
-		RBAC:         false,
-		Audit:        true,
-		ResourceName: "machine",
-	})
-	router.RegisterMachineBillingRoutes(machineBillingGroup, machineController)
 
 	machinesGroup := fuego.Group(server, apiV1.Path+"/machines")
 	router.applyMiddleware(machinesGroup, MiddlewareConfig{
@@ -403,21 +375,29 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		Audit:        true,
 		ResourceName: "machine",
 	})
-	fuego.Get(machinesGroup, "", serverController.ListServers,
-		fuego.OptionSummary("List machines"),
-		fuego.OptionQueryInt("page", "Page number"),
-		fuego.OptionQueryInt("page_size", "Page size"),
-		fuego.OptionQuery("search", "Search by name"),
-		fuego.OptionQuery("sort_by", "Sort field"),
-		fuego.OptionQuery("sort_order", "Sort order"),
-		fuego.OptionQuery("status", "Status filter"),
-		fuego.OptionQueryBool("is_active", "Filter by active state"),
-	)
-
+	router.RegisterMachinesRoutes(machinesGroup, machineController)
 	router.RegisterMachineRegistrationRoutes(machinesGroup, machineController)
 
-	trailController := trail.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
-	trailGroup := fuego.Group(server, apiV1.Path+"/trail")
+	machinesOpsGroup := fuego.Group(server, apiV1.Path+"/machines")
+	fuego.Use(machinesOpsGroup, middleware.ServerIDMiddleware)
+	router.applyMiddleware(machinesOpsGroup, MiddlewareConfig{
+		RBAC:         true,
+		Audit:        true,
+		ResourceName: "machine",
+	})
+	router.RegisterMachineRoutes(machinesOpsGroup, machineController)
+
+	machinesBillingGroup := fuego.Group(server, apiV1.Path+"/machines")
+	fuego.Use(machinesBillingGroup, middleware.ServerIDMiddleware)
+	router.applyMiddleware(machinesBillingGroup, MiddlewareConfig{
+		RBAC:         false,
+		Audit:        true,
+		ResourceName: "machine",
+	})
+	router.RegisterMachineBillingRoutes(machinesBillingGroup, machineController)
+
+	trailController := machine_controller.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
+	trailGroup := fuego.Group(server, apiV1.Path+"/machines/trial")
 	router.applyMiddleware(trailGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "trail",

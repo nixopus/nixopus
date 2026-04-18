@@ -5,22 +5,22 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nixopus/nixopus/api/internal/features/server/storage"
-	server_types "github.com/nixopus/nixopus/api/internal/features/server/types"
+	"github.com/nixopus/nixopus/api/internal/features/machine/storage"
+	machine_types "github.com/nixopus/nixopus/api/internal/features/machine/types"
 	"github.com/nixopus/nixopus/api/internal/testutils"
 	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func insertKey(setup *testutils.TestSetup, key *types.SSHKey) error {
+func insertSSHKey(setup *testutils.TestSetup, key *types.SSHKey) error {
 	_, err := setup.DB.NewInsert().Model(key).Exec(setup.Ctx)
 	return err
 }
 
-func TestSetDefaultServer_HappyPath(t *testing.T) {
+func TestSetDefaultMachine_HappyPath(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	serverStorage := &storage.ServerStorage{DB: setup.DB, Ctx: setup.Ctx}
+	listStorage := storage.NewListStorage(setup.DB, setup.Ctx)
 
 	_, org, err := setup.CreateTestUserAndOrg()
 	require.NoError(t, err)
@@ -46,10 +46,10 @@ func TestSetDefaultServer_HappyPath(t *testing.T) {
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	require.NoError(t, insertKey(setup, keyA))
-	require.NoError(t, insertKey(setup, keyB))
+	require.NoError(t, insertSSHKey(setup, keyA))
+	require.NoError(t, insertSSHKey(setup, keyB))
 
-	oldDefaultID, err := serverStorage.SetDefaultServer(org.ID, keyB.ID)
+	oldDefaultID, err := listStorage.SetDefaultMachine(org.ID, keyB.ID)
 	require.NoError(t, err)
 	require.NotNil(t, oldDefaultID)
 	assert.Equal(t, keyA.ID, *oldDefaultID)
@@ -63,22 +63,21 @@ func TestSetDefaultServer_HappyPath(t *testing.T) {
 	assert.True(t, updatedB.IsDefault)
 }
 
-func TestSetDefaultServer_TargetNotFound(t *testing.T) {
+func TestSetDefaultMachine_TargetNotFound(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	serverStorage := &storage.ServerStorage{DB: setup.DB, Ctx: setup.Ctx}
+	listStorage := storage.NewListStorage(setup.DB, setup.Ctx)
 
 	_, org, err := setup.CreateTestUserAndOrg()
 	require.NoError(t, err)
 	require.NotNil(t, org)
 
-	nonExistentID := uuid.New()
-	_, err = serverStorage.SetDefaultServer(org.ID, nonExistentID)
-	assert.ErrorIs(t, err, server_types.ErrServerNotFound)
+	_, err = listStorage.SetDefaultMachine(org.ID, uuid.New())
+	assert.ErrorIs(t, err, machine_types.ErrMachineNotFound)
 }
 
-func TestSetDefaultServer_TargetInactive(t *testing.T) {
+func TestSetDefaultMachine_TargetInactive(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	serverStorage := &storage.ServerStorage{DB: setup.DB, Ctx: setup.Ctx}
+	listStorage := storage.NewListStorage(setup.DB, setup.Ctx)
 
 	_, org, err := setup.CreateTestUserAndOrg()
 	require.NoError(t, err)
@@ -94,15 +93,15 @@ func TestSetDefaultServer_TargetInactive(t *testing.T) {
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	require.NoError(t, insertKey(setup, inactiveKey))
+	require.NoError(t, insertSSHKey(setup, inactiveKey))
 
-	_, err = serverStorage.SetDefaultServer(org.ID, inactiveKey.ID)
-	assert.ErrorIs(t, err, server_types.ErrServerInactive)
+	_, err = listStorage.SetDefaultMachine(org.ID, inactiveKey.ID)
+	assert.ErrorIs(t, err, machine_types.ErrMachineInactive)
 }
 
-func TestSetDefaultServer_Idempotent(t *testing.T) {
+func TestSetDefaultMachine_Idempotent(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	serverStorage := &storage.ServerStorage{DB: setup.DB, Ctx: setup.Ctx}
+	listStorage := storage.NewListStorage(setup.DB, setup.Ctx)
 
 	_, org, err := setup.CreateTestUserAndOrg()
 	require.NoError(t, err)
@@ -118,9 +117,9 @@ func TestSetDefaultServer_Idempotent(t *testing.T) {
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
-	require.NoError(t, insertKey(setup, activeDefault))
+	require.NoError(t, insertSSHKey(setup, activeDefault))
 
-	oldDefaultID, err := serverStorage.SetDefaultServer(org.ID, activeDefault.ID)
+	oldDefaultID, err := listStorage.SetDefaultMachine(org.ID, activeDefault.ID)
 	require.NoError(t, err)
 	require.NotNil(t, oldDefaultID)
 	assert.Equal(t, activeDefault.ID, *oldDefaultID)
