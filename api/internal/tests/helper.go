@@ -141,3 +141,60 @@ func GetDeployApplicationCancelURL() string {
 func GetCreateOrganizationURL() string {
 	return baseURL + "/organizations"
 }
+
+// Machine routes
+func GetMachinesURL() string {
+	return baseURL + "/machines"
+}
+
+func GetMachineByIDURL(id string) string {
+	return baseURL + "/machines/" + id
+}
+
+func GetMachineSetDefaultURL(id string) string {
+	return baseURL + "/machines/" + id + "/set-default"
+}
+
+func GetMachineSSHStatusURL() string {
+	return baseURL + "/machines/ssh/status"
+}
+
+func GetMachineVerifyURL(id string) string {
+	return baseURL + "/machines/" + id + "/verify"
+}
+
+func GetMachineSSHKeyStatusURL(id string) string {
+	return baseURL + "/machines/" + id + "/ssh/status"
+}
+
+func GetMachineStatusURL(serverID string) string {
+	return baseURL + "/machines/status?server_id=" + serverID
+}
+
+func GetMachineRestartURL(serverID string) string {
+	return baseURL + "/machines/restart?server_id=" + serverID
+}
+
+func GetMachinePauseURL(serverID string) string {
+	return baseURL + "/machines/pause?server_id=" + serverID
+}
+
+func GetMachineResumeURL(serverID string) string {
+	return baseURL + "/machines/resume?server_id=" + serverID
+}
+
+func GetMachineBackupsURL() string {
+	return baseURL + "/machines/backups"
+}
+
+func GetMachineTriggerBackupURL(serverID string) string {
+	return baseURL + "/machines/backup?server_id=" + serverID
+}
+
+func GetMachineBackupScheduleURL() string {
+	return baseURL + "/machines/backup/schedule"
+}
+
+func GetMachineStatsURL() string {
+	return baseURL + "/machines/stats"
+}
