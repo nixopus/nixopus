@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/notification"
 	"github.com/nixopus/nixopus/api/internal/features/notification/storage"
 )
@@ -78,7 +79,7 @@ func (v *Validator) validateCreateSMTPConfigRequest(req notification.CreateSMTPC
 
 // validateUpdateSMTPConfigRequest validates update SMTP request fields
 func (v *Validator) validateUpdateSMTPConfigRequest(req notification.UpdateSMTPConfigRequest) error {
-	if req.ID.String() == "" {
+	if req.ID == uuid.Nil {
 		return notification.ErrMissingID
 	}
 	return nil
@@ -86,7 +87,7 @@ func (v *Validator) validateUpdateSMTPConfigRequest(req notification.UpdateSMTPC
 
 // validateDeleteSMTPConfigRequest validates delete SMTP request fields
 func (v *Validator) validateDeleteSMTPConfigRequest(req notification.DeleteSMTPConfigRequest) error {
-	if req.ID.String() == "" {
+	if req.ID == uuid.Nil {
 		return notification.ErrMissingID
 	}
 	return nil
@@ -94,7 +95,7 @@ func (v *Validator) validateDeleteSMTPConfigRequest(req notification.DeleteSMTPC
 
 // validateGetSMTPConfigRequest validates get SMTP request fields
 func (v *Validator) validateGetSMTPConfigRequest(req notification.GetSMTPConfigRequest) error {
-	if req.ID.String() == "" {
+	if req.ID == uuid.Nil {
 		return notification.ErrMissingID
 	}
 	return nil
