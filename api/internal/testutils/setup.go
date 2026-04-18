@@ -214,6 +214,11 @@ func postJSON(url string, payload interface{}) ([]byte, int, error) {
 
 // CreateTestUserViaAuth creates a user through the Better Auth test utils API
 // and returns a session with cookies for authenticated requests.
+//
+// The OrganizationID in the response is sourced from the session's
+// activeOrganizationId (set by nixopus-auth's setupNewUser hook), which is the
+// same org the API middleware resolves on every request. This ensures test data
+// inserted using OrganizationID will be found by API handlers.
 func (s *TestSetup) CreateTestUserViaAuth(email, name string) (*TestAuthResponse, error) {
 	saveUserURL := authServiceURL + "/api/test/save-user"
 	body, status, err := postJSON(saveUserURL, map[string]interface{}{
@@ -233,38 +238,6 @@ func (s *TestSetup) CreateTestUserViaAuth(email, name string) (*TestAuthResponse
 	}
 	if err := json.Unmarshal(body, &savedUser); err != nil {
 		return nil, fmt.Errorf("failed to parse save-user response: %w (body: %s)", err, string(body))
-	}
-
-	saveOrgURL := authServiceURL + "/api/test/save-org"
-	body, status, err = postJSON(saveOrgURL, map[string]interface{}{
-		"name": name + "'s Team",
-		"slug": strings.ToLower(strings.ReplaceAll(name, " ", "-")) + "-team",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("save-org request failed: %w", err)
-	}
-	if status != http.StatusOK {
-		return nil, fmt.Errorf("save-org failed with status %d: %s", status, string(body))
-	}
-
-	var savedOrg struct {
-		ID string `json:"id"`
-	}
-	if err := json.Unmarshal(body, &savedOrg); err != nil {
-		return nil, fmt.Errorf("failed to parse save-org response: %w (body: %s)", err, string(body))
-	}
-
-	addMemberURL := authServiceURL + "/api/test/add-member"
-	body, status, err = postJSON(addMemberURL, map[string]interface{}{
-		"userId":         savedUser.ID,
-		"organizationId": savedOrg.ID,
-		"role":           "owner",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("add-member request failed: %w", err)
-	}
-	if status != http.StatusOK {
-		return nil, fmt.Errorf("add-member failed with status %d: %s", status, string(body))
 	}
 
 	loginURL := authServiceURL + "/api/test/login"
@@ -321,6 +294,23 @@ func (s *TestSetup) CreateTestUserViaAuth(email, name string) (*TestAuthResponse
 		accessToken = loginResp.Session.Token
 	}
 
+	// Resolve the org ID that the session actually uses. Better Auth's
+	// setupNewUser hook creates a default org and sets activeOrganizationId on
+	// the session; using anything else causes a mismatch with the API middleware.
+	var orgID string
+	_ = s.DB.NewRaw(
+		"SELECT active_organization_id FROM session WHERE token = ?",
+		accessToken,
+	).Scan(ctx, &orgID)
+
+	if orgID == "" {
+		// Fallback: query the user's earliest membership (matches getInitialOrganization).
+		_ = s.DB.NewRaw(
+			"SELECT organization_id FROM member WHERE user_id = ? ORDER BY created_at ASC LIMIT 1",
+			savedUser.ID,
+		).Scan(ctx, &orgID)
+	}
+
 	user, err := s.UserStorage.FindUserByEmail(email)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find user after creation: %w", err)
@@ -330,7 +320,7 @@ func (s *TestSetup) CreateTestUserViaAuth(email, name string) (*TestAuthResponse
 		Cookies:        cookies,
 		AccessToken:    accessToken,
 		User:           user,
-		OrganizationID: savedOrg.ID,
+		OrganizationID: orgID,
 	}, nil
 }
 

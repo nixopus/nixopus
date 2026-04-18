@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/google/uuid"
 	deploy_s3 "github.com/nixopus/nixopus/api/internal/features/deploy/s3"
@@ -234,26 +233,24 @@ func (s *BackupService) UpdateBackupSchedule(ctx context.Context, orgID uuid.UUI
 		return nil, fmt.Errorf("invalid retention_count: must be 1-365")
 	}
 
-	var orgSettings shared_types.OrganizationSettings
-	err := s.db.NewSelect().
-		Model(&orgSettings).
-		Where("organization_id = ?", orgID).
-		Scan(ctx)
+	// GetOrganizationSettings upserts default settings if the row is missing,
+	// so we always have a valid row to update.
+	currentSettings, err := utils.GetOrganizationSettings(ctx, s.db, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load organization settings: %w", err)
 	}
 
-	orgSettings.Settings.BackupScheduleEnabled = &req.Enabled
-	orgSettings.Settings.BackupScheduleFrequency = &req.Frequency
-	orgSettings.Settings.BackupScheduleHourUTC = &req.HourUTC
-	orgSettings.Settings.BackupScheduleDayOfWeek = &req.DayOfWeek
-	orgSettings.Settings.BackupRetentionCount = &req.RetentionCount
-	orgSettings.UpdatedAt = time.Now()
+	currentSettings.BackupScheduleEnabled = &req.Enabled
+	currentSettings.BackupScheduleFrequency = &req.Frequency
+	currentSettings.BackupScheduleHourUTC = &req.HourUTC
+	currentSettings.BackupScheduleDayOfWeek = &req.DayOfWeek
+	currentSettings.BackupRetentionCount = &req.RetentionCount
 
 	_, err = s.db.NewUpdate().
-		Model(&orgSettings).
-		Column("settings", "updated_at").
-		Where("id = ?", orgSettings.ID).
+		TableExpr("organization_settings").
+		Set("settings = ?", currentSettings).
+		Set("updated_at = NOW()").
+		Where("organization_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update backup schedule: %w", err)
