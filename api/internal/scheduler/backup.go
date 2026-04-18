@@ -8,8 +8,11 @@ import (
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	machine_storage "github.com/nixopus/nixopus/api/internal/features/machine/storage"
+	machine_types "github.com/nixopus/nixopus/api/internal/features/machine/types"
+	sshstorage "github.com/nixopus/nixopus/api/internal/features/ssh/storage"
 	"github.com/nixopus/nixopus/api/internal/queue"
 	"github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 	"github.com/robfig/cron/v3"
 	"github.com/uptrace/bun"
 )
@@ -135,28 +138,96 @@ func (b *BackupScheduler) enqueueIfDue(orgID uuid.UUID, freq string, now time.Ti
 		}
 	}
 
+	// Try managed (provisioned) machine first
 	info, err := b.billingStore.GetProvisionInfo(b.ctx, orgID, nil)
 	if err != nil {
 		return fmt.Errorf("resolve machine: %w", err)
 	}
-	if info == nil || info.ContainerName == "" {
-		return fmt.Errorf("no provisioned machine")
+	if info != nil && info.ContainerName != "" {
+		payload := queue.MachineBackupPayload{
+			MachineName: info.ContainerName,
+			UserID:      info.UserID.String(),
+			OrgID:       orgID.String(),
+			ServerID:    info.ServerID,
+			Trigger:     "scheduled",
+		}
+		requestID, err := queue.EnqueueMachineBackup(b.ctx, payload)
+		if err != nil {
+			return fmt.Errorf("enqueue: %w", err)
+		}
+		b.logger.Log(logger.Info, fmt.Sprintf("backup scheduler: enqueued managed backup for org %s machine %s (request %s)", orgID, info.ContainerName, requestID), "")
+		return nil
+	}
+
+	// BYOS fallback: check for user-owned machine via SSH key
+	sshKeyStore := sshstorage.SSHKeyStorage{DB: b.db, Ctx: b.ctx}
+	sshKey, err := sshKeyStore.GetActiveSSHKeyByOrganizationID(orgID)
+	if err != nil || sshKey == nil {
+		return fmt.Errorf("no machine configured for org %s", orgID)
+	}
+
+	isUserOwned, err := b.billingStore.IsServerUserOwned(orgID, sshKey.ID)
+	if err != nil || !isUserOwned {
+		return fmt.Errorf("no provisioned or user-owned machine for org %s", orgID)
+	}
+
+	settings, err := utils.GetOrganizationSettings(b.ctx, b.db, orgID)
+	if err != nil {
+		return fmt.Errorf("get org settings: %w", err)
+	}
+	paths := []string{"/home", "/etc", "/var/lib/docker/volumes"}
+	if len(settings.BackupPaths) > 0 {
+		paths = settings.BackupPaths
+	}
+	retention := 7
+	if settings.BackupRetentionCount != nil {
+		retention = *settings.BackupRetentionCount
+	}
+
+	// Look up the org admin to populate UserID on the backup row
+	var member types.Member
+	memberErr := b.db.NewSelect().
+		Model(&member).
+		Where("organization_id = ?", orgID).
+		Where("role = ?", types.RoleAdmin).
+		OrderExpr("created_at ASC").
+		Limit(1).
+		Scan(b.ctx)
+	userID := uuid.Nil
+	if memberErr == nil {
+		userID = member.UserID
+	}
+
+	backup := &machine_types.MachineBackup{
+		UserID:         userID,
+		OrganizationID: orgID,
+		MachineName:    sshKey.ID.String(),
+		Status:         machine_types.BackupStatusPending,
+		Trigger:        "scheduled",
+	}
+	if err := b.backupStore.InsertBackup(b.ctx, backup); err != nil {
+		return fmt.Errorf("insert backup row: %w", err)
 	}
 
 	payload := queue.MachineBackupPayload{
-		MachineName: info.ContainerName,
-		UserID:      info.UserID.String(),
-		OrgID:       orgID.String(),
-		ServerID:    info.ServerID,
-		Trigger:     "scheduled",
+		MachineName:    sshKey.ID.String(),
+		UserID:         userID.String(),
+		OrgID:          orgID.String(),
+		ServerID:       sshKey.ID.String(),
+		BackupRowID:    backup.ID.String(),
+		BackupPaths:    paths,
+		RetentionCount: retention,
+		Trigger:        "scheduled",
 	}
-
 	requestID, err := queue.EnqueueMachineBackup(b.ctx, payload)
 	if err != nil {
-		return fmt.Errorf("enqueue: %w", err)
+		_ = b.backupStore.UpdateBackupStatus(b.ctx, backup.ID, machine_types.BackupStatusFailed, map[string]interface{}{
+			"error": "failed to enqueue backup task",
+		})
+		return fmt.Errorf("enqueue BYOS backup: %w", err)
 	}
 
-	b.logger.Log(logger.Info, fmt.Sprintf("backup scheduler: enqueued backup for org %s machine %s (request %s)", orgID, info.ContainerName, requestID), "")
+	b.logger.Log(logger.Info, fmt.Sprintf("backup scheduler: enqueued BYOS backup for org %s server %s (request %s)", orgID, sshKey.ID, requestID), "")
 	return nil
 }
 
