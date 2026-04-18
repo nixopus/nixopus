@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/mcp/service"
 	"github.com/nixopus/nixopus/api/internal/features/mcp/validation"
@@ -28,6 +29,9 @@ func (c *MCPController) UpdateServer(f fuego.ContextWithBody[validation.UpdateSe
 	body.ID = f.PathParam("id")
 	if body.ID == "" {
 		return nil, fuego.BadRequestError{Detail: "server ID is required"}
+	}
+	if _, err := uuid.Parse(body.ID); err != nil {
+		return nil, fuego.BadRequestError{Detail: "server ID must be a valid UUID"}
 	}
 
 	if err := validation.ValidateUpdateRequest(&body); err != nil {

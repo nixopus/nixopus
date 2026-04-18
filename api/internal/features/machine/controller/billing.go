@@ -8,6 +8,17 @@ import (
 )
 
 func (c *MachineController) ListMachinePlans(f fuego.ContextNoBody) (*types.ListPlansResponse, error) {
+	w, r := f.Response(), f.Request()
+	user := utils.GetUser(w, r)
+	if user == nil {
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
+	}
+
+	orgID := utils.GetOrganizationID(r)
+	if orgID == uuid.Nil {
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
+	}
+
 	return c.billingService.ListPlans()
 }
 
