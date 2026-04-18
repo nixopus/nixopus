@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/container/service"
 	"github.com/nixopus/nixopus/api/internal/features/container/types"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
@@ -17,6 +18,13 @@ func (c *ContainerController) GetContainerLogs(f fuego.ContextWithBody[types.Con
 			Detail: err.Error(),
 			Err:    err,
 		}
+	}
+
+	if req.ID == "" {
+		req.ID = f.PathParam("container_id")
+	}
+	if _, err := uuid.Parse(req.ID); err != nil {
+		return nil, fuego.BadRequestError{Detail: "container_id must be a valid UUID"}
 	}
 
 	_, r := f.Response(), f.Request()
