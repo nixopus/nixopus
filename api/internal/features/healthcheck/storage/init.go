@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -81,11 +82,17 @@ func (s *HealthCheckStorage) UpdateHealthCheck(healthCheck *shared_types.HealthC
 }
 
 func (s *HealthCheckStorage) DeleteHealthCheck(applicationID uuid.UUID, organizationID uuid.UUID) error {
-	_, err := s.DB.NewDelete().
+	result, err := s.DB.NewDelete().
 		Model((*shared_types.HealthCheck)(nil)).
 		Where("application_id = ? AND organization_id = ?", applicationID, organizationID).
 		Exec(s.Ctx)
-	return err
+	if err != nil {
+		return err
+	}
+	if rows, _ := result.RowsAffected(); rows == 0 {
+		return fmt.Errorf("health check not found")
+	}
+	return nil
 }
 
 func (s *HealthCheckStorage) ToggleHealthCheck(applicationID uuid.UUID, organizationID uuid.UUID, enabled bool) error {

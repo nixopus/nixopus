@@ -4,12 +4,16 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/container/service"
 	"github.com/nixopus/nixopus/api/internal/features/container/types"
 )
 
 func (c *ContainerController) StartContainer(f fuego.ContextNoBody) (*types.ContainerActionResponse, error) {
 	containerID := f.PathParam("container_id")
+	if _, err := uuid.Parse(containerID); err != nil {
+		return nil, fuego.BadRequestError{Detail: "container_id must be a valid UUID"}
+	}
 	ctx := f.Request().Context()
 
 	if resp, skipped := c.isProtectedContainer(ctx, containerID, "start"); skipped {

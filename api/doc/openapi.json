@@ -1800,6 +1800,14 @@
 			"BackupScheduleData": {
 				"description": "BackupScheduleData schema",
 				"properties": {
+					"backup_paths": {
+						"items": {
+							"nullable": true,
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "array"
+					},
 					"day_of_week": {
 						"type": "integer"
 					},
@@ -1823,6 +1831,14 @@
 				"properties": {
 					"data": {
 						"properties": {
+							"backup_paths": {
+								"items": {
+									"nullable": true,
+									"type": "string"
+								},
+								"nullable": true,
+								"type": "array"
+							},
 							"day_of_week": {
 								"type": "integer"
 							},
@@ -10219,6 +10235,10 @@
 					"data": {
 						"nullable": true,
 						"properties": {
+							"channel_id": {
+								"format": "uuid",
+								"type": "string"
+							},
 							"created_at": {
 								"format": "date-time",
 								"type": "string"
@@ -20295,6 +20315,7 @@
 					"content": {
 						"*/*": {
 							"example": {
+								"backup_paths": [],
 								"day_of_week": 1,
 								"enabled": true,
 								"frequency": "string",
