@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	deploy_s3 "github.com/nixopus/nixopus/api/internal/features/deploy/s3"
 	"github.com/nixopus/nixopus/api/internal/features/machine/storage"
 	"github.com/nixopus/nixopus/api/internal/features/machine/types"
 	"github.com/nixopus/nixopus/api/internal/queue"
@@ -14,17 +15,28 @@ import (
 	"github.com/uptrace/bun"
 )
 
+var defaultBackupPaths = []string{"/home", "/etc", "/var/lib/docker/volumes"}
+
 type BackupService struct {
 	provisionInfo ProvisionInfoProvider
 	backupStore   *storage.BackupStorage
 	db            *bun.DB
+	s3Cfg         shared_types.S3Config
 }
 
-func NewBackupService(p ProvisionInfoProvider, bs *storage.BackupStorage, db *bun.DB) *BackupService {
-	return &BackupService{provisionInfo: p, backupStore: bs, db: db}
+func NewBackupService(p ProvisionInfoProvider, bs *storage.BackupStorage, db *bun.DB, s3Cfg shared_types.S3Config) *BackupService {
+	return &BackupService{provisionInfo: p, backupStore: bs, db: db, s3Cfg: s3Cfg}
 }
 
 func (s *BackupService) TriggerBackup(ctx context.Context, userID, orgID uuid.UUID, serverID *uuid.UUID) (*types.TriggerBackupResponse, error) {
+	if serverID != nil {
+		billingStore := storage.NewBillingStorage(s.db, ctx)
+		isUserOwned, err := billingStore.IsServerUserOwned(orgID, *serverID)
+		if err == nil && isUserOwned {
+			return s.triggerBYOSBackup(ctx, userID, orgID, *serverID)
+		}
+	}
+
 	info, err := s.provisionInfo.GetProvisionInfo(ctx, orgID, serverID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to resolve machine: %w", err)
@@ -51,6 +63,75 @@ func (s *BackupService) TriggerBackup(ctx context.Context, userID, orgID uuid.UU
 
 	requestID, err := queue.EnqueueMachineBackup(ctx, payload)
 	if err != nil {
+		return nil, fmt.Errorf("failed to enqueue backup: %w", err)
+	}
+
+	return &types.TriggerBackupResponse{
+		Status:    "success",
+		Message:   "Backup initiated. Check status via GET /machine/backups.",
+		RequestID: requestID,
+	}, nil
+}
+
+func (s *BackupService) triggerBYOSBackup(ctx context.Context, userID, orgID, serverID uuid.UUID) (*types.TriggerBackupResponse, error) {
+	if !deploy_s3.IsConfigured(s.s3Cfg) {
+		return nil, types.ErrS3NotConfigured
+	}
+
+	hasRunning, err := s.backupStore.HasInProgressBackup(ctx, orgID, &serverID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check backup status: %w", err)
+	}
+	if hasRunning {
+		return nil, types.ErrBackupAlreadyRunning
+	}
+
+	provisionID, err := s.backupStore.GetProvisionIDBySSHKey(ctx, orgID, serverID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve provision: %w", err)
+	}
+
+	settings, err := utils.GetOrganizationSettings(ctx, s.db, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get org settings: %w", err)
+	}
+	paths := defaultBackupPaths
+	if len(settings.BackupPaths) > 0 {
+		paths = settings.BackupPaths
+	}
+	retention := 7
+	if settings.BackupRetentionCount != nil {
+		retention = *settings.BackupRetentionCount
+	}
+
+	backup := &types.MachineBackup{
+		UserID:         userID,
+		OrganizationID: orgID,
+		ProvisionID:    provisionID,
+		MachineName:    serverID.String(),
+		Status:         types.BackupStatusPending,
+		Trigger:        "api",
+	}
+	if err := s.backupStore.InsertBackup(ctx, backup); err != nil {
+		return nil, fmt.Errorf("failed to create backup record: %w", err)
+	}
+
+	payload := queue.MachineBackupPayload{
+		MachineName:    serverID.String(),
+		UserID:         userID.String(),
+		OrgID:          orgID.String(),
+		ServerID:       serverID.String(),
+		BackupRowID:    backup.ID.String(),
+		BackupPaths:    paths,
+		RetentionCount: retention,
+		Trigger:        "api",
+	}
+
+	requestID, err := queue.EnqueueMachineBackup(ctx, payload)
+	if err != nil {
+		_ = s.backupStore.UpdateBackupStatus(ctx, backup.ID, types.BackupStatusFailed, map[string]interface{}{
+			"error": "failed to enqueue backup task",
+		})
 		return nil, fmt.Errorf("failed to enqueue backup: %w", err)
 	}
 

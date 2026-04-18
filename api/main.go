@@ -69,7 +69,7 @@ func main() {
 	queue.SetupCustomDomainQueue()
 	queue.SetupResourceUpdateQueue()
 	queue.SetupMachineLifecycleQueue(ctx)
-	queue.SetupMachineBackupQueue(ctx)
+	queue.SetupMachineBackupQueue(ctx, store.DB)
 	queue.SetupMachineVerifyQueue(ctx)
 	queue.SetupVMDeleteQueue()
 

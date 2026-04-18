@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/config"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/machine/service"
 	machine_storage "github.com/nixopus/nixopus/api/internal/features/machine/storage"
@@ -51,7 +52,7 @@ func NewMachineController(
 		listService:         service.NewListService(listStore, l, ctx),
 		billingService:      service.NewBillingService(bs),
 		lifecycleService:    service.NewLifecycleService(bs, queue.ExecuteMachineLifecycle),
-		backupService:       service.NewBackupService(bs, backupStore, store.DB),
+		backupService:       service.NewBackupService(bs, backupStore, store.DB, config.AppConfig.S3),
 		metricsService:      service.NewMetricsService(ts, store.DB),
 		registrationService: regService,
 		ctx:                 ctx,

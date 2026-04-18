@@ -56,11 +56,12 @@ type OrganizationSettingsData struct {
 	ExtensionLogsRetentionDays   *int  `json:"extension_logs_retention_days,omitempty"`
 
 	// Backup schedule settings
-	BackupScheduleEnabled   *bool   `json:"backup_schedule_enabled,omitempty"`
-	BackupScheduleFrequency *string `json:"backup_schedule_frequency,omitempty"`
-	BackupScheduleHourUTC   *int    `json:"backup_schedule_hour_utc,omitempty"`
-	BackupScheduleDayOfWeek *int    `json:"backup_schedule_day_of_week,omitempty"`
-	BackupRetentionCount    *int    `json:"backup_retention_count,omitempty"`
+	BackupScheduleEnabled   *bool    `json:"backup_schedule_enabled,omitempty"`
+	BackupScheduleFrequency *string  `json:"backup_schedule_frequency,omitempty"`
+	BackupScheduleHourUTC   *int     `json:"backup_schedule_hour_utc,omitempty"`
+	BackupScheduleDayOfWeek *int     `json:"backup_schedule_day_of_week,omitempty"`
+	BackupRetentionCount    *int     `json:"backup_retention_count,omitempty"`
+	BackupPaths             []string `json:"backup_paths,omitempty"`
 
 	// AI settings
 	AIIncidentsEnabled *bool `json:"ai_incidents_enabled,omitempty"`
