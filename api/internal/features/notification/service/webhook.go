@@ -16,6 +16,7 @@ func (s *NotificationService) CreateWebhookConfig(ctx context.Context, req *noti
 		ID:             uuid.New(),
 		Type:           req.Type,
 		WebhookURL:     req.WebhookURL,
+		ChannelID:      req.Type + ":" + organizationID.String(),
 		IsActive:       true,
 		UserID:         userID,
 		OrganizationID: organizationID,

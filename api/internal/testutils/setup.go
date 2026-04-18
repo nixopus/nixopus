@@ -433,3 +433,26 @@ func (s *TestSetup) SeedCredentialAccount(userID string) error {
 	).Exec(ctx)
 	return err
 }
+
+// SeedApplication inserts a minimal application record so that healthcheck
+// (and similar) tests can reference a valid application_id without requiring
+// the full deploy pipeline.
+func (s *TestSetup) SeedApplication(userID, organizationID string) (string, error) {
+	appID := "00000000-0000-0000-0000-000000000001"
+	_, err := s.DB.NewRaw(
+		`INSERT INTO applications
+			(id, name, port, environment, build_variables, environment_variables,
+			 build_pack, repository, branch, pre_run_command, post_run_command,
+			 user_id, organization_id)
+		 VALUES
+			(?, 'test-app', 3000, 'production', '', '',
+			 'dockerfile', 'https://github.com/test/repo', 'main', '', '',
+			 ?, ?)
+		 ON CONFLICT (id) DO NOTHING`,
+		appID, userID, organizationID,
+	).Exec(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to seed application: %w", err)
+	}
+	return appID, nil
+}
