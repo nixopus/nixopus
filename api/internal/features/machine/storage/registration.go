@@ -200,6 +200,32 @@ func (s *RegistrationStorage) GetProvisionDetailsBySSHKeyID(sshKeyID uuid.UUID) 
 	return id, err
 }
 
+func (s *RegistrationStorage) GetMachineIsActive(serverID uuid.UUID) (bool, error) {
+	var key api_types.SSHKey
+	err := s.db.NewSelect().
+		Model(&key).
+		Column("is_active").
+		Where("id = ?", serverID).
+		Where("deleted_at IS NULL").
+		Limit(1).
+		Scan(s.ctx)
+	if err != nil {
+		return false, err
+	}
+	return key.IsActive, nil
+}
+
+func (s *RegistrationStorage) SetMachineActive(serverID uuid.UUID, active bool) error {
+	_, err := s.db.NewUpdate().
+		Model((*api_types.SSHKey)(nil)).
+		Set("is_active = ?", active).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", serverID).
+		Where("deleted_at IS NULL").
+		Exec(s.ctx)
+	return err
+}
+
 func (s *RegistrationStorage) GetAnyActiveInfraServerID() (string, error) {
 	var serverID string
 	err := s.db.NewSelect().
