@@ -3,6 +3,7 @@ package controller
 import (
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/nixopus/nixopus/api/internal/features/healthcheck/types"
 )
@@ -32,6 +33,15 @@ func mapHealthCheckError(err error) (int, error) {
 	case errors.Is(err, types.ErrRateLimitExceeded):
 		return http.StatusTooManyRequests, err
 	default:
+		errMsg := err.Error()
+		// FK violation: application_id references a non-existent application
+		if strings.Contains(errMsg, "violates foreign key constraint") {
+			return http.StatusBadRequest, errors.New("referenced application does not exist")
+		}
+		// Storage-level not found
+		if strings.Contains(errMsg, "not found") {
+			return http.StatusNotFound, err
+		}
 		return http.StatusInternalServerError, err
 	}
 }

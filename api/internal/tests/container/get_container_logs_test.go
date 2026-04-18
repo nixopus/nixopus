@@ -273,12 +273,12 @@ func TestGetContainerLogsErrorHandling(t *testing.T) {
 			"stderr": true,
 		}
 		Test(t,
-			Description("Should handle invalid UUID format for container ID"),
+			Description("Should return 400 for invalid UUID container ID"),
 			Post(tests.GetContainerLogsURL("not-a-uuid")),
 			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(requestBody),
-			Expect().Status().Equal(http.StatusInternalServerError),
+			Expect().Status().Equal(http.StatusBadRequest),
 		)
 	})
 
@@ -326,12 +326,12 @@ func TestGetContainerLogsErrorHandling(t *testing.T) {
 			"stderr": true,
 		}
 		Test(t,
-			Description("Should handle invalid since timestamp parameter"),
+			Description("Non-UUID container ID returns 400 before reaching 'since' validation"),
 			Post(tests.GetContainerLogsURL("some-container-id")),
 			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-Id").Add(orgID),
 			Send().Body().JSON(requestBody),
-			Expect().Status().Equal(http.StatusInternalServerError),
+			Expect().Status().Equal(http.StatusBadRequest),
 		)
 	})
 }

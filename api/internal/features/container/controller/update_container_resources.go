@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-fuego/fuego"
+	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/container/service"
 	"github.com/nixopus/nixopus/api/internal/features/container/types"
 )
@@ -12,6 +13,9 @@ import (
 // It validates the resource limits and verifies the container is running before applying the update.
 func (c *ContainerController) UpdateContainerResources(f fuego.ContextWithBody[types.UpdateContainerResourcesRequest]) (*types.UpdateContainerResourcesResponse, error) {
 	containerID := f.PathParam("container_id")
+	if _, err := uuid.Parse(containerID); err != nil {
+		return nil, fuego.BadRequestError{Detail: "container_id must be a valid UUID"}
+	}
 	ctx := f.Request().Context()
 
 	if resp, skipped := c.isProtectedContainer(ctx, containerID, "update resources"); skipped {
