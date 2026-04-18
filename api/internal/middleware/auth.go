@@ -53,8 +53,14 @@ func verifySessionCached(r *http.Request, c *cache.Cache) (*betterauth.SessionRe
 		return nil, err
 	}
 
-	if data, err := json.Marshal(resp); err == nil {
-		_ = c.SetSession(ctx, cacheKey, data)
+	// Only cache sessions that have an activeOrganizationId. New users have a race
+	// condition where the session is created before their default org is set up in
+	// user.create.after, so activeOrganizationId is null in the initial session.
+	// Caching that null would lock new users out for the full SessionCacheTTL.
+	if resp.Session.ActiveOrganizationID != nil && *resp.Session.ActiveOrganizationID != "" {
+		if data, err := json.Marshal(resp); err == nil {
+			_ = c.SetSession(ctx, cacheKey, data)
+		}
 	}
 
 	return resp, nil
@@ -156,7 +162,7 @@ func AuthMiddleware(next http.Handler, app *storage.App, c *cache.Cache) http.Ha
 		ctx = context.WithValue(ctx, types.UserContextKey, user)
 
 		if !isAuthEndpoint(r.URL.Path) {
-			organizationID, err := resolveAndVerifyOrganization(ctx, r, c, betterAuthUserID, sessionResp)
+			organizationID, err := resolveAndVerifyOrganization(ctx, r, c, app, betterAuthUserID, sessionResp)
 			if err != nil {
 				log.Printf("ERROR AuthMiddleware: Failed to resolve organization: %v", err)
 				statusCode := http.StatusBadRequest
@@ -266,13 +272,34 @@ func resolveAndVerifyOrganization(
 	ctx context.Context,
 	r *http.Request,
 	cache *cache.Cache,
+	app *storage.App,
 	betterAuthUserID string,
 	sessionResp *betterauth.SessionResponse,
 ) (string, error) {
 	// Extract organization ID from session (already verified, no duplicate API call)
 	organizationID := extractOrgIDFromSession(sessionResp, r)
+
+	// For new users there is a race: the session is created (session.create.before) before
+	// the default org is set up (user.create.after → setupNewUser). The session gets
+	// activeOrganizationId=null baked into the compact cookie, and patchSessionOrganization
+	// only updates the DB row — not the already-issued cookie. Fall back to a direct DB
+	// membership lookup so new users can proceed immediately after sign-up.
 	if organizationID == "" {
-		return "", fmt.Errorf("no organization ID found in Better Auth session")
+		userUUID, parseErr := uuid.Parse(betterAuthUserID)
+		if parseErr == nil {
+			var member types.Member
+			dbErr := app.Store.DB.NewSelect().
+				Model(&member).
+				Where("user_id = ?", userUUID).
+				OrderExpr("created_at ASC").
+				Limit(1).
+				Scan(ctx)
+			if dbErr == nil && member.OrganizationID != uuid.Nil {
+				log.Printf("INFO AuthMiddleware: activeOrganizationId missing from session for user %s, resolved from DB member table: %s", betterAuthUserID, member.OrganizationID)
+				return member.OrganizationID.String(), nil
+			}
+		}
+		return "", fmt.Errorf("no organization ID found in Better Auth session for user %s", betterAuthUserID)
 	}
 
 	// Check organization membership via Better Auth API (with caching)
