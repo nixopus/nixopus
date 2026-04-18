@@ -34,6 +34,17 @@ func NewMachineService(store *shared_storage.Store, ctx context.Context, l logge
 }
 
 func (s *MachineService) GetMachineStatus(ctx context.Context, orgID uuid.UUID) (*types.MachineStateResponse, error) {
+	serverIDStr, _ := ctx.Value(shared_types.ServerIDKey).(string)
+	if serverID, err := uuid.Parse(serverIDStr); err == nil {
+		if active, err := s.regStore.GetMachineIsActive(serverID); err == nil && !active {
+			return &types.MachineStateResponse{
+				Status:  "success",
+				Message: "Machine status retrieved",
+				Data:    &types.MachineState{Active: false, State: "Paused"},
+			}, nil
+		}
+	}
+
 	sshMgr, err := sshpkg.GetSSHManagerFromContext(ctx)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH manager: %s", err.Error()), orgID.String())
@@ -124,6 +135,43 @@ func (s *MachineService) GetSystemStats(ctx context.Context, orgID uuid.UUID) (*
 		Status:  "success",
 		Message: "System stats collected successfully",
 		Data:    stats,
+	}, nil
+}
+
+func (s *MachineService) RestartMachine(ctx context.Context, orgID uuid.UUID) (*types.MachineActionResponse, error) {
+	sshMgr, err := sshpkg.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH manager: %s", err.Error()), orgID.String())
+		return nil, fmt.Errorf("failed to connect to server: %w", err)
+	}
+
+	_, _ = sshMgr.RunCommand("sudo reboot")
+
+	return &types.MachineActionResponse{
+		Status:  "success",
+		Message: "Machine restart initiated",
+	}, nil
+}
+
+func (s *MachineService) PauseMachine(ctx context.Context, orgID uuid.UUID, serverID uuid.UUID) (*types.MachineActionResponse, error) {
+	if err := s.regStore.SetMachineActive(serverID, false); err != nil {
+		s.logger.Log(logger.Error, err.Error(), orgID.String())
+		return nil, fmt.Errorf("failed to pause machine: %w", err)
+	}
+	return &types.MachineActionResponse{
+		Status:  "success",
+		Message: "Machine paused",
+	}, nil
+}
+
+func (s *MachineService) ResumeMachine(ctx context.Context, orgID uuid.UUID, serverID uuid.UUID) (*types.MachineActionResponse, error) {
+	if err := s.regStore.SetMachineActive(serverID, true); err != nil {
+		s.logger.Log(logger.Error, err.Error(), orgID.String())
+		return nil, fmt.Errorf("failed to resume machine: %w", err)
+	}
+	return &types.MachineActionResponse{
+		Status:  "success",
+		Message: "Machine resumed",
 	}, nil
 }
 

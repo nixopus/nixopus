@@ -80,6 +80,17 @@ func (c *MachineController) RestartMachine(f fuego.ContextNoBody) (*types.Machin
 		return nil, fuego.BadRequestError{Detail: "server_id is required"}
 	}
 
+	userOwned, _ := c.billingService.IsServerUserOwned(orgID, *serverID)
+	if userOwned {
+		ctx := context.WithValue(r.Context(), sharedtypes.ServerIDKey, serverID.String())
+		response, err := c.service.RestartMachine(ctx, orgID)
+		if err != nil {
+			c.logger.Log(logger.Error, err.Error(), orgID.String())
+			return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
+		}
+		return response, nil
+	}
+
 	response, err := c.lifecycleService.Restart(r.Context(), orgID, serverID)
 	if err != nil {
 		return nil, mapLifecycleError(c.logger, err, orgID, "restart")
@@ -106,6 +117,16 @@ func (c *MachineController) PauseMachine(f fuego.ContextNoBody) (*types.MachineA
 		return nil, fuego.BadRequestError{Detail: "server_id is required"}
 	}
 
+	userOwned, _ := c.billingService.IsServerUserOwned(orgID, *serverID)
+	if userOwned {
+		response, err := c.service.PauseMachine(r.Context(), orgID, *serverID)
+		if err != nil {
+			c.logger.Log(logger.Error, err.Error(), orgID.String())
+			return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
+		}
+		return response, nil
+	}
+
 	response, err := c.lifecycleService.Pause(r.Context(), orgID, serverID)
 	if err != nil {
 		return nil, mapLifecycleError(c.logger, err, orgID, "pause")
@@ -130,6 +151,16 @@ func (c *MachineController) ResumeMachine(f fuego.ContextNoBody) (*types.Machine
 	serverID := parseServerID(r)
 	if serverID == nil {
 		return nil, fuego.BadRequestError{Detail: "server_id is required"}
+	}
+
+	userOwned, _ := c.billingService.IsServerUserOwned(orgID, *serverID)
+	if userOwned {
+		response, err := c.service.ResumeMachine(r.Context(), orgID, *serverID)
+		if err != nil {
+			c.logger.Log(logger.Error, err.Error(), orgID.String())
+			return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
+		}
+		return response, nil
 	}
 
 	response, err := c.lifecycleService.Resume(r.Context(), orgID, serverID)
