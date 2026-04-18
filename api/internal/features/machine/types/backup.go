@@ -67,11 +67,12 @@ type BackupListResponse struct {
 }
 
 type BackupScheduleData struct {
-	Enabled        bool   `json:"enabled"`
-	Frequency      string `json:"frequency"`
-	HourUTC        int    `json:"hour_utc"`
-	DayOfWeek      int    `json:"day_of_week"`
-	RetentionCount int    `json:"retention_count"`
+	Enabled        bool     `json:"enabled"`
+	Frequency      string   `json:"frequency"`
+	HourUTC        int      `json:"hour_utc"`
+	DayOfWeek      int      `json:"day_of_week"`
+	RetentionCount int      `json:"retention_count"`
+	BackupPaths    []string `json:"backup_paths,omitempty"`
 }
 
 type BackupScheduleResponse struct {
@@ -82,4 +83,5 @@ type BackupScheduleResponse struct {
 
 var (
 	ErrBackupAlreadyRunning = errors.New("a backup is already in progress for this machine")
+	ErrS3NotConfigured      = errors.New("S3 storage is not configured — set S3_ENDPOINT, S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY")
 )

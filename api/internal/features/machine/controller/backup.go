@@ -141,6 +141,8 @@ func mapBackupError(err error) error {
 		return fuego.NotFoundError{Detail: err.Error()}
 	case errors.Is(err, types.ErrBackupAlreadyRunning):
 		return fuego.HTTPError{Detail: "a backup is already in progress", Status: http.StatusConflict}
+	case errors.Is(err, types.ErrS3NotConfigured):
+		return fuego.BadRequestError{Detail: err.Error()}
 	default:
 		return fuego.HTTPError{Detail: "backup operation failed", Status: http.StatusInternalServerError}
 	}
