@@ -16,11 +16,11 @@ func (s *NotificationService) UpdateSmtp(config notification.UpdateSMTPConfigReq
 		return fmt.Errorf("storage layer not initialized")
 	}
 
-	if config.Host == nil {
-		return fmt.Errorf("SMTP host cannot be empty")
+	hostInfo := "(unchanged)"
+	if config.Host != nil {
+		hostInfo = *config.Host
 	}
-
-	s.logger.Log(logger.Info, fmt.Sprintf("Updating SMTP configuration: Host=%s", *config.Host), "")
+	s.logger.Log(logger.Info, fmt.Sprintf("Updating SMTP configuration: Host=%s", hostInfo), "")
 
 	err := s.storage.UpdateSmtp(&config)
 	if err != nil {

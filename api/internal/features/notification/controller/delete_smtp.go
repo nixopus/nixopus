@@ -2,6 +2,7 @@ package controller
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/go-fuego/fuego"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
@@ -22,10 +23,14 @@ func (c *NotificationController) DeleteSmtp(f fuego.ContextWithBody[notification
 	err := c.service.DeleteSmtp(SMTPConfigs.ID.String())
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
+		status := http.StatusInternalServerError
+		if strings.Contains(err.Error(), "not found") {
+			status = http.StatusNotFound
+		}
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
-			Status: http.StatusInternalServerError,
+			Status: status,
 		}
 	}
 

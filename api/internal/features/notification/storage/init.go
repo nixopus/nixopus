@@ -43,20 +43,30 @@ func (s NotificationStorage) AddSmtp(config *shared_types.SMTPConfigs) error {
 }
 
 // UpdateSmtp updates an existing SMTP configuration in the database.
-//
-// It takes a notification.UpdateSMTPConfigRequest as a parameter and updates the
-// corresponding SMTP configuration in the database.
-// It returns an error if the database operation fails.
+// Only non-nil fields are updated (partial update).
 func (s NotificationStorage) UpdateSmtp(config *notification.UpdateSMTPConfigRequest) error {
-	var smtp *shared_types.SMTPConfigs
-	_, err := s.DB.NewUpdate().Model(smtp).
-		Set("host = ?", config.Host).
-		Set("port = ?", strconv.Itoa(*config.Port)).
-		Set("username = ?", config.Username).
-		Set("password = ?", config.Password).
-		Set("from_name = ?", config.FromName).
-		Set("from_email = ?", config.FromEmail).
-		Where("id = ?", config.ID).Exec(s.Ctx)
+	q := s.DB.NewUpdate().TableExpr("smtp_configs").Where("id = ?", config.ID)
+
+	if config.Host != nil {
+		q = q.Set("host = ?", *config.Host)
+	}
+	if config.Port != nil {
+		q = q.Set("port = ?", strconv.Itoa(*config.Port))
+	}
+	if config.Username != nil {
+		q = q.Set("username = ?", *config.Username)
+	}
+	if config.Password != nil {
+		q = q.Set("password = ?", *config.Password)
+	}
+	if config.FromName != nil {
+		q = q.Set("from_name = ?", *config.FromName)
+	}
+	if config.FromEmail != nil {
+		q = q.Set("from_email = ?", *config.FromEmail)
+	}
+
+	_, err := q.Exec(s.Ctx)
 	return err
 }
 
@@ -66,8 +76,18 @@ func (s NotificationStorage) UpdateSmtp(config *notification.UpdateSMTPConfigReq
 // from the database, and returns an error if the database operation fails.
 func (s NotificationStorage) DeleteSmtp(ID string) error {
 	var config shared_types.SMTPConfigs
-	_, err := s.DB.NewDelete().Model(&config).Where("id = ?", ID).Exec(s.Ctx)
-	return err
+	result, err := s.DB.NewDelete().Model(&config).Where("id = ?", ID).Exec(s.Ctx)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("smtp config not found")
+	}
+	return nil
 }
 
 // GetSmtp returns the SMTP configuration associated with the given ID.

@@ -198,3 +198,222 @@ func GetMachineBackupScheduleURL() string {
 func GetMachineStatsURL() string {
 	return baseURL + "/machines/stats"
 }
+
+// Notification
+func GetNotificationSMTPURL() string {
+	return baseURL + "/notification/smtp"
+}
+
+func GetNotificationPreferencesURL() string {
+	return baseURL + "/notification/preferences"
+}
+
+func GetNotificationWebhookURL(webhookType string) string {
+	return baseURL + "/notification/webhook/" + webhookType
+}
+
+func GetNotificationWebhookBaseURL() string {
+	return baseURL + "/notification/webhook"
+}
+
+func GetNotificationSendURL() string {
+	return baseURL + "/notification/send"
+}
+
+// Domain (custom/verify/dns-check)
+func GetDomainCustomURL() string {
+	return baseURL + "/domain/custom"
+}
+
+func GetDomainVerifyURL() string {
+	return baseURL + "/domain/verify"
+}
+
+func GetDomainDNSCheckURL(id string) string {
+	return baseURL + "/domain/dns-check?id=" + id
+}
+
+// Extensions
+func GetExtensionsURL() string {
+	return baseURL + "/extensions"
+}
+
+func GetExtensionCategoriesURL() string {
+	return baseURL + "/extensions/categories"
+}
+
+func GetExtensionByIDURL(id string) string {
+	return baseURL + "/extensions/" + id
+}
+
+func GetExtensionByExtensionIDURL(extensionID string) string {
+	return baseURL + "/extensions/by-extension-id/" + extensionID
+}
+
+func GetExtensionRunURL(extensionID string) string {
+	return baseURL + "/extensions/" + extensionID + "/run"
+}
+
+func GetExtensionForkURL(extensionID string) string {
+	return baseURL + "/extensions/" + extensionID + "/fork"
+}
+
+func GetExtensionExecutionURL(executionID string) string {
+	return baseURL + "/extensions/execution/" + executionID
+}
+
+func GetExtensionExecutionCancelURL(executionID string) string {
+	return baseURL + "/extensions/execution/" + executionID + "/cancel"
+}
+
+func GetExtensionExecutionLogsURL(executionID string) string {
+	return baseURL + "/extensions/execution/" + executionID + "/logs"
+}
+
+func GetExtensionExecutionsURL(extensionID string) string {
+	return baseURL + "/extensions/by-extension-id/" + extensionID + "/executions"
+}
+
+// Healthcheck
+func GetHealthCheckURL() string {
+	return baseURL + "/healthcheck"
+}
+
+func GetHealthCheckToggleURL() string {
+	return baseURL + "/healthcheck/toggle"
+}
+
+func GetHealthCheckResultsURL() string {
+	return baseURL + "/healthcheck/results"
+}
+
+func GetHealthCheckStatsURL() string {
+	return baseURL + "/healthcheck/stats"
+}
+
+// User settings
+func GetUserNameURL() string {
+	return baseURL + "/user/name"
+}
+
+func GetUserSettingsURL() string {
+	return baseURL + "/user/settings"
+}
+
+func GetUserSettingsFontURL() string {
+	return baseURL + "/user/settings/font"
+}
+
+func GetUserSettingsThemeURL() string {
+	return baseURL + "/user/settings/theme"
+}
+
+func GetUserSettingsLanguageURL() string {
+	return baseURL + "/user/settings/language"
+}
+
+func GetUserSettingsAutoUpdateURL() string {
+	return baseURL + "/user/settings/auto-update"
+}
+
+func GetUserAvatarURL() string {
+	return baseURL + "/user/avatar"
+}
+
+func GetUserPreferencesURL() string {
+	return baseURL + "/user/preferences"
+}
+
+func GetUserOnboardedURL() string {
+	return baseURL + "/user/onboarded"
+}
+
+// Update
+func GetUpdateCheckURL() string {
+	return baseURL + "/update/check"
+}
+
+func GetUpdateURL() string {
+	return baseURL + "/update"
+}
+
+// MCP
+func GetMCPCatalogURL() string {
+	return baseURL + "/mcp/catalog"
+}
+
+func GetMCPServersURL() string {
+	return baseURL + "/mcp/servers"
+}
+
+func GetMCPServerURL(id string) string {
+	return baseURL + "/mcp/servers/" + id
+}
+
+func GetMCPServerTestURL() string {
+	return baseURL + "/mcp/servers/test"
+}
+
+// Machine billing / metrics
+func GetMachinePlansURL() string {
+	return baseURL + "/machines/plans"
+}
+
+func GetMachinePlanSelectURL() string {
+	return baseURL + "/machines/plan/select"
+}
+
+func GetMachineBillingStatusURL() string {
+	return baseURL + "/machines/billing"
+}
+
+func GetMachineMetricsURL() string {
+	return baseURL + "/machines/metrics"
+}
+
+func GetMachineEventsURL() string {
+	return baseURL + "/machines/events"
+}
+
+func GetMachineMetricsSummaryURL() string {
+	return baseURL + "/machines/metrics/summary"
+}
+
+// Container ops
+func GetContainerStartURL(containerID string) string {
+	return baseURL + "/container/" + containerID + "/start"
+}
+
+func GetContainerStopURL(containerID string) string {
+	return baseURL + "/container/" + containerID + "/stop"
+}
+
+func GetContainerRestartURL(containerID string) string {
+	return baseURL + "/container/" + containerID + "/restart"
+}
+
+func GetContainerResourcesURL(containerID string) string {
+	return baseURL + "/container/" + containerID + "/resources"
+}
+
+func GetContainerImagesURL() string {
+	return baseURL + "/container/images"
+}
+
+func GetContainerPruneImagesURL() string {
+	return baseURL + "/container/prune/images"
+}
+
+func GetContainerPruneBuildCacheURL() string {
+	return baseURL + "/container/prune/build-cache"
+}
+
+// Audit
+func GetAuditURL() string {
+	return baseURL + "/audit"
+}
+
+// Auth bootstrap
+func GetAuthBootstrapURL() string {
+	return baseURL + "/auth/bootstrap"
+}
