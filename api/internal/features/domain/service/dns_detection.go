@@ -156,3 +156,33 @@ func GenerateVerificationToken() string {
 	}
 	return hex.EncodeToString(bytes)
 }
+
+// GenerateDNSInstructionsBYOS returns DNS instructions for a self-hosted (BYOS)
+// machine. The user must add an A record pointing their domain to machineIP.
+func GenerateDNSInstructionsBYOS(domain, machineIP, provider string) []types.DNSInstruction {
+	providerDescriptions := map[string]string{
+		"cloudflare":   "Go to your Cloudflare dashboard > DNS > Records > Add Record",
+		"route53":      "Go to AWS Route 53 > Hosted Zones > select your domain > Create Record",
+		"godaddy":      "Go to GoDaddy > My Products > DNS > Add Record",
+		"namecheap":    "Go to Namecheap > Domain List > Manage > Advanced DNS > Add New Record",
+		"google":       "Go to Google Domains > DNS > Custom Records > Manage",
+		"digitalocean": "Go to DigitalOcean > Networking > Domains > your domain > Add Record",
+		"azure":        "Go to Azure Portal > DNS Zones > your domain > + Record set",
+		"hetzner":      "Go to Hetzner DNS Console > your domain > Add Record",
+		"vultr":        "Go to Vultr > DNS > your domain > Add Record",
+		"other":        "Go to your DNS provider's dashboard and add the following record",
+	}
+	description, ok := providerDescriptions[provider]
+	if !ok {
+		description = providerDescriptions["other"]
+	}
+
+	return []types.DNSInstruction{
+		{
+			RecordType:  "A",
+			Name:        domain,
+			Value:       machineIP,
+			Description: fmt.Sprintf("%s. Add an A record pointing %s to your server IP %s", description, domain, machineIP),
+		},
+	}
+}
