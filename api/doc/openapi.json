@@ -6450,6 +6450,218 @@
 				},
 				"type": "object"
 			},
+			"ListMachinesResponse": {
+				"description": "ListMachinesResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"is_active": {
+								"nullable": true,
+								"type": "boolean"
+							},
+							"page": {
+								"default": 1,
+								"minimum": 1,
+								"type": "integer"
+							},
+							"page_size": {
+								"default": 20,
+								"maximum": 100,
+								"minimum": 1,
+								"type": "integer"
+							},
+							"search": {
+								"type": "string"
+							},
+							"servers": {
+								"items": {
+									"properties": {
+										"auth_method": {
+											"type": "string"
+										},
+										"created_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"deleted_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"description": {
+											"nullable": true,
+											"type": "string"
+										},
+										"fingerprint": {
+											"nullable": true,
+											"type": "string"
+										},
+										"host": {
+											"nullable": true,
+											"type": "string"
+										},
+										"id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"is_active": {
+											"type": "boolean"
+										},
+										"is_default": {
+											"type": "boolean"
+										},
+										"key_size": {
+											"nullable": true,
+											"type": "integer"
+										},
+										"key_type": {
+											"nullable": true,
+											"type": "string"
+										},
+										"last_used_at": {
+											"format": "date-time",
+											"nullable": true,
+											"type": "string"
+										},
+										"name": {
+											"type": "string"
+										},
+										"organization_id": {
+											"format": "uuid",
+											"type": "string"
+										},
+										"port": {
+											"nullable": true,
+											"type": "integer"
+										},
+										"provision": {
+											"nullable": true,
+											"properties": {
+												"created_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"disk_size_gb": {
+													"type": "integer"
+												},
+												"domain": {
+													"nullable": true,
+													"type": "string"
+												},
+												"error": {
+													"nullable": true,
+													"type": "string"
+												},
+												"guest_ip": {
+													"nullable": true,
+													"type": "string"
+												},
+												"id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"lxd_container_name": {
+													"nullable": true,
+													"type": "string"
+												},
+												"memory_mb": {
+													"type": "integer"
+												},
+												"organization_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"server_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"ssh_key_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"step": {
+													"nullable": true,
+													"type": "string"
+												},
+												"subdomain": {
+													"nullable": true,
+													"type": "string"
+												},
+												"type": {
+													"type": "string"
+												},
+												"updated_at": {
+													"format": "date-time",
+													"type": "string"
+												},
+												"user_id": {
+													"format": "uuid",
+													"type": "string"
+												},
+												"vcpu_count": {
+													"type": "integer"
+												}
+											},
+											"type": "object"
+										},
+										"proxy_host": {
+											"nullable": true,
+											"type": "string"
+										},
+										"public_key": {
+											"nullable": true,
+											"type": "string"
+										},
+										"total_disk_gb": {
+											"type": "integer"
+										},
+										"total_ram_mb": {
+											"type": "integer"
+										},
+										"total_vcpu": {
+											"type": "integer"
+										},
+										"updated_at": {
+											"format": "date-time",
+											"type": "string"
+										},
+										"user": {
+											"nullable": true,
+											"type": "string"
+										}
+									},
+									"type": "object"
+								},
+								"type": "array"
+							},
+							"sort_by": {
+								"type": "string"
+							},
+							"sort_order": {
+								"enum": [
+									"asc",
+									"desc"
+								],
+								"type": "string"
+							},
+							"status": {
+								"type": "string"
+							},
+							"total_count": {
+								"type": "integer"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"ListPlansResponse": {
 				"description": "ListPlansResponse schema",
 				"properties": {
@@ -6883,218 +7095,6 @@
 									"type": "object"
 								},
 								"type": "array"
-							},
-							"total_count": {
-								"type": "integer"
-							}
-						},
-						"type": "object"
-					},
-					"message": {
-						"type": "string"
-					},
-					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"ListServersResponse": {
-				"description": "ListServersResponse schema",
-				"properties": {
-					"data": {
-						"properties": {
-							"is_active": {
-								"nullable": true,
-								"type": "boolean"
-							},
-							"page": {
-								"default": 1,
-								"minimum": 1,
-								"type": "integer"
-							},
-							"page_size": {
-								"default": 20,
-								"maximum": 100,
-								"minimum": 1,
-								"type": "integer"
-							},
-							"search": {
-								"type": "string"
-							},
-							"servers": {
-								"items": {
-									"properties": {
-										"auth_method": {
-											"type": "string"
-										},
-										"created_at": {
-											"format": "date-time",
-											"type": "string"
-										},
-										"deleted_at": {
-											"format": "date-time",
-											"nullable": true,
-											"type": "string"
-										},
-										"description": {
-											"nullable": true,
-											"type": "string"
-										},
-										"fingerprint": {
-											"nullable": true,
-											"type": "string"
-										},
-										"host": {
-											"nullable": true,
-											"type": "string"
-										},
-										"id": {
-											"format": "uuid",
-											"type": "string"
-										},
-										"is_active": {
-											"type": "boolean"
-										},
-										"is_default": {
-											"type": "boolean"
-										},
-										"key_size": {
-											"nullable": true,
-											"type": "integer"
-										},
-										"key_type": {
-											"nullable": true,
-											"type": "string"
-										},
-										"last_used_at": {
-											"format": "date-time",
-											"nullable": true,
-											"type": "string"
-										},
-										"name": {
-											"type": "string"
-										},
-										"organization_id": {
-											"format": "uuid",
-											"type": "string"
-										},
-										"port": {
-											"nullable": true,
-											"type": "integer"
-										},
-										"provision": {
-											"nullable": true,
-											"properties": {
-												"created_at": {
-													"format": "date-time",
-													"type": "string"
-												},
-												"disk_size_gb": {
-													"type": "integer"
-												},
-												"domain": {
-													"nullable": true,
-													"type": "string"
-												},
-												"error": {
-													"nullable": true,
-													"type": "string"
-												},
-												"guest_ip": {
-													"nullable": true,
-													"type": "string"
-												},
-												"id": {
-													"format": "uuid",
-													"type": "string"
-												},
-												"lxd_container_name": {
-													"nullable": true,
-													"type": "string"
-												},
-												"memory_mb": {
-													"type": "integer"
-												},
-												"organization_id": {
-													"format": "uuid",
-													"type": "string"
-												},
-												"server_id": {
-													"format": "uuid",
-													"type": "string"
-												},
-												"ssh_key_id": {
-													"format": "uuid",
-													"type": "string"
-												},
-												"step": {
-													"nullable": true,
-													"type": "string"
-												},
-												"subdomain": {
-													"nullable": true,
-													"type": "string"
-												},
-												"type": {
-													"type": "string"
-												},
-												"updated_at": {
-													"format": "date-time",
-													"type": "string"
-												},
-												"user_id": {
-													"format": "uuid",
-													"type": "string"
-												},
-												"vcpu_count": {
-													"type": "integer"
-												}
-											},
-											"type": "object"
-										},
-										"proxy_host": {
-											"nullable": true,
-											"type": "string"
-										},
-										"public_key": {
-											"nullable": true,
-											"type": "string"
-										},
-										"total_disk_gb": {
-											"type": "integer"
-										},
-										"total_ram_mb": {
-											"type": "integer"
-										},
-										"total_vcpu": {
-											"type": "integer"
-										},
-										"updated_at": {
-											"format": "date-time",
-											"type": "string"
-										},
-										"user": {
-											"nullable": true,
-											"type": "string"
-										}
-									},
-									"type": "object"
-								},
-								"type": "array"
-							},
-							"sort_by": {
-								"type": "string"
-							},
-							"sort_order": {
-								"enum": [
-									"asc",
-									"desc"
-								],
-								"type": "string"
-							},
-							"status": {
-								"type": "string"
 							},
 							"total_count": {
 								"type": "integer"
@@ -8760,8 +8760,8 @@
 				},
 				"type": "object"
 			},
-			"SetDefaultServerResponse": {
-				"description": "SetDefaultServerResponse schema",
+			"SetDefaultMachineResponse": {
+				"description": "SetDefaultMachineResponse schema",
 				"properties": {
 					"data": {
 						"properties": {
@@ -19790,1782 +19790,6 @@
 				]
 			}
 		},
-		"/api/v1/machine/backup": {
-			"post": {
-				"description": "Trigger machine backup.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "triggerMachineBackup",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"message": "string",
-									"request_id": "00000000-0000-0000-0000-000000000000",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/TriggerBackupResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"message": "string",
-									"request_id": "00000000-0000-0000-0000-000000000000",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/TriggerBackupResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Trigger machine backup",
-				"tags": [
-					"backup",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/backup/schedule": {
-			"get": {
-				"description": "Get backup schedule.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "getBackupSchedule",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/BackupScheduleResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/BackupScheduleResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Get backup schedule",
-				"tags": [
-					"backup",
-					"api/v1/machine"
-				]
-			},
-			"put": {
-				"description": "Update backup schedule.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "updateBackupSchedule",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"example": {
-								"day_of_week": 1,
-								"enabled": true,
-								"frequency": "string",
-								"hour_utc": 1,
-								"retention_count": 1
-							},
-							"schema": {
-								"$ref": "#/components/schemas/BackupScheduleData"
-							}
-						}
-					},
-					"description": "Request body for types.BackupScheduleData",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/BackupScheduleResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/BackupScheduleResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Update backup schedule",
-				"tags": [
-					"backup",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/backups": {
-			"get": {
-				"description": "List machine backups.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "listMachineBackups",
-				"parameters": [
-					{
-						"description": "Page number",
-						"example": 1,
-						"in": "query",
-						"name": "page",
-						"schema": {
-							"default": 1,
-							"minimum": 1,
-							"type": "integer"
-						}
-					},
-					{
-						"description": "Page size",
-						"example": 20,
-						"in": "query",
-						"name": "page_size",
-						"schema": {
-							"default": 20,
-							"maximum": 100,
-							"minimum": 1,
-							"type": "integer"
-						}
-					},
-					{
-						"description": "Search by machine name",
-						"example": "nginx",
-						"in": "query",
-						"name": "search",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"description": "Sort field (created_at, status, size_bytes)",
-						"example": "created_at",
-						"in": "query",
-						"name": "sort_by",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"description": "Sort order (asc, desc)",
-						"example": "desc",
-						"in": "query",
-						"name": "sort_order",
-						"schema": {
-							"enum": [
-								"asc",
-								"desc"
-							],
-							"type": "string"
-						}
-					},
-					{
-						"description": "Filter by backup status",
-						"in": "query",
-						"name": "status",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/BackupListResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/BackupListResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "List machine backups",
-				"tags": [
-					"backups",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/billing": {
-			"get": {
-				"description": "Get machine billing status.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "getMachineBillingStatus",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineBillingResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineBillingResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Get machine billing status",
-				"tags": [
-					"billing",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/events": {
-			"get": {
-				"description": "Get machine events.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "getMachineEvents",
-				"parameters": [
-					{
-						"description": "Start time RFC3339 (default: 1 hour ago)",
-						"in": "query",
-						"name": "from",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"description": "End time RFC3339 (default: now)",
-						"in": "query",
-						"name": "to",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"description": "Max rows (default 200)",
-						"example": 20,
-						"in": "query",
-						"name": "limit",
-						"schema": {
-							"default": 20,
-							"maximum": 100,
-							"minimum": 1,
-							"type": "integer"
-						}
-					},
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": [],
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineEventsResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": [],
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineEventsResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Get machine events",
-				"tags": [
-					"events",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/exec": {
-			"post": {
-				"description": "Execute a command on the host machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "executeACommandOnTheHostMachine",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"example": {
-								"command": "string"
-							},
-							"schema": {
-								"$ref": "#/components/schemas/HostExecRequest"
-							}
-						}
-					},
-					"description": "Request body for types.HostExecRequest",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/HostExecResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/HostExecResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Execute a command on the host machine",
-				"tags": [
-					"exec",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/metrics": {
-			"get": {
-				"description": "Get machine metrics.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "getMachineMetrics",
-				"parameters": [
-					{
-						"description": "Start time RFC3339 (default: 1 hour ago)",
-						"in": "query",
-						"name": "from",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"description": "End time RFC3339 (default: now)",
-						"in": "query",
-						"name": "to",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"description": "Max rows (default 500, max 1000)",
-						"example": 20,
-						"in": "query",
-						"name": "limit",
-						"schema": {
-							"default": 20,
-							"maximum": 100,
-							"minimum": 1,
-							"type": "integer"
-						}
-					},
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": [],
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineMetricsResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": [],
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineMetricsResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Get machine metrics",
-				"tags": [
-					"metrics",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/metrics/summary": {
-			"get": {
-				"description": "Get machine metrics summary.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "getMachineMetricsSummary",
-				"parameters": [
-					{
-						"description": "Start time RFC3339 (default: 1 hour ago)",
-						"in": "query",
-						"name": "from",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"description": "End time RFC3339 (default: now)",
-						"in": "query",
-						"name": "to",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineSummaryResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineSummaryResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Get machine metrics summary",
-				"tags": [
-					"metrics",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/pause": {
-			"post": {
-				"description": "Pause machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "pauseMachine",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineActionResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineActionResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Pause machine",
-				"tags": [
-					"pause",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/plan/select": {
-			"post": {
-				"description": "Select a machine plan.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "selectAMachinePlan",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"example": {
-								"plan_tier": "string"
-							},
-							"schema": {
-								"$ref": "#/components/schemas/SelectPlanRequest"
-							}
-						}
-					},
-					"description": "Request body for types.SelectPlanRequest",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"balance_after_cents": 1,
-									"charged_cents": 1,
-									"error": "string",
-									"message": "string",
-									"period_end": "string",
-									"plan": {},
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/SelectPlanResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"balance_after_cents": 1,
-									"charged_cents": 1,
-									"error": "string",
-									"message": "string",
-									"period_end": "string",
-									"plan": {},
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/SelectPlanResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Select a machine plan",
-				"tags": [
-					"plan",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/plans": {
-			"get": {
-				"description": "List available machine plans.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "listAvailableMachinePlans",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": [],
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ListPlansResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": [],
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ListPlansResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "List available machine plans",
-				"tags": [
-					"plans",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/restart": {
-			"post": {
-				"description": "Restart machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "restartMachine",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineActionResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineActionResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Restart machine",
-				"tags": [
-					"restart",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/resume": {
-			"post": {
-				"description": "Resume machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "resumeMachine",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineActionResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineActionResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Resume machine",
-				"tags": [
-					"resume",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/stats": {
-			"get": {
-				"description": "Get machine system stats.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "getMachineSystemStats",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/SystemStatsResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/SystemStatsResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Get machine system stats",
-				"tags": [
-					"stats",
-					"api/v1/machine"
-				]
-			}
-		},
-		"/api/v1/machine/status": {
-			"get": {
-				"description": "Get machine lifecycle status.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "getMachineLifecycleStatus",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineStateResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MachineStateResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Get machine lifecycle status",
-				"tags": [
-					"status",
-					"api/v1/machine"
-				]
-			}
-		},
 		"/api/v1/machines": {
 			"get": {
 				"description": "List machines.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
@@ -21660,7 +19884,7 @@
 									"status": "string"
 								},
 								"schema": {
-									"$ref": "#/components/schemas/ListServersResponse"
+									"$ref": "#/components/schemas/ListMachinesResponse"
 								}
 							},
 							"application/xml": {
@@ -21670,7 +19894,7 @@
 									"status": "string"
 								},
 								"schema": {
-									"$ref": "#/components/schemas/ListServersResponse"
+									"$ref": "#/components/schemas/ListMachinesResponse"
 								}
 							}
 						},
@@ -21856,6 +20080,2110 @@
 				]
 			}
 		},
+		"/api/v1/machines/backup": {
+			"post": {
+				"description": "Trigger machine backup.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "triggerMachineBackup",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"message": "string",
+									"request_id": "00000000-0000-0000-0000-000000000000",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/TriggerBackupResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"message": "string",
+									"request_id": "00000000-0000-0000-0000-000000000000",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/TriggerBackupResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Trigger machine backup",
+				"tags": [
+					"backup",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/backup/schedule": {
+			"get": {
+				"description": "Get backup schedule.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getBackupSchedule",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/BackupScheduleResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/BackupScheduleResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get backup schedule",
+				"tags": [
+					"backup",
+					"api/v1/machines"
+				]
+			},
+			"put": {
+				"description": "Update backup schedule.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "updateBackupSchedule",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"day_of_week": 1,
+								"enabled": true,
+								"frequency": "string",
+								"hour_utc": 1,
+								"retention_count": 1
+							},
+							"schema": {
+								"$ref": "#/components/schemas/BackupScheduleData"
+							}
+						}
+					},
+					"description": "Request body for types.BackupScheduleData",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/BackupScheduleResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/BackupScheduleResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Update backup schedule",
+				"tags": [
+					"backup",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/backups": {
+			"get": {
+				"description": "List machine backups.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "listMachineBackups",
+				"parameters": [
+					{
+						"description": "Page number",
+						"example": 1,
+						"in": "query",
+						"name": "page",
+						"schema": {
+							"default": 1,
+							"minimum": 1,
+							"type": "integer"
+						}
+					},
+					{
+						"description": "Page size",
+						"example": 20,
+						"in": "query",
+						"name": "page_size",
+						"schema": {
+							"default": 20,
+							"maximum": 100,
+							"minimum": 1,
+							"type": "integer"
+						}
+					},
+					{
+						"description": "Search by machine name",
+						"example": "nginx",
+						"in": "query",
+						"name": "search",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Sort field (created_at, status, size_bytes)",
+						"example": "created_at",
+						"in": "query",
+						"name": "sort_by",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Sort order (asc, desc)",
+						"example": "desc",
+						"in": "query",
+						"name": "sort_order",
+						"schema": {
+							"enum": [
+								"asc",
+								"desc"
+							],
+							"type": "string"
+						}
+					},
+					{
+						"description": "Filter by backup status",
+						"in": "query",
+						"name": "status",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/BackupListResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/BackupListResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "List machine backups",
+				"tags": [
+					"backups",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/billing": {
+			"get": {
+				"description": "Get machine billing status.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getMachineBillingStatus",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineBillingResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineBillingResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get machine billing status",
+				"tags": [
+					"billing",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/events": {
+			"get": {
+				"description": "Get machine events.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getMachineEvents",
+				"parameters": [
+					{
+						"description": "Start time RFC3339 (default: 1 hour ago)",
+						"in": "query",
+						"name": "from",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "End time RFC3339 (default: now)",
+						"in": "query",
+						"name": "to",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Max rows (default 200)",
+						"example": 20,
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"default": 20,
+							"maximum": 100,
+							"minimum": 1,
+							"type": "integer"
+						}
+					},
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": [],
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineEventsResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": [],
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineEventsResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get machine events",
+				"tags": [
+					"events",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/exec": {
+			"post": {
+				"description": "Execute a command on the host machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "executeACommandOnTheHostMachine",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"command": "string"
+							},
+							"schema": {
+								"$ref": "#/components/schemas/HostExecRequest"
+							}
+						}
+					},
+					"description": "Request body for types.HostExecRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/HostExecResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/HostExecResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Execute a command on the host machine",
+				"tags": [
+					"exec",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/metrics": {
+			"get": {
+				"description": "Get machine metrics.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getMachineMetrics",
+				"parameters": [
+					{
+						"description": "Start time RFC3339 (default: 1 hour ago)",
+						"in": "query",
+						"name": "from",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "End time RFC3339 (default: now)",
+						"in": "query",
+						"name": "to",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "Max rows (default 500, max 1000)",
+						"example": 20,
+						"in": "query",
+						"name": "limit",
+						"schema": {
+							"default": 20,
+							"maximum": 100,
+							"minimum": 1,
+							"type": "integer"
+						}
+					},
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": [],
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineMetricsResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": [],
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineMetricsResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get machine metrics",
+				"tags": [
+					"metrics",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/metrics/summary": {
+			"get": {
+				"description": "Get machine metrics summary.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getMachineMetricsSummary",
+				"parameters": [
+					{
+						"description": "Start time RFC3339 (default: 1 hour ago)",
+						"in": "query",
+						"name": "from",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"description": "End time RFC3339 (default: now)",
+						"in": "query",
+						"name": "to",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineSummaryResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineSummaryResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get machine metrics summary",
+				"tags": [
+					"metrics",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/pause": {
+			"post": {
+				"description": "Pause machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "pauseMachine",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineActionResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineActionResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Pause machine",
+				"tags": [
+					"pause",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/plan/select": {
+			"post": {
+				"description": "Select a machine plan.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "selectAMachinePlan",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"plan_tier": "string"
+							},
+							"schema": {
+								"$ref": "#/components/schemas/SelectPlanRequest"
+							}
+						}
+					},
+					"description": "Request body for types.SelectPlanRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"balance_after_cents": 1,
+									"charged_cents": 1,
+									"error": "string",
+									"message": "string",
+									"period_end": "string",
+									"plan": {},
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SelectPlanResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"balance_after_cents": 1,
+									"charged_cents": 1,
+									"error": "string",
+									"message": "string",
+									"period_end": "string",
+									"plan": {},
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SelectPlanResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Select a machine plan",
+				"tags": [
+					"plan",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/plans": {
+			"get": {
+				"description": "List available machine plans.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "listAvailableMachinePlans",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": [],
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ListPlansResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": [],
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ListPlansResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "List available machine plans",
+				"tags": [
+					"plans",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/restart": {
+			"post": {
+				"description": "Restart machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "restartMachine",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineActionResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineActionResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Restart machine",
+				"tags": [
+					"restart",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/resume": {
+			"post": {
+				"description": "Resume machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "resumeMachine",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineActionResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineActionResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Resume machine",
+				"tags": [
+					"resume",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/ssh/status": {
+			"get": {
+				"description": "Get SSH connection status.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getSSHConnectionStatus",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"connected": true,
+									"is_configured": true,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"connected": true,
+									"is_configured": true,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get SSH connection status",
+				"tags": [
+					"ssh",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/stats": {
+			"get": {
+				"description": "Get machine system stats.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getMachineSystemStats",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SystemStatsResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SystemStatsResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get machine system stats",
+				"tags": [
+					"stats",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/status": {
+			"get": {
+				"description": "Get machine lifecycle status.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getMachineLifecycleStatus",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineStateResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/MachineStateResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get machine lifecycle status",
+				"tags": [
+					"status",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/trial/provision": {
+			"post": {
+				"description": "Provision trail resources.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "provisionTrailResources",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"image": "string"
+							},
+							"schema": {
+								"$ref": "#/components/schemas/ProvisionRequest"
+							}
+						}
+					},
+					"description": "Request body for types.ProvisionRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"error": "string",
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ProvisionTrailResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"error": "string",
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ProvisionTrailResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Provision trail resources",
+				"tags": [
+					"provision",
+					"api/v1/machines/trial"
+				]
+			}
+		},
+		"/api/v1/machines/trial/status/{sessionId}": {
+			"get": {
+				"description": "Get trail session status.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getTrailSessionStatus",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "sessionId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"error": "string",
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/TrailStatusEnvelopeResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"error": "string",
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/TrailStatusEnvelopeResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get trail session status",
+				"tags": [
+					"status",
+					"api/v1/machines/trial"
+				]
+			}
+		},
 		"/api/v1/machines/{id}": {
 			"delete": {
 				"description": "Remove a machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
@@ -21954,6 +22282,114 @@
 					}
 				},
 				"summary": "Remove a machine",
+				"tags": [
+					"{id}",
+					"api/v1/machines"
+				]
+			}
+		},
+		"/api/v1/machines/{id}/set-default": {
+			"put": {
+				"description": "Set machine as org default.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "setMachineAsOrgDefault",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SetDefaultMachineResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/SetDefaultMachineResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Set machine as org default",
 				"tags": [
 					"{id}",
 					"api/v1/machines"
@@ -24491,722 +24927,6 @@
 				]
 			}
 		},
-		"/api/v1/servers": {
-			"get": {
-				"description": "List servers.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "listServers",
-				"parameters": [
-					{
-						"description": "Page number",
-						"example": 1,
-						"in": "query",
-						"name": "page",
-						"schema": {
-							"default": 1,
-							"minimum": 1,
-							"type": "integer"
-						}
-					},
-					{
-						"description": "Page size",
-						"example": 20,
-						"in": "query",
-						"name": "page_size",
-						"schema": {
-							"default": 20,
-							"maximum": 100,
-							"minimum": 1,
-							"type": "integer"
-						}
-					},
-					{
-						"description": "Search servers by name",
-						"example": "nginx",
-						"in": "query",
-						"name": "search",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"description": "Sort field",
-						"example": "created_at",
-						"in": "query",
-						"name": "sort_by",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"description": "Sort order",
-						"example": "desc",
-						"in": "query",
-						"name": "sort_order",
-						"schema": {
-							"enum": [
-								"asc",
-								"desc"
-							],
-							"type": "string"
-						}
-					},
-					{
-						"description": "Server status filter",
-						"in": "query",
-						"name": "status",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"description": "Filter by active state",
-						"example": true,
-						"in": "query",
-						"name": "is_active",
-						"schema": {
-							"type": "boolean"
-						}
-					},
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ListServersResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ListServersResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "List servers",
-				"tags": [
-					"api/v1/servers"
-				]
-			}
-		},
-		"/api/v1/servers/ssh/status": {
-			"get": {
-				"description": "Get SSH connection status.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "getSSHConnectionStatus",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"connected": true,
-									"is_configured": true,
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"connected": true,
-									"is_configured": true,
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Get SSH connection status",
-				"tags": [
-					"ssh",
-					"api/v1/servers"
-				]
-			}
-		},
-		"/api/v1/servers/{id}/set-default": {
-			"put": {
-				"description": "Set server as org default.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "setServerAsOrgDefault",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/SetDefaultServerResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/SetDefaultServerResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Set server as org default",
-				"tags": [
-					"{id}",
-					"api/v1/servers"
-				]
-			}
-		},
-		"/api/v1/servers/{id}/ssh/status": {
-			"get": {
-				"description": "Get SSH connection status for a specific server.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "getSSHConnectionStatusForASpecificServer",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"connected": true,
-									"is_configured": true,
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"connected": true,
-									"is_configured": true,
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/SSHConnectionStatusResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Get SSH connection status for a specific server",
-				"tags": [
-					"{id}",
-					"api/v1/servers"
-				]
-			}
-		},
-		"/api/v1/trail/provision": {
-			"post": {
-				"description": "Provision trail resources.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "provisionTrailResources",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"example": {
-								"image": "string"
-							},
-							"schema": {
-								"$ref": "#/components/schemas/ProvisionRequest"
-							}
-						}
-					},
-					"description": "Request body for types.ProvisionRequest",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"error": "string",
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ProvisionTrailResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"error": "string",
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ProvisionTrailResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Provision trail resources",
-				"tags": [
-					"provision",
-					"api/v1/trail"
-				]
-			}
-		},
-		"/api/v1/trail/status/{sessionId}": {
-			"get": {
-				"description": "Get trail session status.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "getTrailSessionStatus",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "sessionId",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"error": "string",
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/TrailStatusEnvelopeResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"error": "string",
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/TrailStatusEnvelopeResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Get trail session status",
-				"tags": [
-					"status",
-					"api/v1/trail"
-				]
-			}
-		},
 		"/api/v1/update": {
 			"post": {
 				"description": "Perform update.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
@@ -26866,22 +26586,16 @@
 			"name": "api/v1/healthcheck"
 		},
 		{
-			"name": "api/v1/machine"
+			"name": "api/v1/machines"
 		},
 		{
-			"name": "api/v1/machines"
+			"name": "api/v1/machines/trial"
 		},
 		{
 			"name": "api/v1/mcp"
 		},
 		{
 			"name": "api/v1/notification"
-		},
-		{
-			"name": "api/v1/servers"
-		},
-		{
-			"name": "api/v1/trail"
 		},
 		{
 			"name": "api/v1/update"

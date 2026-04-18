@@ -185,22 +185,22 @@ export enum MCP_SETTINGS {
 }
 
 export enum MACHINEHOSTURLS {
-  STATUS = 'v1/machine/status',
-  STATS = 'v1/machine/stats',
-  EXEC = 'v1/machine/exec',
-  RESTART = 'v1/machine/restart',
-  PAUSE = 'v1/machine/pause',
-  RESUME = 'v1/machine/resume',
-  BACKUP = 'v1/machine/backup',
-  LIST_BACKUPS = 'v1/machine/backups',
-  GET_BACKUP_SCHEDULE = 'v1/machine/backup/schedule',
-  UPDATE_BACKUP_SCHEDULE = 'v1/machine/backup/schedule',
-  METRICS = 'v1/machine/metrics',
-  EVENTS = 'v1/machine/events'
+  STATUS = 'v1/machines/status',
+  STATS = 'v1/machines/stats',
+  EXEC = 'v1/machines/exec',
+  RESTART = 'v1/machines/restart',
+  PAUSE = 'v1/machines/pause',
+  RESUME = 'v1/machines/resume',
+  BACKUP = 'v1/machines/backup',
+  LIST_BACKUPS = 'v1/machines/backups',
+  GET_BACKUP_SCHEDULE = 'v1/machines/backup/schedule',
+  UPDATE_BACKUP_SCHEDULE = 'v1/machines/backup/schedule',
+  METRICS = 'v1/machines/metrics',
+  EVENTS = 'v1/machines/events'
 }
 
 export enum SERVERURLS {
-  GET_SERVERS = 'v1/servers',
+  GET_SERVERS = 'v1/machines',
   CREATE_MACHINE = 'v1/machines',
   VERIFY_MACHINE = 'v1/machines',
   PROVISION_MACHINE = 'v1/machines/provision',

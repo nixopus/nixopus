@@ -5,6 +5,34 @@ import (
 	machine_controller "github.com/nixopus/nixopus/api/internal/features/machine/controller"
 )
 
+func (router *Router) RegisterMachinesRoutes(group *fuego.Server, machineController *machine_controller.MachineController) {
+	fuego.Get(
+		group,
+		"",
+		machineController.ListMachines,
+		fuego.OptionSummary("List machines"),
+		fuego.OptionQueryInt("page", "Page number"),
+		fuego.OptionQueryInt("page_size", "Page size"),
+		fuego.OptionQuery("search", "Search by name"),
+		fuego.OptionQuery("sort_by", "Sort field"),
+		fuego.OptionQuery("sort_order", "Sort order"),
+		fuego.OptionQuery("status", "Status filter"),
+		fuego.OptionQueryBool("is_active", "Filter by active state"),
+	)
+	fuego.Get(
+		group,
+		"/ssh/status",
+		machineController.CheckSSHStatus,
+		fuego.OptionSummary("Get SSH connection status"),
+	)
+	fuego.Put(
+		group,
+		"/{id}/set-default",
+		machineController.SetDefaultMachine,
+		fuego.OptionSummary("Set machine as org default"),
+	)
+}
+
 func (router *Router) RegisterMachineRoutes(machineGroup *fuego.Server, machineController *machine_controller.MachineController) {
 	fuego.Get(
 		machineGroup,

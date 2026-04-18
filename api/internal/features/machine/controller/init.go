@@ -22,6 +22,7 @@ import (
 type MachineController struct {
 	store               *shared_storage.Store
 	service             *service.MachineService
+	listService         *service.ListService
 	billingService      *service.BillingService
 	lifecycleService    *service.LifecycleService
 	backupService       *service.BackupService
@@ -40,12 +41,14 @@ func NewMachineController(
 	bs := machine_storage.NewBillingStorage(store.DB, ctx)
 	backupStore := machine_storage.NewBackupStorage(store.DB, ctx)
 	regStore := machine_storage.NewRegistrationStorage(store.DB, ctx)
+	listStore := machine_storage.NewListStorage(store.DB, ctx)
 	ffStorage := ff_storage.NewFeatureFlagStorage(store.DB, ctx)
 	ffService := ff_service.NewFeatureFlagService(ffStorage, l, ctx)
 	regService := service.NewRegistrationService(regStore, ffService, nil, l, ctx)
 	return &MachineController{
 		store:               store,
 		service:             service.NewMachineService(store, ctx, l, regStore),
+		listService:         service.NewListService(listStore, l, ctx),
 		billingService:      service.NewBillingService(bs),
 		lifecycleService:    service.NewLifecycleService(bs, queue.ExecuteMachineLifecycle),
 		backupService:       service.NewBackupService(bs, backupStore, store.DB),
