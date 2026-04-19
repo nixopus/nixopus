@@ -1,0 +1,196 @@
+# Workflow: Build Preview Images for Pull Requests
+# Description: Builds amd64-only Docker images tagged pr-<number> for testing PRs
+#              before merging. Comments install instructions on the PR automatically.
+# Cleanup: Preview images are deleted by cleanup_preview.yml when the PR closes.
+
+name: Preview Package Manager
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: 'PR number to build preview for (defaults to current branch HEAD)'
+        type: number
+        required: false
+
+concurrency:
+  group: preview-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  API_IMAGE: ${{ github.repository }}-api
+  VIEW_IMAGE: ${{ github.repository }}-view
+  API_PORT: 8443
+  NEXT_PUBLIC_PORT: 7443
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      view: ${{ steps.filter.outputs.view }}
+      installer: ${{ steps.filter.outputs.installer }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api:
+              - 'api/**'
+            view:
+              - 'view/**'
+            installer:
+              - 'installer/**'
+
+  build-api:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Create .env file
+        run: cp .env.sample api/.env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API preview image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.API_IMAGE }}:pr-${{ github.event.pull_request.number || inputs.pr-number || github.ref_name }}
+          build-args: |
+            API_PORT=${{ env.API_PORT }}
+          cache-from: type=gha,scope=preview-api
+          cache-to: type=gha,mode=max,scope=preview-api
+          provenance: false
+
+  build-view:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.view == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - name: Create .env file
+        run: cp .env.sample view/.env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push View preview image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./view
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}:pr-${{ github.event.pull_request.number || inputs.pr-number || github.ref_name }}
+          build-args: |
+            NEXT_PUBLIC_PORT=${{ env.NEXT_PUBLIC_PORT }}
+          cache-from: type=gha,scope=preview-view
+          cache-to: type=gha,mode=max,scope=preview-view
+          provenance: false
+
+  comment:
+    needs: [detect-changes, build-api, build-view]
+    if: always() && github.event_name == 'pull_request' && (needs.build-api.result == 'success' || needs.build-view.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Determine which images were built
+        id: images
+        run: |
+          PR=${{ github.event.pull_request.number }}
+          OVERRIDES=""
+
+          if [ "${{ needs.build-api.result }}" = "success" ]; then
+            OVERRIDES="${OVERRIDES} NIXOPUS_API_IMAGE=${{ env.REGISTRY }}/${{ env.API_IMAGE }}:pr-${PR}"
+          fi
+          if [ "${{ needs.build-view.result }}" = "success" ]; then
+            OVERRIDES="${OVERRIDES} NIXOPUS_VIEW_IMAGE=${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}:pr-${PR}"
+          fi
+
+          echo "overrides=${OVERRIDES}" >> $GITHUB_OUTPUT
+
+      - name: Comment install instructions on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: preview-deploy
+          message: |
+            ## 🔍 Preview images built
+
+            Preview images for this PR are ready to test. Install on a VPS with:
+
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.pull_request.head.sha }}/installer/get.sh | \
+              sudo NIXOPUS_REPO_RAW=https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.pull_request.head.sha }}/installer \
+              ${{ steps.images.outputs.overrides }} \
+              bash
+            ```
+
+            Or use the `--preview` flag:
+
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/${{ github.event.pull_request.head.sha }}/installer/get.sh | \
+              sudo bash -s -- --preview ${{ github.event.pull_request.number }}
+            ```
+
+            <details>
+            <summary>Image tags</summary>
+
+            | Image | Tag | Built |
+            |-------|-----|-------|
+            | `${{ env.REGISTRY }}/${{ env.API_IMAGE }}` | `pr-${{ github.event.pull_request.number }}` | ${{ needs.build-api.result == 'success' && '✅' || '⏭️ skipped (no api/ changes)' }} |
+            | `${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}` | `pr-${{ github.event.pull_request.number }}` | ${{ needs.build-view.result == 'success' && '✅' || '⏭️ skipped (no view/ changes)' }} |
+
+            > Images not built for this PR will fall back to `:latest`.
+            </details>
+
+            <sub>Updated at ${{ github.event.pull_request.head.sha }} · Preview images are automatically cleaned up when this PR closes.</sub>

@@ -233,6 +233,65 @@ nixopus restart
 
 Users can also switch models per-chat from the model dropdown in the UI.
 
+## Branch Preview (Testing PRs before merge)
+
+Preview images are automatically built for every pull request. This lets you test a PR on a real VPS before merging.
+
+### Testing a PR
+
+When a PR is opened, CI builds `pr-<number>` tagged images and comments install instructions on the PR. Use the one-liner from the comment, or:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nixopus/nixopus/<branch>/installer/get.sh | \
+  sudo bash -s -- --preview <pr-number>
+```
+
+This pulls the API and View images tagged `pr-<number>` and uses the installer files from that PR's branch. Auth and Agent images fall back to `:latest` since they live in separate repos.
+
+### Testing a specific branch
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nixopus/nixopus/<branch>/installer/get.sh | \
+  sudo bash -s -- --branch <branch-name> --preview <pr-number>
+```
+
+### Testing a fork
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/<owner>/<repo>/<branch>/installer/get.sh | \
+  sudo bash -s -- --fork <owner>/<repo> --branch <branch-name>
+```
+
+For forks, you need to build and push images to your own GHCR first (the preview CI only runs on the main repo). You can also override individual images:
+
+```bash
+curl -fsSL install.nixopus.com | \
+  sudo NIXOPUS_API_IMAGE=ghcr.io/youruser/nixopus-api:my-branch \
+       NIXOPUS_VIEW_IMAGE=ghcr.io/youruser/nixopus-view:my-branch \
+       bash
+```
+
+### Image override variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `NIXOPUS_API_IMAGE` | `ghcr.io/nixopus/nixopus-api:latest` | API container image |
+| `NIXOPUS_VIEW_IMAGE` | `ghcr.io/nixopus/nixopus-view:latest` | View container image |
+| `NIXOPUS_AUTH_IMAGE` | `ghcr.io/nixopus/auth:latest` | Auth container image |
+| `NIXOPUS_AGENT_IMAGE` | `ghcr.io/nixopus/agent:latest` | Agent container image |
+
+### Preview image cleanup
+
+Preview images are automatically deleted when the PR closes (merged or not). A weekly sweep also removes any orphaned preview images older than 7 days. You can also trigger cleanup manually from the Actions tab.
+
+### Reverting to stable
+
+Re-run the installer without `--preview` to go back to the latest stable images:
+
+```bash
+curl -fsSL install.nixopus.com | sudo bash
+```
+
 ## HTTPS
 
 When you provide a `DOMAIN`, Caddy automatically obtains and renews TLS certificates from Let's Encrypt. For this to work:
@@ -498,6 +557,17 @@ export NIXOPUS_TELEMETRY=off
 # Method 2 (DO_NOT_TRACK standard)
 export DO_NOT_TRACK=1
 ```
+
+### Installer CLI flags
+
+The installer accepts flags when invoked via `bash -s --`:
+
+| Flag | Description |
+|---|---|
+| `--preview <pr>` | Use preview images built for a PR |
+| `--branch <name>` | Fetch installer files from a specific branch |
+| `--fork <owner/repo>` | Fetch installer files and images from a fork |
+| `--help` | Show installer flags help |
 
 ## Contents
 

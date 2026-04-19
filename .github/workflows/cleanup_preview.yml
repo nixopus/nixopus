@@ -1,0 +1,149 @@
+# Workflow: Cleanup Preview Images
+# Description: Deletes PR-tagged preview images when a PR is closed (merged or not).
+#              Also runs weekly to sweep any orphaned preview packages older than 7 days.
+# Why: GHCR storage isn't free — preview images are ephemeral and should not accumulate.
+
+name: Cleanup Preview Packages
+
+on:
+  pull_request:
+    types: [closed]
+  schedule:
+    # Weekly sweep: every Monday at 03:00 UTC
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      pr-number:
+        description: 'Specific PR number to clean up (leave empty for scheduled sweep)'
+        type: number
+        required: false
+      dry-run:
+        description: 'Dry run — list what would be deleted without deleting'
+        type: boolean
+        default: false
+
+jobs:
+  cleanup-pr:
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.pr-number)
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        package: [nixopus-api, nixopus-view]
+    steps:
+      - name: Delete pr-tagged version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE: ${{ matrix.package }}
+          PR_NUM: ${{ github.event.pull_request.number || inputs.pr-number }}
+          DRY_RUN: ${{ inputs.dry-run || 'false' }}
+        run: |
+          TAG="pr-${PR_NUM}"
+          ORG="${GITHUB_REPOSITORY_OWNER}"
+
+          echo "Looking for ${PACKAGE}:${TAG}..."
+
+          VERSION_ID=$(gh api \
+            "/orgs/${ORG}/packages/container/${PACKAGE}/versions" \
+            --paginate --jq ".[] | select(.metadata.container.tags[]? == \"${TAG}\") | .id" \
+            2>/dev/null || true)
+
+          if [ -z "$VERSION_ID" ]; then
+            # Try user endpoint if org endpoint fails (for personal accounts)
+            VERSION_ID=$(gh api \
+              "/user/packages/container/${PACKAGE}/versions" \
+              --paginate --jq ".[] | select(.metadata.container.tags[]? == \"${TAG}\") | .id" \
+              2>/dev/null || true)
+          fi
+
+          if [ -z "$VERSION_ID" ]; then
+            echo "No version found with tag ${TAG} — nothing to delete"
+            exit 0
+          fi
+
+          echo "Found version ID: ${VERSION_ID}"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "[DRY RUN] Would delete ${PACKAGE}:${TAG} (version ${VERSION_ID})"
+            exit 0
+          fi
+
+          gh api --method DELETE \
+            "/orgs/${ORG}/packages/container/${PACKAGE}/versions/${VERSION_ID}" \
+            2>/dev/null || \
+          gh api --method DELETE \
+            "/user/packages/container/${PACKAGE}/versions/${VERSION_ID}" \
+            2>/dev/null || true
+
+          echo "Deleted ${PACKAGE}:${TAG}"
+
+  sweep-stale:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.pr-number)
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        package: [nixopus-api, nixopus-view]
+    steps:
+      - name: Delete preview versions older than 7 days
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE: ${{ matrix.package }}
+          DRY_RUN: ${{ inputs.dry-run || 'false' }}
+        run: |
+          ORG="${GITHUB_REPOSITORY_OWNER}"
+          CUTOFF=$(date -u -d '7 days ago' '+%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || \
+                   date -u -v-7d '+%Y-%m-%dT%H:%M:%SZ')
+
+          echo "Sweeping ${PACKAGE} preview tags older than ${CUTOFF}..."
+
+          STALE_VERSIONS=$(gh api \
+            "/orgs/${ORG}/packages/container/${PACKAGE}/versions" \
+            --paginate --jq "[.[] | select(
+              (.metadata.container.tags | length > 0) and
+              (.metadata.container.tags | all(startswith(\"pr-\"))) and
+              (.updated_at < \"${CUTOFF}\")
+            ) | {id, tags: .metadata.container.tags, updated: .updated_at}]" \
+            2>/dev/null || echo "[]")
+
+          COUNT=$(echo "$STALE_VERSIONS" | jq 'length')
+          echo "Found ${COUNT} stale preview version(s)"
+
+          if [ "$COUNT" = "0" ]; then
+            exit 0
+          fi
+
+          echo "$STALE_VERSIONS" | jq -r '.[] | "\(.id)\t\(.tags | join(","))\t\(.updated)"'
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "[DRY RUN] Would delete ${COUNT} version(s)"
+            exit 0
+          fi
+
+          echo "$STALE_VERSIONS" | jq -r '.[].id' | while read -r vid; do
+            gh api --method DELETE \
+              "/orgs/${ORG}/packages/container/${PACKAGE}/versions/${vid}" \
+              2>/dev/null || true
+            echo "Deleted version ${vid}"
+          done
+
+  prune-untagged:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && !inputs.pr-number)
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    strategy:
+      matrix:
+        package: [nixopus-api, nixopus-view]
+    steps:
+      - name: Delete untagged versions (keep latest 10)
+        uses: actions/delete-package-versions@v5
+        with:
+          package-name: ${{ matrix.package }}
+          package-type: container
+          delete-only-untagged-versions: true
+          min-versions-to-keep: 10
+          token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
