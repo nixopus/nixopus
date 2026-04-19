@@ -4,8 +4,85 @@ set -euo pipefail
 NIXOPUS_VERSION="0.3.0"
 NIXOPUS_HOME="${NIXOPUS_HOME:-/opt/nixopus}"
 TELEMETRY_URL="${NIXOPUS_TELEMETRY_URL:-https://api.nixopus.com/api/v1/cli/telemetry}"
-REPO_RAW="${NIXOPUS_REPO_RAW:-https://raw.githubusercontent.com/nixopus/nixopus/master/installer}"
+NIXOPUS_REPO="${NIXOPUS_REPO:-nixopus/nixopus}"
+NIXOPUS_BRANCH="${NIXOPUS_BRANCH:-master}"
+REPO_RAW="${NIXOPUS_REPO_RAW:-https://raw.githubusercontent.com/${NIXOPUS_REPO}/${NIXOPUS_BRANCH}/installer}"
 INSTALL_START=$(date +%s)
+
+# ── Argument Parsing ─────────────────────────────────────────────────────────
+
+PREVIEW_PR=""
+PREVIEW_FORK=""
+PREVIEW_BRANCH=""
+
+parse_args() {
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --preview)
+                shift
+                PREVIEW_PR="${1:-}"
+                [ -z "$PREVIEW_PR" ] && { echo "Usage: --preview <pr-number>" >&2; exit 1; }
+                ;;
+            --branch)
+                shift
+                PREVIEW_BRANCH="${1:-}"
+                [ -z "$PREVIEW_BRANCH" ] && { echo "Usage: --branch <branch-name>" >&2; exit 1; }
+                ;;
+            --fork)
+                shift
+                PREVIEW_FORK="${1:-}"
+                [ -z "$PREVIEW_FORK" ] && { echo "Usage: --fork <owner/repo>" >&2; exit 1; }
+                ;;
+            --help|-h)
+                echo "Usage: curl -fsSL install.nixopus.com | sudo bash -s -- [options]"
+                echo ""
+                echo "Options:"
+                echo "  --preview <pr>        Install from a PR's preview images (pr number)"
+                echo "  --branch <name>       Use installer files from a specific branch"
+                echo "  --fork <owner/repo>   Use installer files and images from a fork"
+                echo "  --help                Show this help"
+                echo ""
+                echo "Examples:"
+                echo "  # Test PR #42"
+                echo "  curl -fsSL install.nixopus.com | sudo bash -s -- --preview 42"
+                echo ""
+                echo "  # Test a branch from the main repo"
+                echo "  curl -fsSL ... | sudo bash -s -- --branch feat/new-feature --preview 42"
+                echo ""
+                echo "  # Test a fork"
+                echo "  curl -fsSL ... | sudo bash -s -- --fork someuser/nixopus --branch main"
+                exit 0
+                ;;
+            *)
+                echo "Unknown option: $1 (use --help for usage)" >&2
+                exit 1
+                ;;
+        esac
+        shift
+    done
+}
+
+apply_preview_config() {
+    local repo="${PREVIEW_FORK:-${NIXOPUS_REPO}}"
+    local branch="${PREVIEW_BRANCH:-${NIXOPUS_BRANCH}}"
+
+    if [ -n "$PREVIEW_PR" ]; then
+        NIXOPUS_API_IMAGE="${NIXOPUS_API_IMAGE:-ghcr.io/${repo}-api:pr-${PREVIEW_PR}}"
+        NIXOPUS_VIEW_IMAGE="${NIXOPUS_VIEW_IMAGE:-ghcr.io/${repo}-view:pr-${PREVIEW_PR}}"
+        export NIXOPUS_API_IMAGE NIXOPUS_VIEW_IMAGE
+    fi
+
+    if [ -n "$PREVIEW_FORK" ]; then
+        branch="${PREVIEW_BRANCH:-main}"
+    fi
+
+    if [ -n "$PREVIEW_BRANCH" ] || [ -n "$PREVIEW_FORK" ]; then
+        REPO_RAW="${NIXOPUS_REPO_RAW:-https://raw.githubusercontent.com/${repo}/${branch}/installer}"
+    fi
+}
+
+parse_args "$@"
+apply_preview_config
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -568,6 +645,11 @@ DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
 GROQ_API_KEY=${GROQ_API_KEY:-}
 AGENT_MODEL=${AGENT_MODEL:-}
 AGENT_LIGHT_MODEL=${AGENT_LIGHT_MODEL:-}
+
+NIXOPUS_API_IMAGE=${NIXOPUS_API_IMAGE:-}
+NIXOPUS_VIEW_IMAGE=${NIXOPUS_VIEW_IMAGE:-}
+NIXOPUS_AUTH_IMAGE=${NIXOPUS_AUTH_IMAGE:-}
+NIXOPUS_AGENT_IMAGE=${NIXOPUS_AGENT_IMAGE:-}
 EOF
     chmod 600 "$NIXOPUS_HOME/.env"
 }
@@ -1247,6 +1329,11 @@ send_telemetry() {
 show_banner() {
     echo ""
     echo -e "${BOLD}  Nixopus Self-Host Installer v${NIXOPUS_VERSION}${NC}"
+    if [ -n "$PREVIEW_PR" ]; then
+        echo -e "  ${YELLOW}PREVIEW MODE — PR #${PREVIEW_PR}${NC}"
+    elif [ -n "$PREVIEW_BRANCH" ] || [ -n "$PREVIEW_FORK" ]; then
+        echo -e "  ${YELLOW}PREVIEW MODE — ${PREVIEW_FORK:-${NIXOPUS_REPO}}@${PREVIEW_BRANCH:-${NIXOPUS_BRANCH}}${NC}"
+    fi
     echo -e "  ${DIM}https://nixopus.com${NC}"
     echo ""
 }
@@ -1271,6 +1358,13 @@ show_complete() {
     elif [ -n "${ADMIN_EMAIL:-}" ]; then
         echo ""
         echo -e "  ${BOLD}Admin:${NC}     register at $BASE_URL/register"
+    fi
+    if [ -n "$PREVIEW_PR" ] || [ -n "$PREVIEW_BRANCH" ] || [ -n "$PREVIEW_FORK" ]; then
+        echo ""
+        echo -e "  ${YELLOW}${BOLD}Preview images:${NC}"
+        [ -n "${NIXOPUS_API_IMAGE:-}" ] && echo -e "    ${DIM}API:  ${NIXOPUS_API_IMAGE}${NC}"
+        [ -n "${NIXOPUS_VIEW_IMAGE:-}" ] && echo -e "    ${DIM}View: ${NIXOPUS_VIEW_IMAGE}${NC}"
+        echo -e "  ${YELLOW}To revert to stable: re-run the installer without --preview${NC}"
     fi
     echo ""
     echo -e "  ${BOLD}Commands:${NC}"
