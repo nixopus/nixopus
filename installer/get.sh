@@ -62,13 +62,46 @@ parse_args() {
     done
 }
 
+preview_image_exists() {
+    local image="$1"
+    docker manifest inspect "$image" >/dev/null 2>&1
+}
+
 apply_preview_config() {
     local repo="${PREVIEW_FORK:-${NIXOPUS_REPO}}"
     local branch="${PREVIEW_BRANCH:-${NIXOPUS_BRANCH}}"
 
     if [ -n "$PREVIEW_PR" ]; then
-        NIXOPUS_API_IMAGE="${NIXOPUS_API_IMAGE:-ghcr.io/${repo}-api:pr-${PREVIEW_PR}}"
-        NIXOPUS_VIEW_IMAGE="${NIXOPUS_VIEW_IMAGE:-ghcr.io/${repo}-view:pr-${PREVIEW_PR}}"
+        local api_tag="ghcr.io/${repo}-api:pr-${PREVIEW_PR}"
+        local view_tag="ghcr.io/${repo}-view:pr-${PREVIEW_PR}"
+        local api_ok=false view_ok=false
+
+        if [ -z "${NIXOPUS_API_IMAGE:-}" ]; then
+            if preview_image_exists "$api_tag"; then
+                NIXOPUS_API_IMAGE="$api_tag"
+                api_ok=true
+            fi
+        else
+            api_ok=true
+        fi
+
+        if [ -z "${NIXOPUS_VIEW_IMAGE:-}" ]; then
+            if preview_image_exists "$view_tag"; then
+                NIXOPUS_VIEW_IMAGE="$view_tag"
+                view_ok=true
+            fi
+        else
+            view_ok=true
+        fi
+
+        if [ "$api_ok" = false ] && [ "$view_ok" = false ]; then
+            echo -e "  \033[1;33mWARN\033[0m  No preview images found for PR #${PREVIEW_PR} — using latest for both API and View"
+        elif [ "$api_ok" = false ]; then
+            echo -e "  \033[0;34mINFO\033[0m  Preview image not available for API (pr-${PREVIEW_PR}) — using latest"
+        elif [ "$view_ok" = false ]; then
+            echo -e "  \033[0;34mINFO\033[0m  Preview image not available for View (pr-${PREVIEW_PR}) — using latest"
+        fi
+
         export NIXOPUS_API_IMAGE NIXOPUS_VIEW_IMAGE
     fi
 
@@ -82,7 +115,6 @@ apply_preview_config() {
 }
 
 parse_args "$@"
-apply_preview_config
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -1362,8 +1394,16 @@ show_complete() {
     if [ -n "$PREVIEW_PR" ] || [ -n "$PREVIEW_BRANCH" ] || [ -n "$PREVIEW_FORK" ]; then
         echo ""
         echo -e "  ${YELLOW}${BOLD}Preview images:${NC}"
-        [ -n "${NIXOPUS_API_IMAGE:-}" ] && echo -e "    ${DIM}API:  ${NIXOPUS_API_IMAGE}${NC}"
-        [ -n "${NIXOPUS_VIEW_IMAGE:-}" ] && echo -e "    ${DIM}View: ${NIXOPUS_VIEW_IMAGE}${NC}"
+        if [ -n "${NIXOPUS_API_IMAGE:-}" ]; then
+            echo -e "    ${DIM}API:  ${NIXOPUS_API_IMAGE}${NC}"
+        elif [ -n "$PREVIEW_PR" ]; then
+            echo -e "    ${DIM}API:  latest (pr-${PREVIEW_PR} not available)${NC}"
+        fi
+        if [ -n "${NIXOPUS_VIEW_IMAGE:-}" ]; then
+            echo -e "    ${DIM}View: ${NIXOPUS_VIEW_IMAGE}${NC}"
+        elif [ -n "$PREVIEW_PR" ]; then
+            echo -e "    ${DIM}View: latest (pr-${PREVIEW_PR} not available)${NC}"
+        fi
         echo -e "  ${YELLOW}To revert to stable: re-run the installer without --preview${NC}"
     fi
     echo ""
@@ -1396,6 +1436,7 @@ main() {
 
     log_step 2 "Setting up Docker"
     install_docker
+    apply_preview_config
 
     log_step 3 "Configuring"
     load_existing_config
