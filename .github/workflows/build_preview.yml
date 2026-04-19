@@ -32,7 +32,7 @@ jobs:
     outputs:
       api: ${{ steps.filter.outputs.api }}
       view: ${{ steps.filter.outputs.view }}
-      installer: ${{ steps.filter.outputs.installer }}
+      ci: ${{ steps.filter.outputs.ci }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -46,12 +46,13 @@ jobs:
               - 'api/**'
             view:
               - 'view/**'
-            installer:
+            ci:
+              - '.github/workflows/build_preview.yml'
               - 'installer/**'
 
   build-api:
     needs: detect-changes
-    if: needs.detect-changes.outputs.api == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.detect-changes.outputs.api == 'true' || needs.detect-changes.outputs.ci == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -95,7 +96,7 @@ jobs:
 
   build-view:
     needs: detect-changes
-    if: needs.detect-changes.outputs.view == 'true' || github.event_name == 'workflow_dispatch'
+    if: needs.detect-changes.outputs.view == 'true' || needs.detect-changes.outputs.ci == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
