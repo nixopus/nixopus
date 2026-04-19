@@ -271,6 +271,7 @@ func (s *DeployStorage) GetApplications(page, pageSize int, sortBy string, sortD
 		Relation("Status").
 		Relation("Deployments.Status").
 		Relation("Domains.ComposeService").
+		Relation("Servers").
 		Limit(pageSize).
 		Offset(offset).
 		Where("a.organization_id = ?", organizationID)

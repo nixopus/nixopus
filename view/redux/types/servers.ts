@@ -100,3 +100,21 @@ export interface MachineSshStatusResponse {
 export interface DeleteMachineResponse {
   status: string;
 }
+
+export interface MachineState {
+  active: boolean;
+  state: string;
+  pid: number;
+  uptime_sec: number;
+}
+
+export interface MachineStateResponse {
+  status: string;
+  message: string;
+  data: MachineState;
+}
+
+export interface MachineActionResponse {
+  status: string;
+  message: string;
+}

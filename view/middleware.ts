@@ -11,6 +11,7 @@ const CORE_PRIVATE_PATHS = [
   '/charts',
   '/chats',
   '/extensions',
+  '/machines',
   '/settings',
   '/activities',
   '/domains',

@@ -21,8 +21,6 @@ import (
 	cryptossh "golang.org/x/crypto/ssh"
 )
 
-const defaultMaxBYOSMachines = 2
-
 type MachineBillingChecker interface {
 	CanProvision(orgID uuid.UUID) error
 }
@@ -61,14 +59,6 @@ func NewRegistrationService(
 }
 
 func (s *RegistrationService) CreateMachine(orgID uuid.UUID, userID uuid.UUID, req types.CreateMachineRequest) (*types.CreateMachineResponse, error) {
-	count, err := s.storage.CountUserOwnedMachines(orgID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to count machines: %w", err)
-	}
-	if count >= defaultMaxBYOSMachines {
-		return nil, types.ErrMachineLimitReached
-	}
-
 	port := req.Port
 	if port == 0 {
 		port = 22
