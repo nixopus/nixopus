@@ -19,7 +19,7 @@ import { apiKeysApi } from '@/redux/services/api-keys/apiKeysApi';
 import { machineBackupApi } from '@/redux/services/machine/machineBackupApi';
 import { customDomainsApi } from '@/redux/services/domains/customDomainsApi';
 import { useState, useMemo, useEffect } from 'react';
-import { Globe, HardDrive, KeyRound, Layers, Plug, Settings, Shield } from 'lucide-react';
+import { Globe, HardDrive, KeyRound, Layers, Plug, Server, Settings, Shield } from 'lucide-react';
 import { getPluginNavItems } from '@/plugins/registry';
 
 const BROWSE_HIDDEN_URLS = ['/backups', '/chats'];
@@ -31,6 +31,13 @@ const coreNavItems = [
     icon: Layers,
     resource: 'deploy',
     order: 10
+  },
+  {
+    title: 'navigation.machines',
+    url: '/machines',
+    icon: Server,
+    resource: 'machine',
+    order: 15
   },
   {
     title: 'navigation.integrations',
@@ -169,7 +176,16 @@ export function useAppSidebar() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   const hasAnyPermission = useMemo(() => {
-    const allowedResources = ['dashboard', 'settings', 'extensions', 'ai', 'domain', 'api-key', 'security', 'backup'];
+    const allowedResources = [
+      'dashboard',
+      'settings',
+      'extensions',
+      'ai',
+      'domain',
+      'api-key',
+      'security',
+      'backup'
+    ];
 
     return (resource: string) => {
       if (!user || !activeOrg) return false;

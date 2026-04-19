@@ -2,6 +2,7 @@
   "navigation": {
     "dashboard": "Graphiques",
     "selfHost": "Apps",
+    "machines": "Machines",
     "fileManager": "Gestionnaire de Fichiers",
     "extensions": "Extensions",
     "settings": "Paramètres",

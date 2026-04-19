@@ -13,7 +13,10 @@ import type {
   ProvisionMachineRequest,
   ProvisionStatusResponse,
   MachineSshStatusResponse,
-  DeleteMachineResponse
+  DeleteMachineResponse,
+  MachineState,
+  MachineStateResponse,
+  MachineActionResponse
 } from '@/redux/types/servers';
 
 export const machinesApi = createApi({
@@ -79,11 +82,12 @@ export const machinesApi = createApi({
       transformResponse: (response: { status: string; data: MachineSshStatusResponse }) =>
         response.data
     }),
-    getMachineStatus: builder.query<unknown, { server_id?: string } | void>({
+    getMachineStatus: builder.query<MachineState, { server_id?: string } | void>({
       query: (params) => ({
         url: `${MACHINEHOSTURLS.STATUS}${machineHostQuery(params?.server_id)}`,
         method: 'GET'
-      })
+      }),
+      transformResponse: (response: MachineStateResponse) => response.data
     }),
     getMachineStats: builder.query<unknown, { server_id?: string } | void>({
       query: (params) => ({
@@ -98,19 +102,19 @@ export const machinesApi = createApi({
         body: { command }
       })
     }),
-    restartMachine: builder.mutation<unknown, { server_id?: string } | void>({
+    restartMachine: builder.mutation<MachineActionResponse, { server_id?: string } | void>({
       query: (params) => ({
         url: `${MACHINEHOSTURLS.RESTART}${machineHostQuery(params?.server_id)}`,
         method: 'POST'
       })
     }),
-    pauseMachine: builder.mutation<unknown, { server_id?: string } | void>({
+    pauseMachine: builder.mutation<MachineActionResponse, { server_id?: string } | void>({
       query: (params) => ({
         url: `${MACHINEHOSTURLS.PAUSE}${machineHostQuery(params?.server_id)}`,
         method: 'POST'
       })
     }),
-    resumeMachine: builder.mutation<unknown, { server_id?: string } | void>({
+    resumeMachine: builder.mutation<MachineActionResponse, { server_id?: string } | void>({
       query: (params) => ({
         url: `${MACHINEHOSTURLS.RESUME}${machineHostQuery(params?.server_id)}`,
         method: 'POST'
