@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	api_types "github.com/nixopus/nixopus/api/internal/types"
+	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 	"github.com/vmihailenco/taskq/v3"
 	cryptossh "golang.org/x/crypto/ssh"
@@ -53,7 +53,7 @@ func handleMachineVerify(ctx context.Context, db *bun.DB, payload MachineVerifyP
 		return fmt.Errorf("invalid machine_id: %w", err)
 	}
 
-	var sshKey api_types.SSHKey
+	var sshKey shared_types.SSHKey
 	err = db.NewSelect().
 		Model(&sshKey).
 		Where("id = ?", machineUUID).
@@ -64,6 +64,7 @@ func handleMachineVerify(ctx context.Context, db *bun.DB, payload MachineVerifyP
 	}
 
 	if sshKey.PrivateKeyEncrypted == nil || sshKey.Host == nil {
+		markMachineInactive(ctx, db, payload.MachineID)
 		return fmt.Errorf("ssh key missing private key or host")
 	}
 
@@ -104,14 +105,24 @@ func handleMachineVerify(ctx context.Context, db *bun.DB, payload MachineVerifyP
 	}
 	defer session.Close()
 
-	if err := session.Run("echo ok"); err != nil {
+	runErr := make(chan error, 1)
+	go func() { runErr <- session.Run("echo ok") }()
+
+	select {
+	case err := <-runErr:
+		if err != nil {
+			markMachineInactive(ctx, db, payload.MachineID)
+			return fmt.Errorf("SSH command failed: %w", err)
+		}
+	case <-ctx.Done():
+		session.Close()
 		markMachineInactive(ctx, db, payload.MachineID)
-		return fmt.Errorf("SSH command failed: %w", err)
+		return ctx.Err()
 	}
 
 	now := time.Now()
 	_, err = db.NewUpdate().
-		Model((*api_types.SSHKey)(nil)).
+		Model((*shared_types.SSHKey)(nil)).
 		Set("is_active = ?", true).
 		Set("last_used_at = ?", now).
 		Set("updated_at = ?", now).
@@ -127,7 +138,7 @@ func handleMachineVerify(ctx context.Context, db *bun.DB, payload MachineVerifyP
 
 func markMachineInactive(ctx context.Context, db *bun.DB, machineID string) {
 	_, err := db.NewUpdate().
-		Model((*api_types.SSHKey)(nil)).
+		Model((*shared_types.SSHKey)(nil)).
 		Set("is_active = ?", false).
 		Set("updated_at = ?", time.Now()).
 		Where("id = ?::uuid", machineID).
