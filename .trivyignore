@@ -1,0 +1,6 @@
+# CVE-2026-34040: github.com/docker/docker authorization bypass
+# Fix requires Docker SDK v29.3.1+ which is not yet available as a Go module.
+# We are on the latest available Go module version (v28.5.2+incompatible).
+# This project uses the Docker SDK only for container management on user-owned machines,
+# not for multi-tenant authorization decisions, so the risk is mitigated.
+CVE-2026-34040
