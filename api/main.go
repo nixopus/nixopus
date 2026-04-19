@@ -70,7 +70,7 @@ func main() {
 	queue.SetupResourceUpdateQueue()
 	queue.SetupMachineLifecycleQueue(ctx)
 	queue.SetupMachineBackupQueue(ctx, store.DB)
-	queue.SetupMachineVerifyQueue(ctx)
+	queue.SetupMachineVerifyQueue(ctx, store.DB)
 	queue.SetupVMDeleteQueue()
 
 	router := routes.NewRouter(app)

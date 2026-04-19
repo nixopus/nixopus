@@ -5,8 +5,13 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
+	"github.com/google/uuid"
+	api_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/uptrace/bun"
 	"github.com/vmihailenco/taskq/v3"
+	cryptossh "golang.org/x/crypto/ssh"
 )
 
 const (
@@ -26,7 +31,7 @@ var (
 	taskMachineVerifyTask *taskq.Task
 )
 
-func SetupMachineVerifyQueue(ctx context.Context) {
+func SetupMachineVerifyQueue(ctx context.Context, db *bun.DB) {
 	onceMachineVerify.Do(func() {
 		machineVerifyQueue = registerProducerQueue(&taskq.QueueOptions{
 			Name: queueMachineVerify,
@@ -35,11 +40,101 @@ func SetupMachineVerifyQueue(ctx context.Context) {
 			Name:       taskMachineVerify,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, payload MachineVerifyPayload) error {
-				return nil
+				return handleMachineVerify(ctx, db, payload)
 			},
 		})
 		log.Printf("Machine verify queue initialized")
 	})
+}
+
+func handleMachineVerify(ctx context.Context, db *bun.DB, payload MachineVerifyPayload) error {
+	machineUUID, err := uuid.Parse(payload.MachineID)
+	if err != nil {
+		return fmt.Errorf("invalid machine_id: %w", err)
+	}
+
+	var sshKey api_types.SSHKey
+	err = db.NewSelect().
+		Model(&sshKey).
+		Where("id = ?", machineUUID).
+		Where("deleted_at IS NULL").
+		Scan(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to load ssh key: %w", err)
+	}
+
+	if sshKey.PrivateKeyEncrypted == nil || sshKey.Host == nil {
+		return fmt.Errorf("ssh key missing private key or host")
+	}
+
+	signer, err := cryptossh.ParsePrivateKey([]byte(*sshKey.PrivateKeyEncrypted))
+	if err != nil {
+		markMachineInactive(ctx, db, payload.MachineID)
+		return fmt.Errorf("failed to parse private key: %w", err)
+	}
+
+	port := 22
+	if sshKey.Port != nil {
+		port = *sshKey.Port
+	}
+	user := "root"
+	if sshKey.User != nil {
+		user = *sshKey.User
+	}
+
+	config := &cryptossh.ClientConfig{
+		User:            user,
+		Auth:            []cryptossh.AuthMethod{cryptossh.PublicKeys(signer)},
+		HostKeyCallback: cryptossh.InsecureIgnoreHostKey(),
+		Timeout:         10 * time.Second,
+	}
+
+	addr := fmt.Sprintf("%s:%d", *sshKey.Host, port)
+	client, err := cryptossh.Dial("tcp", addr, config)
+	if err != nil {
+		markMachineInactive(ctx, db, payload.MachineID)
+		return fmt.Errorf("SSH dial failed: %w", err)
+	}
+	defer client.Close()
+
+	session, err := client.NewSession()
+	if err != nil {
+		markMachineInactive(ctx, db, payload.MachineID)
+		return fmt.Errorf("SSH session failed: %w", err)
+	}
+	defer session.Close()
+
+	if err := session.Run("echo ok"); err != nil {
+		markMachineInactive(ctx, db, payload.MachineID)
+		return fmt.Errorf("SSH command failed: %w", err)
+	}
+
+	now := time.Now()
+	_, err = db.NewUpdate().
+		Model((*api_types.SSHKey)(nil)).
+		Set("is_active = ?", true).
+		Set("last_used_at = ?", now).
+		Set("updated_at = ?", now).
+		Where("id = ?::uuid", payload.MachineID).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to update ssh key status: %w", err)
+	}
+
+	log.Printf("[machine-verify] success: machine_id=%s", payload.MachineID)
+	return nil
+}
+
+func markMachineInactive(ctx context.Context, db *bun.DB, machineID string) {
+	_, err := db.NewUpdate().
+		Model((*api_types.SSHKey)(nil)).
+		Set("is_active = ?", false).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?::uuid", machineID).
+		Exec(ctx)
+	if err != nil {
+		log.Printf("[machine-verify] failed to mark inactive: machine_id=%s err=%v", machineID, err)
+	}
 }
 
 func EnqueueMachineVerifyTask(ctx context.Context, payload MachineVerifyPayload) error {
