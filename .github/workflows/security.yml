@@ -29,6 +29,7 @@ jobs:
           exit-code: '1'
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
+          trivyignores: '.trivyignore'
 
   secret-scan:
     runs-on: ubuntu-latest

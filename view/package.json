@@ -64,7 +64,7 @@
     "jws": "^4.0.1",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.479.0",
-    "next": "15.5.14",
+    "next": "15.5.15",
     "next-themes": "^0.4.4",
     "nookies": "^2.5.2",
     "posthog-js": "^1.363.5",
@@ -98,7 +98,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.21.0",
-    "eslint-config-next": "15.5.14",
+    "eslint-config-next": "15.5.15",
     "eslint-config-prettier": "^10.0.2",
     "eslint-plugin-prettier": "^5.2.3",
     "eslint-plugin-react": "^7.37.4",
@@ -115,7 +115,11 @@
     "hono": "^4.12.4",
     "express-rate-limit": "^8.2.2",
     "kysely": "^0.28.12",
-    "cookie": "^0.7.0"
+    "cookie": "^0.7.0",
+    "defu": "^6.1.5",
+    "lodash": "^4.18.0",
+    "lodash-es": "^4.18.0",
+    "picomatch": "^4.0.4"
   },
   "overrides": {
     "jws": "^4.0.1",
@@ -123,6 +127,10 @@
     "hono": "^4.12.4",
     "express-rate-limit": "^8.2.2",
     "kysely": "^0.28.12",
-    "cookie": "^0.7.0"
+    "cookie": "^0.7.0",
+    "defu": "^6.1.5",
+    "lodash": "^4.18.0",
+    "lodash-es": "^4.18.0",
+    "picomatch": "^4.0.4"
   }
 }
