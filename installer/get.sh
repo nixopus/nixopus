@@ -115,7 +115,6 @@ apply_preview_config() {
 }
 
 parse_args "$@"
-apply_preview_config
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -1437,6 +1436,7 @@ main() {
 
     log_step 2 "Setting up Docker"
     install_docker
+    apply_preview_config
 
     log_step 3 "Configuring"
     load_existing_config
