@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
@@ -19,7 +18,7 @@ func NewParser() *Parser {
 }
 
 func (p *Parser) ParseExtensionFile(filePath string) (*types.Extension, []types.ExtensionVariable, error) {
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read file %s: %w", filePath, err)
 	}
@@ -105,24 +104,15 @@ func (p *Parser) LoadExtensionsFromDirectory(dirPath string) ([]*types.Extension
 		return nil, nil, fmt.Errorf("failed to read directory: %w", err)
 	}
 
-	// Collect all parseable paths: flat YAML files and directory metadata files
 	var parsePaths []string
 	for _, entry := range entries {
-		if entry.IsDir() {
-			metadataPath := filepath.Join(dirPath, entry.Name(), "metadata.yaml")
-			if _, err := os.Stat(metadataPath); err == nil {
-				parsePaths = append(parsePaths, metadataPath)
-			}
+		if !entry.IsDir() {
 			continue
 		}
-
-		if filepath.Ext(entry.Name()) != ".yaml" {
-			continue
+		metadataPath := filepath.Join(dirPath, entry.Name(), "metadata.yaml")
+		if _, err := os.Stat(metadataPath); err == nil {
+			parsePaths = append(parsePaths, metadataPath)
 		}
-		if entry.Name() == "rfc.yaml" {
-			continue
-		}
-		parsePaths = append(parsePaths, filepath.Join(dirPath, entry.Name()))
 	}
 
 	if len(parsePaths) == 0 {
