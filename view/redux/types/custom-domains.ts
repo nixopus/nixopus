@@ -11,7 +11,7 @@ export type CustomDomain = {
 };
 
 export type DNSInstruction = {
-  record_type: 'CNAME' | 'A' | 'TXT';
+  record_type: 'CNAME' | 'A' | 'AAAA' | 'TXT';
   name: string;
   value: string;
   description: string;
