@@ -34,6 +34,38 @@ func (t *TaskService) CreateDeploymentTask(deployment *types.CreateDeploymentReq
 	return TaskPayload.Application, nil
 }
 
+func (t *TaskService) CreateTemplateDeploymentTask(deployment *types.CreateDeploymentRequest, userID uuid.UUID, organizationID uuid.UUID, templateID string) (shared_types.Application, error) {
+	contextTask := ContextTask{
+		TaskService:    t,
+		ContextConfig:  deployment,
+		UserId:         userID,
+		OrganizationId: organizationID,
+	}
+
+	TaskPayload, err := contextTask.PrepareCreateDeploymentContext()
+	if err != nil {
+		return shared_types.Application{}, err
+	}
+
+	TaskPayload.Application.TemplateID = templateID
+	if _, err := t.Store.DB.NewUpdate().
+		Model(&TaskPayload.Application).
+		Column("template_id").
+		Where("id = ?", TaskPayload.Application.ID).
+		Exec(context.Background()); err != nil {
+		return shared_types.Application{}, fmt.Errorf("failed to set template_id: %w", err)
+	}
+
+	TaskPayload.CorrelationID = uuid.NewString()
+
+	err = CreateDeploymentQueue.Add(TaskCreateDeployment.WithArgs(context.Background(), TaskPayload))
+	if err != nil {
+		return shared_types.Application{}, fmt.Errorf("failed to enqueue deployment: %w", err)
+	}
+
+	return TaskPayload.Application, nil
+}
+
 func (t *TaskService) HandleCreateDockerfileDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
 	taskCtx := t.NewTaskContext(TaskPayload)
 
