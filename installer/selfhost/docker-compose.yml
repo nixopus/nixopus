@@ -71,6 +71,7 @@ services:
       DOCKER_HOST: "unix:///var/run/docker.sock"
       MOUNT_PATH: /etc/nixopus/configs
       DEPLOY_DOMAIN: "${DOMAIN:-${HOST_IP}}"
+      IP_FAMILY: "${IP_FAMILY:-ipv4}"
       APP_VERSION: "${NIXOPUS_VERSION:-latest}"
       SECRET_MANAGER_ENABLED: "false"
     volumes:
