@@ -92,6 +92,10 @@ func getHostIP() string {
 				if isV4 {
 					continue
 				}
+			case "dual", "ipv4":
+				if !isV4 {
+					continue
+				}
 			default:
 				if !isV4 {
 					continue

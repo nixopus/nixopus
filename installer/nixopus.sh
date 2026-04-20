@@ -202,11 +202,11 @@ cmd_domain() {
         local effective_family="${ip_flag:-${IP_FAMILY:-ipv4}}"
 
         if [ "$verify_mode" != "off" ]; then
-            local resolved="" mismatch=false
+            local mismatch=false
 
             if command -v getent >/dev/null 2>&1; then
                 local resolved_v4="" resolved_v6=""
-                resolved_v4=$(getent hosts "$domain" 2>/dev/null | awk '{print $1}' | head -1) || true
+                resolved_v4=$(getent hosts "$domain" 2>/dev/null | awk '$1 !~ /:/ {print $1; exit}') || true
                 resolved_v6=$(getent hosts "$domain" 2>/dev/null | awk '/:/{print $1; exit}') || true
 
                 case "$effective_family" in
@@ -379,6 +379,9 @@ cmd_ip() {
         sedi "s|^AUTH_PUBLIC_URL=.*|AUTH_PUBLIC_URL=${base_url}|" "$NIXOPUS_HOME/.env"
     fi
     echo "Set $target_var to $new_ip"
+    if [ "$target_var" = "HOST_IP6" ] && [ "$(grep '^IP_FAMILY=' "$NIXOPUS_HOME/.env" | cut -d= -f2)" = "ipv4" ]; then
+        echo "Note: IP_FAMILY is still 'ipv4'. Run 'nixopus config set IP_FAMILY=dual' to enable dual-stack."
+    fi
     echo "Restarting services..."
     dc up -d --remove-orphans
 }
