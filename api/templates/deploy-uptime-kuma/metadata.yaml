@@ -1,0 +1,48 @@
+metadata:
+  id: "deploy-uptime-kuma"
+  name: "Uptime Kuma"
+  description: "Uptime Kuma is a self-hosted monitoring tool"
+  author: "Nixopus Team"
+  icon: "https://uptime.kuma.pet/img/icon.svg"
+  category: "Monitoring"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+  featured: true
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Uptime Kuma"
+    default: "louislam/uptime-kuma"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "1"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Uptime Kuma container"
+    default: "uptime-kuma"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Uptime Kuma"
+    default: 3001
+    is_required: true
+
+  volume_name:
+    type: "string"
+    description: "Named Docker volume for persistent data"
+    default: "uptime-kuma"
+    is_required: true
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Uptime Kuma (optional)"
+    default: ""
+    is_required: false

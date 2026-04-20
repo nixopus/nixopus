@@ -1,0 +1,17 @@
+services:
+  redis:
+    image: ${IMAGE:-redis}:${TAG:-7-alpine}
+    container_name: ${CONTAINER_NAME:-redis}
+    ports:
+      - "${HOST_PORT:-6379}:${CONTAINER_PORT:-6379}"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+    volumes:
+      - redis-data:/data
+      - redis-config:/usr/local/etc/redis
+    command: redis-server --appendonly yes --maxmemory ${MAXMEMORY:-256mb} --maxmemory-policy ${MAXMEMORY_POLICY:-allkeys-lru}
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  redis-config:

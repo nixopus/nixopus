@@ -1,0 +1,54 @@
+metadata:
+  id: "deploy-ollama"
+  name: "Ollama"
+  description: "Ollama is a tool for running large language models locally. It provides a simple way to run, create, and share large language models on your own machine with a REST API and command-line interface."
+  author: "Nixopus Team"
+  icon: "https://ollama.com/public/hello.png"
+  category: "Development"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+  featured: true
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Ollama"
+    default: "ollama/ollama"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Ollama container"
+    default: "ollama"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Ollama API"
+    default: 11434
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Ollama API"
+    default: 11434
+    is_required: true
+
+  data_volume_name:
+    type: "string"
+    description: "Named Docker volume for Ollama models and data"
+    default: "ollama"
+    is_required: true
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Ollama (optional)"
+    default: ""
+    is_required: false

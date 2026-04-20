@@ -46,8 +46,6 @@ func (s *Store) Init(ctx context.Context) error {
 	s.DB.RegisterModel((*types.ComposeService)(nil))
 	s.DB.RegisterModel((*types.Extension)(nil))
 	s.DB.RegisterModel((*types.ExtensionVariable)(nil))
-	s.DB.RegisterModel((*types.ExtensionExecution)(nil))
-	s.DB.RegisterModel((*types.ExecutionStep)(nil))
 
 	// Load extensions from templates directory
 	extensionLoader := loader.NewExtensionLoader(s.DB)

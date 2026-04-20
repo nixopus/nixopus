@@ -250,30 +250,6 @@ func GetExtensionByExtensionIDURL(extensionID string) string {
 	return baseURL + "/extensions/by-extension-id/" + extensionID
 }
 
-func GetExtensionRunURL(extensionID string) string {
-	return baseURL + "/extensions/" + extensionID + "/run"
-}
-
-func GetExtensionForkURL(extensionID string) string {
-	return baseURL + "/extensions/" + extensionID + "/fork"
-}
-
-func GetExtensionExecutionURL(executionID string) string {
-	return baseURL + "/extensions/execution/" + executionID
-}
-
-func GetExtensionExecutionCancelURL(executionID string) string {
-	return baseURL + "/extensions/execution/" + executionID + "/cancel"
-}
-
-func GetExtensionExecutionLogsURL(executionID string) string {
-	return baseURL + "/extensions/execution/" + executionID + "/logs"
-}
-
-func GetExtensionExecutionsURL(extensionID string) string {
-	return baseURL + "/extensions/by-extension-id/" + extensionID + "/executions"
-}
-
 // Healthcheck
 func GetHealthCheckURL() string {
 	return baseURL + "/healthcheck"

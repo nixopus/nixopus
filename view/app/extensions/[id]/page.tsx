@@ -1,32 +1,20 @@
 'use client';
 
 import PageLayout from '@/packages/layouts/page-layout';
-import TabsWrapper, { TabsWrapperList } from '@nixopus/ui';
 import useExtensionDetails from '../../../packages/hooks/extensions/use-extension-detail';
-import { ExtensionInput, ExtensionForkDialog } from '@/packages/components/extension';
+import { ExtensionInput } from '@/packages/components/extension';
 import { Button } from '@nixopus/ui';
 import { OverviewTab } from '@/packages/components/extension-tabs';
-import { GitFork } from 'lucide-react';
 import { SubPageHeader } from '@nixopus/ui';
 
 export default function ExtensionDetailsPage() {
   const {
     runModalOpen,
-    isRunning,
     isLoading,
-    tab,
     extension,
     setRunModalOpen,
     t,
-    setTab,
-    tabs,
-    hasExecutions,
-    isExecsLoading,
-    parsed,
     variableColumns,
-    entryColumns,
-    openRunIndex,
-    openValidateIndex,
     handleRunExtension,
     handleChange,
     handleSubmit,
@@ -36,66 +24,25 @@ export default function ExtensionDetailsPage() {
     buttonText,
     isOnlyProxyDomain,
     noFieldsToShow,
-    setOpenRunIndex,
-    setOpenValidateIndex,
-    actions,
-    forkOpen,
-    setForkOpen,
-    forkYaml,
-    setForkYaml,
-    forkPreview,
-    forkVariableColumns,
-    doFork,
-    isForking
+    actions
   } = useExtensionDetails();
 
   return (
     <PageLayout maxWidth="6xl" padding="md" spacing="lg">
-      <TabsWrapper
-        value={tab}
-        onValueChange={setTab}
-        tabs={tabs}
-        showTabsCondition={!isExecsLoading && hasExecutions}
-        className="min-w-fit w-auto"
-        defaultContent={
-          <OverviewTab
-            extension={extension}
-            isLoading={isLoading}
-            parsed={parsed}
-            variableColumns={variableColumns}
-            entryColumns={entryColumns}
-            openRunIndex={openRunIndex}
-            openValidateIndex={openValidateIndex}
-            onToggleRun={setOpenRunIndex}
-            onToggleValidate={setOpenValidateIndex}
-          />
+      <SubPageHeader
+        title={extension?.name || ''}
+        actions={
+          <Button
+            className="min-w-[112px]"
+            onClick={() => setRunModalOpen(true)}
+            disabled={!extension}
+          >
+            {buttonText}
+          </Button>
         }
-      >
-        <SubPageHeader
-          title={extension?.name || ''}
-          actions={
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setForkOpen(true)}
-                disabled={!extension || extension.parent_extension_id != null}
-              >
-                <GitFork className="mr-2 h-4 w-4" />
-                {t('extensions.fork') || 'Fork'}
-              </Button>
-              <Button
-                className="min-w-[112px]"
-                onClick={() => setRunModalOpen(true)}
-                disabled={!extension || isRunning}
-              >
-                {buttonText}
-              </Button>
-            </div>
-          }
-        >
-          <TabsWrapperList className="mt-4" />
-        </SubPageHeader>
-      </TabsWrapper>
+      />
+
+      <OverviewTab extension={extension} isLoading={isLoading} variableColumns={variableColumns} />
 
       <ExtensionInput
         open={runModalOpen}
@@ -112,21 +59,6 @@ export default function ExtensionDetailsPage() {
         handleSubmit={handleSubmit}
         requiredFields={requiredFields}
       />
-
-      {extension && (
-        <ExtensionForkDialog
-          open={forkOpen}
-          onOpenChange={setForkOpen}
-          extension={extension}
-          t={t}
-          forkYaml={forkYaml}
-          setForkYaml={setForkYaml}
-          preview={forkPreview}
-          variableColumns={forkVariableColumns}
-          doFork={doFork}
-          isLoading={isForking}
-        />
-      )}
     </PageLayout>
   );
 }

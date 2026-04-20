@@ -1,0 +1,16 @@
+services:
+  statping-ng:
+    image: ${IMAGE:-adamboutcher/statping-ng}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-statping-ng}
+    ports:
+      - "${HOST_PORT:-8080}:${CONTAINER_PORT:-8080}"
+    environment:
+      DB_CONN: ${DB_CONNECTION:-sqlite}
+      NAME: ${NAME:-Status Page}
+      DESCRIPTION: ${DESCRIPTION:-Monitor your services}
+    volumes:
+      - statpingng_data:/app
+    restart: unless-stopped
+
+volumes:
+  statpingng_data:

@@ -1,0 +1,384 @@
+metadata:
+  id: "deploy-postiz"
+  name: "Postiz"
+  description: "Postiz is an open-source social media management platform for scheduling posts across multiple platforms including X/Twitter, LinkedIn, Reddit, Facebook, Instagram, TikTok, YouTube, Pinterest, and more."
+  author: "Nixopus Team"
+  icon: "https://postiz.com/_next/static/media/logo.7379cc96.svg"
+  category: "Social"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+  featured: true
+
+variables:
+  container_name:
+    type: "string"
+    description: "Name of the Postiz container"
+    default: "postiz"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Postiz"
+    default: 5001
+    is_required: true
+
+  main_url:
+    type: "string"
+    description: "Main URL for Postiz (e.g., https://postiz.your-domain.com)"
+    default: "http://localhost:5001"
+    is_required: true
+
+  jwt_secret:
+    type: "string"
+    description: "JWT secret for authentication (use a strong random string)"
+    default: "CHANGE_ME_IN_PRODUCTION_USE_A_STRONG_SECRET"
+    is_required: true
+
+  postgres_user:
+    type: "string"
+    description: "PostgreSQL database user"
+    default: "postiz-user"
+    is_required: true
+
+  postgres_password:
+    type: "string"
+    description: "PostgreSQL database password"
+    default: "postiz-password"
+    is_required: true
+
+  postgres_db:
+    type: "string"
+    description: "PostgreSQL database name"
+    default: "postiz-db-local"
+    is_required: true
+
+  disable_registration:
+    type: "string"
+    description: "Disable new user registration (true/false)"
+    default: "false"
+    is_required: false
+
+  storage_provider:
+    type: "string"
+    description: "Storage provider (local or cloudflare)"
+    default: "local"
+    is_required: false
+
+  cloudflare_account_id:
+    type: "string"
+    description: "Cloudflare R2 Account ID (optional)"
+    default: ""
+    is_required: false
+
+  cloudflare_access_key:
+    type: "string"
+    description: "Cloudflare R2 Access Key (optional)"
+    default: ""
+    is_required: false
+
+  cloudflare_secret_access_key:
+    type: "string"
+    description: "Cloudflare R2 Secret Access Key (optional)"
+    default: ""
+    is_required: false
+
+  cloudflare_bucketname:
+    type: "string"
+    description: "Cloudflare R2 Bucket Name (optional)"
+    default: ""
+    is_required: false
+
+  cloudflare_bucket_url:
+    type: "string"
+    description: "Cloudflare R2 Bucket URL (optional)"
+    default: ""
+    is_required: false
+
+  openai_api_key:
+    type: "string"
+    description: "OpenAI API Key for AI features (optional)"
+    default: ""
+    is_required: false
+
+  x_api_key:
+    type: "string"
+    description: "X (Twitter) API Key"
+    default: ""
+    is_required: false
+
+  x_api_secret:
+    type: "string"
+    description: "X (Twitter) API Secret"
+    default: ""
+    is_required: false
+
+  linkedin_client_id:
+    type: "string"
+    description: "LinkedIn Client ID"
+    default: ""
+    is_required: false
+
+  linkedin_client_secret:
+    type: "string"
+    description: "LinkedIn Client Secret"
+    default: ""
+    is_required: false
+
+  reddit_client_id:
+    type: "string"
+    description: "Reddit Client ID"
+    default: ""
+    is_required: false
+
+  reddit_client_secret:
+    type: "string"
+    description: "Reddit Client Secret"
+    default: ""
+    is_required: false
+
+  github_client_id:
+    type: "string"
+    description: "GitHub Client ID"
+    default: ""
+    is_required: false
+
+  github_client_secret:
+    type: "string"
+    description: "GitHub Client Secret"
+    default: ""
+    is_required: false
+
+  beehiive_api_key:
+    type: "string"
+    description: "Beehiiv API Key"
+    default: ""
+    is_required: false
+
+  beehiive_publication_id:
+    type: "string"
+    description: "Beehiiv Publication ID"
+    default: ""
+    is_required: false
+
+  threads_app_id:
+    type: "string"
+    description: "Threads App ID"
+    default: ""
+    is_required: false
+
+  threads_app_secret:
+    type: "string"
+    description: "Threads App Secret"
+    default: ""
+    is_required: false
+
+  facebook_app_id:
+    type: "string"
+    description: "Facebook App ID"
+    default: ""
+    is_required: false
+
+  facebook_app_secret:
+    type: "string"
+    description: "Facebook App Secret"
+    default: ""
+    is_required: false
+
+  youtube_client_id:
+    type: "string"
+    description: "YouTube Client ID"
+    default: ""
+    is_required: false
+
+  youtube_client_secret:
+    type: "string"
+    description: "YouTube Client Secret"
+    default: ""
+    is_required: false
+
+  tiktok_client_id:
+    type: "string"
+    description: "TikTok Client ID"
+    default: ""
+    is_required: false
+
+  tiktok_client_secret:
+    type: "string"
+    description: "TikTok Client Secret"
+    default: ""
+    is_required: false
+
+  pinterest_client_id:
+    type: "string"
+    description: "Pinterest Client ID"
+    default: ""
+    is_required: false
+
+  pinterest_client_secret:
+    type: "string"
+    description: "Pinterest Client Secret"
+    default: ""
+    is_required: false
+
+  dribbble_client_id:
+    type: "string"
+    description: "Dribbble Client ID"
+    default: ""
+    is_required: false
+
+  dribbble_client_secret:
+    type: "string"
+    description: "Dribbble Client Secret"
+    default: ""
+    is_required: false
+
+  discord_client_id:
+    type: "string"
+    description: "Discord Client ID"
+    default: ""
+    is_required: false
+
+  discord_client_secret:
+    type: "string"
+    description: "Discord Client Secret"
+    default: ""
+    is_required: false
+
+  discord_bot_token_id:
+    type: "string"
+    description: "Discord Bot Token ID"
+    default: ""
+    is_required: false
+
+  slack_id:
+    type: "string"
+    description: "Slack Client ID"
+    default: ""
+    is_required: false
+
+  slack_secret:
+    type: "string"
+    description: "Slack Client Secret"
+    default: ""
+    is_required: false
+
+  slack_signing_secret:
+    type: "string"
+    description: "Slack Signing Secret"
+    default: ""
+    is_required: false
+
+  mastodon_url:
+    type: "string"
+    description: "Mastodon Instance URL"
+    default: "https://mastodon.social"
+    is_required: false
+
+  mastodon_client_id:
+    type: "string"
+    description: "Mastodon Client ID"
+    default: ""
+    is_required: false
+
+  mastodon_client_secret:
+    type: "string"
+    description: "Mastodon Client Secret"
+    default: ""
+    is_required: false
+
+  oauth_display_name:
+    type: "string"
+    description: "OAuth Provider Display Name (e.g., Authentik)"
+    default: ""
+    is_required: false
+
+  oauth_logo_url:
+    type: "string"
+    description: "OAuth Provider Logo URL"
+    default: ""
+    is_required: false
+
+  postiz_generic_oauth:
+    type: "string"
+    description: "Enable Generic OAuth (true/false)"
+    default: "false"
+    is_required: false
+
+  postiz_oauth_url:
+    type: "string"
+    description: "OAuth Provider Base URL"
+    default: ""
+    is_required: false
+
+  postiz_oauth_auth_url:
+    type: "string"
+    description: "OAuth Authorization URL"
+    default: ""
+    is_required: false
+
+  postiz_oauth_token_url:
+    type: "string"
+    description: "OAuth Token URL"
+    default: ""
+    is_required: false
+
+  postiz_oauth_userinfo_url:
+    type: "string"
+    description: "OAuth UserInfo URL"
+    default: ""
+    is_required: false
+
+  postiz_oauth_client_id:
+    type: "string"
+    description: "OAuth Client ID"
+    default: ""
+    is_required: false
+
+  postiz_oauth_client_secret:
+    type: "string"
+    description: "OAuth Client Secret"
+    default: ""
+    is_required: false
+
+  discord_support:
+    type: "string"
+    description: "Discord Support Server Invite URL"
+    default: ""
+    is_required: false
+
+  polotno:
+    type: "string"
+    description: "Polotno API Key for design features"
+    default: ""
+    is_required: false
+
+  stripe_publishable_key:
+    type: "string"
+    description: "Stripe Publishable Key"
+    default: ""
+    is_required: false
+
+  stripe_secret_key:
+    type: "string"
+    description: "Stripe Secret Key"
+    default: ""
+    is_required: false
+
+  stripe_signing_key:
+    type: "string"
+    description: "Stripe Webhook Signing Key"
+    default: ""
+    is_required: false
+
+  stripe_signing_key_connect:
+    type: "string"
+    description: "Stripe Connect Signing Key"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for reverse proxy (optional, leave empty to skip)"
+    default: ""
+    is_required: false

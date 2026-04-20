@@ -1,0 +1,12 @@
+services:
+  linkding:
+    image: ${IMAGE:-sissbruecker/linkding}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-linkding}
+    ports:
+      - "${HOST_PORT:-9090}:${CONTAINER_PORT:-9090}"
+    volumes:
+      - linkding-data:/etc/linkding/data
+    restart: unless-stopped
+
+volumes:
+  linkding-data:

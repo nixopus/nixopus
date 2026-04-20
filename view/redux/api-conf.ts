@@ -103,7 +103,8 @@ export enum DEPLOY {
   ADD_APPLICATION_DOMAIN = 'v1/deploy/application/domains',
   REMOVE_APPLICATION_DOMAIN = 'v1/deploy/application/domains',
   GET_COMPOSE_SERVICES = 'v1/deploy/application/compose-services',
-  PREVIEW_COMPOSE_SERVICES = 'v1/deploy/application/preview-compose'
+  PREVIEW_COMPOSE_SERVICES = 'v1/deploy/application/preview-compose',
+  CREATE_TEMPLATE_DEPLOYMENT = 'v1/deploy/application/template'
 }
 
 export enum SOCKET_EVENTS {
@@ -155,14 +156,7 @@ export enum EXTENSIONURLS {
   GET_EXTENSIONS = 'v1/extensions',
   GET_CATEGORIES = 'v1/extensions/categories',
   GET_EXTENSION = 'v1/extensions/{id}',
-  GET_EXTENSION_BY_ID = 'v1/extensions/by-extension-id/{extension_id}',
-  FORK_EXTENSION = 'v1/extensions/{extension_id}/fork',
-  DELETE_EXTENSION = 'v1/extensions/{id}',
-  RUN_EXTENSION = 'v1/extensions/{extension_id}/run',
-  CANCEL_EXECUTION = 'v1/extensions/execution/{execution_id}/cancel',
-  GET_EXECUTION = 'v1/extensions/execution/{execution_id}',
-  LIST_EXECUTIONS = 'v1/extensions/by-extension-id/{extension_id}/executions',
-  GET_EXECUTION_LOGS = 'v1/extensions/execution/{execution_id}/logs'
+  GET_EXTENSION_BY_ID = 'v1/extensions/by-extension-id/{extension_id}'
 }
 
 export enum HEALTHCHECKURLS {

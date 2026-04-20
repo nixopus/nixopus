@@ -1,0 +1,16 @@
+services:
+  gotify:
+    image: ${IMAGE:-ghcr.io/gotify/server}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-gotify}
+    ports:
+      - "${HOST_PORT:-80}:${CONTAINER_PORT:-80}"
+    environment:
+      TZ: ${TIMEZONE:-UTC}
+      GOTIFY_DEFAULTUSER_NAME: ${DEFAULT_USER:-admin}
+      GOTIFY_DEFAULTUSER_PASS: ${DEFAULT_PASSWORD:-admin}
+    volumes:
+      - gotify_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  gotify_data:

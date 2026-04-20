@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sync"
 
@@ -18,7 +18,7 @@ func NewParser() *Parser {
 }
 
 func (p *Parser) ParseExtensionFile(filePath string) (*types.Extension, []types.ExtensionVariable, error) {
-	data, err := ioutil.ReadFile(filePath)
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read file %s: %w", filePath, err)
 	}
@@ -99,24 +99,26 @@ func (p *Parser) convertToVariables(extYAML *ExtensionYAML, extensionID string) 
 }
 
 func (p *Parser) LoadExtensionsFromDirectory(dirPath string) ([]*types.Extension, [][]types.ExtensionVariable, error) {
-	files, err := filepath.Glob(filepath.Join(dirPath, "*.yaml"))
+	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read directory: %w", err)
 	}
 
-	// Filter out rfc.yaml
-	validFiles := make([]string, 0, len(files))
-	for _, file := range files {
-		if filepath.Base(file) != "rfc.yaml" {
-			validFiles = append(validFiles, file)
+	var parsePaths []string
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		metadataPath := filepath.Join(dirPath, entry.Name(), "metadata.yaml")
+		if _, err := os.Stat(metadataPath); err == nil {
+			parsePaths = append(parsePaths, metadataPath)
 		}
 	}
 
-	if len(validFiles) == 0 {
+	if len(parsePaths) == 0 {
 		return []*types.Extension{}, [][]types.ExtensionVariable{}, nil
 	}
 
-	// Process files in parallel
 	type result struct {
 		extension *types.Extension
 		variables []types.ExtensionVariable
@@ -124,12 +126,11 @@ func (p *Parser) LoadExtensionsFromDirectory(dirPath string) ([]*types.Extension
 		index     int
 	}
 
-	results := make([]result, len(validFiles))
+	results := make([]result, len(parsePaths))
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	// Process files concurrently
-	for i, file := range validFiles {
+	for i, file := range parsePaths {
 		wg.Add(1)
 		go func(idx int, filePath string) {
 			defer wg.Done()
@@ -142,9 +143,8 @@ func (p *Parser) LoadExtensionsFromDirectory(dirPath string) ([]*types.Extension
 
 	wg.Wait()
 
-	// Collect results and check for errors
-	extensions := make([]*types.Extension, 0, len(validFiles))
-	allVariables := make([][]types.ExtensionVariable, 0, len(validFiles))
+	extensions := make([]*types.Extension, 0, len(parsePaths))
+	allVariables := make([][]types.ExtensionVariable, 0, len(parsePaths))
 
 	for _, res := range results {
 		if res.err != nil {
