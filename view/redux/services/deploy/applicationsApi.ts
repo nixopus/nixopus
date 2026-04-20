@@ -7,6 +7,7 @@ import {
   ComposeService,
   CreateApplicationRequest,
   CreateProjectRequest,
+  CreateTemplateDeploymentRequest,
   DeployProjectRequest,
   DuplicateProjectRequest,
   Environment,
@@ -311,6 +312,17 @@ export const deployApi = createApi({
       }),
       transformResponse: (response: { services: PreviewComposeService[] }) =>
         response.services ?? []
+    }),
+    createTemplateDeployment: builder.mutation<Application, CreateTemplateDeploymentRequest>({
+      query: (data) => ({
+        url: DEPLOY.CREATE_TEMPLATE_DEPLOYMENT,
+        method: 'POST',
+        body: data
+      }),
+      invalidatesTags: [{ type: 'Deploy', id: 'LIST' }],
+      transformResponse: (response: { status: string; message: string; data: Application }) => {
+        return response.data;
+      }
     })
   })
 });
@@ -336,5 +348,6 @@ export const {
   useGetApplicationDeploymentsQuery,
   useUpdateApplicationLabelsMutation,
   useGetComposeServicesQuery,
-  usePreviewComposeServicesMutation
+  usePreviewComposeServicesMutation,
+  useCreateTemplateDeploymentMutation
 } = deployApi;
