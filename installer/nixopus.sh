@@ -130,6 +130,8 @@ cmd_config() {
     echo "Version:      ${NIXOPUS_VERSION:-unknown}"
     echo "Domain:       ${DOMAIN:-<none, IP mode>}"
     echo "Host IP:      ${HOST_IP:-<unknown>}"
+    echo "Host IP6:     ${HOST_IP6:-<none>}"
+    echo "IP Family:    ${IP_FAMILY:-ipv4}"
     echo "Access:       ${ALLOWED_ORIGIN:-unknown}"
     echo "HTTP Port:    ${CADDY_HTTP_PORT:-80}"
     echo "HTTPS Port:   ${CADDY_HTTPS_PORT:-443}"
@@ -164,9 +166,27 @@ cmd_config() {
 }
 
 cmd_domain() {
-    local action="${1:-}" domain="${2:-}"
+    local action="" domain="" ip_flag="" verify_mode="auto"
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            add|remove) action="$1" ;;
+            --ipv4)     ip_flag="ipv4" ;;
+            --ipv6)     ip_flag="ipv6" ;;
+            --verify=*) verify_mode="${1#--verify=}" ;;
+            -*)         echo "Unknown flag: $1" >&2; return 1 ;;
+            *)          [ -z "$domain" ] && domain="$1" ;;
+        esac
+        shift
+    done
+
+    case "$verify_mode" in
+        auto|strict|off) ;;
+        *) echo "Unknown verify mode: $verify_mode (use auto, strict, or off)" >&2; return 1 ;;
+    esac
+
     if [ "$action" != "add" ] && [ "$action" != "remove" ]; then
-        echo "Usage: nixopus domain add <domain>"
+        echo "Usage: nixopus domain add <domain> [--ipv4|--ipv6] [--verify=auto|strict|off]"
         echo "       nixopus domain remove"
         return 1
     fi
@@ -175,9 +195,55 @@ cmd_domain() {
 
     if [ "$action" = "add" ]; then
         if [ -z "$domain" ]; then
-            echo "Usage: nixopus domain add <domain>" >&2
+            echo "Usage: nixopus domain add <domain> [--ipv4|--ipv6] [--verify=auto|strict|off]" >&2
             return 1
         fi
+
+        local effective_family="${ip_flag:-${IP_FAMILY:-ipv4}}"
+
+        if [ "$verify_mode" != "off" ]; then
+            local resolved="" mismatch=false
+
+            if command -v getent >/dev/null 2>&1; then
+                local resolved_v4="" resolved_v6=""
+                resolved_v4=$(getent hosts "$domain" 2>/dev/null | awk '{print $1}' | head -1) || true
+                resolved_v6=$(getent hosts "$domain" 2>/dev/null | awk '/:/{print $1; exit}') || true
+
+                case "$effective_family" in
+                    ipv4)
+                        if [ -n "$resolved_v4" ] && [ "$resolved_v4" != "${HOST_IP:-}" ]; then
+                            echo "WARNING: $domain resolves to $resolved_v4 but HOST_IP is ${HOST_IP:-<unset>}"
+                            mismatch=true
+                        fi
+                        ;;
+                    ipv6)
+                        local effective_v6="${HOST_IP6:-${HOST_IP:-}}"
+                        if [ -n "$resolved_v6" ] && [ "$resolved_v6" != "$effective_v6" ]; then
+                            echo "WARNING: $domain resolves to $resolved_v6 but host IPv6 is ${effective_v6:-<unset>}"
+                            mismatch=true
+                        fi
+                        ;;
+                    dual)
+                        if [ -n "$resolved_v4" ] && [ -n "${HOST_IP:-}" ] && [ "$resolved_v4" != "$HOST_IP" ]; then
+                            echo "WARNING: $domain A record resolves to $resolved_v4 but HOST_IP is $HOST_IP"
+                            mismatch=true
+                        fi
+                        if [ -n "$resolved_v6" ] && [ -n "${HOST_IP6:-}" ] && [ "$resolved_v6" != "$HOST_IP6" ]; then
+                            echo "WARNING: $domain AAAA record resolves to $resolved_v6 but HOST_IP6 is $HOST_IP6"
+                            mismatch=true
+                        fi
+                        ;;
+                esac
+            else
+                echo "Note: 'getent' not available, skipping DNS verification"
+            fi
+
+            if [ "$mismatch" = true ] && [ "$verify_mode" = "strict" ]; then
+                echo "Aborting (--verify=strict). Fix DNS or use --verify=off." >&2
+                return 1
+            fi
+        fi
+
         local cookie_domain
         cookie_domain=".$(echo "$domain" | awk -F. '{print $(NF-1)"."$NF}')"
 
@@ -190,7 +256,14 @@ cmd_domain() {
         sedi "s|^AUTH_SECURE_COOKIES=.*|AUTH_SECURE_COOKIES=true|" "$NIXOPUS_HOME/.env"
 
         echo "Domain set to $domain"
-        echo "Ensure DNS A record for $domain points to ${HOST_IP:-your server IP}"
+        case "$effective_family" in
+            ipv4) echo "Ensure DNS A record for $domain points to ${HOST_IP:-your server IP}" ;;
+            ipv6) echo "Ensure DNS AAAA record for $domain points to ${HOST_IP6:-${HOST_IP:-your server IP}}" ;;
+            dual)
+                [ -n "${HOST_IP:-}" ] && echo "Ensure DNS A record for $domain points to $HOST_IP"
+                [ -n "${HOST_IP6:-}" ] && echo "Ensure DNS AAAA record for $domain points to $HOST_IP6"
+                ;;
+        esac
         echo "Restarting services for HTTPS..."
         dc up -d --remove-orphans
     fi
@@ -247,19 +320,50 @@ cmd_port() {
 }
 
 cmd_ip() {
-    local action="${1:-}" new_ip="${2:-}"
+    local action="" new_ip="" ip_flag=""
+
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            set)    action="set" ;;
+            --ipv4) ip_flag="ipv4" ;;
+            --ipv6) ip_flag="ipv6" ;;
+            -*)     echo "Unknown flag: $1" >&2; return 1 ;;
+            *)      [ -z "$new_ip" ] && new_ip="$1" ;;
+        esac
+        shift
+    done
+
     load_env
+
     if [ "$action" != "set" ] || [ -z "$new_ip" ]; then
         echo "── IP Configuration ──"
-        echo "Host IP:  ${HOST_IP:-<unknown>}"
-        echo "Access:   ${ALLOWED_ORIGIN:-unknown}"
+        echo "Host IP:    ${HOST_IP:-<unknown>}"
+        echo "Host IP6:   ${HOST_IP6:-<none>}"
+        echo "IP Family:  ${IP_FAMILY:-ipv4}"
+        echo "Access:     ${ALLOWED_ORIGIN:-unknown}"
         echo ""
-        echo "Usage: nixopus ip set <ip>"
+        echo "Usage: nixopus ip set [--ipv4|--ipv6] <ip>"
         return
     fi
 
-    sedi "s|^HOST_IP=.*|HOST_IP=${new_ip}|" "$NIXOPUS_HOME/.env"
-    if [ -z "${DOMAIN:-}" ]; then
+    local target_var="HOST_IP"
+    if [ -n "$ip_flag" ]; then
+        [ "$ip_flag" = "ipv6" ] && target_var="HOST_IP6"
+    elif [[ "$new_ip" == *:* ]]; then
+        target_var="HOST_IP6"
+    fi
+
+    if grep -q "^${target_var}=" "$NIXOPUS_HOME/.env"; then
+        sedi "s|^${target_var}=.*|${target_var}=${new_ip}|" "$NIXOPUS_HOME/.env"
+    else
+        echo "${target_var}=${new_ip}" >> "$NIXOPUS_HOME/.env"
+    fi
+
+    if ! grep -q "^IP_FAMILY=" "$NIXOPUS_HOME/.env"; then
+        echo "IP_FAMILY=ipv4" >> "$NIXOPUS_HOME/.env"
+    fi
+
+    if [ "$target_var" = "HOST_IP" ] && [ -z "${DOMAIN:-}" ]; then
         local ip_for_url
         ip_for_url=$(format_ip_for_url "$new_ip")
         local http_port
@@ -274,7 +378,7 @@ cmd_ip() {
         sedi "s|^API_URL=.*|API_URL=${base_url}/api|" "$NIXOPUS_HOME/.env"
         sedi "s|^AUTH_PUBLIC_URL=.*|AUTH_PUBLIC_URL=${base_url}|" "$NIXOPUS_HOME/.env"
     fi
-    echo "Set IP to $new_ip"
+    echo "Set $target_var to $new_ip"
     echo "Restarting services..."
     dc up -d --remove-orphans
 }
@@ -319,13 +423,16 @@ cmd_help() {
     echo "  uninstall [--purge] Remove Nixopus (--purge deletes data)"
     echo "  config              Show current configuration"
     echo "  config set K=V      Update configuration value"
-    echo "  domain add <domain> Switch to domain-based HTTPS"
+    echo "  domain add <domain> [--ipv4|--ipv6] [--verify=auto|strict|off]"
+    echo "                      Switch to domain-based HTTPS"
     echo "  domain remove       Switch back to IP-based HTTP"
-    echo "  ip set <ip>         Change host IP (IP mode only)"
+    echo "  ip set [--ipv4|--ipv6] <ip>"
+    echo "                      Change host IP"
     echo "  port                Show port configuration"
     echo "  port set <type> <n> Change port (http, https, ssh)"
     echo "  backup              Backup database and config"
     echo "  info                Show install info and status"
+    echo "  admin-bootstrap     Create admin account via auth API (uses ADMIN_EMAIL/ADMIN_PASSWORD)"
     echo "  help                Show this help"
 }
 
