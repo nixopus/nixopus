@@ -263,7 +263,14 @@ detect_ipv6() {
         ip=$(curl -6 -fsSL --connect-timeout 5 "$svc" 2>/dev/null | tr -d '[:space:]') && [ -n "$ip" ] && break
     done
     if [ -z "$ip" ]; then
-        ip=$(hostname -I 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i ~ /:/) {print $i; exit}}')
+        ip=$(hostname -I 2>/dev/null | awk '{
+            for(i=1;i<=NF;i++) {
+                if($i ~ /:/ && $i !~ /^::1/ && $i !~ /^fe80:/ && $i !~ /^fc/ && $i !~ /^fd/ && $i !~ /^ff/) {
+                    print $i;
+                    exit
+                }
+            }
+        }')
     fi
     echo "$ip"
 }
@@ -443,6 +450,12 @@ gather_config() {
 
     if [ -z "${HOST_IP:-}" ] && [ -z "${HOST_IP6:-}" ] && [ -z "${DOMAIN:-}" ]; then
         fail "Cannot detect public IP and no domain set. Pass HOST_IP=x.x.x.x or HOST_IP6=xxxx::xxxx"
+    fi
+
+    if [ "$IP_FAMILY" = "dual" ] && [ -z "${DOMAIN:-}" ]; then
+        if [ -z "${HOST_IP:-}" ] || [ -z "${HOST_IP6:-}" ]; then
+            fail "IP_FAMILY=dual requires both HOST_IP and HOST_IP6 when DOMAIN is not set. Detected HOST_IP=${HOST_IP:-<unset>}, HOST_IP6=${HOST_IP6:-<unset>}"
+        fi
     fi
 
     if [ -n "${HOST_IP:-}" ] && is_private_ip "$HOST_IP" && [ -t 0 ]; then
@@ -1150,7 +1163,7 @@ cmd_domain() {
                         fi
                         ;;
                     ipv6)
-                        local effective_v6="${HOST_IP6:-${HOST_IP:-}}"
+                        local effective_v6="${HOST_IP6:-}"
                         if [ -n "$resolved_v6" ] && [ "$resolved_v6" != "$effective_v6" ]; then
                             echo "WARNING: $domain resolves to $resolved_v6 but host IPv6 is ${effective_v6:-<unset>}"
                             mismatch=true
@@ -1168,7 +1181,12 @@ cmd_domain() {
                         ;;
                 esac
             else
-                echo "Note: 'getent' not available, skipping DNS verification"
+                if [ "$verify_mode" = "strict" ]; then
+                    echo "ERROR: 'getent' not available — cannot verify DNS with --verify=strict" >&2
+                    return 1
+                else
+                    echo "Note: 'getent' not available, skipping DNS verification"
+                fi
             fi
 
             if [ "$mismatch" = true ] && [ "$verify_mode" = "strict" ]; then
@@ -1280,10 +1298,22 @@ cmd_ip() {
     fi
 
     local target_var="HOST_IP"
+    local current_ip_family="${IP_FAMILY:-ipv4}"
+
     if [ -n "$ip_flag" ]; then
-        [ "$ip_flag" = "ipv6" ] && target_var="HOST_IP6"
+        if [ "$ip_flag" = "ipv6" ]; then
+            if [ "$current_ip_family" = "ipv6" ]; then
+                target_var="HOST_IP"
+            else
+                target_var="HOST_IP6"
+            fi
+        fi
     elif [[ "$new_ip" == *:* ]]; then
-        target_var="HOST_IP6"
+        if [ "$current_ip_family" = "ipv6" ]; then
+            target_var="HOST_IP"
+        else
+            target_var="HOST_IP6"
+        fi
     fi
 
     if grep -q "^${target_var}=" "$NIXOPUS_HOME/.env"; then
