@@ -402,7 +402,26 @@ func (c *DeployController) syncComposeApplicationDomains(appID uuid.UUID, organi
 		}
 
 		isNew := false
+		serviceOrPortChanged := false
 		if _, exists := existingSet[desiredLower]; exists {
+			var prevDomain *shared_types.ApplicationDomain
+			for i := range existingDomains {
+				if strings.ToLower(existingDomains[i].Domain) == desiredLower {
+					prevDomain = &existingDomains[i]
+					break
+				}
+			}
+			if prevDomain != nil {
+				prevServiceID := prevDomain.ComposeServiceID
+				prevPort := prevDomain.Port
+				serviceChanged := (prevServiceID == nil && composeServiceID != nil) ||
+					(prevServiceID != nil && composeServiceID == nil) ||
+					(prevServiceID != nil && composeServiceID != nil && *prevServiceID != *composeServiceID)
+				portChanged := (prevPort == nil && port != nil) ||
+					(prevPort != nil && port == nil) ||
+					(prevPort != nil && port != nil && *prevPort != *port)
+				serviceOrPortChanged = serviceChanged || portChanged
+			}
 			if err := c.storage.UpdateApplicationDomainService(appID, cd.Domain, composeServiceID, port); err != nil {
 				return err
 			}
@@ -413,7 +432,7 @@ func (c *DeployController) syncComposeApplicationDomains(appID uuid.UUID, organi
 			isNew = true
 		}
 
-		if isNew && hostErr == nil {
+		if (isNew || serviceOrPortChanged) && hostErr == nil {
 			resolvedPort := composeServicePort
 			if port != nil && *port > 0 {
 				resolvedPort = *port

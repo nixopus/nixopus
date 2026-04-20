@@ -64,6 +64,11 @@ func BuildMultiUpstreamRoutes(
 			domainUpstreams = upstreams
 		}
 
+		if len(domainUpstreams) == 0 {
+			lgr.Log(logger.Warning, fmt.Sprintf("skipping domain %s: no valid upstreams", d.Domain), "")
+			continue
+		}
+
 		routes = append(routes, DomainRoute{
 			Domain:    d.Domain,
 			Upstreams: domainUpstreams,

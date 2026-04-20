@@ -164,7 +164,15 @@ func (s *TaskService) recoverSingleApp(ctx context.Context, app *shared_types.Ap
 
 	taskCtx.AddLog("Service created with container id " + containerResult.ContainerID)
 
-	swarmPort, _ := strconv.Atoi(containerResult.AvailablePort)
+	swarmPort, err := strconv.Atoi(containerResult.AvailablePort)
+	if err != nil || swarmPort <= 0 {
+		msg := fmt.Sprintf("Invalid AvailablePort: %s (parsed as %d)", containerResult.AvailablePort, swarmPort)
+		taskCtx.LogAndUpdateStatus(msg, shared_types.Failed)
+		if err != nil {
+			return fmt.Errorf("failed to parse AvailablePort: %w", err)
+		}
+		return fmt.Errorf("invalid AvailablePort: must be positive, got %d", swarmPort)
+	}
 	if err := s.configureRecoveryDomains(ctx, app, swarmPort, taskCtx); err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to configure domains: "+err.Error(), shared_types.Failed)
 		return fmt.Errorf("failed to configure domains: %w", err)
