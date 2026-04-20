@@ -54,13 +54,6 @@ const coreNavItems = [
     order: 40
   },
   {
-    title: 'navigation.backups',
-    url: '/backups',
-    icon: HardDrive,
-    resource: 'backup',
-    order: 50
-  },
-  {
     title: 'navigation.apiKeys',
     url: '/api-keys',
     icon: KeyRound,
