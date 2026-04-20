@@ -30,7 +30,6 @@ func InitSchedulers(store *shared_storage.Store, ctx context.Context) *Scheduler
 
 	sched.RegisterJob(cleanup.NewDeploymentLogsCleanupJob(store.DB, l))
 	sched.RegisterJob(cleanup.NewAuditLogsCleanupJob(store.DB, l))
-	sched.RegisterJob(cleanup.NewExtensionLogsCleanupJob(store.DB, l))
 
 	sched.RegisterJob(container.NewPruneImagesJob(l))
 	sched.RegisterJob(container.NewPruneBuildCacheJob(l))

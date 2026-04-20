@@ -5,7 +5,6 @@ import (
 	extension "github.com/nixopus/nixopus/api/internal/features/extension/controller"
 )
 
-// RegisterExtensionRoutes registers extension routes
 func (router *Router) RegisterExtensionRoutes(extensionGroup *fuego.Server, extensionController *extension.ExtensionsController) {
 	fuego.Get(
 		extensionGroup,
@@ -37,49 +36,5 @@ func (router *Router) RegisterExtensionRoutes(extensionGroup *fuego.Server, exte
 		"/by-extension-id/{extension_id}",
 		extensionController.GetExtensionByExtensionID,
 		fuego.OptionSummary("Get extension by extension ID"),
-	)
-	fuego.Get(
-		extensionGroup,
-		"/by-extension-id/{extension_id}/executions",
-		extensionController.ListExecutionsByExtensionID,
-		fuego.OptionSummary("List extension executions"),
-	)
-	fuego.Post(
-		extensionGroup,
-		"/{extension_id}/run",
-		extensionController.RunExtension,
-		fuego.OptionSummary("Run extension"),
-	)
-	fuego.Post(
-		extensionGroup,
-		"/execution/{execution_id}/cancel",
-		extensionController.CancelExecution,
-		fuego.OptionSummary("Cancel execution"),
-	)
-	fuego.Get(
-		extensionGroup,
-		"/execution/{execution_id}",
-		extensionController.GetExecution,
-		fuego.OptionSummary("Get execution"),
-	)
-	fuego.Get(
-		extensionGroup,
-		"/execution/{execution_id}/logs",
-		extensionController.ListExecutionLogs,
-		fuego.OptionSummary("List execution logs"),
-		fuego.OptionQueryInt("afterSeq", "Return logs after this sequence"),
-		fuego.OptionQueryInt("limit", "Maximum logs to return"),
-	)
-	fuego.Post(
-		extensionGroup,
-		"/{extension_id}/fork",
-		extensionController.ForkExtension,
-		fuego.OptionSummary("Fork extension"),
-	)
-	fuego.Delete(
-		extensionGroup,
-		"/{id}",
-		extensionController.DeleteFork,
-		fuego.OptionSummary("Delete forked extension"),
 	)
 }
