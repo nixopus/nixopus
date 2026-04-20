@@ -204,7 +204,7 @@ func (router *Router) SetupRoutes() {
 	server := router.createServer(PORT)
 	apiV1 := api.NewVersion(api.CurrentVersion)
 
-	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
+	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, dispatcher, router.app.Store.ExtensionLoader)
 	if err != nil {
 		log.Fatalf("Failed to create deploy controller: %v", err)
 	}

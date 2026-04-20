@@ -11,7 +11,8 @@ import (
 )
 
 type Store struct {
-	DB *bun.DB
+	DB              *bun.DB
+	ExtensionLoader *loader.ExtensionLoader
 }
 
 type App struct {
@@ -45,11 +46,10 @@ func (s *Store) Init(ctx context.Context) error {
 	s.DB.RegisterModel((*types.ComposeService)(nil))
 	s.DB.RegisterModel((*types.Extension)(nil))
 	s.DB.RegisterModel((*types.ExtensionVariable)(nil))
-	s.DB.RegisterModel((*types.ExtensionExecution)(nil))
-	s.DB.RegisterModel((*types.ExecutionStep)(nil))
 
 	// Load extensions from templates directory
 	extensionLoader := loader.NewExtensionLoader(s.DB)
+	s.ExtensionLoader = extensionLoader
 	if err := extensionLoader.LoadExtensionsFromTemplates(ctx); err != nil {
 		log.Printf("Warning: Failed to load extensions from templates: %v", err)
 	} else {

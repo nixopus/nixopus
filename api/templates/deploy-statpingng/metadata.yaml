@@ -1,0 +1,71 @@
+metadata:
+  id: "deploy-statpingng"
+  name: "Statping-ng"
+  description: "An easy to use Status Page for your websites and applications"
+  author: "Nixopus Team"
+  icon: "https://raw.githubusercontent.com/statping-ng/statping-ng/dev/frontend/public/img/banner.png"
+  category: "Monitoring"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Statping-ng"
+    default: "adamboutcher/statping-ng"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Statping-ng container"
+    default: "statping-ng"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Statping-ng"
+    default: 8080
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Statping-ng"
+    default: 8080
+    is_required: true
+
+  data_volume:
+    type: "string"
+    description: "Named volume for Statping-ng data storage"
+    default: "statpingng_data"
+    is_required: true
+
+  db_connection:
+    type: "string"
+    description: "Database connection string (optional, uses sqlite by default)"
+    default: "sqlite"
+    is_required: false
+
+  name:
+    type: "string"
+    description: "Name of the status page"
+    default: "Status Page"
+    is_required: false
+
+  description:
+    type: "string"
+    description: "Description for the status page"
+    default: "Monitor your services"
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Statping-ng (optional)"
+    default: ""
+    is_required: false

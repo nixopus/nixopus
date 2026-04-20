@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: ${IMAGE:-postgres}:${TAG:-15-alpine}
+    container_name: ${CONTAINER_NAME:-postgres}
+    ports:
+      - "${HOST_PORT:-5432}:${CONTAINER_PORT:-5432}"
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - postgres-init-scripts:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  postgres-init-scripts:

@@ -1,0 +1,95 @@
+metadata:
+  id: "deploy-kimai"
+  name: "Kimai"
+  description: "Kimai is a professional grade time-tracking application, free and open-source. It handles use-cases of freelancers as well as companies with dozens or hundreds of users. Uses kimai image from linuxserver.io. Requires an external database (MariaDB or MySQL)."
+  author: "Nixopus Team"
+  icon: "⏱https://www.kimai.org/images/kimai_logo_48.webp"
+  category: "Productivity"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Kimai"
+    default: "lscr.io/linuxserver/kimai"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Kimai container"
+    default: "kimai"
+    is_required: true
+
+  http_host_port:
+    type: "integer"
+    description: "Host port for HTTP GUI"
+    default: 80
+    is_required: true
+
+  http_container_port:
+    type: "integer"
+    description: "Container port for HTTP GUI"
+    default: 80
+    is_required: true
+
+  https_host_port:
+    type: "integer"
+    description: "Host port for HTTPS GUI"
+    default: 443
+    is_required: true
+
+  https_container_port:
+    type: "integer"
+    description: "Container port for HTTPS GUI"
+    default: 443
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Kimai persistent configuration files"
+    default: "kimai-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  database_url:
+    type: "string"
+    description: "Database connection URL (format: mysql://user:pass@host:3306/dbname?charset=utf8&serverVersion=version). Run SELECT VERSION(); in your database to get the version"
+    default: ""
+    is_required: false
+
+  trusted_proxies:
+    type: "string"
+    description: "If behind a reverse proxy, set this to its IP or network CIDR so that Kimai trusts its headers (e.g., 127.0.0.1/32)"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Kimai web GUI (optional, recommended for internet access)"
+    default: ""
+    is_required: false

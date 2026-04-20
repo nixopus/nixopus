@@ -31,25 +31,25 @@ type ComposeDomain struct {
 }
 
 type CreateDeploymentRequest struct {
-	Name                 string                          `json:"name"`
-	Domains              []string                        `json:"domains,omitempty"`
-	ComposeDomains       []ComposeDomain                 `json:"compose_domains,omitempty"`
-	Environment          shared_types.Environment        `json:"environment"`
-	BuildPack            shared_types.BuildPack          `json:"build_pack"`
-	Repository           string                          `json:"repository"`
-	Branch               string                          `json:"branch"`
-	PreRunCommand        string                          `json:"pre_run_command"`
-	PostRunCommand       string                          `json:"post_run_command"`
-	BuildVariables       map[string]string               `json:"build_variables"`
-	EnvironmentVariables map[string]string               `json:"environment_variables"`
-	Port                 int                             `json:"port"`
-	DockerfilePath       string                          `json:"dockerfile_path,omitempty"`
-	BasePath             string                          `json:"base_path,omitempty"`
-	Source               shared_types.Source             `json:"source,omitempty"`
-	ServerIDs            []uuid.UUID                     `json:"server_ids,omitempty"`
-	PrimaryServerID      *uuid.UUID                      `json:"primary_server_id,omitempty"`
-	RoutingStrategy      shared_types.RoutingStrategy    `json:"routing_strategy,omitempty"`
-	TargetServerIDs      []uuid.UUID                     `json:"target_server_ids,omitempty"`
+	Name                 string                       `json:"name"`
+	Domains              []string                     `json:"domains,omitempty"`
+	ComposeDomains       []ComposeDomain              `json:"compose_domains,omitempty"`
+	Environment          shared_types.Environment     `json:"environment"`
+	BuildPack            shared_types.BuildPack       `json:"build_pack"`
+	Repository           string                       `json:"repository"`
+	Branch               string                       `json:"branch"`
+	PreRunCommand        string                       `json:"pre_run_command"`
+	PostRunCommand       string                       `json:"post_run_command"`
+	BuildVariables       map[string]string            `json:"build_variables"`
+	EnvironmentVariables map[string]string            `json:"environment_variables"`
+	Port                 int                          `json:"port"`
+	DockerfilePath       string                       `json:"dockerfile_path,omitempty"`
+	BasePath             string                       `json:"base_path,omitempty"`
+	Source               shared_types.Source          `json:"source,omitempty"`
+	ServerIDs            []uuid.UUID                  `json:"server_ids,omitempty"`
+	PrimaryServerID      *uuid.UUID                   `json:"primary_server_id,omitempty"`
+	RoutingStrategy      shared_types.RoutingStrategy `json:"routing_strategy,omitempty"`
+	TargetServerIDs      []uuid.UUID                  `json:"target_server_ids,omitempty"`
 }
 
 // CreateProjectRequest is used to create a project (application) without triggering deployment.
@@ -284,6 +284,14 @@ type ApplicationServersResponse struct {
 	Status  string                           `json:"status"`
 	Message string                           `json:"message"`
 	Data    []shared_types.ApplicationServer `json:"data"`
+}
+
+type CreateTemplateDeploymentRequest struct {
+	TemplateID  string                   `json:"template_id"`
+	Name        string                   `json:"name"`
+	Variables   map[string]interface{}   `json:"variables"`
+	ServerIDs   []uuid.UUID              `json:"server_ids,omitempty"`
+	Environment shared_types.Environment `json:"environment,omitempty"`
 }
 
 type CancelDeploymentRequest struct {

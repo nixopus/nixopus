@@ -7,180 +7,23 @@ import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Skeleton } from '@nixopus/ui';
 import { Alert, AlertDescription } from '@nixopus/ui';
 import { AlertCircle } from 'lucide-react';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter
-} from '@nixopus/ui';
 import { Button } from '@nixopus/ui';
-import { Label } from '@nixopus/ui';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@nixopus/ui';
-import AceEditor from '@/components/ui/ace-editor';
 import { CardWrapper } from '@nixopus/ui';
-import { TypographyMuted, TypographySmall } from '@nixopus/ui';
-import { DataTable } from '@nixopus/ui';
-import { ExternalLink, Check, GitFork, Trash2, ChevronDown } from 'lucide-react';
+import { ExternalLink, ChevronDown } from 'lucide-react';
 import { CardDescription } from '@nixopus/ui';
-import { DeleteDialog } from '@/components/ui/delete-dialog';
-import { useSudoMode } from '@/packages/hooks/security/use-sudo-mode';
 import {
   CategoryBadgesProps,
   ExtensionsGridProps,
-  ExtensionForkDialogProps,
   ExtensionCardProps,
   ExtensionInputProps
 } from '@/packages/types/extension';
-import { Sparkles, Globe } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { Input } from '@nixopus/ui';
 import { Textarea } from '@nixopus/ui';
 import { Checkbox } from '@nixopus/ui';
+import { Label } from '@nixopus/ui';
 import { ExtensionVariable } from '@/redux/types/extension';
 import { DialogWrapper } from '@nixopus/ui';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@nixopus/ui';
-import { useMemo } from 'react';
-import { TableColumn } from '@nixopus/ui';
-import { Badge } from '@nixopus/ui';
-
-interface StepsSectionProps {
-  tRunLabel: string;
-  tValidateLabel: string;
-  title: string;
-  runSteps: any[];
-  validateSteps: any[];
-  openRunIndex: number | null;
-  setOpenRunIndex: (index: number | null) => void;
-  openValidateIndex: number | null;
-  setOpenValidateIndex: (index: number | null) => void;
-}
-
-function StepsSection({
-  tRunLabel,
-  tValidateLabel,
-  title,
-  runSteps,
-  validateSteps,
-  openRunIndex,
-  setOpenRunIndex,
-  openValidateIndex,
-  setOpenValidateIndex
-}: StepsSectionProps) {
-  const entryColumns: TableColumn<[string, any]>[] = useMemo(
-    () => [
-      {
-        key: 'key',
-        title: 'Key',
-        render: ([k]) => k,
-        width: '25%',
-        className: 'text-muted-foreground'
-      },
-      {
-        key: 'value',
-        title: 'Value',
-        render: ([, v]) => {
-          if (typeof v === 'object' && v !== null) {
-            return <pre className="text-xs">{JSON.stringify(v, null, 2)}</pre>;
-          }
-          return String(v ?? '');
-        }
-      }
-    ],
-    []
-  );
-
-  const createStepColumns = (
-    label: string,
-    openIndex: number | null,
-    onToggle: (index: number | null) => void
-  ): TableColumn<any>[] =>
-    useMemo(
-      () => [
-        {
-          key: 'step',
-          title: label,
-          render: (step, _, index) => {
-            const entries = Object.entries(step || {}).filter(
-              ([k]) => k !== 'name' && k !== 'type'
-            );
-            const isOpen = openIndex === index;
-            return (
-              <Collapsible open={isOpen} onOpenChange={(open) => onToggle(open ? index : null)}>
-                <CollapsibleTrigger className="w-full text-left flex items-start gap-2 group">
-                  <TypographyMuted className="mt-0.5 shrink-0">{index + 1}.</TypographyMuted>
-                  <div className="flex-1 min-w-0">
-                    <TypographySmall className="font-medium">
-                      {step?.name || step?.type || 'Step'}
-                    </TypographySmall>
-                    {step?.type && (
-                      <Badge variant="outline" className="ml-2">
-                        {step.type}
-                      </Badge>
-                    )}
-                  </div>
-                  <ChevronDown
-                    className={`h-4 w-4 shrink-0 transition-transform duration-200 ${
-                      isOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </CollapsibleTrigger>
-                {entries.length > 0 && entryColumns && (
-                  <CollapsibleContent className="mt-3">
-                    <DataTable
-                      data={entries}
-                      columns={entryColumns}
-                      showBorder={true}
-                      striped={false}
-                      containerClassName="rounded-md"
-                    />
-                  </CollapsibleContent>
-                )}
-              </Collapsible>
-            );
-          }
-        }
-      ],
-      [label, openIndex, onToggle, entryColumns]
-    );
-
-  const runStepColumns = createStepColumns(tRunLabel, openRunIndex ?? null, setOpenRunIndex);
-  const validateStepColumns = createStepColumns(
-    tValidateLabel,
-    openValidateIndex ?? null,
-    setOpenValidateIndex
-  );
-
-  const hasRun = runSteps.length > 0;
-  const hasValidate = validateSteps.length > 0;
-
-  if (!hasRun && !hasValidate) {
-    return null;
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      {hasRun && (
-        <DataTable
-          data={runSteps}
-          columns={runStepColumns}
-          showBorder={true}
-          striped={false}
-          rowClassName="border-0"
-        />
-      )}
-      {hasValidate && (
-        <DataTable
-          data={validateSteps}
-          columns={validateStepColumns}
-          showBorder={true}
-          striped={false}
-          rowClassName="border-0"
-        />
-      )}
-    </div>
-  );
-}
 
 export default function CategoryBadges({
   categories,
@@ -226,19 +69,8 @@ export function ExtensionGrid({
   error,
   onInstall,
   onViewDetails,
-  onForkClick,
-  setConfirmOpen,
   expanded,
-  setExpanded,
-  forkOpen,
-  setForkOpen,
-  confirmOpen,
-  forkYaml,
-  setForkYaml,
-  preview,
-  variableColumns,
-  doFork,
-  selectedExtension
+  setExpanded
 }: ExtensionsGridProps) {
   const { t } = useTranslation();
 
@@ -261,47 +93,26 @@ export function ExtensionGrid({
         <div className="mx-auto max-w-md">
           <div className="text-6xl mb-4">🔍</div>
           <h3 className="text-lg font-semibold mb-2">{t('extensions.noExtensions')}</h3>
-          <p className="text-muted-foreground">
-            Try adjusting your search or filters to find more extensions.
-          </p>
+          <p className="text-muted-foreground">{t('extensions.noExtensionsHint')}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {extensions.map((extension) => (
-          <ExtensionCard
-            key={extension.id}
-            extension={extension}
-            onInstall={onInstall}
-            onViewDetails={onViewDetails}
-            onForkClick={onForkClick}
-            setConfirmOpen={setConfirmOpen}
-            expanded={expanded}
-            setExpanded={setExpanded}
-            t={t}
-            confirmOpen={confirmOpen}
-          />
-        ))}
-      </div>
-      {selectedExtension && (
-        <ExtensionForkDialog
-          open={forkOpen}
-          onOpenChange={setForkOpen}
-          extension={selectedExtension}
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {extensions.map((extension) => (
+        <ExtensionCard
+          key={extension.id}
+          extension={extension}
+          onInstall={onInstall}
+          onViewDetails={onViewDetails}
+          expanded={expanded}
+          setExpanded={setExpanded}
           t={t}
-          forkYaml={forkYaml}
-          setForkYaml={setForkYaml}
-          preview={preview}
-          variableColumns={variableColumns}
-          doFork={doFork}
-          isLoading={false}
         />
-      )}
-    </>
+      ))}
+    </div>
   );
 }
 
@@ -334,146 +145,16 @@ export function ExtensionGridSkeleton() {
   );
 }
 
-export function ExtensionForkDialog({
-  open,
-  onOpenChange,
-  extension,
-  t,
-  forkYaml,
-  setForkYaml,
-  preview,
-  variableColumns,
-  doFork,
-  isLoading
-}: ExtensionForkDialogProps) {
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="sm:max-w-3xl md:max-w-4xl w-full p-0">
-        <SheetHeader className="px-4 pt-4 pb-0">
-          <SheetTitle>{t('extensions.fork') || 'Fork Extension'}</SheetTitle>
-          <SheetDescription>{extension.description}</SheetDescription>
-        </SheetHeader>
-        <div className="px-4 flex-1 overflow-hidden flex flex-col min-h-0">
-          <Tabs defaultValue="edit" className="w-full flex-1 flex flex-col overflow-hidden min-h-0">
-            <TabsList>
-              <TabsTrigger value="edit">{t('common.edit') || 'Edit'}</TabsTrigger>
-              <TabsTrigger value="preview">{t('common.preview') || 'Preview'}</TabsTrigger>
-            </TabsList>
-            <TabsContent value="edit" className="overflow-hidden flex-1 flex flex-col min-h-0">
-              <div className="flex flex-col gap-2 h-full">
-                <Label>{t('extensions.forkYaml') || 'YAML (optional)'}</Label>
-                <div className="flex-1">
-                  <AceEditor
-                    mode="yaml"
-                    name="fork-yaml-editor"
-                    value={forkYaml}
-                    onChange={setForkYaml}
-                    height="100%"
-                  />
-                </div>
-              </div>
-            </TabsContent>
-            <TabsContent value="preview" className="flex-1 overflow-y-auto min-h-0">
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <CardWrapper compact>
-                    <TypographyMuted className="text-xs mb-1">
-                      {t('extensions.type') || 'Type'}
-                    </TypographyMuted>
-                    <TypographySmall>
-                      {preview?.metadata?.type || extension.extension_type}
-                    </TypographySmall>
-                  </CardWrapper>
-                  <CardWrapper compact>
-                    <TypographyMuted className="text-xs mb-1">
-                      {t('extensions.category') || 'Category'}
-                    </TypographyMuted>
-                    <TypographySmall>
-                      {preview?.metadata?.category || extension.category}
-                    </TypographySmall>
-                  </CardWrapper>
-                </div>
-                {preview?.variables && preview.variables.length > 0 && (
-                  <DataTable
-                    data={preview.variables}
-                    columns={variableColumns}
-                    showBorder={true}
-                    striped={false}
-                    rowClassName="border-0"
-                  />
-                )}
-                {(preview?.execution?.run?.length || preview?.execution?.validate?.length) && (
-                  <StepsSection
-                    tRunLabel={t('extensions.runSteps') || 'Run steps'}
-                    tValidateLabel={t('extensions.validateSteps') || 'Validate steps'}
-                    title={t('extensions.execution') || 'Execution'}
-                    runSteps={preview?.execution?.run || []}
-                    validateSteps={preview?.execution?.validate || []}
-                    openRunIndex={null}
-                    setOpenRunIndex={() => {}}
-                    openValidateIndex={null}
-                    setOpenValidateIndex={() => {}}
-                  />
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-        <SheetFooter className="flex-row justify-end border-t gap-2">
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            {t('common.cancel')}
-          </Button>
-          <Button onClick={doFork} disabled={isLoading}>
-            {t('extensions.fork') || 'Fork'}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
-  );
-}
-
 const MAX_DESCRIPTION_CHARS = 90;
 
 export function ExtensionCard({
   extension,
   onInstall,
   onViewDetails,
-  onFork,
-  onForkClick,
-  onRemove,
-  setConfirmOpen,
   expanded,
   setExpanded,
-  t,
-  confirmOpen
+  t
 }: ExtensionCardProps) {
-  const { requireSudo } = useSudoMode();
-  const cardActions = (
-    <div className="flex items-center gap-1 shrink-0">
-      {!extension.parent_extension_id && (
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('extensions.fork') || 'Fork'}
-          onClick={() => onForkClick?.(extension)}
-        >
-          <GitFork className="h-4 w-4" />
-        </Button>
-      )}
-      {extension.parent_extension_id && (
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('extensions.remove') || 'Remove'}
-          onClick={() => setConfirmOpen(true)}
-          className="text-destructive hover:text-destructive"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      )}
-    </div>
-  );
-
   const customHeader = (
     <div className="flex items-center gap-4 w-full">
       <div className="flex size-12 items-center justify-center rounded-full bg-muted shrink-0 overflow-hidden">
@@ -486,65 +167,45 @@ export function ExtensionCard({
       <div className="flex-1 min-w-0">
         <h3 className="text-lg font-bold mb-1">{extension.name}</h3>
       </div>
-      {cardActions}
     </div>
   );
 
   return (
-    <>
-      <CardWrapper
-        className="h-full transition-shadow hover:shadow-lg"
-        header={customHeader}
-        contentClassName="space-y-4"
-      >
-        <CardDescription>
-          {expanded || extension.description.length <= MAX_DESCRIPTION_CHARS
-            ? extension.description
-            : `${extension.description.slice(0, MAX_DESCRIPTION_CHARS)}…`}
-          {extension.description.length > MAX_DESCRIPTION_CHARS && (
-            <Button
-              variant="link"
-              className="ml-2 text-primary hover:underline"
-              size="sm"
-              onClick={() => setExpanded(!expanded)}
-            >
-              {expanded ? t('common.readLess') || 'Read less' : t('common.readMore') || 'Read more'}{' '}
-              <ChevronDown className="size-4" />
-            </Button>
-          )}
-        </CardDescription>
-        <div className="flex gap-2">
-          <Button onClick={() => onInstall?.(extension)} className="min-w-[100px]">
-            {extension.extension_type === 'install' ? t('extensions.install') : t('extensions.run')}
-          </Button>
+    <CardWrapper
+      className="h-full transition-shadow hover:shadow-lg"
+      header={customHeader}
+      contentClassName="space-y-4"
+    >
+      <CardDescription>
+        {expanded || extension.description.length <= MAX_DESCRIPTION_CHARS
+          ? extension.description
+          : `${extension.description.slice(0, MAX_DESCRIPTION_CHARS)}…`}
+        {extension.description.length > MAX_DESCRIPTION_CHARS && (
           <Button
-            variant="ghost"
-            onClick={() => onViewDetails?.(extension)}
-            className="min-w-[100px]"
+            variant="link"
+            className="ml-2 text-primary hover:underline"
+            size="sm"
+            onClick={() => setExpanded(!expanded)}
           >
-            {t('extensions.viewDetails')}
-            <ExternalLink className="ml-2 h-4 w-4" />
+            {expanded ? t('common.readLess') || 'Read less' : t('common.readMore') || 'Read more'}{' '}
+            <ChevronDown className="size-4" />
           </Button>
-        </div>
-      </CardWrapper>
-      <DeleteDialog
-        open={confirmOpen}
-        onOpenChange={setConfirmOpen}
-        title={t('extensions.confirmDeleteTitle') || 'Remove fork?'}
-        description={
-          t('extensions.confirmDeleteMessage') ||
-          'This will remove your forked extension. This action cannot be undone.'
-        }
-        confirmText={t('common.delete') || 'Delete'}
-        cancelText={t('common.cancel') || 'Cancel'}
-        variant="destructive"
-        onConfirm={() => {
-          requireSudo(async () => {
-            await onRemove?.(extension);
-          });
-        }}
-      />
-    </>
+        )}
+      </CardDescription>
+      <div className="flex gap-2">
+        <Button onClick={() => onInstall?.(extension)} className="min-w-[100px]">
+          {t('extensions.install')}
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => onViewDetails?.(extension)}
+          className="min-w-[100px]"
+        >
+          {t('extensions.viewDetails')}
+          <ExternalLink className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+    </CardWrapper>
   );
 }
 
@@ -728,7 +389,6 @@ function VariableInput({
           </div>
         );
       default:
-        // string or other types
         const isLongText = variable.description && variable.description.length > 100;
         if (isLongText) {
           return (

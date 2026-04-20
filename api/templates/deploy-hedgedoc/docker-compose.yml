@@ -1,0 +1,27 @@
+services:
+  hedgedoc:
+    image: ${IMAGE:-lscr.io/linuxserver/hedgedoc}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-hedgedoc}
+    ports:
+      - "${HOST_PORT:-3000}:${CONTAINER_PORT:-3000}"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TIMEZONE:-Etc/UTC}
+      DB_HOST: ${DB_HOST:-}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_USER: ${DB_USER:-hedgedoc}
+      DB_PASS: ${DB_PASS:-}
+      DB_NAME: ${DB_NAME:-hedgedoc}
+      CMD_DOMAIN: ${CMD_DOMAIN:-localhost}
+      CMD_URL_ADDPORT: ${CMD_URL_ADDPORT:-false}
+      CMD_PROTOCOL_USESSL: ${CMD_PROTOCOL_USESSL:-false}
+      CMD_PORT: ${CMD_PORT:-3000}
+      CMD_ALLOW_ORIGIN: ${CMD_ALLOW_ORIGIN:-['localhost']}
+      CMD_DB_DIALECT: ${CMD_DB_DIALECT:-}
+    volumes:
+      - hedgedoc-config:/config
+    restart: unless-stopped
+
+volumes:
+  hedgedoc-config:

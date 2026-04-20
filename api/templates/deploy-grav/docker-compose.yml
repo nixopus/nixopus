@@ -1,0 +1,16 @@
+services:
+  grav:
+    image: ${IMAGE:-lscr.io/linuxserver/grav}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-grav}
+    ports:
+      - "${HOST_PORT:-80}:${CONTAINER_PORT:-80}"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TIMEZONE:-Etc/UTC}
+    volumes:
+      - grav-config:/config
+    restart: unless-stopped
+
+volumes:
+  grav-config:

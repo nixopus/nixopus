@@ -1,0 +1,31 @@
+services:
+  netdata:
+    image: ${IMAGE:-netdata/netdata}:${TAG:-edge}
+    container_name: ${CONTAINER_NAME:-netdata}
+    ports:
+      - "${HOST_PORT:-19999}:${CONTAINER_PORT:-19999}"
+    privileged: true
+    environment:
+      NETDATA_CLAIM_TOKEN: ""
+      NETDATA_CLAIM_URL: "https://app.netdata.cloud"
+      NETDATA_CLAIM_ROOMS: ""
+    volumes:
+      - netdataconfig:/etc/netdata
+      - netdatalib:/var/lib/netdata
+      - netdatacache:/var/cache/netdata
+      - /:/host/root:ro
+      - /etc/passwd:/host/etc/passwd:ro
+      - /etc/group:/host/etc/group:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /etc/os-release:/host/etc/os-release:ro
+      - /var/log:/host/var/log:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /run/dbus:/run/dbus:ro
+    restart: unless-stopped
+
+volumes:
+  netdataconfig:
+  netdatalib:
+  netdatacache:

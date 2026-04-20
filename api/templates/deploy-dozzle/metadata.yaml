@@ -1,0 +1,65 @@
+metadata:
+  id: "deploy-dozzle"
+  name: "Dozzle"
+  description: "Dozzle is a real-time log viewer for Docker containers. It provides a modern web interface to monitor and view logs from all your Docker containers in real-time, with support for container actions like stopping, starting, and restarting containers."
+  author: "Nixopus Team"
+  icon: "https://dozzle.dev/logo.svg"
+  category: "Monitoring"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Dozzle"
+    default: "amir20/dozzle"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Dozzle container"
+    default: "dozzle"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Dozzle"
+    default: 8080
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Dozzle"
+    default: 8080
+    is_required: true
+
+  docker_socket_path:
+    type: "string"
+    description: "Path to Docker socket on host"
+    default: "/var/run/docker.sock"
+    is_required: true
+
+  enable_actions:
+    type: "string"
+    description: "Enable container actions (start, stop, restart) - set to 'true' to enable"
+    default: "false"
+    is_required: false
+
+  enable_shell:
+    type: "string"
+    description: "Enable shell access to containers - set to 'true' to enable"
+    default: "false"
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Dozzle (optional)"
+    default: ""
+    is_required: false

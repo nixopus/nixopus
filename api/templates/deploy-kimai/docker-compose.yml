@@ -1,0 +1,19 @@
+services:
+  kimai:
+    image: ${IMAGE:-lscr.io/linuxserver/kimai}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-kimai}
+    ports:
+      - "${HTTP_HOST_PORT:-80}:${HTTP_CONTAINER_PORT:-80}"
+      - "${HTTPS_HOST_PORT:-443}:${HTTPS_CONTAINER_PORT:-443}"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TIMEZONE:-Etc/UTC}
+      DATABASE_URL: ${DATABASE_URL:-}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+    volumes:
+      - kimai-config:/config
+    restart: unless-stopped
+
+volumes:
+  kimai-config:

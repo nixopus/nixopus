@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Extension,
@@ -11,18 +11,12 @@ import {
 } from '@/redux/types/extension';
 import {
   useGetExtensionsQuery,
-  useRunExtensionMutation,
-  useCancelExecutionMutation,
-  useGetExtensionCategoriesQuery,
-  useDeleteExtensionMutation,
-  useForkExtensionMutation
+  useGetExtensionCategoriesQuery
 } from '@/redux/services/extensions/extensionsApi';
+import { useCreateTemplateDeploymentMutation } from '@/redux/services/deploy/applicationsApi';
 import { SelectOption } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { toast } from 'sonner';
-import YAML from 'yaml';
-import { TableColumn } from '@nixopus/ui';
-import { VariableData } from '@/packages/types/extension';
 import { useExtensionInput } from './use-extension-input';
 import { DialogAction } from '@nixopus/ui';
 
@@ -42,19 +36,7 @@ export function useExtensions() {
   const [selectedExtension, setSelectedExtension] = useState<Extension | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ExtensionCategory | null>(null);
   const { t } = useTranslation();
-  const [forkOpen, setForkOpen] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleteExtension] = useDeleteExtensionMutation();
   const [expanded, setExpanded] = useState(false);
-
-  const onDelete = async (extension: Extension) => {
-    try {
-      await deleteExtension({ id: extension.id }).unwrap();
-      toast.success(t('extensions.deleteSuccess') || 'Removed');
-    } catch (e) {
-      toast.error(t('extensions.deleteFailed') || 'Remove failed');
-    }
-  };
 
   const queryParams: ExtensionListParams = {
     search: searchTerm || undefined,
@@ -75,12 +57,12 @@ export function useExtensions() {
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   };
 
   const handleSortChange = (key: ExtensionSortField, direction: SortDirection) => {
     setSortConfig({ key, direction });
-    setCurrentPage(1); // Reset to first page when sorting
+    setCurrentPage(1);
   };
 
   const handleCategoryChange = (value: string | null) => {
@@ -101,74 +83,31 @@ export function useExtensions() {
     router.push(`/extensions/${extension.id}`);
   };
 
-  const handleForkClick = (extension: Extension) => {
-    setSelectedExtension(extension);
-    setForkOpen(true);
-  };
-
   const error = apiError ? 'Failed to load extensions' : null;
 
-  const [runExtensionMutation] = useRunExtensionMutation();
-  const [cancelExecutionMutation] = useCancelExecutionMutation();
+  const [createTemplateDeployment, { isLoading: isInstalling }] =
+    useCreateTemplateDeploymentMutation();
 
   const handleRun = async (values: Record<string, unknown>) => {
     if (!selectedExtension) return;
-    const exec = await runExtensionMutation({
-      extensionId: selectedExtension.extension_id,
-      body: { variables: values }
-    }).unwrap();
-    setRunModalOpen(false);
-    router.push(`/extensions/${selectedExtension.id}?exec=${exec.id}&openLogs=1`);
-  };
-
-  const handleCancel = async (executionId: string) => {
-    await cancelExecutionMutation({ executionId });
+    try {
+      const app = await createTemplateDeployment({
+        template_id: selectedExtension.extension_id,
+        name: selectedExtension.name,
+        variables: values
+      }).unwrap();
+      setRunModalOpen(false);
+      router.push(`/apps/application/${app.id}`);
+      toast.success(t('extensions.installSuccess') || 'App created successfully');
+    } catch (e) {
+      toast.error(t('extensions.installFailed') || 'Failed to create app');
+    }
   };
 
   const sortOptions: SelectOption[] = [
     { value: 'name_asc', label: t('extensions.sortOptions.name') + ' (A-Z)' },
     { value: 'name_desc', label: t('extensions.sortOptions.name') + ' (Z-A)' }
   ];
-
-  const [forkYaml, setForkYaml] = useState<string>('');
-  const [forkExtension] = useForkExtensionMutation();
-
-  const preview = useMemo(() => {
-    try {
-      const y = YAML.parse(forkYaml || '');
-      const variables = y?.variables || {};
-      const variablesArray: VariableData[] = Object.entries(variables).map(
-        ([key, val]: [string, any]) => ({
-          name: key,
-          type: val?.variable_type || val?.type || '',
-          required: val?.is_required ? 'Yes' : 'No',
-          default: String(val?.default_value ?? ''),
-          description: val?.description || ''
-        })
-      );
-      return {
-        variables: variablesArray,
-        execution: y?.execution || {},
-        metadata: y?.metadata || {}
-      } as any;
-    } catch {
-      return undefined;
-    }
-  }, [forkYaml]);
-
-  const variableColumns: TableColumn<VariableData>[] = [
-    { key: 'name', title: 'Name', dataIndex: 'name' },
-    { key: 'type', title: 'Type', dataIndex: 'type' },
-    { key: 'required', title: 'Required', dataIndex: 'required' },
-    { key: 'default', title: 'Default', dataIndex: 'default', className: 'truncate max-w-[120px]' },
-    { key: 'description', title: 'Description', dataIndex: 'description' }
-  ];
-
-  useEffect(() => {
-    if (forkOpen && selectedExtension) {
-      setForkYaml(selectedExtension.yaml_content || '');
-    }
-  }, [forkOpen, selectedExtension]);
 
   useEffect(() => {
     if (selectedExtension?.id && runModalOpen && extensions.length > 0) {
@@ -184,23 +123,10 @@ export function useExtensions() {
   }, [extensions, runModalOpen, selectedExtension?.id]);
 
   useEffect(() => {
-    if (!runModalOpen && !forkOpen) {
+    if (!runModalOpen) {
       setSelectedExtension(null);
     }
-  }, [runModalOpen, forkOpen]);
-
-  const doFork = async () => {
-    try {
-      await forkExtension({
-        extensionId: selectedExtension?.extension_id || '',
-        yaml_content: forkYaml || undefined
-      }).unwrap();
-      toast.success(t('extensions.forkSuccess'));
-      setForkOpen(false);
-    } catch (e) {
-      toast.error(t('extensions.forkFailed'));
-    }
-  };
+  }, [runModalOpen]);
 
   const { values, errors, handleChange, handleSubmit, requiredFields } = useExtensionInput({
     extension: selectedExtension,
@@ -216,9 +142,11 @@ export function useExtensions() {
       variant: 'ghost'
     },
     {
-      label: t('extensions.run'),
+      label: t('extensions.install'),
       onClick: handleSubmit,
-      variant: 'default'
+      variant: 'default',
+      disabled: isInstalling,
+      loading: isInstalling
     }
   ];
 
@@ -246,25 +174,13 @@ export function useExtensions() {
     handlePageChange,
     handleInstall,
     handleViewDetails,
-    handleForkClick,
     handleRun,
-    handleCancel,
     runModalOpen,
     setRunModalOpen,
     selectedExtension,
     sortOptions,
-    forkOpen,
-    setForkOpen,
-    confirmOpen,
-    setConfirmOpen,
     expanded,
     setExpanded,
-    onDelete,
-    forkYaml,
-    setForkYaml,
-    preview,
-    variableColumns,
-    doFork,
     actions,
     isOnlyProxyDomain,
     noFieldsToShow,
