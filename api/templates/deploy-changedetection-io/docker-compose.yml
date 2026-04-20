@@ -1,0 +1,18 @@
+services:
+  changedetection-io:
+    image: ${IMAGE:-lscr.io/linuxserver/changedetection.io}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-changedetection-io}
+    ports:
+      - "${HOST_PORT:-5000}:${CONTAINER_PORT:-5000}"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TIMEZONE:-Etc/UTC}
+      BASE_URL: ${BASE_URL:-}
+      PLAYWRIGHT_DRIVER_URL: ${PLAYWRIGHT_DRIVER_URL:-}
+    volumes:
+      - ${CONFIG_VOLUME_NAME:-changedetection-config}:/config
+    restart: unless-stopped
+
+volumes:
+  ${CONFIG_VOLUME_NAME:-changedetection-config}:

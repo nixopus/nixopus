@@ -1,0 +1,47 @@
+metadata:
+  id: "deploy-webhook-tester"
+  name: "Webhook Tester"
+  description: "A simple webhook testing tool for capturing and inspecting HTTP requests"
+  author: "Nixopus Team"
+  icon: "https://camo.githubusercontent.com/4b5238bfc81afab48db033bf611dac615d7bdbc3d65812fb2c98375ebc12a5ad/68747470733a2f2f736f6369616c6966792e6769742e63692f746172616d70616d70616d2f776562686f6f6b2d7465737465722f696d6167653f6465736372697074696f6e3d3126666f6e743d52616c6577617926666f726b733d31266973737565733d31266c6f676f3d68747470732533412532462532466769746875622e636f6d253246757365722d6174746163686d656e747325324661737365747325324665326536353964632d376662312d346163322d616433632d383833383939663566633338266f776e65723d312670756c6c733d31267061747465726e3d536f6c6964267374617267617a6572733d31267468656d653d4461726b"
+  category: "Development"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Webhook Tester"
+    default: "ghcr.io/tarampampam/webhook-tester"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "2"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Webhook Tester container"
+    default: "webhook-tester"
+    is_required: true
+
+  http_port:
+    type: "integer"
+    description: "Host port to expose Webhook Tester HTTP interface"
+    default: 8080
+    is_required: true
+
+  http_container_port:
+    type: "integer"
+    description: "Container port for Webhook Tester HTTP interface"
+    default: 8080
+    is_required: true
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Webhook Tester (optional)"
+    default: ""
+    is_required: false

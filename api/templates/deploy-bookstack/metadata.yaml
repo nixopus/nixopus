@@ -1,0 +1,119 @@
+metadata:
+  id: "deploy-bookstack"
+  name: "BookStack"
+  description: "BookStack is a free and open source Wiki designed for creating beautiful documentation. Featuring a simple, but powerful WYSIWYG editor it allows for teams to create detailed and useful documentation with ease. Powered by SQL and including a Markdown editor. Uses bookstack image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "https://avatars.githubusercontent.com/u/20912696?s=48&v=4"
+  category: "Productivity"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for BookStack"
+    default: "lscr.io/linuxserver/bookstack"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the BookStack container"
+    default: "bookstack"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose BookStack web interface"
+    default: 6875
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for BookStack web interface"
+    default: 80
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for BookStack persistent configuration files"
+    default: "bookstack-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  app_url:
+    type: "string"
+    description: "The protocol, IP/URL, and port that your application will be accessed on (e.g., http://192.168.1.1:6875 or https://bookstack.mydomain.com). Required for reverse proxy subfolder setups."
+    default: ""
+    is_required: true
+
+  app_key:
+    type: "string"
+    description: "Session encryption key. Generate with: docker run -it --rm --entrypoint /bin/bash lscr.io/linuxserver/bookstack:latest appkey"
+    default: ""
+    is_required: true
+
+  db_host:
+    type: "string"
+    description: "Database instance hostname (e.g., mariadb container name or IP address)"
+    default: ""
+    is_required: true
+
+  db_port:
+    type: "integer"
+    description: "Database port"
+    default: 3306
+    is_required: false
+
+  db_username:
+    type: "string"
+    description: "Database username"
+    default: ""
+    is_required: true
+
+  db_password:
+    type: "string"
+    description: "Database password (minimum 4 characters, non-alphanumeric passwords must be properly escaped)"
+    default: ""
+    is_required: true
+
+  db_database:
+    type: "string"
+    description: "Database name"
+    default: ""
+    is_required: true
+
+  queue_connection:
+    type: "string"
+    description: "Set to 'database' to enable async actions like sending email or triggering webhooks (optional)"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for BookStack (optional)"
+    default: ""
+    is_required: false

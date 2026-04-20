@@ -1,0 +1,48 @@
+metadata:
+  id: "deploy-excalidraw"
+  name: "Excalidraw"
+  description: "Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
+  author: "Nixopus Team"
+  icon: "https://plus.excalidraw.com/images/logo.svg"
+  category: "Productivity"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+  featured: true
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Excalidraw"
+    default: "excalidraw/excalidraw"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "excalidraw"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose"
+    default: 5000
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port to map"
+    default: 80
+    is_required: true
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Excalidraw (optional)"
+    default: ""
+    is_required: false

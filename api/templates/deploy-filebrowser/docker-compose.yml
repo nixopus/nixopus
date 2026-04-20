@@ -1,0 +1,16 @@
+services:
+  filebrowser:
+    image: ${IMAGE:-filebrowser/filebrowser}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-filebrowser}
+    ports:
+      - "${HOST_PORT:-8080}:80"
+    volumes:
+      - ${DATA_VOLUME:-filebrowser_data}:/srv
+      - ${DB_VOLUME:-filebrowser_database}:/database
+      - ${CONFIG_VOLUME:-filebrowser_config}:/config
+    restart: unless-stopped
+
+volumes:
+  ${DATA_VOLUME:-filebrowser_data}:
+  ${DB_VOLUME:-filebrowser_database}:
+  ${CONFIG_VOLUME:-filebrowser_config}:

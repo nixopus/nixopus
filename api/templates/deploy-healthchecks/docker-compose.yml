@@ -1,0 +1,36 @@
+services:
+  healthchecks:
+    image: ${IMAGE:-lscr.io/linuxserver/healthchecks}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-healthchecks}
+    ports:
+      - "${WEBUI_HOST_PORT:-8000}:${WEBUI_CONTAINER_PORT:-8000}"
+      - "${SMTP_HOST_PORT:-2525}:${SMTP_CONTAINER_PORT:-2525}"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TIMEZONE:-Etc/UTC}
+      SITE_ROOT: ${SITE_ROOT:-}
+      SITE_NAME: ${SITE_NAME:-}
+      SUPERUSER_EMAIL: ${SUPERUSER_EMAIL:-}
+      SUPERUSER_PASSWORD: ${SUPERUSER_PASSWORD:-}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-}
+      APPRISE_ENABLED: ${APPRISE_ENABLED:-False}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-}
+      DEBUG: ${DEBUG:-True}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-}
+      INTEGRATIONS_ALLOW_PRIVATE_IPS: ${INTEGRATIONS_ALLOW_PRIVATE_IPS:-}
+      PING_EMAIL_DOMAIN: ${PING_EMAIL_DOMAIN:-}
+      RP_ID: ${RP_ID:-}
+      SECRET_KEY: ${SECRET_KEY:-}
+      SITE_LOGO_URL: ${SITE_LOGO_URL:-}
+    volumes:
+      - ${CONFIG_VOLUME_NAME:-healthchecks-config}:/config
+    restart: unless-stopped
+
+volumes:
+  ${CONFIG_VOLUME_NAME:-healthchecks-config}:

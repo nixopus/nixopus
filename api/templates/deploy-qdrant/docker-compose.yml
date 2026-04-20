@@ -1,0 +1,16 @@
+services:
+  qdrant:
+    image: ${IMAGE:-qdrant/qdrant}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-qdrant}
+    ports:
+      - "${REST_PORT:-6333}:${REST_CONTAINER_PORT:-6333}"
+      - "${GRPC_PORT:-6334}:${GRPC_CONTAINER_PORT:-6334}"
+    environment:
+      QDRANT__SERVICE__API_KEY: ${API_KEY:-}
+      QDRANT__LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    volumes:
+      - ${STORAGE_VOLUME_NAME:-qdrant-storage}:/qdrant/storage:z
+    restart: unless-stopped
+
+volumes:
+  ${STORAGE_VOLUME_NAME:-qdrant-storage}:

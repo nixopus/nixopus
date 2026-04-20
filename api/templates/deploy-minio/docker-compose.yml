@@ -1,0 +1,17 @@
+services:
+  minio:
+    image: ${IMAGE:-minio/minio}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-minio}
+    ports:
+      - "${API_PORT:-9000}:9000"
+      - "${CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${SECRET_KEY:-minioadmin}
+    volumes:
+      - ${VOLUME_NAME:-minio-data}:/data
+    command: server /data --console-address :9001
+    restart: unless-stopped
+
+volumes:
+  ${VOLUME_NAME:-minio-data}:
