@@ -1,0 +1,12 @@
+services:
+  uptime-kuma:
+    image: ${IMAGE:-louislam/uptime-kuma}:${TAG:-1}
+    container_name: ${CONTAINER_NAME:-uptime-kuma}
+    ports:
+      - "${HOST_PORT:-3001}:3001"
+    volumes:
+      - ${VOLUME_NAME:-uptime-kuma}:/app/data
+    restart: always
+
+volumes:
+  ${VOLUME_NAME:-uptime-kuma}:

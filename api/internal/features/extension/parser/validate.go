@@ -53,17 +53,16 @@ func (p *Parser) validateExtension(ext *ExtensionYAML) error {
 		}
 	}
 
-	if len(ext.Execution.Run) == 0 && len(ext.Execution.Validate) == 0 {
-		return fmt.Errorf("execution must have at least one step")
-	}
-	for _, step := range append([]ExecutionStep{}, ext.Execution.Run...) {
-		if err := p.validateStep(step); err != nil {
-			return err
+	if len(ext.Execution.Run) > 0 || len(ext.Execution.Validate) > 0 {
+		for _, step := range append([]ExecutionStep{}, ext.Execution.Run...) {
+			if err := p.validateStep(step); err != nil {
+				return err
+			}
 		}
-	}
-	for _, step := range append([]ExecutionStep{}, ext.Execution.Validate...) {
-		if err := p.validateStep(step); err != nil {
-			return err
+		for _, step := range append([]ExecutionStep{}, ext.Execution.Validate...) {
+			if err := p.validateStep(step); err != nil {
+				return err
+			}
 		}
 	}
 

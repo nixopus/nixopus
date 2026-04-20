@@ -1,0 +1,17 @@
+services:
+  n8n:
+    image: ${IMAGE:-docker.n8n.io/n8nio/n8n}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-n8n}
+    ports:
+      - "${HOST_PORT:-5678}:${CONTAINER_PORT:-5678}"
+    environment:
+      N8N_PORT: ${CONTAINER_PORT:-5678}
+      N8N_HOST: "0.0.0.0"
+      WEBHOOK_URL: "http://localhost:${HOST_PORT:-5678}"
+      TZ: ${TIMEZONE:-UTC}
+    volumes:
+      - ${DATA_VOLUME:-n8n_data}:/home/node/.n8n
+    restart: unless-stopped
+
+volumes:
+  ${DATA_VOLUME:-n8n_data}:

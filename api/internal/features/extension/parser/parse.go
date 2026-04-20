@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sync"
 
@@ -99,24 +100,35 @@ func (p *Parser) convertToVariables(extYAML *ExtensionYAML, extensionID string) 
 }
 
 func (p *Parser) LoadExtensionsFromDirectory(dirPath string) ([]*types.Extension, [][]types.ExtensionVariable, error) {
-	files, err := filepath.Glob(filepath.Join(dirPath, "*.yaml"))
+	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read directory: %w", err)
 	}
 
-	// Filter out rfc.yaml
-	validFiles := make([]string, 0, len(files))
-	for _, file := range files {
-		if filepath.Base(file) != "rfc.yaml" {
-			validFiles = append(validFiles, file)
+	// Collect all parseable paths: flat YAML files and directory metadata files
+	var parsePaths []string
+	for _, entry := range entries {
+		if entry.IsDir() {
+			metadataPath := filepath.Join(dirPath, entry.Name(), "metadata.yaml")
+			if _, err := os.Stat(metadataPath); err == nil {
+				parsePaths = append(parsePaths, metadataPath)
+			}
+			continue
 		}
+
+		if filepath.Ext(entry.Name()) != ".yaml" {
+			continue
+		}
+		if entry.Name() == "rfc.yaml" {
+			continue
+		}
+		parsePaths = append(parsePaths, filepath.Join(dirPath, entry.Name()))
 	}
 
-	if len(validFiles) == 0 {
+	if len(parsePaths) == 0 {
 		return []*types.Extension{}, [][]types.ExtensionVariable{}, nil
 	}
 
-	// Process files in parallel
 	type result struct {
 		extension *types.Extension
 		variables []types.ExtensionVariable
@@ -124,12 +136,11 @@ func (p *Parser) LoadExtensionsFromDirectory(dirPath string) ([]*types.Extension
 		index     int
 	}
 
-	results := make([]result, len(validFiles))
+	results := make([]result, len(parsePaths))
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 
-	// Process files concurrently
-	for i, file := range validFiles {
+	for i, file := range parsePaths {
 		wg.Add(1)
 		go func(idx int, filePath string) {
 			defer wg.Done()
@@ -142,9 +153,8 @@ func (p *Parser) LoadExtensionsFromDirectory(dirPath string) ([]*types.Extension
 
 	wg.Wait()
 
-	// Collect results and check for errors
-	extensions := make([]*types.Extension, 0, len(validFiles))
-	allVariables := make([][]types.ExtensionVariable, 0, len(validFiles))
+	extensions := make([]*types.Extension, 0, len(parsePaths))
+	allVariables := make([][]types.ExtensionVariable, 0, len(parsePaths))
 
 	for _, res := range results {
 		if res.err != nil {
