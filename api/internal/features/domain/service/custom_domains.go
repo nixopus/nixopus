@@ -10,6 +10,7 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/domain/types"
 	"github.com/nixopus/nixopus/api/internal/features/domain/validation"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
+	sshstorage "github.com/nixopus/nixopus/api/internal/features/ssh/storage"
 	"github.com/nixopus/nixopus/api/internal/queue"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
@@ -30,26 +31,24 @@ func (s *DomainsService) AddCustomDomain(ctx context.Context, userID, orgID uuid
 		return nil, nil, "", types.ErrDomainAlreadyExists
 	}
 
-	var provisionDetails shared_types.UserProvisionDetails
-	q := s.store.DB.NewSelect().Model(&provisionDetails)
-	serverIDStr, _ := ctx.Value(shared_types.ServerIDKey).(string)
-	if serverIDStr != "" {
-		if sid, parseErr := uuid.Parse(serverIDStr); parseErr == nil {
-			q = q.Where("ssh_key_id = ? AND organization_id = ?", sid, orgID)
-		} else {
-			q = q.Where("organization_id = ?", orgID)
-		}
-	} else {
-		q = q.Where("organization_id = ?", orgID)
-	}
-	err = q.Limit(1).Scan(ctx)
+	sshKeyStorage := sshstorage.SSHKeyStorage{DB: s.store.DB, Ctx: ctx}
+	defaultKey, err := sshKeyStorage.GetDefaultSSHKeyByOrganizationID(orgID)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to get provision details", err.Error())
-		return nil, nil, "", fmt.Errorf("provision details not found for organization")
+		s.logger.Log(logger.Error, "failed to get default server for org", err.Error())
+		return nil, nil, "", fmt.Errorf("no default server configured for organization")
+	}
+
+	isBYOS := false
+	var provisionDetails shared_types.UserProvisionDetails
+	provErr := s.store.DB.NewSelect().Model(&provisionDetails).
+		Where("ssh_key_id = ? AND organization_id = ?", defaultKey.ID, orgID).
+		Limit(1).Scan(ctx)
+	if provErr == nil && provisionDetails.Type == "user_owned" {
+		isBYOS = true
 	}
 
 	targetSubdomain := ""
-	if provisionDetails.Subdomain != nil {
+	if !isBYOS && provErr == nil && provisionDetails.Subdomain != nil {
 		targetSubdomain = *provisionDetails.Subdomain
 	}
 
@@ -57,11 +56,13 @@ func (s *DomainsService) AddCustomDomain(ctx context.Context, userID, orgID uuid
 	verificationToken := GenerateVerificationToken()
 
 	// BYOS path: user-owned machine — use machine IP as target instead of nixopus subdomain
-	if provisionDetails.Type == "user_owned" {
-		machineIP, ipErr := s.resolveMachineIP(ctx, provisionDetails)
-		if ipErr != nil {
-			s.logger.Log(logger.Error, "failed to resolve machine IP for BYOS domain", ipErr.Error())
-			return nil, nil, "", fmt.Errorf("machine IP not configured: please ensure your server IP is set")
+	if isBYOS {
+		machineIP := ""
+		if defaultKey.Host != nil && *defaultKey.Host != "" {
+			machineIP = *defaultKey.Host
+		}
+		if machineIP == "" {
+			return nil, nil, "", fmt.Errorf("default server has no IP configured")
 		}
 		targetSubdomain = machineIP
 
