@@ -323,7 +323,7 @@ func (c *DeployController) syncApplicationDomains(appID uuid.UUID, organizationI
 						c.logger.Log(logger.Warning, fmt.Sprintf("failed to resolve port for %s, skipping domain routing: %v", app.Name, portErr), "")
 					}
 				}
-				if port > 0 || app.BuildPack == shared_types.DockerCompose {
+				if port > 0 {
 					addDomains := make([]shared_types.ApplicationDomain, len(toAdd))
 					for i, d := range toAdd {
 						addDomains[i] = shared_types.ApplicationDomain{Domain: d}
@@ -440,7 +440,7 @@ func (c *DeployController) syncComposeApplicationDomains(appID uuid.UUID, organi
 			if resolvedPort > 0 {
 				composeApp, composeAppErr := c.service.GetApplicationById(appID.String(), organizationID)
 				if composeAppErr == nil {
-					singleDomain := shared_types.ApplicationDomain{Domain: strings.TrimSpace(cd.Domain), Port: port}
+					singleDomain := shared_types.ApplicationDomain{Domain: strings.TrimSpace(cd.Domain), Port: &resolvedPort}
 					domainRoutes := caddy.BuildMultiUpstreamRoutes(
 						orgCtx, c.storage, &c.logger,
 						composeApp, []shared_types.ApplicationDomain{singleDomain},
@@ -494,8 +494,8 @@ func (c *DeployController) buildProxyRoutes(orgID uuid.UUID, app shared_types.Ap
 	}
 
 	singleDomain := shared_types.ApplicationDomain{Domain: domain}
-	if portOverride != nil {
-		singleDomain.Port = portOverride
+	if app.BuildPack == shared_types.DockerCompose && port > 0 {
+		singleDomain.Port = &port
 	}
 
 	return caddy.BuildMultiUpstreamRoutes(
