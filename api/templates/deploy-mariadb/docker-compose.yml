@@ -14,8 +14,8 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
       REMOTE_SQL: ${REMOTE_SQL:-}
     volumes:
-      - ${CONFIG_VOLUME_NAME:-mariadb-config}:/config
+      - mariadb-config:/config
     restart: unless-stopped
 
 volumes:
-  ${CONFIG_VOLUME_NAME:-mariadb-config}:
+  mariadb-config:

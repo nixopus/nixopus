@@ -12,8 +12,8 @@ services:
       DATABASE_URL: ${DATABASE_URL:-}
       TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
     volumes:
-      - ${CONFIG_VOLUME_NAME:-kimai-config}:/config
+      - kimai-config:/config
     restart: unless-stopped
 
 volumes:
-  ${CONFIG_VOLUME_NAME:-kimai-config}:
+  kimai-config:

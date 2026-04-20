@@ -16,8 +16,8 @@ services:
       DEFAULT_WORKSPACE: ${DEFAULT_WORKSPACE:-/config/workspace}
       PWA_APPNAME: ${PWA_APPNAME:-code-server}
     volumes:
-      - ${CONFIG_VOLUME_NAME:-code-server-config}:/config
+      - code-server-config:/config
     restart: unless-stopped
 
 volumes:
-  ${CONFIG_VOLUME_NAME:-code-server-config}:
+  code-server-config:

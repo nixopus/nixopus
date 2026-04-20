@@ -10,9 +10,9 @@ services:
       NETDATA_CLAIM_URL: "https://app.netdata.cloud"
       NETDATA_CLAIM_ROOMS: ""
     volumes:
-      - ${NETDATA_CONFIG_VOLUME:-netdataconfig}:/etc/netdata
-      - ${NETDATA_LIB_VOLUME:-netdatalib}:/var/lib/netdata
-      - ${NETDATA_CACHE_VOLUME:-netdatacache}:/var/cache/netdata
+      - netdataconfig:/etc/netdata
+      - netdatalib:/var/lib/netdata
+      - netdatacache:/var/cache/netdata
       - /:/host/root:ro
       - /etc/passwd:/host/etc/passwd:ro
       - /etc/group:/host/etc/group:ro
@@ -26,6 +26,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  ${NETDATA_CONFIG_VOLUME:-netdataconfig}:
-  ${NETDATA_LIB_VOLUME:-netdatalib}:
-  ${NETDATA_CACHE_VOLUME:-netdatacache}:
+  netdataconfig:
+  netdatalib:
+  netdatacache:

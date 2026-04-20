@@ -20,8 +20,8 @@ services:
       CMD_ALLOW_ORIGIN: ${CMD_ALLOW_ORIGIN:-['localhost']}
       CMD_DB_DIALECT: ${CMD_DB_DIALECT:-}
     volumes:
-      - ${CONFIG_VOLUME_NAME:-hedgedoc-config}:/config
+      - hedgedoc-config:/config
     restart: unless-stopped
 
 volumes:
-  ${CONFIG_VOLUME_NAME:-hedgedoc-config}:
+  hedgedoc-config:

@@ -9,10 +9,10 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
-      - ${DATA_VOLUME_NAME:-postgres-data}:/var/lib/postgresql/data
-      - ${INIT_SCRIPTS_VOLUME:-postgres-init-scripts}:/docker-entrypoint-initdb.d
+      - postgres-data:/var/lib/postgresql/data
+      - postgres-init-scripts:/docker-entrypoint-initdb.d
     restart: unless-stopped
 
 volumes:
-  ${DATA_VOLUME_NAME:-postgres-data}:
-  ${INIT_SCRIPTS_VOLUME:-postgres-init-scripts}:
+  postgres-data:
+  postgres-init-scripts:

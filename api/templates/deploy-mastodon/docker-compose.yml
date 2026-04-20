@@ -47,8 +47,8 @@ services:
       DB_POOL: ${DB_POOL:-5}
       NO_CHOWN: ${NO_CHOWN:-}
     volumes:
-      - ${CONFIG_VOLUME_NAME:-mastodon-config}:/config
+      - mastodon-config:/config
     restart: unless-stopped
 
 volumes:
-  ${CONFIG_VOLUME_NAME:-mastodon-config}:
+  mastodon-config:

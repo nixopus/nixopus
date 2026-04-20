@@ -29,8 +29,8 @@ services:
       SECRET_KEY: ${SECRET_KEY:-}
       SITE_LOGO_URL: ${SITE_LOGO_URL:-}
     volumes:
-      - ${CONFIG_VOLUME_NAME:-healthchecks-config}:/config
+      - healthchecks-config:/config
     restart: unless-stopped
 
 volumes:
-  ${CONFIG_VOLUME_NAME:-healthchecks-config}:
+  healthchecks-config:

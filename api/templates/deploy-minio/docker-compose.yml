@@ -9,9 +9,9 @@ services:
       MINIO_ROOT_USER: ${ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${SECRET_KEY:-minioadmin}
     volumes:
-      - ${VOLUME_NAME:-minio-data}:/data
+      - minio-data:/data
     command: server /data --console-address :9001
     restart: unless-stopped
 
 volumes:
-  ${VOLUME_NAME:-minio-data}:
+  minio-data:

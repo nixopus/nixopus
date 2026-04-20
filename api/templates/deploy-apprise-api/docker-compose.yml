@@ -10,10 +10,10 @@ services:
       TZ: ${TIMEZONE:-Etc/UTC}
       APPRISE_ATTACH_SIZE: ${APPRISE_ATTACH_SIZE:-0}
     volumes:
-      - ${CONFIG_VOLUME_NAME:-apprise-api-config}:/config
-      - ${ATTACHMENTS_VOLUME_NAME:-apprise-api-attachments}:/attachments
+      - apprise-api-config:/config
+      - apprise-api-attachments:/attachments
     restart: unless-stopped
 
 volumes:
-  ${CONFIG_VOLUME_NAME:-apprise-api-config}:
-  ${ATTACHMENTS_VOLUME_NAME:-apprise-api-attachments}:
+  apprise-api-config:
+  apprise-api-attachments:

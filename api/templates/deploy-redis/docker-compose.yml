@@ -7,11 +7,11 @@ services:
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
     volumes:
-      - ${DATA_VOLUME_NAME:-redis-data}:/data
-      - ${CONFIG_VOLUME_NAME:-redis-config}:/usr/local/etc/redis
+      - redis-data:/data
+      - redis-config:/usr/local/etc/redis
     command: redis-server --appendonly yes --maxmemory ${MAXMEMORY:-256mb} --maxmemory-policy ${MAXMEMORY_POLICY:-allkeys-lru}
     restart: unless-stopped
 
 volumes:
-  ${DATA_VOLUME_NAME:-redis-data}:
-  ${CONFIG_VOLUME_NAME:-redis-config}:
+  redis-data:
+  redis-config:

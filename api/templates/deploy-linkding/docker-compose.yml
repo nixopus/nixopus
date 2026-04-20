@@ -5,8 +5,8 @@ services:
     ports:
       - "${HOST_PORT:-9090}:${CONTAINER_PORT:-9090}"
     volumes:
-      - ${DATA_VOLUME_NAME:-linkding-data}:/etc/linkding/data
+      - linkding-data:/etc/linkding/data
     restart: unless-stopped
 
 volumes:
-  ${DATA_VOLUME_NAME:-linkding-data}:
+  linkding-data:

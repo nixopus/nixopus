@@ -17,8 +17,8 @@ services:
       DB_DATABASE: ${DB_DATABASE:-}
       QUEUE_CONNECTION: ${QUEUE_CONNECTION:-}
     volumes:
-      - ${CONFIG_VOLUME_NAME:-bookstack-config}:/config
+      - bookstack-config:/config
     restart: unless-stopped
 
 volumes:
-  ${CONFIG_VOLUME_NAME:-bookstack-config}:
+  bookstack-config:

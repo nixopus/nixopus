@@ -51,7 +51,7 @@ func (l *ExtensionLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPa
 	var existingExtensions []types.Extension
 	err = l.db.NewSelect().
 		Model(&existingExtensions).
-		Where("extension_id IN (?) AND deleted_at IS NULL", bun.In(extensionIDs)).
+		Where("extension_id IN (?)", bun.In(extensionIDs)).
 		Scan(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to fetch existing extensions: %w", err)
@@ -75,6 +75,14 @@ func (l *ExtensionLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPa
 		existing, exists := existingMap[extension.ExtensionID]
 
 		if exists {
+			if existing.DeletedAt != nil {
+				// Restore soft-deleted extension
+				extension.ID = existing.ID
+				extension.CreatedAt = existing.CreatedAt
+				toUpdate = append(toUpdate, extension)
+				updateVariables = append(updateVariables, variables)
+				continue
+			}
 			// Check if content hash changed
 			if existing.ContentHash == extension.ContentHash {
 				skippedCount++
@@ -184,7 +192,7 @@ func (l *ExtensionLoader) batchUpdateExtensions(ctx context.Context, extensions 
 	for _, extension := range extensions {
 		if _, err := tx.NewUpdate().
 			Model(extension).
-			Column("name", "description", "author", "icon", "category", "extension_type", "version", "is_verified", "featured", "yaml_content", "parsed_content", "content_hash", "validation_status", "updated_at").
+			Column("name", "description", "author", "icon", "category", "extension_type", "version", "is_verified", "featured", "yaml_content", "parsed_content", "content_hash", "validation_status", "updated_at", "deleted_at").
 			Where("id = ?", extension.ID).
 			Exec(ctx); err != nil {
 			return fmt.Errorf("failed to update extension %s: %w", extension.ExtensionID, err)

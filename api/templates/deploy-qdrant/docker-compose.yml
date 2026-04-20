@@ -9,8 +9,8 @@ services:
       QDRANT__SERVICE__API_KEY: ${API_KEY:-}
       QDRANT__LOG_LEVEL: ${LOG_LEVEL:-INFO}
     volumes:
-      - ${STORAGE_VOLUME_NAME:-qdrant-storage}:/qdrant/storage:z
+      - qdrant-storage:/qdrant/storage:z
     restart: unless-stopped
 
 volumes:
-  ${STORAGE_VOLUME_NAME:-qdrant-storage}:
+  qdrant-storage:

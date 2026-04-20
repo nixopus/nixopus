@@ -9,8 +9,8 @@ services:
       NAME: ${NAME:-Status Page}
       DESCRIPTION: ${DESCRIPTION:-Monitor your services}
     volumes:
-      - ${DATA_VOLUME:-statpingng_data}:/app
+      - statpingng_data:/app
     restart: unless-stopped
 
 volumes:
-  ${DATA_VOLUME:-statpingng_data}:
+  statpingng_data:

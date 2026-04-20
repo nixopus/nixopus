@@ -5,8 +5,8 @@ services:
     ports:
       - "${HOST_PORT:-11434}:${CONTAINER_PORT:-11434}"
     volumes:
-      - ${DATA_VOLUME_NAME:-ollama}:/root/.ollama
+      - ollama:/root/.ollama
     restart: unless-stopped
 
 volumes:
-  ${DATA_VOLUME_NAME:-ollama}:
+  ollama:

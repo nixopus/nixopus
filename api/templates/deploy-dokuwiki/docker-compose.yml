@@ -10,8 +10,8 @@ services:
       PGID: ${PGID:-1000}
       TZ: ${TIMEZONE:-Etc/UTC}
     volumes:
-      - ${CONFIG_VOLUME_NAME:-dokuwiki-config}:/config
+      - dokuwiki-config:/config
     restart: unless-stopped
 
 volumes:
-  ${CONFIG_VOLUME_NAME:-dokuwiki-config}:
+  dokuwiki-config:

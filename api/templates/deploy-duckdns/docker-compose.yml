@@ -11,8 +11,8 @@ services:
       UPDATE_IP: ${UPDATE_IP:-}
       LOG_FILE: ${LOG_FILE:-false}
     volumes:
-      - ${CONFIG_VOLUME_NAME:-duckdns-config}:/config
+      - duckdns-config:/config
     restart: unless-stopped
 
 volumes:
-  ${CONFIG_VOLUME_NAME:-duckdns-config}:
+  duckdns-config:

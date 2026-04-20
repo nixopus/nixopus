@@ -9,8 +9,8 @@ services:
       GOTIFY_DEFAULTUSER_NAME: ${DEFAULT_USER:-admin}
       GOTIFY_DEFAULTUSER_PASS: ${DEFAULT_PASSWORD:-admin}
     volumes:
-      - ${DATA_VOLUME:-gotify_data}:/app/data
+      - gotify_data:/app/data
     restart: unless-stopped
 
 volumes:
-  ${DATA_VOLUME:-gotify_data}:
+  gotify_data:

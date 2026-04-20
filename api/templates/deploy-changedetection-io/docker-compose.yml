@@ -11,8 +11,8 @@ services:
       BASE_URL: ${BASE_URL:-}
       PLAYWRIGHT_DRIVER_URL: ${PLAYWRIGHT_DRIVER_URL:-}
     volumes:
-      - ${CONFIG_VOLUME_NAME:-changedetection-config}:/config
+      - changedetection-config:/config
     restart: unless-stopped
 
 volumes:
-  ${CONFIG_VOLUME_NAME:-changedetection-config}:
+  changedetection-config:

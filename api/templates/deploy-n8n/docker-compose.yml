@@ -10,8 +10,8 @@ services:
       WEBHOOK_URL: "http://localhost:${HOST_PORT:-5678}"
       TZ: ${TIMEZONE:-UTC}
     volumes:
-      - ${DATA_VOLUME:-n8n_data}:/home/node/.n8n
+      - n8n_data:/home/node/.n8n
     restart: unless-stopped
 
 volumes:
-  ${DATA_VOLUME:-n8n_data}:
+  n8n_data:
