@@ -345,38 +345,6 @@ func extractUpstreamsFromRoute(route caddyhttp.Route) []string {
 	return dials
 }
 
-func extractUpstreamFromRoute(route caddyhttp.Route) string {
-	for _, handlerRaw := range route.HandlersRaw {
-		var handlerMap map[string]json.RawMessage
-		if err := json.Unmarshal(handlerRaw, &handlerMap); err != nil {
-			continue
-		}
-
-		handlerNameRaw, exists := handlerMap["handler"]
-		if !exists {
-			continue
-		}
-		var handlerName string
-		if err := json.Unmarshal(handlerNameRaw, &handlerName); err != nil || handlerName != "reverse_proxy" {
-			continue
-		}
-
-		upstreamsRaw, exists := handlerMap["upstreams"]
-		if !exists {
-			continue
-		}
-		var upstreams []map[string]interface{}
-		if err := json.Unmarshal(upstreamsRaw, &upstreams); err != nil || len(upstreams) == 0 {
-			continue
-		}
-
-		if dial, ok := upstreams[0]["dial"].(string); ok {
-			return dial
-		}
-	}
-	return ""
-}
-
 func parseDial(dial string) (string, int, error) {
 	host, portStr, err := net.SplitHostPort(dial)
 	if err != nil {
