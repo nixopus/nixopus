@@ -301,22 +301,11 @@ func (t *TaskService) addDomainsForCompose(ctx context.Context, TaskPayload shar
 		return err
 	}
 
-	var routes []caddy.DomainRoute
-	for i := range domains {
-		d := &domains[i]
-		if d.Domain == "" {
-			continue
-		}
-		port := d.ResolvePort()
-		if port == 0 {
-			taskCtx.AddLog(fmt.Sprintf("Skipping domain %s: no service linked and no port override", d.Domain))
-			continue
-		}
-		routes = append(routes, caddy.DomainRoute{
-			Domain:       d.Domain,
-			UpstreamDial: caddy.FormatDial(upstreamHost, port),
-		})
-	}
+	routes := caddy.BuildMultiUpstreamRoutes(
+		ctx, t.Storage, &t.Logger,
+		TaskPayload.Application, domains,
+		upstreamHost, 0,
+	)
 	if len(routes) == 0 {
 		return nil
 	}
@@ -326,7 +315,11 @@ func (t *TaskService) addDomainsForCompose(ctx context.Context, TaskPayload shar
 		return err
 	}
 	for _, r := range routes {
-		taskCtx.AddLog("Domain " + r.Domain + " -> " + r.UpstreamDial + " added successfully with TLS")
+		dial := r.UpstreamDial
+		if len(r.Upstreams) > 0 {
+			dial = fmt.Sprintf("[%d upstreams, lb=%s]", len(r.Upstreams), r.LBPolicy)
+		}
+		taskCtx.AddLog(fmt.Sprintf("Domain %s -> %s", r.Domain, dial))
 	}
 	return nil
 }

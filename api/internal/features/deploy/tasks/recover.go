@@ -187,33 +187,22 @@ func (s *TaskService) configureRecoveryDomains(ctx context.Context, app *shared_
 		return
 	}
 
-	isCompose := app.BuildPack == shared_types.DockerCompose
-	var routes []caddy.DomainRoute
-	for i := range domains {
-		d := &domains[i]
-		if d.Domain == "" {
-			continue
-		}
+	routes := caddy.BuildMultiUpstreamRoutes(
+		ctx, s.Storage, &s.Logger,
+		*app, domains,
+		upstreamHost, swarmPort,
+	)
 
-		port := swarmPort
-		if isCompose {
-			port = d.ResolvePort()
-			if port == 0 {
-				taskCtx.AddLog(fmt.Sprintf("Skipping orphaned compose domain %s during recovery", d.Domain))
-				continue
-			}
-		}
-
-		routes = append(routes, caddy.DomainRoute{
-			Domain:       d.Domain,
-			UpstreamDial: caddy.FormatDial(upstreamHost, port),
-		})
-	}
 	if len(routes) == 0 {
 		return
 	}
 
-	if err := caddy.AddDomainsWithRetry(ctx, nil, &s.Logger, routes); err != nil {
-		taskCtx.AddLog("Warning: failed to configure proxy: " + err.Error())
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, app.OrganizationID.String())
+	if err := caddy.AddDomainsAtomic(orgCtx, nil, &s.Logger, routes); err != nil {
+		taskCtx.AddLog("Warning: failed to configure domains: " + err.Error())
+		return
+	}
+	for _, r := range routes {
+		taskCtx.AddLog("Domain " + r.Domain + " configured for recovery")
 	}
 }
