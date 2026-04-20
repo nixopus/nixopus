@@ -54,8 +54,12 @@ func GetDefaultServer() Server {
 	}
 }
 
-// this logic has to be rechecked for when app is running inside a docker container
 func getHostIP() string {
+	ipFamily := os.Getenv("IP_FAMILY")
+	if ipFamily == "" {
+		ipFamily = "ipv4"
+	}
+
 	interfaces, err := net.Interfaces()
 	if err != nil {
 		return ""
@@ -78,8 +82,20 @@ func getHostIP() string {
 			case *net.IPAddr:
 				ip = v.IP
 			}
-			if ip == nil || ip.IsLoopback() || ip.To4() == nil {
+			if ip == nil || ip.IsLoopback() {
 				continue
+			}
+
+			isV4 := ip.To4() != nil
+			switch ipFamily {
+			case "ipv6":
+				if isV4 {
+					continue
+				}
+			default:
+				if !isV4 {
+					continue
+				}
 			}
 
 			return ip.String()
