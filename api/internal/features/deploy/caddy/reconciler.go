@@ -89,13 +89,14 @@ func (r *Reconciler) ReconcileOrganization(ctx context.Context, organizationID u
 
 	type routeState struct {
 		upstreams []string
+		lbPolicy  string
 	}
 	actualMap := make(map[string]routeState)
 	for _, route := range actual {
 		if len(route.Upstreams) > 0 {
-			actualMap[route.Domain] = routeState{upstreams: route.Upstreams}
+			actualMap[route.Domain] = routeState{upstreams: route.Upstreams, lbPolicy: route.LBPolicy}
 		} else if route.UpstreamDial != "" {
-			actualMap[route.Domain] = routeState{upstreams: []string{route.UpstreamDial}}
+			actualMap[route.Domain] = routeState{upstreams: []string{route.UpstreamDial}, lbPolicy: route.LBPolicy}
 		}
 	}
 
@@ -107,11 +108,12 @@ func (r *Reconciler) ReconcileOrganization(ctx context.Context, organizationID u
 		if len(desiredUpstreams) == 0 && route.UpstreamDial != "" {
 			desiredUpstreams = []string{route.UpstreamDial}
 		}
+		desiredLB := route.LBPolicy
 
 		actual, exists := actualMap[route.Domain]
 		if !exists {
 			toAdd = append(toAdd, route)
-		} else if !upstreamsEqual(desiredUpstreams, actual.upstreams) {
+		} else if !upstreamsEqual(desiredUpstreams, actual.upstreams) || desiredLB != actual.lbPolicy {
 			toUpdate = append(toUpdate, route)
 		}
 	}

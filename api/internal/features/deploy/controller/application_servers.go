@@ -131,7 +131,12 @@ func (c *DeployController) SetApplicationServers(f fuego.ContextWithBody[types.S
 	}
 
 	if reconcileErr := caddy.EnqueueReconcile(organizationID); reconcileErr != nil {
-		c.logger.Log(logger.Warning, "failed to enqueue route sync after server change", reconcileErr.Error())
+		c.logger.Log(logger.Error, "failed to enqueue route sync after server change", reconcileErr.Error())
+		return nil, fuego.HTTPError{
+			Err:    reconcileErr,
+			Detail: "failed to enqueue route synchronization: " + reconcileErr.Error(),
+			Status: http.StatusInternalServerError,
+		}
 	}
 
 	servers, err := c.storage.GetApplicationServers(data.ApplicationID)

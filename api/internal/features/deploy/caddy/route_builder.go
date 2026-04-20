@@ -2,6 +2,7 @@ package caddy
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/nixopus/nixopus/api/internal/features/deploy/storage"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
@@ -28,13 +29,13 @@ func BuildMultiUpstreamRoutes(
 
 	lbPolicy := mapRoutingStrategy(app.RoutingStrategy)
 
-	upstreams, err := resolveServerUpstreams(ctx, servers, fallbackPort, lgr)
+	upstreams, primaryUpstreamIndex, err := resolveServerUpstreams(ctx, servers, fallbackPort, lgr)
 	if err != nil || len(upstreams) == 0 {
 		return buildSingleUpstreamRoutes(domains, fallbackUpstream, fallbackPort, app.BuildPack)
 	}
 
 	if app.RoutingStrategy == shared_types.RoutingStrategyPrimaryFailover {
-		upstreams = orderPrimaryFirst(upstreams, servers)
+		upstreams = orderPrimaryFirst(upstreams, primaryUpstreamIndex)
 	}
 
 	var routes []DomainRoute
@@ -52,7 +53,11 @@ func BuildMultiUpstreamRoutes(
 		var domainUpstreams []string
 		if app.BuildPack == shared_types.DockerCompose {
 			for _, u := range upstreams {
-				host, _, _ := parseDial(u)
+				host, _, err := parseDial(u)
+				if err != nil {
+					lgr.Log(logger.Warning, fmt.Sprintf("skipping malformed upstream %s: %v", u, err), "")
+					continue
+				}
 				domainUpstreams = append(domainUpstreams, FormatDial(host, port))
 			}
 		} else {
@@ -94,8 +99,9 @@ func buildSingleUpstreamRoutes(
 	return routes
 }
 
-func resolveServerUpstreams(ctx context.Context, servers []shared_types.ApplicationServer, port int, lgr *logger.Logger) ([]string, error) {
+func resolveServerUpstreams(ctx context.Context, servers []shared_types.ApplicationServer, port int, lgr *logger.Logger) ([]string, int, error) {
 	var upstreams []string
+	primaryUpstreamIndex := -1
 	for _, srv := range servers {
 		if srv.Server == nil || srv.Server.Host == nil {
 			continue
@@ -106,26 +112,22 @@ func resolveServerUpstreams(ctx context.Context, servers []shared_types.Applicat
 		} else {
 			host = *srv.Server.Host
 		}
+		if srv.IsPrimary {
+			primaryUpstreamIndex = len(upstreams)
+		}
 		upstreams = append(upstreams, FormatDial(host, port))
 	}
-	return upstreams, nil
+	return upstreams, primaryUpstreamIndex, nil
 }
 
-func orderPrimaryFirst(upstreams []string, servers []shared_types.ApplicationServer) []string {
-	primaryIdx := -1
-	for i, srv := range servers {
-		if srv.IsPrimary {
-			primaryIdx = i
-			break
-		}
-	}
-	if primaryIdx <= 0 || primaryIdx >= len(upstreams) {
+func orderPrimaryFirst(upstreams []string, primaryUpstreamIndex int) []string {
+	if primaryUpstreamIndex <= 0 || primaryUpstreamIndex >= len(upstreams) {
 		return upstreams
 	}
 	result := make([]string, len(upstreams))
-	result[0] = upstreams[primaryIdx]
-	copy(result[1:], upstreams[:primaryIdx])
-	copy(result[1+primaryIdx:], upstreams[primaryIdx+1:])
+	result[0] = upstreams[primaryUpstreamIndex]
+	copy(result[1:], upstreams[:primaryUpstreamIndex])
+	copy(result[1+primaryUpstreamIndex:], upstreams[primaryUpstreamIndex+1:])
 	return result
 }
 

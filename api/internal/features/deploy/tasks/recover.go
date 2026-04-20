@@ -165,26 +165,27 @@ func (s *TaskService) recoverSingleApp(ctx context.Context, app *shared_types.Ap
 	taskCtx.AddLog("Service created with container id " + containerResult.ContainerID)
 
 	swarmPort, _ := strconv.Atoi(containerResult.AvailablePort)
-	s.configureRecoveryDomains(ctx, app, swarmPort, taskCtx)
+	if err := s.configureRecoveryDomains(ctx, app, swarmPort, taskCtx); err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to configure domains: "+err.Error(), shared_types.Failed)
+		return fmt.Errorf("failed to configure domains: %w", err)
+	}
 
 	taskCtx.LogAndUpdateStatus("Recovery completed successfully", shared_types.Deployed)
 	return nil
 }
 
-func (s *TaskService) configureRecoveryDomains(ctx context.Context, app *shared_types.Application, swarmPort int, taskCtx *TaskContext) {
+func (s *TaskService) configureRecoveryDomains(ctx context.Context, app *shared_types.Application, swarmPort int, taskCtx *TaskContext) error {
 	domains, err := s.Storage.GetApplicationDomains(app.ID)
 	if err != nil {
-		taskCtx.AddLog("Warning: failed to load domains for proxy setup: " + err.Error())
-		return
+		return fmt.Errorf("failed to load domains for proxy setup: %w", err)
 	}
 	if len(domains) == 0 {
-		return
+		return nil
 	}
 
 	upstreamHost, err := GetSSHHostForOrganization(ctx, app.OrganizationID)
 	if err != nil {
-		taskCtx.AddLog("Warning: failed to get SSH host for domain setup: " + err.Error())
-		return
+		return fmt.Errorf("failed to get SSH host for domain setup: %w", err)
 	}
 
 	routes := caddy.BuildMultiUpstreamRoutes(
@@ -194,15 +195,15 @@ func (s *TaskService) configureRecoveryDomains(ctx context.Context, app *shared_
 	)
 
 	if len(routes) == 0 {
-		return
+		return nil
 	}
 
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, app.OrganizationID.String())
 	if err := caddy.AddDomainsAtomic(orgCtx, nil, &s.Logger, routes); err != nil {
-		taskCtx.AddLog("Warning: failed to configure domains: " + err.Error())
-		return
+		return fmt.Errorf("failed to configure domains: %w", err)
 	}
 	for _, r := range routes {
 		taskCtx.AddLog("Domain " + r.Domain + " configured for recovery")
 	}
+	return nil
 }
