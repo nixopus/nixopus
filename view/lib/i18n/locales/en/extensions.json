@@ -6,6 +6,8 @@
     "exploreExtensions": "Explore Extensions Hub",
     "exploreExtensionsTitle": "Explore extensions",
     "install": "Install",
+    "installSuccess": "App created successfully",
+    "installFailed": "Failed to create app",
     "run": "Run",
     "viewDetails": "View details",
     "madeBy": "Made by",
@@ -19,6 +21,7 @@
       "rating": "Rating"
     },
     "noExtensions": "No extensions found",
+    "noExtensionsHint": "Try adjusting your search or filters to find more extensions.",
     "noVariables": "This extension has no inputs",
     "loading": "Loading extensions...",
     "error": "Failed to load extensions",

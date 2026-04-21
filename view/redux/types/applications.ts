@@ -219,6 +219,14 @@ export interface ProjectFamilyResponse {
 }
 
 // Health Check Component Props
+export interface CreateTemplateDeploymentRequest {
+  template_id: string;
+  name: string;
+  variables: Record<string, unknown>;
+  server_ids?: string[];
+  environment?: string;
+}
+
 export interface HealthCheckChartProps {
   applicationId: string;
   setDialogOpen: (open: boolean) => void;

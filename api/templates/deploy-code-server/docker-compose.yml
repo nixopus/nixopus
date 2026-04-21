@@ -1,0 +1,23 @@
+services:
+  code-server:
+    image: ${IMAGE:-lscr.io/linuxserver/code-server}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-code-server}
+    ports:
+      - "${HOST_PORT:-8443}:${CONTAINER_PORT:-8443}"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TIMEZONE:-Etc/UTC}
+      PASSWORD: ${PASSWORD:-}
+      HASHED_PASSWORD: ${HASHED_PASSWORD:-}
+      SUDO_PASSWORD: ${SUDO_PASSWORD:-}
+      SUDO_PASSWORD_HASH: ${SUDO_PASSWORD_HASH:-}
+      PROXY_DOMAIN: ${PROXY_DOMAIN:-}
+      DEFAULT_WORKSPACE: ${DEFAULT_WORKSPACE:-/config/workspace}
+      PWA_APPNAME: ${PWA_APPNAME:-code-server}
+    volumes:
+      - code-server-config:/config
+    restart: unless-stopped
+
+volumes:
+  code-server-config:

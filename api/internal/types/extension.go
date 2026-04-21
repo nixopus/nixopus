@@ -36,16 +36,6 @@ const (
 	ValidationStatusInvalid      ValidationStatus = "invalid"
 )
 
-type ExecutionStatus string
-
-const (
-	ExecutionStatusPending   ExecutionStatus = "pending"
-	ExecutionStatusRunning   ExecutionStatus = "running"
-	ExecutionStatusCompleted ExecutionStatus = "completed"
-	ExecutionStatusFailed    ExecutionStatus = "failed"
-	ExecutionStatusCancelled ExecutionStatus = "cancelled"
-)
-
 type ExtensionType string
 
 const (
@@ -92,89 +82,6 @@ type ExtensionVariable struct {
 	CreatedAt         time.Time       `json:"created_at" bun:"created_at,notnull,default:now()"`
 
 	Extension *Extension `json:"-" bun:"rel:belongs-to,join:extension_id=id"`
-}
-
-type ExtensionExecution struct {
-	bun.BaseModel  `bun:"table:extension_executions,alias:ee" swaggerignore:"true"`
-	ID             uuid.UUID       `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
-	ExtensionID    uuid.UUID       `json:"extension_id" bun:"extension_id,notnull,type:uuid"`
-	ServerHostname string          `json:"server_hostname" bun:"server_hostname"`
-	VariableValues string          `json:"variable_values" bun:"variable_values,type:jsonb"`
-	Status         ExecutionStatus `json:"status" bun:"status,default:'pending'"`
-	StartedAt      time.Time       `json:"started_at" bun:"started_at,notnull,default:now()"`
-	CompletedAt    *time.Time      `json:"completed_at,omitempty" bun:"completed_at"`
-	ExitCode       int             `json:"exit_code" bun:"exit_code"`
-	ErrorMessage   string          `json:"error_message" bun:"error_message"`
-	ExecutionLog   string          `json:"execution_log" bun:"execution_log"`
-	LogSeq         int64           `json:"log_seq" bun:"log_seq"`
-	CreatedAt      time.Time       `json:"created_at" bun:"created_at,notnull,default:now()"`
-
-	Extension *Extension      `json:"-" bun:"rel:belongs-to,join:extension_id=id"`
-	Steps     []ExecutionStep `json:"steps,omitempty" bun:"rel:has-many,join:id=execution_id"`
-}
-
-type ExecutionStep struct {
-	bun.BaseModel `bun:"table:execution_steps,alias:es" swaggerignore:"true"`
-	ID            uuid.UUID       `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
-	ExecutionID   uuid.UUID       `json:"execution_id" bun:"execution_id,notnull,type:uuid"`
-	StepName      string          `json:"step_name" bun:"step_name,notnull"`
-	Phase         string          `json:"phase" bun:"phase,notnull"`
-	StepOrder     int             `json:"step_order" bun:"step_order,notnull"`
-	StartedAt     time.Time       `json:"started_at" bun:"started_at,notnull,default:now()"`
-	CompletedAt   *time.Time      `json:"completed_at,omitempty" bun:"completed_at"`
-	Status        ExecutionStatus `json:"status" bun:"status,default:'pending'"`
-	ExitCode      int             `json:"exit_code" bun:"exit_code"`
-	Output        string          `json:"output" bun:"output"`
-	CreatedAt     time.Time       `json:"created_at" bun:"created_at,notnull,default:now()"`
-
-	Execution *ExtensionExecution `json:"-" bun:"rel:belongs-to,join:execution_id=id"`
-}
-
-type ExtensionLog struct {
-	bun.BaseModel `bun:"table:extension_logs,alias:el" swaggerignore:"true"`
-	ID            uuid.UUID       `json:"id" bun:"id,pk,type:uuid,default:uuid_generate_v4()"`
-	ExecutionID   uuid.UUID       `json:"execution_id" bun:"execution_id,notnull,type:uuid"`
-	StepID        *uuid.UUID      `json:"step_id,omitempty" bun:"step_id,nullzero,type:uuid"`
-	Level         string          `json:"level" bun:"level,notnull"`
-	Message       string          `json:"message" bun:"message,notnull"`
-	Data          json.RawMessage `json:"data" bun:"data,notnull,type:jsonb"`
-	Sequence      int64           `json:"sequence" bun:"sequence,notnull"`
-	CreatedAt     time.Time       `json:"created_at" bun:"created_at,notnull,default:now()"`
-}
-
-// SpecStep defines a single step in the extension spec (parsed from YAML/JSON)
-type SpecStep struct {
-	Name         string                 `json:"Name"`
-	Type         string                 `json:"Type"`
-	Properties   map[string]interface{} `json:"Properties"`
-	IgnoreErrors bool                   `json:"IgnoreErrors"`
-	Timeout      int                    `json:"Timeout"`
-}
-
-// ExtensionSpec is the parsed extension content used for execution
-type ExtensionSpec struct {
-	Metadata struct {
-		ID          string `json:"ID"`
-		Name        string `json:"Name"`
-		Description string `json:"Description"`
-		Author      string `json:"Author"`
-		Icon        string `json:"Icon"`
-		Category    string `json:"Category"`
-		Type        string `json:"Type"`
-		Version     string `json:"Version"`
-		IsVerified  bool   `json:"IsVerified"`
-	} `json:"Metadata"`
-	Variables map[string]struct {
-		Type              string      `json:"Type"`
-		Description       string      `json:"Description"`
-		Default           interface{} `json:"Default"`
-		IsRequired        bool        `json:"IsRequired"`
-		ValidationPattern string      `json:"ValidationPattern"`
-	} `json:"Variables"`
-	Execution struct {
-		Run      []SpecStep `json:"Run"`
-		Validate []SpecStep `json:"Validate"`
-	} `json:"Execution"`
 }
 
 type SortDirection string

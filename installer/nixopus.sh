@@ -217,7 +217,7 @@ cmd_domain() {
                         fi
                         ;;
                     ipv6)
-                        local effective_v6="${HOST_IP6:-${HOST_IP:-}}"
+                        local effective_v6="${HOST_IP6:-}"
                         if [ -n "$resolved_v6" ] && [ "$resolved_v6" != "$effective_v6" ]; then
                             echo "WARNING: $domain resolves to $resolved_v6 but host IPv6 is ${effective_v6:-<unset>}"
                             mismatch=true
@@ -235,7 +235,12 @@ cmd_domain() {
                         ;;
                 esac
             else
-                echo "Note: 'getent' not available, skipping DNS verification"
+                if [ "$verify_mode" = "strict" ]; then
+                    echo "ERROR: 'getent' not available — cannot verify DNS with --verify=strict" >&2
+                    return 1
+                else
+                    echo "Note: 'getent' not available, skipping DNS verification"
+                fi
             fi
 
             if [ "$mismatch" = true ] && [ "$verify_mode" = "strict" ]; then
@@ -347,10 +352,22 @@ cmd_ip() {
     fi
 
     local target_var="HOST_IP"
+    local current_ip_family="${IP_FAMILY:-ipv4}"
+
     if [ -n "$ip_flag" ]; then
-        [ "$ip_flag" = "ipv6" ] && target_var="HOST_IP6"
+        if [ "$ip_flag" = "ipv6" ]; then
+            if [ "$current_ip_family" = "ipv6" ]; then
+                target_var="HOST_IP"
+            else
+                target_var="HOST_IP6"
+            fi
+        fi
     elif [[ "$new_ip" == *:* ]]; then
-        target_var="HOST_IP6"
+        if [ "$current_ip_family" = "ipv6" ]; then
+            target_var="HOST_IP"
+        else
+            target_var="HOST_IP6"
+        fi
     fi
 
     if grep -q "^${target_var}=" "$NIXOPUS_HOME/.env"; then
@@ -414,6 +431,94 @@ cmd_info() {
     cmd_status
 }
 
+# cmd_admin_bootstrap creates (or recreates) the initial admin account by
+# calling Better Auth's POST /api/auth/sign-up/email through Caddy. Uses
+# ADMIN_EMAIL/ADMIN_PASSWORD from .env unless overridden by env vars or
+# CLI args:  nixopus admin-bootstrap [email] [password]
+cmd_admin_bootstrap() {
+    load_env
+
+    local email="${1:-${ADMIN_EMAIL:-}}"
+    local password="${2:-${ADMIN_PASSWORD:-}}"
+
+    if [ -z "$email" ]; then
+        echo "ADMIN_EMAIL is not set. Usage: nixopus admin-bootstrap <email> <password>" >&2
+        return 1
+    fi
+    if [ -z "$password" ]; then
+        echo "ADMIN_PASSWORD is not set. Usage: nixopus admin-bootstrap <email> <password>" >&2
+        return 1
+    fi
+
+    local base="${ALLOWED_ORIGIN:-${AUTH_PUBLIC_URL:-}}"
+    if [ -z "$base" ]; then
+        echo "Cannot determine BASE_URL (ALLOWED_ORIGIN missing in .env)" >&2
+        return 1
+    fi
+
+    json_escape() {
+        local s="$1"
+        s="${s//\\/\\\\}"
+        s="${s//\"/\\\"}"
+        printf '%s' "$s"
+    }
+
+    local name="${email%@*}"
+    local payload
+    payload=$(printf '{"email":"%s","password":"%s","name":"%s"}' \
+        "$(json_escape "$email")" "$(json_escape "$password")" "$(json_escape "$name")")
+
+    local timeout="${ADMIN_BOOTSTRAP_TIMEOUT:-30}" elapsed=0 interval=3
+    local http_code="000" body code tmp
+    tmp=$(mktemp)
+    echo "Bootstrapping admin ($email) at $base ..."
+
+    while [ "$elapsed" -lt "$timeout" ]; do
+        http_code=$(curl -sS -k -o "$tmp" -w "%{http_code}" \
+            --connect-timeout 5 --max-time 15 \
+            -X POST "$base/api/auth/sign-up/email" \
+            -H "Content-Type: application/json" \
+            -H "Origin: $base" \
+            -d "$payload" 2>/dev/null || echo "000")
+
+        body=$(cat "$tmp" 2>/dev/null || true)
+        code=$(printf '%s' "$body" | grep -oE '"code"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n1 | sed -E 's/.*"code"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
+
+        case "$http_code" in
+            200|201)
+                rm -f "$tmp"
+                echo "Admin account created."
+                return 0
+                ;;
+            422)
+                if [ "$code" = "USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL" ] || [ "$code" = "USER_ALREADY_EXISTS" ]; then
+                    rm -f "$tmp"
+                    echo "Admin account already exists — nothing to do."
+                    return 0
+                fi
+                ;;
+            400|403)
+                case "$code" in
+                    EMAIL_PASSWORD_SIGN_UP_DISABLED|INVALID_ORIGIN|MISSING_OR_NULL_ORIGIN|CROSS_SITE_NAVIGATION_LOGIN_BLOCKED|PASSWORD_TOO_SHORT|PASSWORD_TOO_LONG|INVALID_PASSWORD|INVALID_EMAIL)
+                        rm -f "$tmp"
+                        echo "Auth service rejected request: $code" >&2
+                        echo "Response: $(printf '%s' "$body" | head -c 200)" >&2
+                        return 1
+                        ;;
+                esac
+                ;;
+        esac
+
+        sleep "$interval"
+        elapsed=$((elapsed + interval))
+    done
+
+    rm -f "$tmp"
+    echo "Failed to create admin after ${timeout}s (HTTP $http_code${code:+, code: $code})." >&2
+    [ -n "$body" ] && echo "Response: $(printf '%s' "$body" | head -c 200)" >&2
+    return 1
+}
+
 cmd_help() {
     echo "Usage: nixopus <command> [args]"
     echo ""
@@ -452,6 +557,7 @@ case "${1:-help}" in
     port)      shift; cmd_port "$@" ;;
     backup)    cmd_backup ;;
     info)      cmd_info ;;
+    admin-bootstrap) shift; cmd_admin_bootstrap "$@" ;;
     help|--help|-h) cmd_help ;;
     *)         echo "Unknown command: $1"; cmd_help; exit 1 ;;
 esac

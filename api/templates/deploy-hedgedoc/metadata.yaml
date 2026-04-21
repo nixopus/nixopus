@@ -1,0 +1,137 @@
+metadata:
+  id: "deploy-hedgedoc"
+  name: "HedgeDoc"
+  description: "HedgeDoc is a real-time, multi-platform collaborative markdown note editor. This means that you can write notes with other people on your desktop, tablet or even on the phone. You can sign-in via multiple auth providers like Facebook, Twitter, GitHub and many more. Uses hedgedoc image from linuxserver.io. Requires a database (MariaDB, MySQL, PostgreSQL, or SQLite)."
+  author: "Nixopus Team"
+  icon: "https://hedgedoc.org/images/banner/hedgedoc_banner_color_horizontal.svg"
+  category: "Productivity"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for HedgeDoc"
+    default: "lscr.io/linuxserver/hedgedoc"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the HedgeDoc container"
+    default: "hedgedoc"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port for HedgeDoc web GUI"
+    default: 3000
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for HedgeDoc web GUI"
+    default: 3000
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for HedgeDoc persistent configuration files"
+    default: "hedgedoc-config"
+    is_required: true
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  db_host:
+    type: "string"
+    description: "Host address of database (MariaDB, MySQL, PostgreSQL, or leave empty for SQLite)"
+    default: ""
+    is_required: false
+
+  db_port:
+    type: "integer"
+    description: "Port to access database (default 3306 for MariaDB/MySQL, 5432 for PostgreSQL)"
+    default: 3306
+    is_required: false
+
+  db_user:
+    type: "string"
+    description: "Database user"
+    default: "hedgedoc"
+    is_required: false
+
+  db_pass:
+    type: "string"
+    description: "Database password"
+    default: ""
+    is_required: false
+
+  db_name:
+    type: "string"
+    description: "Database name"
+    default: "hedgedoc"
+    is_required: false
+
+  cmd_domain:
+    type: "string"
+    description: "The address the GUI will be accessed at (e.g., localhost, 192.168.1.1, or hedgedoc.domain.com)"
+    default: "localhost"
+    is_required: false
+
+  cmd_url_addport:
+    type: "string"
+    description: "Set to true if using a port other than 80 or 443"
+    default: "false"
+    is_required: false
+
+  cmd_protocol_usessl:
+    type: "string"
+    description: "Set to true if accessing over https via reverse proxy"
+    default: "false"
+    is_required: false
+
+  cmd_port:
+    type: "integer"
+    description: "If accessing at a port different than 80, 443 or 3000, set this to that port and change port mapping accordingly"
+    default: 3000
+    is_required: false
+
+  cmd_allow_origin:
+    type: "string"
+    description: "Comma-separated list of allowed hostnames (e.g., ['localhost'] or ['example.com', 'www.example.com'])"
+    default: "['localhost']"
+    is_required: false
+
+  cmd_db_dialect:
+    type: "string"
+    description: "Database engine (mariadb, mysql, postgres, sqlite). If DB_HOST is not set, this allows selecting SQLite"
+    default: ""
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for HedgeDoc web GUI (optional, recommended for internet access)"
+    default: ""
+    is_required: false

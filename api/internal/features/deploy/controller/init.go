@@ -11,6 +11,7 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/deploy/storage"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/tasks"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/validation"
+	extension_loader "github.com/nixopus/nixopus/api/internal/features/extension/loader"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 	"github.com/nixopus/nixopus/api/internal/utils"
@@ -21,15 +22,16 @@ import (
 )
 
 type DeployController struct {
-	store         *shared_storage.Store
-	validator     *validation.Validator
-	service       *service.DeployService
-	storage       *storage.DeployStorage
-	ctx           context.Context
-	logger        logger.Logger
-	notifier      shared_types.Notifier
-	taskService   *tasks.TaskService
-	githubService *github_service.GithubConnectorService
+	store           *shared_storage.Store
+	validator       *validation.Validator
+	service         *service.DeployService
+	storage         *storage.DeployStorage
+	ctx             context.Context
+	logger          logger.Logger
+	notifier        shared_types.Notifier
+	taskService     *tasks.TaskService
+	githubService   *github_service.GithubConnectorService
+	extensionLoader *extension_loader.ExtensionLoader
 }
 
 func NewDeployController(
@@ -37,6 +39,7 @@ func NewDeployController(
 	ctx context.Context,
 	l logger.Logger,
 	notifier shared_types.Notifier,
+	extensionLoader *extension_loader.ExtensionLoader,
 ) (*DeployController, error) {
 	deployStorage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
 	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})
@@ -56,15 +59,16 @@ func NewDeployController(
 	taskService.StartConsumers(ctx)
 
 	return &DeployController{
-		store:         store,
-		validator:     validation.NewValidator(),
-		service:       service.NewDeployService(store, ctx, l, &deployStorage),
-		storage:       &deployStorage,
-		ctx:           ctx,
-		logger:        l,
-		notifier:      notifier,
-		taskService:   taskService,
-		githubService: github_service,
+		store:           store,
+		validator:       validation.NewValidator(),
+		service:         service.NewDeployService(store, ctx, l, &deployStorage),
+		storage:         &deployStorage,
+		ctx:             ctx,
+		logger:          l,
+		notifier:        notifier,
+		taskService:     taskService,
+		githubService:   github_service,
+		extensionLoader: extensionLoader,
 	}, nil
 }
 

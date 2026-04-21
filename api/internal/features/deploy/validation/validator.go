@@ -48,6 +48,8 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 		return validateGetProjectFamilyRequest(*r)
 	case *types.AddApplicationToFamilyRequest:
 		return validateAddApplicationToFamilyRequest(r)
+	case *types.CreateTemplateDeploymentRequest:
+		return validateTemplateDeploymentRequest(r)
 	case *types.CancelDeploymentRequest:
 		return validateCancelDeploymentRequest(*r)
 	default:
@@ -249,6 +251,16 @@ func validateAddApplicationToFamilyRequest(req *types.AddApplicationToFamilyRequ
 	}
 	if req.DockerfilePath == "" {
 		req.DockerfilePath = "Dockerfile"
+	}
+	return nil
+}
+
+func validateTemplateDeploymentRequest(req *types.CreateTemplateDeploymentRequest) error {
+	if req.TemplateID == "" {
+		return errors.New("template_id is required")
+	}
+	if req.Name == "" {
+		return errors.New("name is required")
 	}
 	return nil
 }

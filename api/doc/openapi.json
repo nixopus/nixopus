@@ -502,6 +502,10 @@
 						},
 						"type": "object"
 					},
+					"template_id": {
+						"format": "uuid",
+						"type": "string"
+					},
 					"updated_at": {
 						"format": "date-time",
 						"type": "string"
@@ -898,6 +902,10 @@
 									}
 								},
 								"type": "object"
+							},
+							"template_id": {
+								"format": "uuid",
+								"type": "string"
 							},
 							"updated_at": {
 								"format": "date-time",
@@ -1559,6 +1567,10 @@
 									}
 								},
 								"type": "object"
+							},
+							"template_id": {
+								"format": "uuid",
+								"type": "string"
 							},
 							"updated_at": {
 								"format": "date-time",
@@ -2623,6 +2635,38 @@
 				},
 				"type": "object"
 			},
+			"CreateTemplateDeploymentRequest": {
+				"description": "CreateTemplateDeploymentRequest schema",
+				"properties": {
+					"environment": {
+						"nullable": true,
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					},
+					"server_ids": {
+						"items": {
+							"format": "uuid",
+							"type": "string"
+						},
+						"nullable": true,
+						"type": "array"
+					},
+					"template_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"variables": {
+						"additionalProperties": {
+							"description": "Variable value (string, number, boolean, or JSON as string)",
+							"type": "string"
+						},
+						"type": "object"
+					}
+				},
+				"type": "object"
+			},
 			"CreateWebhookConfigRequest": {
 				"description": "CreateWebhookConfigRequest schema",
 				"properties": {
@@ -3279,6 +3323,10 @@
 										},
 										"type": "object"
 									},
+									"template_id": {
+										"format": "uuid",
+										"type": "string"
+									},
 									"updated_at": {
 										"format": "date-time",
 										"type": "string"
@@ -3504,116 +3552,6 @@
 				],
 				"type": "object"
 			},
-			"ExecutionResponse": {
-				"description": "ExecutionResponse schema",
-				"properties": {
-					"data": {
-						"nullable": true,
-						"properties": {
-							"completed_at": {
-								"format": "date-time",
-								"nullable": true,
-								"type": "string"
-							},
-							"created_at": {
-								"format": "date-time",
-								"type": "string"
-							},
-							"error_message": {
-								"type": "string"
-							},
-							"execution_log": {
-								"type": "string"
-							},
-							"exit_code": {
-								"type": "integer"
-							},
-							"extension_id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"id": {
-								"format": "uuid",
-								"type": "string"
-							},
-							"log_seq": {
-								"format": "int64",
-								"type": "integer"
-							},
-							"server_hostname": {
-								"type": "string"
-							},
-							"started_at": {
-								"format": "date-time",
-								"type": "string"
-							},
-							"status": {
-								"type": "string"
-							},
-							"steps": {
-								"items": {
-									"nullable": true,
-									"properties": {
-										"completed_at": {
-											"format": "date-time",
-											"nullable": true,
-											"type": "string"
-										},
-										"created_at": {
-											"format": "date-time",
-											"type": "string"
-										},
-										"execution_id": {
-											"format": "uuid",
-											"type": "string"
-										},
-										"exit_code": {
-											"type": "integer"
-										},
-										"id": {
-											"format": "uuid",
-											"type": "string"
-										},
-										"output": {
-											"type": "string"
-										},
-										"phase": {
-											"type": "string"
-										},
-										"started_at": {
-											"format": "date-time",
-											"type": "string"
-										},
-										"status": {
-											"type": "string"
-										},
-										"step_name": {
-											"type": "string"
-										},
-										"step_order": {
-											"type": "integer"
-										}
-									},
-									"type": "object"
-								},
-								"nullable": true,
-								"type": "array"
-							},
-							"variable_values": {
-								"type": "string"
-							}
-						},
-						"type": "object"
-					},
-					"message": {
-						"type": "string"
-					},
-					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
 			"ExtensionResponse": {
 				"description": "ExtensionResponse schema",
 				"properties": {
@@ -3734,16 +3672,6 @@
 						"type": "string"
 					},
 					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"ForkExtensionRequest": {
-				"description": "ForkExtensionRequest schema",
-				"properties": {
-					"yaml_content": {
-						"nullable": true,
 						"type": "string"
 					}
 				},
@@ -4774,6 +4702,10 @@
 											},
 											"type": "object"
 										},
+										"template_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"updated_at": {
 											"format": "date-time",
 											"type": "string"
@@ -5739,6 +5671,10 @@
 													},
 													"type": "object"
 												},
+												"template_id": {
+													"format": "uuid",
+													"type": "string"
+												},
 												"updated_at": {
 													"format": "date-time",
 													"type": "string"
@@ -5943,118 +5879,6 @@
 								},
 								"verification_token": {
 									"nullable": true,
-									"type": "string"
-								}
-							},
-							"type": "object"
-						},
-						"type": "array"
-					},
-					"message": {
-						"type": "string"
-					},
-					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"ListExecutionsResponse": {
-				"description": "ListExecutionsResponse schema",
-				"properties": {
-					"data": {
-						"items": {
-							"properties": {
-								"completed_at": {
-									"format": "date-time",
-									"nullable": true,
-									"type": "string"
-								},
-								"created_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"error_message": {
-									"type": "string"
-								},
-								"execution_log": {
-									"type": "string"
-								},
-								"exit_code": {
-									"type": "integer"
-								},
-								"extension_id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"id": {
-									"format": "uuid",
-									"type": "string"
-								},
-								"log_seq": {
-									"format": "int64",
-									"type": "integer"
-								},
-								"server_hostname": {
-									"type": "string"
-								},
-								"started_at": {
-									"format": "date-time",
-									"type": "string"
-								},
-								"status": {
-									"type": "string"
-								},
-								"steps": {
-									"items": {
-										"nullable": true,
-										"properties": {
-											"completed_at": {
-												"format": "date-time",
-												"nullable": true,
-												"type": "string"
-											},
-											"created_at": {
-												"format": "date-time",
-												"type": "string"
-											},
-											"execution_id": {
-												"format": "uuid",
-												"type": "string"
-											},
-											"exit_code": {
-												"type": "integer"
-											},
-											"id": {
-												"format": "uuid",
-												"type": "string"
-											},
-											"output": {
-												"type": "string"
-											},
-											"phase": {
-												"type": "string"
-											},
-											"started_at": {
-												"format": "date-time",
-												"type": "string"
-											},
-											"status": {
-												"type": "string"
-											},
-											"step_name": {
-												"type": "string"
-											},
-											"step_order": {
-												"type": "integer"
-											}
-										},
-										"type": "object"
-									},
-									"nullable": true,
-									"type": "array"
-								},
-								"variable_values": {
 									"type": "string"
 								}
 							},
@@ -6393,69 +6217,6 @@
 							"type": "object"
 						},
 						"type": "array"
-					},
-					"message": {
-						"type": "string"
-					},
-					"status": {
-						"type": "string"
-					}
-				},
-				"type": "object"
-			},
-			"ListLogsResponse": {
-				"description": "ListLogsResponse schema",
-				"properties": {
-					"data": {
-						"properties": {
-							"execution_status": {
-								"nullable": true,
-								"type": "string"
-							},
-							"logs": {
-								"items": {
-									"properties": {
-										"created_at": {
-											"format": "date-time",
-											"type": "string"
-										},
-										"data": {
-											"description": "JSON-encoded value",
-											"type": "string"
-										},
-										"execution_id": {
-											"format": "uuid",
-											"type": "string"
-										},
-										"id": {
-											"format": "uuid",
-											"type": "string"
-										},
-										"level": {
-											"type": "string"
-										},
-										"message": {
-											"type": "string"
-										},
-										"sequence": {
-											"format": "int64",
-											"type": "integer"
-										},
-										"step_id": {
-											"format": "uuid",
-											"type": "string"
-										}
-									},
-									"type": "object"
-								},
-								"type": "array"
-							},
-							"next_after": {
-								"format": "int64",
-								"type": "integer"
-							}
-						},
-						"type": "object"
 					},
 					"message": {
 						"type": "string"
@@ -8187,6 +7948,10 @@
 											},
 											"type": "object"
 										},
+										"template_id": {
+											"format": "uuid",
+											"type": "string"
+										},
 										"updated_at": {
 											"format": "date-time",
 											"type": "string"
@@ -8513,19 +8278,6 @@
 						},
 						"nullable": true,
 						"type": "array"
-					}
-				},
-				"type": "object"
-			},
-			"RunExtensionRequest": {
-				"description": "RunExtensionRequest schema",
-				"properties": {
-					"variables": {
-						"additionalProperties": {
-							"description": "Variable value (string, number, boolean, or JSON as string)",
-							"type": "string"
-						},
-						"type": "object"
 					}
 				},
 				"type": "object"
@@ -15170,6 +14922,125 @@
 				]
 			}
 		},
+		"/api/v1/deploy/application/template": {
+			"post": {
+				"description": "Deploy application from template.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "deployApplicationFromTemplate",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"environment": "string",
+								"name": "string",
+								"server_ids": [],
+								"template_id": "00000000-0000-0000-0000-000000000000",
+								"variables": {}
+							},
+							"schema": {
+								"$ref": "#/components/schemas/CreateTemplateDeploymentRequest"
+							}
+						}
+					},
+					"description": "Request body for types.CreateTemplateDeploymentRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ApplicationResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Deploy application from template",
+				"tags": [
+					"template",
+					"api/v1/deploy",
+					"application"
+				]
+			}
+		},
 		"/api/v1/deploy/applications": {
 			"get": {
 				"description": "List applications.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
@@ -16248,114 +16119,6 @@
 				]
 			}
 		},
-		"/api/v1/extensions/by-extension-id/{extension_id}/executions": {
-			"get": {
-				"description": "List extension executions.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "listExtensionExecutions",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "extension_id",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": [],
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ListExecutionsResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": [],
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ListExecutionsResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "List extension executions",
-				"tags": [
-					"by-extension-id",
-					"api/v1/extensions"
-				]
-			}
-		},
 		"/api/v1/extensions/categories": {
 			"get": {
 				"description": "List extension categories.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
@@ -16456,697 +16219,7 @@
 				]
 			}
 		},
-		"/api/v1/extensions/execution/{execution_id}": {
-			"get": {
-				"description": "Get execution.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "getExecution",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "execution_id",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ExecutionResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ExecutionResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Get execution",
-				"tags": [
-					"execution",
-					"api/v1/extensions"
-				]
-			}
-		},
-		"/api/v1/extensions/execution/{execution_id}/cancel": {
-			"post": {
-				"description": "Cancel execution.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "cancelExecution",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "execution_id",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MessageResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MessageResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Cancel execution",
-				"tags": [
-					"execution",
-					"api/v1/extensions"
-				]
-			}
-		},
-		"/api/v1/extensions/execution/{execution_id}/logs": {
-			"get": {
-				"description": "List execution logs.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
-				"operationId": "listExecutionLogs",
-				"parameters": [
-					{
-						"description": "Return logs after this sequence",
-						"in": "query",
-						"name": "afterSeq",
-						"schema": {
-							"type": "integer"
-						}
-					},
-					{
-						"description": "Maximum logs to return",
-						"example": 20,
-						"in": "query",
-						"name": "limit",
-						"schema": {
-							"default": 20,
-							"maximum": 100,
-							"minimum": 1,
-							"type": "integer"
-						}
-					},
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "execution_id",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ListLogsResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ListLogsResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "List execution logs",
-				"tags": [
-					"execution",
-					"api/v1/extensions"
-				]
-			}
-		},
-		"/api/v1/extensions/{extension_id}/fork": {
-			"post": {
-				"description": "Fork extension.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "forkExtension",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "extension_id",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"example": {
-								"yaml_content": "string"
-							},
-							"schema": {
-								"$ref": "#/components/schemas/ForkExtensionRequest"
-							}
-						}
-					},
-					"description": "Request body for controller.ForkExtensionRequest",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ExtensionResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ExtensionResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Fork extension",
-				"tags": [
-					"{extension_id}",
-					"api/v1/extensions"
-				]
-			}
-		},
-		"/api/v1/extensions/{extension_id}/run": {
-			"post": {
-				"description": "Run extension.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "runExtension",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "extension_id",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"requestBody": {
-					"content": {
-						"*/*": {
-							"example": {
-								"variables": {}
-							},
-							"schema": {
-								"$ref": "#/components/schemas/RunExtensionRequest"
-							}
-						}
-					},
-					"description": "Request body for controller.RunExtensionRequest",
-					"required": true
-				},
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ExecutionResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"data": {},
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ExecutionResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Run extension",
-				"tags": [
-					"{extension_id}",
-					"api/v1/extensions"
-				]
-			}
-		},
 		"/api/v1/extensions/{id}": {
-			"delete": {
-				"description": "Delete forked extension.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
-				"operationId": "deleteForkedExtension",
-				"parameters": [
-					{
-						"in": "header",
-						"name": "Accept",
-						"schema": {
-							"type": "string"
-						}
-					},
-					{
-						"in": "path",
-						"name": "id",
-						"required": true,
-						"schema": {
-							"type": "string"
-						}
-					}
-				],
-				"responses": {
-					"200": {
-						"content": {
-							"application/json": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MessageResponse"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"message": "string",
-									"status": "string"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/MessageResponse"
-								}
-							}
-						},
-						"description": "OK"
-					},
-					"400": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "invalid_request",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"500": {
-						"content": {
-							"application/json": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							},
-							"application/xml": {
-								"example": {
-									"code": "internal_error",
-									"details": {},
-									"message": "Request failed"
-								},
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Internal Server Error _(panics)_"
-					},
-					"default": {
-						"description": ""
-					}
-				},
-				"summary": "Delete forked extension",
-				"tags": [
-					"{id}",
-					"api/v1/extensions"
-				]
-			},
 			"get": {
 				"description": "Get extension by ID.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
 				"operationId": "getExtensionByID",
@@ -26694,9 +25767,6 @@
 			"name": "exec"
 		},
 		{
-			"name": "execution"
-		},
-		{
 			"name": "generate"
 		},
 		{
@@ -26796,6 +25866,9 @@
 			"name": "status"
 		},
 		{
+			"name": "template"
+		},
+		{
 			"name": "test"
 		},
 		{
@@ -26815,9 +25888,6 @@
 		},
 		{
 			"name": "{container_id}"
-		},
-		{
-			"name": "{extension_id}"
 		},
 		{
 			"name": "{id}"

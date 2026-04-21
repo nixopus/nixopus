@@ -1,0 +1,12 @@
+services:
+  beszel:
+    image: ${IMAGE:-henrygd/beszel}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-beszel}
+    ports:
+      - "${HOST_PORT:-8090}:${CONTAINER_PORT:-8090}"
+    volumes:
+      - beszel_data:/beszel_data
+    restart: unless-stopped
+
+volumes:
+  beszel_data:

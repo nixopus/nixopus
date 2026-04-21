@@ -31,6 +31,12 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 	)
 	fuego.Post(
 		applicationGroup,
+		"/template",
+		deployController.HandleTemplateDeploy,
+		fuego.OptionSummary("Deploy application from template"),
+	)
+	fuego.Post(
+		applicationGroup,
 		"/project",
 		deployController.HandleCreateProject,
 		fuego.OptionSummary("Create project"),

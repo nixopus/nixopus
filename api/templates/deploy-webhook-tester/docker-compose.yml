@@ -1,0 +1,7 @@
+services:
+  webhook-tester:
+    image: ${IMAGE:-ghcr.io/tarampampam/webhook-tester}:${TAG:-2}
+    container_name: ${CONTAINER_NAME:-webhook-tester}
+    ports:
+      - "${HTTP_PORT:-8080}:${HTTP_CONTAINER_PORT:-8080}"
+    restart: unless-stopped
