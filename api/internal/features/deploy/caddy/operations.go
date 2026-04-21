@@ -49,9 +49,12 @@ func AddDomainsWithRetry(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Lo
 					targets[i] = caddygo.UpstreamTarget{Host: host, Port: port}
 				}
 				lbOpts := caddygo.LoadBalancingOptions{Policy: d.LBPolicy}
-				if d.LBPolicy == "first" {
-					lbOpts.HealthCheckPath = "/health"
-					lbOpts.HealthCheckIntervalSec = 10
+				if len(d.Upstreams) > 1 {
+					lbOpts.PassiveFailDurationSec = 30
+					lbOpts.PassiveMaxFails = 2
+					lbOpts.PassiveUnhealthyStatus = []int{502, 503}
+					lbOpts.TryDurationSec = 5
+					lbOpts.TryIntervalMs = 250
 				}
 				if err := client.AddDomainWithUpstreams(d.Domain, targets, lbOpts, caddygo.DomainOptions{}); err != nil {
 					return fmt.Errorf("failed to add domain %s: %w", d.Domain, err)

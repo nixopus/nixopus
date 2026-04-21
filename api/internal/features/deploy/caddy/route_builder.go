@@ -29,13 +29,13 @@ func BuildMultiUpstreamRoutes(
 
 	lbPolicy := mapRoutingStrategy(app.RoutingStrategy)
 
-	upstreams, primaryUpstreamIndex, err := resolveServerUpstreams(ctx, servers, fallbackPort, lgr)
-	if err != nil || len(upstreams) == 0 {
+	hosts, primaryHostIndex := resolveServerHosts(servers, lgr)
+	if len(hosts) == 0 {
 		return buildSingleUpstreamRoutes(domains, fallbackUpstream, fallbackPort, app.BuildPack)
 	}
 
 	if app.RoutingStrategy == shared_types.RoutingStrategyPrimaryFailover {
-		upstreams = orderPrimaryFirst(upstreams, primaryUpstreamIndex)
+		hosts = orderPrimaryFirst(hosts, primaryHostIndex)
 	}
 
 	var routes []DomainRoute
@@ -50,18 +50,10 @@ func BuildMultiUpstreamRoutes(
 				continue
 			}
 		}
-		var domainUpstreams []string
-		if app.BuildPack == shared_types.DockerCompose {
-			for _, u := range upstreams {
-				host, _, err := parseDial(u)
-				if err != nil {
-					lgr.Log(logger.Warning, fmt.Sprintf("skipping malformed upstream %s: %v", u, err), "")
-					continue
-				}
-				domainUpstreams = append(domainUpstreams, FormatDial(host, port))
-			}
-		} else {
-			domainUpstreams = upstreams
+
+		domainUpstreams := make([]string, 0, len(hosts))
+		for _, h := range hosts {
+			domainUpstreams = append(domainUpstreams, FormatDial(h, port))
 		}
 
 		if len(domainUpstreams) == 0 {
@@ -104,25 +96,28 @@ func buildSingleUpstreamRoutes(
 	return routes
 }
 
-func resolveServerUpstreams(ctx context.Context, servers []shared_types.ApplicationServer, port int, lgr *logger.Logger) ([]string, int, error) {
-	var upstreams []string
-	primaryUpstreamIndex := -1
+func resolveServerHosts(servers []shared_types.ApplicationServer, lgr *logger.Logger) ([]string, int) {
+	multiServer := len(servers) > 1
+	var hosts []string
+	primaryIndex := -1
 	for _, srv := range servers {
 		if srv.Server == nil || srv.Server.Host == nil {
 			continue
 		}
-		host := ""
-		if srv.Server.ProxyHost != nil && *srv.Server.ProxyHost != "" {
+		var host string
+		if multiServer && !srv.Server.IsDefault {
+			host = *srv.Server.Host
+		} else if srv.Server.ProxyHost != nil && *srv.Server.ProxyHost != "" {
 			host = *srv.Server.ProxyHost
 		} else {
 			host = *srv.Server.Host
 		}
 		if srv.IsPrimary {
-			primaryUpstreamIndex = len(upstreams)
+			primaryIndex = len(hosts)
 		}
-		upstreams = append(upstreams, FormatDial(host, port))
+		hosts = append(hosts, host)
 	}
-	return upstreams, primaryUpstreamIndex, nil
+	return hosts, primaryIndex
 }
 
 func orderPrimaryFirst(upstreams []string, primaryUpstreamIndex int) []string {
