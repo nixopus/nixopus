@@ -3,6 +3,7 @@ package tasks
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -22,12 +23,11 @@ func (t *TaskService) deployDockerCompose(ctx context.Context, TaskPayload share
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
 
 	composeFilePath := t.buildComposeFilePath(TaskPayload, repoPath, taskCtx)
+	envVars := GetMapFromString(TaskPayload.Application.EnvironmentVariables)
 
-	if err := t.discoverAndPersistComposeServices(orgCtx, composeFilePath, TaskPayload, taskCtx); err != nil {
+	if err := t.discoverAndPersistComposeServices(orgCtx, composeFilePath, TaskPayload, taskCtx, envVars); err != nil {
 		taskCtx.AddLog("Warning: failed to discover compose services: " + err.Error())
 	}
-
-	envVars := GetMapFromString(TaskPayload.Application.EnvironmentVariables)
 	outputCallback := t.createOutputCallback(taskCtx)
 
 	deploymentTypeEnum := shared_types.DeploymentType(deploymentType)
@@ -196,8 +196,20 @@ func (t *TaskService) composeRestart(ctx context.Context, composeFilePath string
 	return nil
 }
 
-func (t *TaskService) discoverAndPersistComposeServices(ctx context.Context, composeFilePath string, TaskPayload shared_types.TaskPayload, taskCtx *TaskContext) error {
-	parsed, err := ParseComposeFile(composeFilePath)
+func (t *TaskService) discoverAndPersistComposeServices(ctx context.Context, composeFilePath string, TaskPayload shared_types.TaskPayload, taskCtx *TaskContext, envVars map[string]string) error {
+	var parsed []ParsedComposeService
+	var err error
+
+	if TaskPayload.Application.Source == shared_types.SourceTemplate && TaskPayload.Application.TemplateID != "" {
+		localPath := filepath.Join(".", "templates", TaskPayload.Application.TemplateID, "docker-compose.yml")
+		data, readErr := os.ReadFile(localPath)
+		if readErr != nil {
+			return fmt.Errorf("failed to read template compose file: %w", readErr)
+		}
+		parsed, err = ParseComposeYAML(data, envVars)
+	} else {
+		parsed, err = ParseComposeFile(composeFilePath)
+	}
 	if err != nil {
 		return err
 	}

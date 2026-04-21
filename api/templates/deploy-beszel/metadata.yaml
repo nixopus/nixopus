@@ -1,0 +1,53 @@
+metadata:
+  id: "deploy-beszel"
+  name: "Beszel"
+  description: "Simple, lightweight server monitoring with Docker stats, historical data, and alerts. Beszel provides real-time monitoring of your server resources with a clean, intuitive interface for tracking CPU, memory, disk usage, and more."
+  author: "Nixopus Team"
+  icon: "https://beszel.dev/image/home-dashboard.png"
+  category: "Monitoring"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Beszel"
+    default: "henrygd/beszel"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Beszel container"
+    default: "beszel"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Beszel"
+    default: 8090
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Beszel"
+    default: 8090
+    is_required: true
+
+  data_volume_name:
+    type: "string"
+    description: "Named Docker volume for Beszel data persistence"
+    default: "beszel_data"
+    is_required: true
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Beszel (optional)"
+    default: ""
+    is_required: false

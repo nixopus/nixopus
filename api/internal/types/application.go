@@ -39,6 +39,7 @@ type Application struct {
 	ComposeServices      []*ComposeService        `json:"compose_services,omitempty" bun:"rel:has-many,join:id=application_id"`
 	IsLiveDeployment     bool                     `json:"is_live_deployment" bun:"is_live_deployment,notnull,default:false"`
 	Source               Source                   `json:"source" bun:"source,notnull,default:'github'"`
+	TemplateID           string                   `json:"template_id" bun:"template_id,notnull,default:''"`
 	RoutingStrategy      RoutingStrategy          `json:"routing_strategy" bun:"routing_strategy,notnull,default:'single'"`
 	Servers              []*ApplicationServer     `json:"servers,omitempty" bun:"rel:has-many,join:id=application_id"`
 }
@@ -207,10 +208,11 @@ func IsValidBuildPack(bp string) bool {
 type Source string
 
 const (
-	SourceGithub  Source = "github"
-	SourceS3      Source = "s3"
-	SourceZip     Source = "zip"
-	SourceStaging Source = "staging"
+	SourceGithub   Source = "github"
+	SourceS3       Source = "s3"
+	SourceZip      Source = "zip"
+	SourceStaging  Source = "staging"
+	SourceTemplate Source = "template"
 )
 
 type DeploymentRequestConfig struct {

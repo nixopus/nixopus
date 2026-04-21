@@ -21,24 +21,9 @@ type ExtensionVariable struct {
 	ValidationPattern string      `yaml:"validation_pattern"`
 }
 
-type ExecutionStep struct {
-	Name         string                 `yaml:"name"`
-	Type         string                 `yaml:"type"`
-	Properties   map[string]interface{} `yaml:"properties"`
-	Conditions   []string               `yaml:"conditions,omitempty"`
-	IgnoreErrors bool                   `yaml:"ignore_errors,omitempty"`
-	Timeout      int                    `yaml:"timeout,omitempty"`
-}
-
-type ExtensionExecution struct {
-	Run      []ExecutionStep `yaml:"run"`
-	Validate []ExecutionStep `yaml:"validate"`
-}
-
 type ExtensionYAML struct {
 	Metadata  ExtensionMetadata            `yaml:"metadata"`
 	Variables map[string]ExtensionVariable `yaml:"variables"`
-	Execution ExtensionExecution           `yaml:"execution"`
 }
 
 type Parser struct{}

@@ -1,0 +1,18 @@
+services:
+  duckdns:
+    image: ${IMAGE:-lscr.io/linuxserver/duckdns}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-duckdns}
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TIMEZONE:-Etc/UTC}
+      SUBDOMAINS: ${SUBDOMAINS:-}
+      TOKEN: ${TOKEN:-}
+      UPDATE_IP: ${UPDATE_IP:-}
+      LOG_FILE: ${LOG_FILE:-false}
+    volumes:
+      - duckdns-config:/config
+    restart: unless-stopped
+
+volumes:
+  duckdns-config:

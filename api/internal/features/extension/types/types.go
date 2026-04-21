@@ -24,34 +24,6 @@ type CategoriesResponse struct {
 	Data    []shared_types.ExtensionCategory `json:"data"`
 }
 
-// ExecutionResponse is the typed response for single execution
-type ExecutionResponse struct {
-	Status  string                           `json:"status"`
-	Message string                           `json:"message"`
-	Data    *shared_types.ExtensionExecution `json:"data"`
-}
-
-// ListExecutionsResponse is the typed response for listing executions
-type ListExecutionsResponse struct {
-	Status  string                            `json:"status"`
-	Message string                            `json:"message"`
-	Data    []shared_types.ExtensionExecution `json:"data"`
-}
-
-// ListLogsResponseData contains log data with pagination info
-type ListLogsResponseData struct {
-	Logs            []shared_types.ExtensionLog   `json:"logs"`
-	NextAfter       int64                         `json:"next_after"`
-	ExecutionStatus *shared_types.ExecutionStatus `json:"execution_status,omitempty"`
-}
-
-// ListLogsResponse is the typed response for listing logs
-type ListLogsResponse struct {
-	Status  string               `json:"status"`
-	Message string               `json:"message"`
-	Data    ListLogsResponseData `json:"data"`
-}
-
 // ListExtensionsResponse wraps the extension list response
 type ListExtensionsResponse struct {
 	Status  string                             `json:"status"`

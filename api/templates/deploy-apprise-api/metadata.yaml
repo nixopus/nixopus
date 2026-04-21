@@ -1,0 +1,83 @@
+metadata:
+  id: "deploy-apprise-api"
+  name: "Apprise API"
+  description: "Apprise API takes advantage of Apprise through your network with a user-friendly API. Send notifications to more than 100 services. An incredibly lightweight gateway to Apprise. Uses apprise-api image from linuxserver.io"
+  author: "Nixopus Team"
+  icon: "https://raw.githubusercontent.com/caronc/apprise/master/apprise/assets/themes/default/apprise-logo.png"
+  category: "Monitoring"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Apprise API"
+    default: "lscr.io/linuxserver/apprise-api"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Apprise API container"
+    default: "apprise-api"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Apprise API interface and API"
+    default: 8000
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Apprise API"
+    default: 8000
+    is_required: true
+
+  config_volume_name:
+    type: "string"
+    description: "Named Docker volume for Apprise API persistent configuration files"
+    default: "apprise-api-config"
+    is_required: true
+
+  attachments_volume_name:
+    type: "string"
+    description: "Named Docker volume for attachments storage (optional, required if APPRISE_ATTACH_SIZE > 0)"
+    default: "apprise-api-attachments"
+    is_required: false
+
+  puid:
+    type: "integer"
+    description: "User ID for running the container"
+    default: 1000
+    is_required: false
+
+  pgid:
+    type: "integer"
+    description: "Group ID for running the container"
+    default: 1000
+    is_required: false
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "Etc/UTC"
+    is_required: false
+
+  apprise_attach_size:
+    type: "integer"
+    description: "Max attachment size in MB. 0 disables attachments. Must have /attachments mounted to set to a positive value"
+    default: 0
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Apprise API (optional)"
+    default: ""
+    is_required: false

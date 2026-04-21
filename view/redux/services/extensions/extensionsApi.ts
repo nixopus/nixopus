@@ -4,7 +4,6 @@ import {
   Extension,
   ExtensionListParams,
   ExtensionListResponse,
-  ExtensionExecution,
   ExtensionCategory
 } from '@/redux/types/extension';
 import { EXTENSIONURLS } from '@/redux/api-conf';
@@ -12,7 +11,7 @@ import { EXTENSIONURLS } from '@/redux/api-conf';
 export const extensionsApi = createApi({
   reducerPath: 'extensionsApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: ['Extensions', 'Extension', 'Execution'],
+  tagTypes: ['Extensions', 'Extension'],
   endpoints: (builder) => ({
     getExtensions: builder.query<ExtensionListResponse, ExtensionListParams>({
       query: (params) => {
@@ -82,90 +81,6 @@ export const extensionsApi = createApi({
       providesTags: (result, error, { extensionId }) => [{ type: 'Extension', id: extensionId }],
       transformResponse: (response: { status: string; message: string; data: Extension }) =>
         response.data
-    }),
-    runExtension: builder.mutation<
-      ExtensionExecution,
-      { extensionId: string; body: FormData | { variables?: Record<string, unknown> } }
-    >({
-      query: ({ extensionId, body }) => {
-        const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
-        return {
-          url: EXTENSIONURLS.RUN_EXTENSION.replace('{extension_id}', extensionId),
-          method: 'POST',
-          body,
-          headers: isFormData ? undefined : { 'Content-Type': 'application/json' }
-        };
-      },
-      transformResponse: (response: {
-        status: string;
-        message: string;
-        data: ExtensionExecution;
-      }) => response.data
-    }),
-    forkExtension: builder.mutation<Extension, { extensionId: string; yaml_content?: string }>({
-      query: ({ extensionId, ...body }) => ({
-        url: EXTENSIONURLS.FORK_EXTENSION.replace('{extension_id}', extensionId),
-        method: 'POST',
-        body,
-        headers: { 'Content-Type': 'application/json' }
-      }),
-      invalidatesTags: ['Extensions'],
-      transformResponse: (response: { status: string; message: string; data: Extension }) =>
-        response.data
-    }),
-    deleteExtension: builder.mutation<{ status: string }, { id: string }>({
-      query: ({ id }) => ({
-        url: EXTENSIONURLS.DELETE_EXTENSION.replace('{id}', id),
-        method: 'DELETE'
-      }),
-      invalidatesTags: ['Extensions']
-    }),
-    cancelExecution: builder.mutation<{ status: string; message: string }, { executionId: string }>(
-      {
-        query: ({ executionId }) => ({
-          url: EXTENSIONURLS.CANCEL_EXECUTION.replace('{execution_id}', executionId),
-          method: 'POST'
-        })
-      }
-    ),
-    getExecution: builder.query<ExtensionExecution, { executionId: string }>({
-      query: ({ executionId }) => ({
-        url: EXTENSIONURLS.GET_EXECUTION.replace('{execution_id}', executionId),
-        method: 'GET'
-      }),
-      providesTags: (result, error, { executionId }) => [{ type: 'Execution', id: executionId }],
-      transformResponse: (response: {
-        status: string;
-        message: string;
-        data: ExtensionExecution;
-      }) => response.data
-    }),
-    listExecutions: builder.query<ExtensionExecution[], { extensionId: string }>({
-      query: ({ extensionId }) => ({
-        url: EXTENSIONURLS.LIST_EXECUTIONS.replace('{extension_id}', extensionId),
-        method: 'GET'
-      }),
-      providesTags: (result, error, { extensionId }) => [{ type: 'Extension', id: extensionId }],
-      transformResponse: (response: {
-        status: string;
-        message: string;
-        data: ExtensionExecution[];
-      }) => response.data || []
-    }),
-    getExecutionLogs: builder.query<
-      { logs: any[]; next_after: number; execution_status?: string },
-      { executionId: string; afterSeq?: number; limit?: number }
-    >({
-      query: ({ executionId, afterSeq = 0, limit = 200 }) => ({
-        url: `${EXTENSIONURLS.GET_EXECUTION_LOGS.replace('{execution_id}', executionId)}?afterSeq=${afterSeq}&limit=${limit}`,
-        method: 'GET'
-      }),
-      providesTags: (result, error, { executionId }) => [{ type: 'Execution', id: executionId }],
-      transformResponse: (response: {
-        status: string;
-        message: string;
-        data: { logs: any[]; next_after: number; execution_status?: string };
-      }) => response.data
     })
   })
 });
@@ -174,12 +89,5 @@ export const {
   useGetExtensionsQuery,
   useGetExtensionCategoriesQuery,
   useGetExtensionQuery,
-  useGetExtensionByExtensionIdQuery,
-  useRunExtensionMutation,
-  useForkExtensionMutation,
-  useDeleteExtensionMutation,
-  useCancelExecutionMutation,
-  useGetExecutionQuery,
-  useListExecutionsQuery,
-  useGetExecutionLogsQuery
+  useGetExtensionByExtensionIdQuery
 } = extensionsApi;

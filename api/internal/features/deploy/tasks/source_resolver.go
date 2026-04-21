@@ -189,6 +189,8 @@ func (t *TaskService) GetSourceResolver(source shared_types.Source) SourceResolv
 		return &ZipSourceResolver{task: t}
 	case shared_types.SourceStaging:
 		return &StagingSourceResolver{}
+	case shared_types.SourceTemplate:
+		return &TemplateSourceResolver{}
 	default:
 		return &GithubSourceResolver{task: t}
 	}

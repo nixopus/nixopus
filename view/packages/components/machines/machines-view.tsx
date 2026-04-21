@@ -21,7 +21,6 @@ import {
 import {
   Loader2,
   AlertCircle,
-  Globe,
   Plus,
   RotateCw,
   LayoutGrid,
@@ -45,7 +44,6 @@ import { useMachinesView } from '@/packages/hooks/machines/use-machines-view';
 import { useMachineLifecycle } from '@/packages/hooks/machines/use-machine-lifecycle';
 import { useMachineBackup } from '@/packages/hooks/backups/use-machine-backup';
 import type { Machine } from '@/packages/hooks/machines/use-machines';
-import type { Application } from '@/redux/types/applications';
 import type { LiveState } from '@/packages/hooks/machines/use-machine-lifecycle';
 
 export function formatRam(mb: number): string {
@@ -200,7 +198,7 @@ const MACHINE_NAV_OPTIONS = [
 
 export const MachineCard = React.memo(function MachineCard({ machine }: { machine: Machine }) {
   const router = useRouter();
-  const { serverApplications, customDomains, isInteractive, isFailed } = useMachineCard(machine);
+  const { isInteractive, isFailed } = useMachineCard(machine);
   const machineLabel = machine.domain || '';
   const isProvisioning = machine.status === 'provisioning';
   const isActive = machine.status === 'active' || (!isProvisioning && !isFailed);
@@ -299,11 +297,7 @@ export const MachineCard = React.memo(function MachineCard({ machine }: { machin
             contentClassName="space-y-1.5"
           >
             <MachineActionOverlay activeAction={activeAction} />
-            <MachineCardContent
-              status={machine.status}
-              applications={serverApplications}
-              customDomains={customDomains}
-            />
+            <MachineCardContent status={machine.status} />
             {(machine.total_vcpu > 0 || machine.total_ram_mb > 0 || machine.total_disk_gb > 0) && (
               <div className="flex items-center gap-3 pt-1.5 border-t border-border/50 flex-wrap">
                 {machine.total_vcpu > 0 && (
@@ -377,13 +371,9 @@ const MachineStatusBadge = React.memo(function MachineStatusBadge({
 });
 
 const MachineCardContent = React.memo(function MachineCardContent({
-  status,
-  applications = [],
-  customDomains = []
+  status
 }: {
   status?: Machine['status'];
-  applications?: Application[];
-  customDomains?: string[];
 }) {
   if (status === 'provisioning') {
     return (
@@ -401,40 +391,7 @@ const MachineCardContent = React.memo(function MachineCardContent({
     );
   }
 
-  return (
-    <div className="space-y-2">
-      {applications.length > 0 && (
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="font-medium">{applications.length}</span>
-            <span>{applications.length === 1 ? 'app' : 'apps'} deployed</span>
-          </div>
-          {customDomains.length > 0 && (
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Globe className="h-3 w-3" />
-                <span className="font-medium">Custom domains:</span>
-              </div>
-              <div className="flex flex-col gap-1 pl-4">
-                {customDomains.slice(0, 3).map((domain, idx) => (
-                  <span key={idx} title={domain} className="truncate">
-                    <TypographyMuted className="text-xs text-muted-foreground truncate">
-                      {domain}
-                    </TypographyMuted>
-                  </span>
-                ))}
-                {customDomains.length > 3 && (
-                  <TypographyMuted className="text-xs text-muted-foreground">
-                    +{customDomains.length - 3} more
-                  </TypographyMuted>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
+  return null;
 });
 
 function MachinesSkeleton({
@@ -479,12 +436,6 @@ function MachinesSkeleton({
             headerClassName="w-full min-w-0 pb-0 px-0"
             contentClassName="space-y-1.5"
           >
-            <div className="space-y-2">
-              <div className="space-y-1.5">
-                <Skeleton className="h-3.5 w-28" />
-                <Skeleton className="h-3.5 w-36" />
-              </div>
-            </div>
             <div className="flex items-center gap-3 pt-1.5 border-t border-border/50">
               <Skeleton className="h-3.5 w-12" />
               <Skeleton className="h-3.5 w-16" />

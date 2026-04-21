@@ -1,0 +1,65 @@
+metadata:
+  id: "deploy-netdata"
+  name: "Netdata"
+  description: "Real-time performance monitoring and troubleshooting for systems and applications"
+  author: "Nixopus Team"
+  icon: "https://www.netdata.cloud/img/netdata-logo.svg"
+  category: "Monitoring"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Netdata"
+    default: "netdata/netdata"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "edge"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the Netdata container"
+    default: "netdata"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose Netdata"
+    default: 19999
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port for Netdata"
+    default: 19999
+    is_required: true
+
+  netdata_config_volume:
+    type: "string"
+    description: "Named volume for Netdata configuration"
+    default: "netdataconfig"
+    is_required: true
+
+  netdata_lib_volume:
+    type: "string"
+    description: "Named volume for Netdata library data"
+    default: "netdatalib"
+    is_required: true
+
+  netdata_cache_volume:
+    type: "string"
+    description: "Named volume for Netdata cache"
+    default: "netdatacache"
+    is_required: true
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Netdata (optional)"
+    default: ""
+    is_required: false
