@@ -24,6 +24,7 @@ import { Checkbox } from '@nixopus/ui';
 import { Label } from '@nixopus/ui';
 import { ExtensionVariable } from '@/redux/types/extension';
 import { DialogWrapper } from '@nixopus/ui';
+import { ServerSelector } from './server-selector';
 
 export default function CategoryBadges({
   categories,
@@ -222,7 +223,8 @@ export function ExtensionInput({
   errors,
   handleChange,
   handleSubmit,
-  requiredFields
+  requiredFields,
+  serverSelector
 }: ExtensionInputProps) {
   if (noFieldsToShow) {
     return (
@@ -239,8 +241,19 @@ export function ExtensionInput({
         actions={actions}
         size="md"
       >
-        <div className="py-2">
+        <div className="py-2 space-y-4">
           <p className="text-sm text-muted-foreground">No additional fields required.</p>
+          {serverSelector?.isMultiServer && (
+            <ServerSelector
+              servers={serverSelector.servers}
+              selectedServerIds={serverSelector.selectedServerIds}
+              onToggleServer={serverSelector.toggleServer}
+              routingStrategy={serverSelector.routingStrategy}
+              onRoutingStrategyChange={serverSelector.setRoutingStrategy}
+              primaryServerId={serverSelector.primaryServerId}
+              onPrimaryServerIdChange={serverSelector.setPrimaryServerId}
+            />
+          )}
         </div>
       </DialogWrapper>
     );
@@ -287,6 +300,17 @@ export function ExtensionInput({
             />
           );
         })}
+        {serverSelector?.isMultiServer && (
+          <ServerSelector
+            servers={serverSelector.servers}
+            selectedServerIds={serverSelector.selectedServerIds}
+            onToggleServer={serverSelector.toggleServer}
+            routingStrategy={serverSelector.routingStrategy}
+            onRoutingStrategyChange={serverSelector.setRoutingStrategy}
+            primaryServerId={serverSelector.primaryServerId}
+            onPrimaryServerIdChange={serverSelector.setPrimaryServerId}
+          />
+        )}
       </div>
     </DialogWrapper>
   );

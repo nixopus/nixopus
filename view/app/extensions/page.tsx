@@ -45,7 +45,8 @@ export default function ExtensionsPage() {
     errors,
     handleChange,
     handleSubmit,
-    requiredFields
+    requiredFields,
+    serverSelector
   } = useExtensions();
 
   return (
@@ -122,6 +123,7 @@ export default function ExtensionsPage() {
         handleSubmit={handleSubmit}
         requiredFields={requiredFields}
         actions={actions}
+        serverSelector={serverSelector}
       />
     </PageLayout>
   );
