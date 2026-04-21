@@ -1,0 +1,60 @@
+metadata:
+  id: "deploy-n8n"
+  name: "n8n"
+  description: "n8n is a workflow automation tool that lets you connect applications and automate tasks easily."
+  author: "Nixopus Team"
+  icon: "https://n8n.io/brandguidelines/logo-dark.svg"
+  category: "Development"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+  featured: true
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for n8n"
+    default: "docker.n8n.io/n8nio/n8n"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "n8n"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose"
+    default: 5678
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port to map"
+    default: 5678
+    is_required: true
+
+  data_volume:
+    type: "string"
+    description: "Volume name for persistent n8n data"
+    default: "n8n_data"
+    is_required: true
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "UTC"
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for n8n (optional)"
+    default: ""
+    is_required: false

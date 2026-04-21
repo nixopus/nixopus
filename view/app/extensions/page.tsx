@@ -8,7 +8,6 @@ import { PaginationWrapper } from '@nixopus/ui';
 import { MainPageHeader } from '@nixopus/ui';
 import { SearchBar } from '@nixopus/ui';
 import { SelectWrapper } from '@nixopus/ui';
-import { Skeleton } from '@nixopus/ui';
 import { ExtensionSortField, SortDirection } from '@/redux/types/extension';
 import { ExtensionGrid, ExtensionInput } from '@/packages/components/extension';
 import CategoryBadges from '@/packages/components/extension';
@@ -32,23 +31,13 @@ export default function ExtensionsPage() {
     handlePageChange,
     handleInstall,
     handleViewDetails,
-    handleForkClick,
     handleRun,
     runModalOpen,
     setRunModalOpen,
     selectedExtension,
     sortOptions,
-    forkOpen,
-    setForkOpen,
-    confirmOpen,
-    setConfirmOpen,
     expanded,
     setExpanded,
-    forkYaml,
-    setForkYaml,
-    preview,
-    variableColumns,
-    doFork,
     actions,
     isOnlyProxyDomain,
     noFieldsToShow,
@@ -105,19 +94,8 @@ export default function ExtensionsPage() {
           error={error || undefined}
           onInstall={handleInstall}
           onViewDetails={handleViewDetails}
-          onForkClick={handleForkClick}
-          setConfirmOpen={setConfirmOpen}
           expanded={expanded}
           setExpanded={setExpanded}
-          forkOpen={forkOpen}
-          setForkOpen={setForkOpen}
-          confirmOpen={confirmOpen}
-          forkYaml={forkYaml}
-          setForkYaml={setForkYaml}
-          preview={preview}
-          variableColumns={variableColumns}
-          doFork={doFork}
-          selectedExtension={selectedExtension}
         />
 
         {totalPages > 1 && (

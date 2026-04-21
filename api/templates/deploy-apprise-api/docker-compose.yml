@@ -1,0 +1,19 @@
+services:
+  apprise-api:
+    image: ${IMAGE:-lscr.io/linuxserver/apprise-api}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-apprise-api}
+    ports:
+      - "${HOST_PORT:-8000}:${CONTAINER_PORT:-8000}"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TIMEZONE:-Etc/UTC}
+      APPRISE_ATTACH_SIZE: ${APPRISE_ATTACH_SIZE:-0}
+    volumes:
+      - apprise-api-config:/config
+      - apprise-api-attachments:/attachments
+    restart: unless-stopped
+
+volumes:
+  apprise-api-config:
+  apprise-api-attachments:

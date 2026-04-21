@@ -1,0 +1,15 @@
+services:
+  dozzle:
+    image: ${IMAGE:-amir20/dozzle}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-dozzle}
+    ports:
+      - "${HOST_PORT:-8080}:${CONTAINER_PORT:-8080}"
+    environment:
+      DOZZLE_LEVEL: info
+      DOZZLE_TAILSIZE: "300"
+      DOZZLE_FILTER: ""
+      DOZZLE_ACTIONS: ${ENABLE_ACTIONS:-false}
+      DOZZLE_SHELL: ${ENABLE_SHELL:-false}
+    volumes:
+      - ${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock:ro
+    restart: unless-stopped

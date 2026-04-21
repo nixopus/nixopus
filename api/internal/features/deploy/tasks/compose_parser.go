@@ -3,11 +3,14 @@ package tasks
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
+
+var envVarRe = regexp.MustCompile(`\$\{([^:}]+)(?::-([^}]*))?\}`)
 
 type ParsedComposeService struct {
 	ServiceName string
@@ -34,15 +37,20 @@ func ParseComposeFile(filePath string) ([]ParsedComposeService, error) {
 	return ParseComposeYAML(data)
 }
 
-func ParseComposeYAML(data []byte) ([]ParsedComposeService, error) {
+func ParseComposeYAML(data []byte, envVars ...map[string]string) ([]ParsedComposeService, error) {
 	var cf composeFile
 	if err := yaml.Unmarshal(data, &cf); err != nil {
 		return nil, fmt.Errorf("failed to parse compose YAML: %w", err)
 	}
 
+	var env map[string]string
+	if len(envVars) > 0 {
+		env = envVars[0]
+	}
+
 	var result []ParsedComposeService
 	for name, svc := range cf.Services {
-		ports := extractPorts(svc.Ports)
+		ports := extractPorts(svc.Ports, env)
 		if len(ports) == 0 {
 			ports = extractExposePorts(svc.Expose)
 		}
@@ -82,7 +90,7 @@ func extractExposePorts(raw []interface{}) []int {
 
 // extractPorts handles both short syntax ("8080:80", "3000") and long syntax
 // (map with target/published keys) from docker-compose port definitions.
-func extractPorts(raw []interface{}) []int {
+func extractPorts(raw []interface{}, env map[string]string) []int {
 	var ports []int
 	seen := make(map[int]bool)
 
@@ -91,7 +99,7 @@ func extractPorts(raw []interface{}) []int {
 
 		switch v := entry.(type) {
 		case string:
-			extracted = parseShortPortSyntax(v)
+			extracted = parseShortPortSyntax(v, env)
 		case int:
 			extracted = []int{v}
 		case float64:
@@ -111,14 +119,39 @@ func extractPorts(raw []interface{}) []int {
 	return ports
 }
 
+// resolveEnvVars replaces ${VAR:-default} with the env var value if present,
+// otherwise falls back to the default. This ensures compose service discovery
+// uses the actual runtime port values, not just template defaults.
+func resolveEnvVars(s string, env map[string]string) string {
+	return envVarRe.ReplaceAllStringFunc(s, func(match string) string {
+		parts := envVarRe.FindStringSubmatch(match)
+		if len(parts) < 2 {
+			return match
+		}
+		varName := parts[1]
+		defaultVal := ""
+		if len(parts) >= 3 {
+			defaultVal = parts[2]
+		}
+		if env != nil {
+			if val, ok := env[varName]; ok {
+				return val
+			}
+		}
+		return defaultVal
+	})
+}
+
 // parseShortPortSyntax handles formats like:
 // "8080:80" -> published=8080, "3000" -> published=3000,
 // "127.0.0.1:8080:80" -> published=8080, "8080-8090:80-90" -> published=8080
-func parseShortPortSyntax(s string) []int {
+func parseShortPortSyntax(s string, env map[string]string) []int {
 	s = strings.TrimSpace(s)
 	if s == "" {
 		return nil
 	}
+
+	s = resolveEnvVars(s, env)
 
 	// Strip protocol suffix like "/tcp" or "/udp"
 	if idx := strings.LastIndex(s, "/"); idx != -1 {

@@ -17,8 +17,6 @@ export type ExtensionCategory =
 
 export type ValidationStatus = 'not_validated' | 'valid' | 'invalid';
 
-export type ExecutionStatus = 'pending' | 'running' | 'completed' | 'failed';
-
 export type ExtensionType = 'install' | 'run';
 
 export interface ExtensionVariable {
@@ -55,52 +53,6 @@ export interface Extension {
   updated_at: string;
   deleted_at?: string;
   variables?: ExtensionVariable[];
-}
-
-export interface ExtensionExecution {
-  id: string;
-  extension_id: string;
-  server_hostname: string;
-  variable_values: string;
-  status: ExecutionStatus;
-  started_at: string;
-  completed_at?: string;
-  exit_code: number;
-  error_message: string;
-  execution_log: string;
-  created_at: string;
-  extension?: Extension;
-  log_seq?: number;
-}
-
-export interface ExecutionStep {
-  id: string;
-  execution_id: string;
-  step_name: string;
-  phase: string;
-  step_order: number;
-  started_at: string;
-  completed_at?: string;
-  status: ExecutionStatus;
-  exit_code: number;
-  output: string;
-  created_at: string;
-}
-
-export interface ExtensionLog {
-  id: string;
-  execution_id: string;
-  step_id?: string;
-  level: string;
-  message: string;
-  data: unknown;
-  sequence: number;
-  created_at: string;
-}
-
-export interface ListLogsResponse {
-  logs: ExtensionLog[];
-  next_after: number;
 }
 
 export type SortDirection = 'asc' | 'desc';

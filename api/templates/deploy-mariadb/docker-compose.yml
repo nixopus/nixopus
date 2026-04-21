@@ -1,0 +1,21 @@
+services:
+  mariadb:
+    image: ${IMAGE:-lscr.io/linuxserver/mariadb}:${TAG:-latest}
+    container_name: ${CONTAINER_NAME:-mariadb}
+    ports:
+      - "${HOST_PORT:-3306}:${CONTAINER_PORT:-3306}"
+    environment:
+      PUID: ${PUID:-1000}
+      PGID: ${PGID:-1000}
+      TZ: ${TIMEZONE:-Etc/UTC}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-}
+      MYSQL_USER: ${MYSQL_USER:-}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
+      REMOTE_SQL: ${REMOTE_SQL:-}
+    volumes:
+      - mariadb-config:/config
+    restart: unless-stopped
+
+volumes:
+  mariadb-config:

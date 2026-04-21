@@ -1,0 +1,71 @@
+metadata:
+  id: "deploy-gotify"
+  name: "Gotify"
+  description: "Gotify is a simple server for sending and receiving messages in real-time, perfect for push notifications and alerts."
+  author: "Nixopus Team"
+  icon: "https://raw.githubusercontent.com/gotify/logo/master/gotify-logo.png"
+  category: "Monitoring"
+  type: "install"
+  version: "1.0.0"
+  isVerified: false
+
+variables:
+  image:
+    type: "string"
+    description: "Docker image for Gotify"
+    default: "ghcr.io/gotify/server"
+    is_required: true
+
+  tag:
+    type: "string"
+    description: "Docker image tag"
+    default: "latest"
+    is_required: true
+
+  container_name:
+    type: "string"
+    description: "Name of the container"
+    default: "gotify"
+    is_required: true
+
+  host_port:
+    type: "integer"
+    description: "Host port to expose"
+    default: 80
+    is_required: true
+
+  container_port:
+    type: "integer"
+    description: "Container port to map"
+    default: 80
+    is_required: true
+
+  data_volume:
+    type: "string"
+    description: "Docker volume name for Gotify persistent data"
+    default: "gotify_data"
+    is_required: true
+
+  timezone:
+    type: "string"
+    description: "Timezone (TZ) environment variable"
+    default: "UTC"
+    is_required: false
+
+  default_user:
+    type: "string"
+    description: "Default admin username"
+    default: "admin"
+    is_required: false
+
+  default_password:
+    type: "string"
+    description: "Default admin password"
+    default: "admin"
+    is_required: false
+
+  proxy_domain:
+    type: "string"
+    description: "Domain name for Gotify (optional)"
+    default: ""
+    is_required: false

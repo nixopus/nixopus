@@ -41,17 +41,23 @@ export function MachineProvider({ machineId, children }: MachineProviderProps) {
 
   const resolvedId = isExplicit ? explicitId! : (data?.servers?.[0]?.id ?? null);
 
-  const prevMachineIdRef = useRef<string | null>(resolvedId);
+  // Track the last resolved machine ID so we can distinguish:
+  //   - initial null -> first real value (just initialization, do NOT wipe caches)
+  //   - real-A -> real-B (genuine machine switch, wipe machine-scoped caches)
+  // Wiping on initialization would clear caches that other pages just populated,
+  // causing skeletons to flash even though data was already fetched.
+  const prevMachineIdRef = useRef<string | null>(null);
   useEffect(() => {
-    if (resolvedId && resolvedId !== prevMachineIdRef.current) {
-      prevMachineIdRef.current = resolvedId;
-      dispatch(deployApi.util.resetApiState());
-      dispatch(containerApi.util.resetApiState());
-      dispatch(imagesApi.util.resetApiState());
-      dispatch(fileManagersApi.util.resetApiState());
-      dispatch(machineBackupApi.util.resetApiState());
-      PLUGIN_MACHINE_APIS.forEach((path) => dispatch({ type: `${path}/resetApiState` }));
-    }
+    if (!resolvedId) return;
+    const prev = prevMachineIdRef.current;
+    prevMachineIdRef.current = resolvedId;
+    if (prev === null || prev === resolvedId) return;
+    dispatch(deployApi.util.resetApiState());
+    dispatch(containerApi.util.resetApiState());
+    dispatch(imagesApi.util.resetApiState());
+    dispatch(fileManagersApi.util.resetApiState());
+    dispatch(machineBackupApi.util.resetApiState());
+    PLUGIN_MACHINE_APIS.forEach((path) => dispatch({ type: `${path}/resetApiState` }));
   }, [resolvedId, dispatch]);
 
   const value = useMemo(() => ({ machineId: resolvedId, isExplicit }), [resolvedId, isExplicit]);
