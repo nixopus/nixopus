@@ -287,11 +287,13 @@ type ApplicationServersResponse struct {
 }
 
 type CreateTemplateDeploymentRequest struct {
-	TemplateID  string                   `json:"template_id"`
-	Name        string                   `json:"name"`
-	Variables   map[string]interface{}   `json:"variables"`
-	ServerIDs   []uuid.UUID              `json:"server_ids,omitempty"`
-	Environment shared_types.Environment `json:"environment,omitempty"`
+	TemplateID      string                       `json:"template_id"`
+	Name            string                       `json:"name"`
+	Variables       map[string]interface{}       `json:"variables"`
+	ServerIDs       []uuid.UUID                  `json:"server_ids,omitempty"`
+	PrimaryServerID *uuid.UUID                   `json:"primary_server_id,omitempty"`
+	RoutingStrategy shared_types.RoutingStrategy `json:"routing_strategy,omitempty"`
+	Environment     shared_types.Environment     `json:"environment,omitempty"`
 }
 
 type CancelDeploymentRequest struct {

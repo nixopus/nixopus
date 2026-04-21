@@ -485,6 +485,8 @@ github.com/quic-go/quic-go v0.59.0 h1:OLJkp1Mlm/aS7dpKgTc6cnpynnD2Xg7C1pwL6vy/SA
 github.com/quic-go/quic-go v0.59.0/go.mod h1:upnsH4Ju1YkqpLXC305eW3yDZ4NfnNbmQRCMWS58IKU=
 github.com/raghavyuva/caddygo v0.0.0-20260420091323-5535e8e09c1d h1:69YO9SO98fuqGkbn6iw2+C2MqQLs9hW9bIXerVGL3wI=
 github.com/raghavyuva/caddygo v0.0.0-20260420091323-5535e8e09c1d/go.mod h1:nXAW//4ImRs0bC/UHcqsdYpif2YCvgFdxUAHE7JqdCc=
+github.com/raghavyuva/caddygo v0.0.0-20260421075009-799160652657 h1:jUChxrQOTZYjK6DjbsB9ezhgaLtaYAfOFiuAr8fxm0g=
+github.com/raghavyuva/caddygo v0.0.0-20260421075009-799160652657/go.mod h1:nXAW//4ImRs0bC/UHcqsdYpif2YCvgFdxUAHE7JqdCc=
 github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
 github.com/robfig/cron/v3 v3.0.1/go.mod h1:eQICP3HwyT7UooqI/z+Ov+PtYAWygg1TEWWzGIFLtro=
 github.com/rogpeppe/go-internal v1.14.1 h1:UQB4HGPB6osV0SQTLymcB4TgvyWu6ZyliaW0tI/otEQ=

@@ -109,8 +109,13 @@ func WithSFTPClientFromPool(ctx context.Context, fn func(*sftp.Client) error) er
 		return err
 	}
 
+	cacheKey := orgID
+	if serverIDStr, ok := ctx.Value(types.ServerIDKey).(string); ok && serverIDStr != "" {
+		cacheKey = orgID + ":" + serverIDStr
+	}
+
 	for attempt := 0; attempt < maxRetries; attempt++ {
-		client, release, fromPool, createErr := pool.getOrCreate(ctx, orgID, sshMgr)
+		client, release, fromPool, createErr := pool.getOrCreate(ctx, cacheKey, sshMgr)
 		if client == nil {
 			if createErr != nil && isClosedConnectionError(createErr) && attempt < maxRetries-1 {
 				// Stale connection (e.g. "use of closed network connection"); evicted by getOrCreate, retry
@@ -129,7 +134,7 @@ func WithSFTPClientFromPool(ctx context.Context, fn func(*sftp.Client) error) er
 		if err != nil {
 			if isClosedConnectionError(err) {
 				doRelease() // Release before evict so refcount is accurate
-				pool.evict(orgID, client)
+				pool.evict(cacheKey, client)
 				if fromPool {
 					sshMgr.CloseConnection("")
 				}
@@ -139,7 +144,7 @@ func WithSFTPClientFromPool(ctx context.Context, fn func(*sftp.Client) error) er
 			}
 			return err
 		}
-		pool.touch(orgID)
+		pool.touch(cacheKey)
 		return nil
 	}
 	return fmt.Errorf("SFTP operation failed after %d attempts", maxRetries)

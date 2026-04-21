@@ -78,6 +78,8 @@ func (c *DeployController) HandleTemplateDeploy(f fuego.ContextWithBody[types.Cr
 		EnvironmentVariables: envVars,
 		Source:               shared_types.SourceTemplate,
 		ServerIDs:            data.ServerIDs,
+		PrimaryServerID:      data.PrimaryServerID,
+		RoutingStrategy:      data.RoutingStrategy,
 	}
 
 	if proxyDomain != "" {

@@ -87,8 +87,8 @@ type DockerRepository interface {
 
 	ComposeUp(composeFilePath string, envVars map[string]string) (string, error)
 	ComposeUpWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string)) (string, error)
-	ComposeDown(composeFilePath string) error
-	ComposeDownWithCallback(composeFilePath string, outputCallback func(string)) error
+	ComposeDown(composeFilePath string, envVars map[string]string) error
+	ComposeDownWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string)) error
 	ComposeRestart(composeFilePath string, envVars map[string]string, outputCallback func(string)) error
 	ComposeBuild(composeFilePath string, envVars map[string]string) error
 	RemoveImage(imageName string, opts image.RemoveOptions) error
@@ -134,6 +134,9 @@ func NewDockerServiceWithServer(db *bun.DB, ctx context.Context, organizationID 
 	}
 
 	orgCtx := context.WithValue(context.Background(), shared_types.OrganizationIDKey, organizationID.String())
+	if serverIDStr, ok := ctx.Value(shared_types.ServerIDKey).(string); ok && serverIDStr != "" {
+		orgCtx = context.WithValue(orgCtx, shared_types.ServerIDKey, serverIDStr)
+	}
 	svc := &DockerService{
 		Cli:       cli,
 		Ctx:       orgCtx,
@@ -551,13 +554,13 @@ func (s *DockerService) ComposeUpWithCallback(composeFilePath string, envVars ma
 }
 
 // ComposeDown stops and removes the Docker Compose services
-func (s *DockerService) ComposeDown(composeFilePath string) error {
-	return s.ComposeDownWithCallback(composeFilePath, nil)
+func (s *DockerService) ComposeDown(composeFilePath string, envVars map[string]string) error {
+	return s.ComposeDownWithCallback(composeFilePath, envVars, nil)
 }
 
 // ComposeDownWithCallback stops and removes Docker Compose services with streaming output
-func (s *DockerService) ComposeDownWithCallback(composeFilePath string, outputCallback func(string)) error {
-	command, err := s.buildComposeCommand("down", composeFilePath, nil)
+func (s *DockerService) ComposeDownWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string)) error {
+	command, err := s.buildComposeCommand("down", composeFilePath, envVars)
 	if err != nil {
 		return err
 	}

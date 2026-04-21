@@ -26,7 +26,7 @@ require (
 	github.com/moby/term v0.5.2
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/pkg/sftp v1.13.5
-	github.com/raghavyuva/caddygo v0.0.0-20260420091323-5535e8e09c1d
+	github.com/raghavyuva/caddygo v0.0.0-20260421075009-799160652657
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/viper v1.21.0

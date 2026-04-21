@@ -245,9 +245,12 @@ func addRouteToClient(client *caddygo.Client, route DomainRoute) error {
 			targets[i] = caddygo.UpstreamTarget{Host: host, Port: port}
 		}
 		lbOpts := caddygo.LoadBalancingOptions{Policy: route.LBPolicy}
-		if route.LBPolicy == "first" {
-			lbOpts.HealthCheckPath = "/health"
-			lbOpts.HealthCheckIntervalSec = 10
+		if len(route.Upstreams) > 1 {
+			lbOpts.PassiveFailDurationSec = 30
+			lbOpts.PassiveMaxFails = 2
+			lbOpts.PassiveUnhealthyStatus = []int{502, 503}
+			lbOpts.TryDurationSec = 5
+			lbOpts.TryIntervalMs = 250
 		}
 		return client.AddDomainWithUpstreams(route.Domain, targets, lbOpts, caddygo.DomainOptions{})
 	}
