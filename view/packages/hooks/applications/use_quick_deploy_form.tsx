@@ -14,6 +14,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Github } from 'lucide-react';
 import { defaultValidator } from './use_multiple_domains';
+import { useServerSelector } from '@/packages/hooks/deploy/use-server-selector';
 
 interface UseQuickDeployFormProps {
   repository?: string;
@@ -33,6 +34,7 @@ export function useQuickDeployForm({
     useGetGithubRepositoryBranchesMutation();
   const [createProject, { isLoading: isCreatingProject }] = useCreateProjectMutation();
   const [previewCompose] = usePreviewComposeServicesMutation();
+  const serverSelector = useServerSelector();
 
   const [availableBranches, setAvailableBranches] = useState<{ label: string; value: string }[]>(
     []
@@ -325,7 +327,16 @@ export function useQuickDeployForm({
         name: values.application_name,
         repository: values.repository,
         branch: values.branch,
-        build_pack: values.build_pack as BuildPack
+        build_pack: values.build_pack as BuildPack,
+        ...(serverSelector.selectedServerIds.length > 0 && {
+          server_ids: serverSelector.selectedServerIds
+        }),
+        ...(serverSelector.routingStrategy && {
+          routing_strategy: serverSelector.routingStrategy
+        }),
+        ...(serverSelector.primaryServerId && {
+          primary_server_id: serverSelector.primaryServerId
+        })
       };
 
       if (isCompose) {
@@ -449,6 +460,7 @@ export function useQuickDeployForm({
     isCreatingProject,
     composeServices,
     isPreviewingCompose,
-    previewError
+    previewError,
+    serverSelector
   };
 }

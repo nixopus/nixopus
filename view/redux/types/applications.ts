@@ -33,6 +33,8 @@ export type ApplicationServer = {
   };
 };
 
+export type RoutingStrategy = 'single' | 'round_robin' | 'primary_failover';
+
 export type Application = {
   id: string;
   name: string;
@@ -60,6 +62,7 @@ export type Application = {
   base_path?: string;
   labels?: string[];
   family_id?: string;
+  routing_strategy?: RoutingStrategy;
 };
 
 export type ApplicationStatus = {
@@ -198,6 +201,8 @@ export interface CreateProjectRequest {
   dockerfile_path?: string;
   base_path?: string;
   server_ids?: string[];
+  routing_strategy?: RoutingStrategy;
+  primary_server_id?: string;
 }
 
 // DeployProjectRequest is used to trigger deployment of an existing project.
@@ -224,6 +229,8 @@ export interface CreateTemplateDeploymentRequest {
   name: string;
   variables: Record<string, unknown>;
   server_ids?: string[];
+  routing_strategy?: RoutingStrategy;
+  primary_server_id?: string;
   environment?: string;
 }
 
