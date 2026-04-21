@@ -7,10 +7,6 @@ name: Test Nixopus API
 on:
   pull_request:
     branches: [master]
-    paths:
-      - 'api/**'
-      - 'docker-compose-test.yml'
-      - '.github/workflows/test.yaml'
   push:
     branches: [master]
     paths:
@@ -31,7 +27,30 @@ permissions:
   contents: read
 
 jobs:
+  detect-changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            api:
+              - 'api/**'
+              - 'docker-compose-test.yml'
+              - '.github/workflows/test.yaml'
+
   test:
+    needs: detect-changes
+    if: |
+      always() &&
+      (needs.detect-changes.result == 'skipped' || needs.detect-changes.outputs.api == 'true')
     runs-on: ubuntu-latest
 
     steps:
