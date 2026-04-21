@@ -26,7 +26,7 @@ import { PasswordInputField } from '@nixopus/ui';
 import Link from 'next/link';
 import nixopusLogo from '@/public/nixopus_logo_transparent.png';
 import { UseFormReturn } from 'react-hook-form';
-import { RegisterForm } from '../hooks/auth/use-register';
+import { RegisterForm } from '../../hooks/auth/use-register';
 
 export const AdminRegistered = () => {
   const { t } = useTranslation();

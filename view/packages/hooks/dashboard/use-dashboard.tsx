@@ -13,13 +13,13 @@ import {
   ContainersWidget,
   NetworkWidget,
   SystemInfoCard
-} from '@/packages/components/dashboard';
-import { LoadAverageCard } from '@/packages/components/dashboard';
-import { CPUUsageCard } from '@/packages/components/dashboard';
-import { MemoryUsageCard } from '@/packages/components/dashboard';
-import { DiskUsageCard } from '@/packages/components/dashboard';
-import { DeploymentsWidget } from '@/packages/components/deployments-widget';
-import { DeploymentStatsWidget } from '@/packages/components/deployments-widget';
+} from '@/packages/components/dashboard/dashboard';
+import { LoadAverageCard } from '@/packages/components/dashboard/dashboard';
+import { CPUUsageCard } from '@/packages/components/dashboard/dashboard';
+import { MemoryUsageCard } from '@/packages/components/dashboard/dashboard';
+import { DiskUsageCard } from '@/packages/components/dashboard/dashboard';
+import { DeploymentsWidget } from '@/packages/components/deployments/deployments-widget';
+import { DeploymentStatsWidget } from '@/packages/components/deployments/deployments-widget';
 
 export const useDashboard = () => {
   const { isFeatureEnabled, isLoading: isFeatureFlagsLoading } = useFeatureFlags();

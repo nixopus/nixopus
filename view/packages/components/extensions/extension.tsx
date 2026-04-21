@@ -24,7 +24,7 @@ import { Checkbox } from '@nixopus/ui';
 import { Label } from '@nixopus/ui';
 import { ExtensionVariable } from '@/redux/types/extension';
 import { DialogWrapper } from '@nixopus/ui';
-import { ServerSelector } from './server-selector';
+import { ServerSelector } from '../applications/server-selector';
 
 export default function CategoryBadges({
   categories,

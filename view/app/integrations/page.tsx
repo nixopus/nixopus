@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { ResourceGuard } from '@/packages/components/rbac';
+import { ResourceGuard } from '@/packages/components/rbac/rbac';
 import { TypographyH2, TypographyMuted } from '@nixopus/ui';
 import { IntegrationsPage } from '@/packages/components/integrations';
 

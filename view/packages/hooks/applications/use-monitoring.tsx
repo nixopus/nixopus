@@ -5,8 +5,8 @@ import {
   DeploymentOverview,
   DeploymentHealthChart,
   LatestDeployment
-} from '@/packages/components/application-details';
-import { HealthCheckCard } from '@/packages/components/application-healthcheck';
+} from '@/packages/components/applications/application-details';
+import { HealthCheckCard } from '@/packages/components/applications/application-healthcheck';
 import { DashboardItem } from '@/packages/types/layout';
 
 interface UseMonitoringReturn {

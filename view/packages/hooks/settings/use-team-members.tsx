@@ -18,7 +18,7 @@ import {
 import { TrashIcon, ChevronDownIcon, ChevronUpIcon, PencilIcon } from 'lucide-react';
 import { DotsVerticalIcon } from '@radix-ui/react-icons';
 import { Avatar, AvatarFallback, AvatarImage } from '@nixopus/ui';
-import { ResourceGuard } from '@/packages/components/rbac';
+import { ResourceGuard } from '@/packages/components/rbac/rbac';
 import { TypographyMuted } from '@nixopus/ui';
 import { EditUser, MAX_VISIBLE_PERMISSIONS } from '../../types/settings';
 import { useTranslation } from '../shared/use-translation';

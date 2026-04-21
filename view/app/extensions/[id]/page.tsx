@@ -2,9 +2,9 @@
 
 import PageLayout from '@/packages/layouts/page-layout';
 import useExtensionDetails from '../../../packages/hooks/extensions/use-extension-detail';
-import { ExtensionInput } from '@/packages/components/extension';
+import { ExtensionInput } from '@/packages/components/extensions/extension';
 import { Button } from '@nixopus/ui';
-import { OverviewTab } from '@/packages/components/extension-tabs';
+import { OverviewTab } from '@/packages/components/extensions/extension-tabs';
 import { SubPageHeader } from '@nixopus/ui';
 
 export default function ExtensionDetailsPage() {

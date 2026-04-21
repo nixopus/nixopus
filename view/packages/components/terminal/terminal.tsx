@@ -10,14 +10,14 @@ import {
   TerminalHeaderProps,
   SessionTabProps,
   TerminalPaneProps
-} from '../types/terminal';
-import useTerminalPane from '../hooks/terminal/use-terminal-pane';
+} from '../../types/terminal';
+import useTerminalPane from '../../hooks/terminal/use-terminal-pane';
 import '@xterm/xterm/css/xterm.css';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useFeatureFlags } from '@/packages/hooks/shared/features_provider';
-import DisabledFeature from '@/packages/components/rbac';
+import DisabledFeature from '@/packages/components/rbac/rbac';
 import { FeatureNames } from '@/packages/types/feature-flags';
-import { AnyPermissionGuard } from '@/packages/components/rbac';
+import { AnyPermissionGuard } from '@/packages/components/rbac/rbac';
 import { useRBAC } from '@/packages/utils/rbac';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@nixopus/ui';
 import { useTerminalSessions } from '@/packages/hooks/terminal/use-terminal-sessions';

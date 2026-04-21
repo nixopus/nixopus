@@ -9,8 +9,8 @@ import { MainPageHeader } from '@nixopus/ui';
 import { SearchBar } from '@nixopus/ui';
 import { SelectWrapper } from '@nixopus/ui';
 import { ExtensionSortField, SortDirection } from '@/redux/types/extension';
-import { ExtensionGrid, ExtensionInput } from '@/packages/components/extension';
-import CategoryBadges from '@/packages/components/extension';
+import { ExtensionGrid, ExtensionInput } from '@/packages/components/extensions/extension';
+import CategoryBadges from '@/packages/components/extensions/extension';
 
 export default function ExtensionsPage() {
   const { t } = useTranslation();

@@ -1,9 +1,11 @@
 'use client';
 import React, { useState, useMemo } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import GitHubAppSetup, { ManagedGitHubAppSetup } from '@/packages/components/github-connector';
-import { ListRepositories } from '@/packages/components/github-repositories';
-import AppItem from '../../packages/components/application';
+import GitHubAppSetup, {
+  ManagedGitHubAppSetup
+} from '@/packages/components/github/github-connector';
+import { ListRepositories } from '@/packages/components/github/github-repositories';
+import AppItem from '../../packages/components/applications/application';
 import useGetDeployedApplications from '../../packages/hooks/applications/use_get_deployed_applications';
 import {
   PaginationWrapper,
@@ -22,11 +24,11 @@ import {
 import { SortSelect } from '@/components/ui/sort-selector';
 import { Application } from '@/redux/types/applications';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
+import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
 import { Plus, MoveUpRight, MoreVertical } from 'lucide-react';
 import { LabelFilter } from '@/components/ui/label-filter';
-import { SSHBanner } from '@/packages/components/dashboard';
+import { SSHBanner } from '@/packages/components/dashboard/dashboard';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
 import {

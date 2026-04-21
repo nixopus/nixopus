@@ -18,9 +18,9 @@ import { Activity, Settings, Layers, ScrollText, Box } from 'lucide-react';
 import DeploymentsList, {
   ApplicationLogs,
   Monitor
-} from '@/packages/components/application-details';
-import { DeployConfigureForm } from '@/packages/components/application-form';
-import { ApplicationResources } from '@/packages/components/application-resources';
+} from '@/packages/components/applications/application-details';
+import { DeployConfigureForm } from '@/packages/components/applications/application-form';
+import { ApplicationResources } from '@/packages/components/applications/application-resources';
 import { useTranslation } from '../shared/use-translation';
 
 interface WebSocketMessage {

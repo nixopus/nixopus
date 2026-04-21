@@ -4,17 +4,17 @@ import { Button } from '@nixopus/ui';
 import { Form } from '@nixopus/ui';
 import { FormInputField } from '@nixopus/ui';
 import FormSelectField from '@/components/ui/form-select-field';
-import { MultipleDomainInput } from '@/packages/components/multi-domains';
-import { ComposeDomainInput } from '@/packages/components/compose-domain-input';
+import { MultipleDomainInput } from '@/packages/components/domains/multi-domains';
+import { ComposeDomainInput } from '@/packages/components/applications/compose-domain-input';
 import { EnvVariablesEditor } from '@/components/ui/env-variables-editor';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@nixopus/ui';
 import { BuildPack } from '@/redux/types/deploy-form';
-import { EnvironmentInputField } from '@/packages/components/environment-input-field';
+import { EnvironmentInputField } from '@/packages/components/applications/environment-input-field';
 import useUpdateDeployment from '@/packages/hooks/applications/use_update_deployment';
 import { useDeploymentConfiguration } from '@/packages/hooks/applications/use_deployment_configuration';
 import { parsePort } from '@/packages/utils/util';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
-import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
+import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac/rbac';
 import { Skeleton } from '@nixopus/ui';
 import {
   ChevronDownIcon,
@@ -29,7 +29,7 @@ import { useQuickDeployForm } from '@/packages/hooks/applications/use_quick_depl
 import { CardWrapper } from '@nixopus/ui';
 import { Plus } from 'lucide-react';
 import { useGetComposeServicesQuery } from '@/redux/services/deploy/applicationsApi';
-import { ServerSelector } from '@/packages/components/server-selector';
+import { ServerSelector } from '@/packages/components/applications/server-selector';
 
 interface ComposeDomainEntry {
   domain: string;

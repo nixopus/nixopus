@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { useParams } from 'next/navigation';
-import { ResourceGuard } from '@/packages/components/rbac';
+import { ResourceGuard } from '@/packages/components/rbac/rbac';
 import { Skeleton } from '@nixopus/ui';
 import PageLayout from '@/packages/layouts/page-layout';
-import DeploymentLogsTable from '@/packages/components/deployment-logs';
+import DeploymentLogsTable from '@/packages/components/deployments/deployment-logs';
 
 function page() {
   const { deployment_id } = useParams();

@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { GithubRepository } from '@/redux/types/github';
-import useGithubRepoPagination from '../hooks/applications/use_github_repo_pagination';
+import useGithubRepoPagination from '../../hooks/applications/use_github_repo_pagination';
 import { PaginationWrapper, CardWrapper, CardTitle, DataTable } from '@nixopus/ui';
 import { SearchBar } from '@nixopus/ui';
 import { SortSelect } from '@/components/ui/sort-selector';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { Button } from '@nixopus/ui';
 import { Settings, MoveUpRight, Loader2 } from 'lucide-react';
-import useGithubConnectorSettings from '../hooks/applications/use-github-connector-settings';
+import useGithubConnectorSettings from '../../hooks/applications/use-github-connector-settings';
 import { useRouter } from 'next/navigation';
 import { useRepositoryCard } from '@/packages/hooks/github/use_repository_card';
-import { GitHubConnectorSettingsModal } from '@/packages/components/github-connector';
+import { GitHubConnectorSettingsModal } from '@/packages/components/github/github-connector';
 import { cn } from '@/lib/utils';
 import {
   DATA_TABLE_CLASS,

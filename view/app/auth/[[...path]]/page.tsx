@@ -1,9 +1,9 @@
 'use client';
 import { cn } from '@/lib/utils';
-import { LoginForm } from '@/packages/components/login-form';
-import { OtpLoginForm } from '@/packages/components/otp-login-form';
-import { ForgotPasswordForm } from '@/packages/components/forgot-password-form';
-import { ResetPasswordForm } from '@/packages/components/reset-password-form';
+import { LoginForm } from '@/packages/components/auth/login-form';
+import { OtpLoginForm } from '@/packages/components/auth/otp-login-form';
+import { ForgotPasswordForm } from '@/packages/components/auth/forgot-password-form';
+import { ResetPasswordForm } from '@/packages/components/auth/reset-password-form';
 import useAuth from '@/packages/hooks/auth/use-auth';
 import useOtpAuth from '@/packages/hooks/auth/use-otp-auth';
 import { usePasswordLoginEnabled } from '@/packages/hooks/shared/use-config';

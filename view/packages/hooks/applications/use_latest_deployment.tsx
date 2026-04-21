@@ -3,7 +3,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { ApplicationDeployment, Status } from '@/redux/types/applications';
 import { Box, Clock, GitCommit, Container } from 'lucide-react';
-import { StatusIndicator } from '@/packages/components/application-details';
+import { StatusIndicator } from '@/packages/components/applications/application-details';
 
 interface UseLatestDeploymentProps {
   deployment?: ApplicationDeployment;

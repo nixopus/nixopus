@@ -4,7 +4,7 @@ import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Plus } from 'lucide-react';
 import { useChatThreads } from '@/packages/hooks/ai/use-chat-threads';
-import { ThreadSidebar } from '@/packages/components/thread-sidebar';
+import { ThreadSidebar } from '@/packages/components/chat/thread-sidebar';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { useSidebar, SidebarMenuButton } from '@/components/ui/sidebar';
 

@@ -6,7 +6,7 @@ import { LogoutDialog } from '@/components/ui/logout-dialog';
 import { Button } from '@nixopus/ui';
 import { LogOut } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@nixopus/ui';
-import { ResourceGuard } from '@/packages/components/rbac';
+import { ResourceGuard } from '@/packages/components/rbac/rbac';
 import { Input } from '@nixopus/ui';
 import { Label } from '@nixopus/ui';
 import { Switch } from '@nixopus/ui';
@@ -15,9 +15,9 @@ import { RotateCcw } from 'lucide-react';
 import { Skeleton } from '@nixopus/ui';
 import { cn } from '@/lib/utils';
 import { SelectWrapper } from '@nixopus/ui';
-import { AvatarSection, AccountSection } from '@/packages/components/general-settings';
-import { NotificationChannelsTab } from '@/packages/components/notification-settings';
-import { NotificationPreferencesTab } from '@/packages/components/notification-settings';
+import { AvatarSection, AccountSection } from '@/packages/components/settings/general-settings';
+import { NotificationChannelsTab } from '@/packages/components/settings/notification-settings';
+import { NotificationPreferencesTab } from '@/packages/components/settings/notification-settings';
 // import DomainsTable from '@/app/settings/domains/components/domainsTable';
 // import UpdateDomainDialog from '@/app/settings/domains/components/update-domain';
 import {
@@ -39,7 +39,7 @@ import {
 import { Heart, HelpCircle, AlertCircle, ArrowUpCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@nixopus/ui';
 import { useSettingsFooter } from '@/packages/hooks/settings/use-settings-footer';
-import { SettingsSidebarProps } from '../types/settings';
+import { SettingsSidebarProps } from '../../types/settings';
 import { toast } from 'sonner';
 import {
   useGetOrganizationSettingsQuery,

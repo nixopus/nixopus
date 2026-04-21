@@ -29,12 +29,12 @@ import { Button } from '@nixopus/ui';
 import { UserMenu } from '@/components/ui/user-menu';
 import { LogoutDialog } from '@/components/ui/logout-dialog';
 import { Separator } from '@/components/ui/separator';
-import { AnyPermissionGuard } from '@/packages/components/rbac';
-import { CreateTeam } from '@/packages/components/team-settings';
-import { MachineSwitcher } from '@/packages/components/machine-switcher';
-import { NavMain } from '@/packages/components/nav-main';
-import { SidebarChatTab } from '@/packages/components/sidebar-chat-tab';
-import { Terminal } from '@/packages/components/terminal';
+import { AnyPermissionGuard } from '@/packages/components/rbac/rbac';
+import { CreateTeam } from '@/packages/components/settings/team-settings';
+import { MachineSwitcher } from '@/packages/components/machines/machine-switcher';
+import { NavMain } from '@/packages/components/layout/nav-main';
+import { SidebarChatTab } from '@/packages/components/chat/sidebar-chat-tab';
+import { Terminal } from '@/packages/components/terminal/terminal';
 import {
   AppSidebarProps,
   AppTopBarProps,
