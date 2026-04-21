@@ -17,7 +17,9 @@ import (
 // DomainRoute represents a domain-to-upstream mapping extracted from Caddy config.
 type DomainRoute struct {
 	Domain       string
-	UpstreamDial string // host:port format
+	UpstreamDial string   // host:port — single upstream (backward compat, used when Upstreams is empty)
+	Upstreams    []string // multiple upstreams in host:port format
+	LBPolicy     string   // Caddy lb_policy: "round_robin", "first", etc. Empty = single upstream
 }
 
 // AddDomainsWithRetry adds multiple domains to Caddy with retry and tunnel
@@ -37,12 +39,34 @@ func AddDomainsWithRetry(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Lo
 		}
 
 		for _, d := range domains {
-			host, port, parseErr := parseDial(d.UpstreamDial)
-			if parseErr != nil {
-				return fmt.Errorf("invalid upstream %s: %w", d.UpstreamDial, parseErr)
-			}
-			if err := client.AddDomainWithAutoTLS(d.Domain, host, port, caddygo.DomainOptions{}); err != nil {
-				return fmt.Errorf("failed to add domain %s: %w", d.Domain, err)
+			if len(d.Upstreams) > 0 {
+				targets := make([]caddygo.UpstreamTarget, len(d.Upstreams))
+				for i, u := range d.Upstreams {
+					host, port, parseErr := parseDial(u)
+					if parseErr != nil {
+						return fmt.Errorf("invalid upstream %s: %w", u, parseErr)
+					}
+					targets[i] = caddygo.UpstreamTarget{Host: host, Port: port}
+				}
+				lbOpts := caddygo.LoadBalancingOptions{Policy: d.LBPolicy}
+				if len(d.Upstreams) > 1 {
+					lbOpts.PassiveFailDurationSec = 30
+					lbOpts.PassiveMaxFails = 2
+					lbOpts.PassiveUnhealthyStatus = []int{502, 503}
+					lbOpts.TryDurationSec = 5
+					lbOpts.TryIntervalMs = 250
+				}
+				if err := client.AddDomainWithUpstreams(d.Domain, targets, lbOpts, caddygo.DomainOptions{}); err != nil {
+					return fmt.Errorf("failed to add domain %s: %w", d.Domain, err)
+				}
+			} else {
+				host, port, parseErr := parseDial(d.UpstreamDial)
+				if parseErr != nil {
+					return fmt.Errorf("invalid upstream %s: %w", d.UpstreamDial, parseErr)
+				}
+				if err := client.AddDomainWithAutoTLS(d.Domain, host, port, caddygo.DomainOptions{}); err != nil {
+					return fmt.Errorf("failed to add domain %s: %w", d.Domain, err)
+				}
 			}
 		}
 
@@ -265,15 +289,16 @@ func extractDomainRoutes(config *caddy.Config) ([]DomainRoute, error) {
 			continue
 		}
 
-		upstream := extractUpstreamFromRoute(route)
-		if upstream == "" {
+		upstreams := extractUpstreamsFromRoute(route)
+		dr := DomainRoute{Domain: domain}
+		if len(upstreams) > 1 {
+			dr.Upstreams = upstreams
+		} else if len(upstreams) == 1 {
+			dr.UpstreamDial = upstreams[0]
+		} else {
 			continue
 		}
-
-		routes = append(routes, DomainRoute{
-			Domain:       domain,
-			UpstreamDial: upstream,
-		})
+		routes = append(routes, dr)
 	}
 
 	return routes, nil
@@ -293,36 +318,34 @@ func extractDomainFromRoute(route caddyhttp.Route) string {
 	return ""
 }
 
-func extractUpstreamFromRoute(route caddyhttp.Route) string {
+func extractUpstreamsFromRoute(route caddyhttp.Route) []string {
+	var dials []string
 	for _, handlerRaw := range route.HandlersRaw {
-		var handlerMap map[string]json.RawMessage
-		if err := json.Unmarshal(handlerRaw, &handlerMap); err != nil {
+		var handler map[string]json.RawMessage
+		if err := json.Unmarshal(handlerRaw, &handler); err != nil {
 			continue
 		}
-
-		handlerNameRaw, exists := handlerMap["handler"]
-		if !exists {
+		handlerName, _ := handler["handler"]
+		var name string
+		json.Unmarshal(handlerName, &name)
+		if name != "reverse_proxy" {
 			continue
 		}
-		var handlerName string
-		if err := json.Unmarshal(handlerNameRaw, &handlerName); err != nil || handlerName != "reverse_proxy" {
-			continue
-		}
-
-		upstreamsRaw, exists := handlerMap["upstreams"]
+		upstreamsRaw, exists := handler["upstreams"]
 		if !exists {
 			continue
 		}
 		var upstreams []map[string]interface{}
-		if err := json.Unmarshal(upstreamsRaw, &upstreams); err != nil || len(upstreams) == 0 {
+		if err := json.Unmarshal(upstreamsRaw, &upstreams); err != nil {
 			continue
 		}
-
-		if dial, ok := upstreams[0]["dial"].(string); ok {
-			return dial
+		for _, u := range upstreams {
+			if dial, ok := u["dial"].(string); ok {
+				dials = append(dials, dial)
+			}
 		}
 	}
-	return ""
+	return dials
 }
 
 func parseDial(dial string) (string, int, error) {

@@ -18,6 +18,7 @@ import { SelectOption } from '@nixopus/ui';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import { toast } from 'sonner';
 import { useExtensionInput } from './use-extension-input';
+import { useServerSelector } from '@/packages/hooks/deploy/use-server-selector';
 import { DialogAction } from '@nixopus/ui';
 
 export function useExtensions() {
@@ -36,6 +37,7 @@ export function useExtensions() {
   const [selectedExtension, setSelectedExtension] = useState<Extension | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<ExtensionCategory | null>(null);
   const { t } = useTranslation();
+  const serverSelector = useServerSelector();
   const [expanded, setExpanded] = useState(false);
 
   const queryParams: ExtensionListParams = {
@@ -94,7 +96,16 @@ export function useExtensions() {
       const app = await createTemplateDeployment({
         template_id: selectedExtension.extension_id,
         name: selectedExtension.name,
-        variables: values
+        variables: values,
+        ...(serverSelector.selectedServerIds.length > 0 && {
+          server_ids: serverSelector.selectedServerIds
+        }),
+        ...(serverSelector.routingStrategy && {
+          routing_strategy: serverSelector.routingStrategy
+        }),
+        ...(serverSelector.primaryServerId && {
+          primary_server_id: serverSelector.primaryServerId
+        })
       }).unwrap();
       setRunModalOpen(false);
       router.push(`/apps/application/${app.id}`);
@@ -188,6 +199,7 @@ export function useExtensions() {
     errors,
     handleChange,
     handleSubmit,
-    requiredFields
+    requiredFields,
+    serverSelector
   };
 }

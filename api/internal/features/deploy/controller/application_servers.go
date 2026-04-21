@@ -5,6 +5,7 @@ import (
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/deploy/caddy"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/utils"
@@ -125,6 +126,15 @@ func (c *DeployController) SetApplicationServers(f fuego.ContextWithBody[types.S
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
+			Status: http.StatusInternalServerError,
+		}
+	}
+
+	if reconcileErr := caddy.EnqueueReconcile(organizationID); reconcileErr != nil {
+		c.logger.Log(logger.Error, "failed to enqueue route sync after server change", reconcileErr.Error())
+		return nil, fuego.HTTPError{
+			Err:    reconcileErr,
+			Detail: "failed to enqueue route synchronization: " + reconcileErr.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}

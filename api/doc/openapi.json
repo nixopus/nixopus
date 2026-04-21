@@ -2645,6 +2645,14 @@
 					"name": {
 						"type": "string"
 					},
+					"primary_server_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"routing_strategy": {
+						"nullable": true,
+						"type": "string"
+					},
 					"server_ids": {
 						"items": {
 							"format": "uuid",
@@ -14941,6 +14949,8 @@
 							"example": {
 								"environment": "string",
 								"name": "string",
+								"primary_server_id": "00000000-0000-0000-0000-000000000000",
+								"routing_strategy": "string",
 								"server_ids": [],
 								"template_id": "00000000-0000-0000-0000-000000000000",
 								"variables": {}

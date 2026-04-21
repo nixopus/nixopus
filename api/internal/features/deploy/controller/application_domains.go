@@ -311,19 +311,30 @@ func (c *DeployController) syncApplicationDomains(appID uuid.UUID, organizationI
 			return err
 		}
 		app, appErr := c.service.GetApplicationById(appID.String(), organizationID)
-		if appErr == nil && app.BuildPack != shared_types.DockerCompose {
+		if appErr == nil {
 			orgCtx := context.WithValue(c.ctx, shared_types.OrganizationIDKey, organizationID.String())
 			upstreamHost, hostErr := resolveSSHUpstreamHost(orgCtx)
-			port, portErr := resolveDockerPublishedPort(orgCtx, app.Name)
-			if hostErr == nil && portErr == nil {
-				var routes []caddy.DomainRoute
-				for _, d := range toAdd {
-					routes = append(routes, caddy.DomainRoute{
-						Domain:       d,
-						UpstreamDial: caddy.FormatDial(upstreamHost, port),
-					})
+			if hostErr == nil {
+				port := 0
+				var portErr error
+				if app.BuildPack != shared_types.DockerCompose {
+					port, portErr = resolveDockerPublishedPort(orgCtx, app.Name)
+					if portErr != nil {
+						c.logger.Log(logger.Warning, fmt.Sprintf("failed to resolve port for %s, skipping domain routing: %v", app.Name, portErr), "")
+					}
 				}
-				c.tryAddRoutesToProxy(organizationID, routes)
+				if port > 0 {
+					addDomains := make([]shared_types.ApplicationDomain, len(toAdd))
+					for i, d := range toAdd {
+						addDomains[i] = shared_types.ApplicationDomain{Domain: d}
+					}
+					routes := caddy.BuildMultiUpstreamRoutes(
+						orgCtx, c.storage, &c.logger,
+						app, addDomains,
+						upstreamHost, port,
+					)
+					c.tryAddRoutesToProxy(organizationID, routes)
+				}
 			}
 		}
 	}
@@ -391,7 +402,26 @@ func (c *DeployController) syncComposeApplicationDomains(appID uuid.UUID, organi
 		}
 
 		isNew := false
+		serviceOrPortChanged := false
 		if _, exists := existingSet[desiredLower]; exists {
+			var prevDomain *shared_types.ApplicationDomain
+			for i := range existingDomains {
+				if strings.ToLower(existingDomains[i].Domain) == desiredLower {
+					prevDomain = &existingDomains[i]
+					break
+				}
+			}
+			if prevDomain != nil {
+				prevServiceID := prevDomain.ComposeServiceID
+				prevPort := prevDomain.Port
+				serviceChanged := (prevServiceID == nil && composeServiceID != nil) ||
+					(prevServiceID != nil && composeServiceID == nil) ||
+					(prevServiceID != nil && composeServiceID != nil && *prevServiceID != *composeServiceID)
+				portChanged := (prevPort == nil && port != nil) ||
+					(prevPort != nil && port == nil) ||
+					(prevPort != nil && port != nil && *prevPort != *port)
+				serviceOrPortChanged = serviceChanged || portChanged
+			}
 			if err := c.storage.UpdateApplicationDomainService(appID, cd.Domain, composeServiceID, port); err != nil {
 				return err
 			}
@@ -402,16 +432,22 @@ func (c *DeployController) syncComposeApplicationDomains(appID uuid.UUID, organi
 			isNew = true
 		}
 
-		if isNew && hostErr == nil {
+		if (isNew || serviceOrPortChanged) && hostErr == nil {
 			resolvedPort := composeServicePort
 			if port != nil && *port > 0 {
 				resolvedPort = *port
 			}
 			if resolvedPort > 0 {
-				newRoutes = append(newRoutes, caddy.DomainRoute{
-					Domain:       strings.TrimSpace(cd.Domain),
-					UpstreamDial: caddy.FormatDial(upstreamHost, resolvedPort),
-				})
+				composeApp, composeAppErr := c.service.GetApplicationById(appID.String(), organizationID)
+				if composeAppErr == nil {
+					singleDomain := shared_types.ApplicationDomain{Domain: strings.TrimSpace(cd.Domain), Port: &resolvedPort}
+					domainRoutes := caddy.BuildMultiUpstreamRoutes(
+						orgCtx, c.storage, &c.logger,
+						composeApp, []shared_types.ApplicationDomain{singleDomain},
+						upstreamHost, resolvedPort,
+					)
+					newRoutes = append(newRoutes, domainRoutes...)
+				}
 			}
 		}
 	}
@@ -457,10 +493,16 @@ func (c *DeployController) buildProxyRoutes(orgID uuid.UUID, app shared_types.Ap
 		}
 	}
 
-	return []caddy.DomainRoute{{
-		Domain:       domain,
-		UpstreamDial: caddy.FormatDial(upstreamHost, port),
-	}}
+	singleDomain := shared_types.ApplicationDomain{Domain: domain}
+	if app.BuildPack == shared_types.DockerCompose && port > 0 {
+		singleDomain.Port = &port
+	}
+
+	return caddy.BuildMultiUpstreamRoutes(
+		orgCtx, c.storage, &c.logger,
+		app, []shared_types.ApplicationDomain{singleDomain},
+		upstreamHost, port,
+	)
 }
 
 func resolveSSHUpstreamHost(ctx context.Context) (string, error) {

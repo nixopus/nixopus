@@ -21,6 +21,7 @@ import { useMemorySearch, type MemorySearchResult } from './use-memory-search';
 import { getSelfHosted } from '@/redux/conf';
 import { useGetAllGithubConnectorQuery } from '@/redux/services/connector/githubConnectorApi';
 import { useGetApplicationsQuery } from '@/redux/services/deploy/applicationsApi';
+import { useGetServersQuery } from '@/redux/services/servers/serversApi';
 import {
   buildSampleRepoContext,
   getDefaultGuidedPrompt,
@@ -126,6 +127,9 @@ export function useChatPage(): UseChatPageReturn {
     page: 1,
     limit: 1
   });
+  const { data: serversData } = useGetServersQuery({ page: 1, page_size: 100 });
+  const activeServers = (serversData?.servers ?? []).filter((s) => s.is_active);
+
   const githubConnected = Boolean(githubConnectors && githubConnectors.length > 0);
   const hasDeployedApps = Boolean(
     (applicationsData?.total_count ?? applicationsData?.applications?.length ?? 0) > 0
@@ -203,7 +207,29 @@ export function useChatPage(): UseChatPageReturn {
       }
     ];
 
-    if (serverId) {
+    if (activeServers.length >= 2) {
+      activeServers.forEach((server) => {
+        contexts.push({
+          type: 'Machine',
+          id: server.id,
+          label: server.name,
+          meta: {
+            ID: server.id,
+            ...(server.provision?.domain || server.host
+              ? { Hostname: (server.provision?.domain ?? server.host)! }
+              : {}),
+            Status: server.is_active ? 'ACTIVE' : 'INACTIVE',
+            ...(server.is_default ? { Default: 'true' } : {})
+          }
+        });
+      });
+      contexts.push({
+        type: 'MultiServerInfo',
+        id: 'multi-server',
+        label: `${activeServers.length} servers available`,
+        meta: { Strategies: 'single, round_robin, primary_failover' }
+      });
+    } else if (serverId) {
       contexts.push({
         type: 'Machine',
         id: serverId,
@@ -214,10 +240,15 @@ export function useChatPage(): UseChatPageReturn {
 
     setSelectedContexts(contexts);
 
-    const serverSuffix = serverName ? ` on server "${serverName}"` : '';
-    setPendingDeployPrompt(`Deploy "${repoFullName}" as a new application${serverSuffix}.`);
+    const multiServerSuffix =
+      activeServers.length >= 2
+        ? ' I have multiple servers available.'
+        : serverName
+          ? ` on server "${serverName}".`
+          : '';
+    setPendingDeployPrompt(`Deploy "${repoFullName}" as a new application.${multiServerSuffix}`);
     navRouter.replace('/chats');
-  }, [threads.isInitialized, searchParams]);
+  }, [threads.isInitialized, searchParams, activeServers.length]);
 
   useEffect(() => {
     if (pendingDeployPrompt && threads.activeThreadId) {

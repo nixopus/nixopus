@@ -174,16 +174,15 @@ func (s *TaskService) HandleUpdateDockerfileDeployment(ctx context.Context, Task
 			return err
 		}
 
-		var routes []caddy.DomainRoute
-		for _, appDomain := range TaskPayload.Application.Domains {
-			if appDomain.Domain == "" {
-				continue
-			}
-			routes = append(routes, caddy.DomainRoute{
-				Domain:       appDomain.Domain,
-				UpstreamDial: caddy.FormatDial(upstreamHost, port),
-			})
+		appDomains := make([]shared_types.ApplicationDomain, len(TaskPayload.Application.Domains))
+		for i, d := range TaskPayload.Application.Domains {
+			appDomains[i] = *d
 		}
+		routes := caddy.BuildMultiUpstreamRoutes(
+			ctx, s.Storage, &s.Logger,
+			TaskPayload.Application, appDomains,
+			upstreamHost, port,
+		)
 
 		if err := caddy.AddDomainsAtomic(orgCtx, nil, &s.Logger, routes); err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to configure proxy: "+err.Error(), shared_types.Failed)

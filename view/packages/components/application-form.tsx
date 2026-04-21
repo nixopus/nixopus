@@ -29,6 +29,7 @@ import { useQuickDeployForm } from '@/packages/hooks/applications/use_quick_depl
 import { CardWrapper } from '@nixopus/ui';
 import { Plus } from 'lucide-react';
 import { useGetComposeServicesQuery } from '@/redux/services/deploy/applicationsApi';
+import { ServerSelector } from '@/packages/components/server-selector';
 
 interface ComposeDomainEntry {
   domain: string;
@@ -434,7 +435,8 @@ export const QuickDeployForm = ({
     isCreatingProject,
     composeServices,
     isPreviewingCompose,
-    previewError
+    previewError,
+    serverSelector
   } = useQuickDeployForm({
     repository,
     repository_full_name,
@@ -533,6 +535,18 @@ export const QuickDeployForm = ({
                 );
               })}
             </div>
+
+            {serverSelector.isMultiServer && (
+              <ServerSelector
+                servers={serverSelector.servers}
+                selectedServerIds={serverSelector.selectedServerIds}
+                onToggleServer={serverSelector.toggleServer}
+                routingStrategy={serverSelector.routingStrategy}
+                onRoutingStrategyChange={serverSelector.setRoutingStrategy}
+                primaryServerId={serverSelector.primaryServerId}
+                onPrimaryServerIdChange={serverSelector.setPrimaryServerId}
+              />
+            )}
 
             <Button
               type="button"

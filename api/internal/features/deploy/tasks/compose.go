@@ -92,7 +92,7 @@ func (t *TaskService) executeComposeDeployment(ctx context.Context, deploymentTy
 		return t.composeUp(ctx, composeFilePath, envVars, outputCallback, taskCtx, "Starting Docker Compose services", "Docker Compose services started successfully")
 
 	case shared_types.DeploymentTypeReDeploy, shared_types.DeploymentTypeUpdate, shared_types.DeploymentTypeRollback:
-		if err := t.composeDown(ctx, composeFilePath, outputCallback, taskCtx); err != nil {
+		if err := t.composeDown(ctx, composeFilePath, envVars, outputCallback, taskCtx); err != nil {
 			return err
 		}
 		taskCtx.AddLog("Existing services stopped, starting with new code")
@@ -137,7 +137,7 @@ func (t *TaskService) composeUp(ctx context.Context, composeFilePath string, env
 	return nil
 }
 
-func (t *TaskService) composeDown(ctx context.Context, composeFilePath string, outputCallback func(string), taskCtx *TaskContext) error {
+func (t *TaskService) composeDown(ctx context.Context, composeFilePath string, envVars map[string]string, outputCallback func(string), taskCtx *TaskContext) error {
 	taskCtx.AddLog("Stopping existing Docker Compose services")
 
 	dockerSvc, err := t.getDockerService(ctx)
@@ -147,13 +147,13 @@ func (t *TaskService) composeDown(ctx context.Context, composeFilePath string, o
 	}
 
 	if ds, ok := dockerSvc.(*docker.DockerService); ok {
-		err := ds.ComposeDownWithCallback(composeFilePath, outputCallback)
+		err := ds.ComposeDownWithCallback(composeFilePath, envVars, outputCallback)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to stop docker compose services: "+err.Error(), shared_types.Failed)
 			return err
 		}
 	} else {
-		err := dockerSvc.ComposeDown(composeFilePath)
+		err := dockerSvc.ComposeDown(composeFilePath, envVars)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to stop docker compose services: "+err.Error(), shared_types.Failed)
 			return err
@@ -179,7 +179,7 @@ func (t *TaskService) composeRestart(ctx context.Context, composeFilePath string
 			return err
 		}
 	} else {
-		if err := t.composeDown(ctx, composeFilePath, outputCallback, taskCtx); err != nil {
+		if err := t.composeDown(ctx, composeFilePath, envVars, outputCallback, taskCtx); err != nil {
 			return err
 		}
 		output, err := dockerSvc.ComposeUp(composeFilePath, envVars)
@@ -313,22 +313,11 @@ func (t *TaskService) addDomainsForCompose(ctx context.Context, TaskPayload shar
 		return err
 	}
 
-	var routes []caddy.DomainRoute
-	for i := range domains {
-		d := &domains[i]
-		if d.Domain == "" {
-			continue
-		}
-		port := d.ResolvePort()
-		if port == 0 {
-			taskCtx.AddLog(fmt.Sprintf("Skipping domain %s: no service linked and no port override", d.Domain))
-			continue
-		}
-		routes = append(routes, caddy.DomainRoute{
-			Domain:       d.Domain,
-			UpstreamDial: caddy.FormatDial(upstreamHost, port),
-		})
-	}
+	routes := caddy.BuildMultiUpstreamRoutes(
+		ctx, t.Storage, &t.Logger,
+		TaskPayload.Application, domains,
+		upstreamHost, 0,
+	)
 	if len(routes) == 0 {
 		return nil
 	}
@@ -338,7 +327,11 @@ func (t *TaskService) addDomainsForCompose(ctx context.Context, TaskPayload shar
 		return err
 	}
 	for _, r := range routes {
-		taskCtx.AddLog("Domain " + r.Domain + " -> " + r.UpstreamDial + " added successfully with TLS")
+		dial := r.UpstreamDial
+		if len(r.Upstreams) > 0 {
+			dial = fmt.Sprintf("[%d upstreams, lb=%s]", len(r.Upstreams), r.LBPolicy)
+		}
+		taskCtx.AddLog(fmt.Sprintf("Domain %s -> %s", r.Domain, dial))
 	}
 	return nil
 }

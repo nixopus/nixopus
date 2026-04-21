@@ -66,7 +66,7 @@ func (t *TaskService) updateParentStatus(ctx context.Context, parentDepID uuid.U
 	case failCount == len(errs):
 		status = shared_types.Failed
 	default:
-		status = shared_types.PartialFailure
+		status = shared_types.Failed
 	}
 
 	now := time.Now()

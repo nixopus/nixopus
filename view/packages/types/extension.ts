@@ -1,6 +1,7 @@
 import { Extension, ExtensionVariable } from '@/redux/types/extension';
 import { translationKey } from '@/packages/hooks/shared/use-translation';
 import { DialogAction } from '@nixopus/ui';
+import { useServerSelector } from '@/packages/hooks/deploy/use-server-selector';
 
 export type CategoryBadgesProps = {
   categories: string[];
@@ -43,6 +44,7 @@ export interface ExtensionInputProps {
   handleChange: (name: string, value: unknown) => void;
   handleSubmit: () => void;
   requiredFields: ExtensionVariable[];
+  serverSelector?: ReturnType<typeof useServerSelector>;
 }
 
 export interface OverviewTabProps {

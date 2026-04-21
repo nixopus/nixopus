@@ -87,19 +87,33 @@ func (r *Reconciler) ReconcileOrganization(ctx context.Context, organizationID u
 		return r.fullRebuild(orgCtx, desired)
 	}
 
-	actualMap := make(map[string]string)
+	type routeState struct {
+		upstreams []string
+		lbPolicy  string
+	}
+	actualMap := make(map[string]routeState)
 	for _, route := range actual {
-		actualMap[route.Domain] = route.UpstreamDial
+		if len(route.Upstreams) > 0 {
+			actualMap[route.Domain] = routeState{upstreams: route.Upstreams, lbPolicy: route.LBPolicy}
+		} else if route.UpstreamDial != "" {
+			actualMap[route.Domain] = routeState{upstreams: []string{route.UpstreamDial}, lbPolicy: route.LBPolicy}
+		}
 	}
 
 	var toAdd []DomainRoute
 	var toUpdate []DomainRoute
 
 	for _, route := range desired {
-		actualDial, exists := actualMap[route.Domain]
+		desiredUpstreams := route.Upstreams
+		if len(desiredUpstreams) == 0 && route.UpstreamDial != "" {
+			desiredUpstreams = []string{route.UpstreamDial}
+		}
+		desiredLB := route.LBPolicy
+
+		actual, exists := actualMap[route.Domain]
 		if !exists {
 			toAdd = append(toAdd, route)
-		} else if actualDial != route.UpstreamDial {
+		} else if !upstreamsEqual(desiredUpstreams, actual.upstreams) || desiredLB != actual.lbPolicy {
 			toUpdate = append(toUpdate, route)
 		}
 	}
@@ -120,26 +134,16 @@ func (r *Reconciler) ReconcileOrganization(ctx context.Context, organizationID u
 		}
 
 		for _, route := range toAdd {
-			host, port, parseErr := parseDial(route.UpstreamDial)
-			if parseErr != nil {
-				result.Errors = append(result.Errors, fmt.Sprintf("invalid dial for %s: %v", route.Domain, parseErr))
-				continue
-			}
-			if err := client.AddDomainWithAutoTLS(route.Domain, host, port, caddygo.DomainOptions{}); err != nil {
-				result.Errors = append(result.Errors, fmt.Sprintf("failed to add %s: %v", route.Domain, err))
+			if addErr := addRouteToClient(client, route); addErr != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("failed to add %s: %v", route.Domain, addErr))
 			} else {
 				result.Added = append(result.Added, route.Domain)
 			}
 		}
 
 		for _, route := range toUpdate {
-			host, port, parseErr := parseDial(route.UpstreamDial)
-			if parseErr != nil {
-				result.Errors = append(result.Errors, fmt.Sprintf("invalid dial for %s: %v", route.Domain, parseErr))
-				continue
-			}
-			if err := client.AddDomainWithAutoTLS(route.Domain, host, port, caddygo.DomainOptions{}); err != nil {
-				result.Errors = append(result.Errors, fmt.Sprintf("failed to update %s: %v", route.Domain, err))
+			if updateErr := addRouteToClient(client, route); updateErr != nil {
+				result.Errors = append(result.Errors, fmt.Sprintf("failed to update %s: %v", route.Domain, updateErr))
 			} else {
 				result.Updated = append(result.Updated, route.Domain)
 			}
@@ -197,65 +201,76 @@ func (r *Reconciler) buildDeployDomains(ctx context.Context, organizationID uuid
 	}
 
 	var routes []DomainRoute
-
 	for _, app := range apps {
 		if len(app.Domains) == 0 {
 			continue
 		}
 
+		appDomains := make([]shared_types.ApplicationDomain, len(app.Domains))
+		for i, d := range app.Domains {
+			appDomains[i] = *d
+		}
+
 		if app.BuildPack == shared_types.DockerCompose {
-			routes = append(routes, r.buildComposeRoutes(app, upstreamHost)...)
+			composeRoutes := BuildMultiUpstreamRoutes(
+				ctx, r.Storage, &r.Logger,
+				app, appDomains, upstreamHost, 0,
+			)
+			routes = append(routes, composeRoutes...)
 		} else {
-			routes = append(routes, r.buildSwarmRoutes(ctx, app, upstreamHost)...)
+			port, err := r.getPublishedPort(ctx, app.Name)
+			if err != nil {
+				r.Logger.Log(logger.Warning, fmt.Sprintf("skipping %s: %v", app.Name, err), "")
+				continue
+			}
+			swarmRoutes := BuildMultiUpstreamRoutes(
+				ctx, r.Storage, &r.Logger,
+				app, appDomains, upstreamHost, port,
+			)
+			routes = append(routes, swarmRoutes...)
 		}
 	}
 
 	return routes, nil
 }
 
-// buildComposeRoutes resolves ports from the domain's linked ComposeService or
-// port override. Orphaned domains (no service, no override) are skipped.
-func (r *Reconciler) buildComposeRoutes(app shared_types.Application, upstreamHost string) []DomainRoute {
-	var routes []DomainRoute
-	for _, d := range app.Domains {
-		if d.Domain == "" {
-			continue
+func addRouteToClient(client *caddygo.Client, route DomainRoute) error {
+	if len(route.Upstreams) > 0 {
+		targets := make([]caddygo.UpstreamTarget, len(route.Upstreams))
+		for i, u := range route.Upstreams {
+			host, port, parseErr := parseDial(u)
+			if parseErr != nil {
+				return fmt.Errorf("invalid upstream %s: %w", u, parseErr)
+			}
+			targets[i] = caddygo.UpstreamTarget{Host: host, Port: port}
 		}
-
-		port := d.ResolvePort()
-		if port == 0 {
-			r.Logger.Log(logger.Warning,
-				fmt.Sprintf("skipping orphaned compose domain %s (no service linked, no port override)", d.Domain), "")
-			continue
+		lbOpts := caddygo.LoadBalancingOptions{Policy: route.LBPolicy}
+		if len(route.Upstreams) > 1 {
+			lbOpts.PassiveFailDurationSec = 30
+			lbOpts.PassiveMaxFails = 2
+			lbOpts.PassiveUnhealthyStatus = []int{502, 503}
+			lbOpts.TryDurationSec = 5
+			lbOpts.TryIntervalMs = 250
 		}
-
-		routes = append(routes, DomainRoute{
-			Domain:       d.Domain,
-			UpstreamDial: fmt.Sprintf("%s:%d", upstreamHost, port),
-		})
+		return client.AddDomainWithUpstreams(route.Domain, targets, lbOpts, caddygo.DomainOptions{})
 	}
-	return routes
+	host, port, parseErr := parseDial(route.UpstreamDial)
+	if parseErr != nil {
+		return fmt.Errorf("invalid upstream %s: %w", route.UpstreamDial, parseErr)
+	}
+	return client.AddDomainWithAutoTLS(route.Domain, host, port, caddygo.DomainOptions{})
 }
 
-// buildSwarmRoutes uses Swarm service discovery to resolve published ports.
-func (r *Reconciler) buildSwarmRoutes(ctx context.Context, app shared_types.Application, upstreamHost string) []DomainRoute {
-	publishedPort, err := r.getPublishedPort(ctx, app.Name)
-	if err != nil {
-		r.Logger.Log(logger.Warning,
-			fmt.Sprintf("service %s unreachable, skipping %d domain(s)", app.Name, len(app.Domains)),
-			err.Error())
-		return nil
+func upstreamsEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
 	}
-
-	dial := fmt.Sprintf("%s:%d", upstreamHost, publishedPort)
-	var routes []DomainRoute
-	for _, d := range app.Domains {
-		if d.Domain == "" {
-			continue
+	for i := range a {
+		if a[i] != b[i] {
+			return false
 		}
-		routes = append(routes, DomainRoute{Domain: d.Domain, UpstreamDial: dial})
 	}
-	return routes
+	return true
 }
 
 func (r *Reconciler) getPublishedPort(ctx context.Context, serviceName string) (int, error) {
@@ -308,12 +323,7 @@ func (r *Reconciler) fullRebuild(ctx context.Context, desired []DomainRoute) (*R
 	}
 
 	for _, route := range desired {
-		host, port, parseErr := parseDial(route.UpstreamDial)
-		if parseErr != nil {
-			result.Errors = append(result.Errors, fmt.Sprintf("invalid dial for %s: %v", route.Domain, parseErr))
-			continue
-		}
-		if err := client.AddDomainWithAutoTLS(route.Domain, host, port, caddygo.DomainOptions{}); err != nil {
+		if err := addRouteToClient(client, route); err != nil {
 			result.Errors = append(result.Errors, fmt.Sprintf("failed to add %s: %v", route.Domain, err))
 		} else {
 			result.Added = append(result.Added, route.Domain)

@@ -164,56 +164,54 @@ func (s *TaskService) recoverSingleApp(ctx context.Context, app *shared_types.Ap
 
 	taskCtx.AddLog("Service created with container id " + containerResult.ContainerID)
 
-	swarmPort, _ := strconv.Atoi(containerResult.AvailablePort)
-	s.configureRecoveryDomains(ctx, app, swarmPort, taskCtx)
+	swarmPort, err := strconv.Atoi(containerResult.AvailablePort)
+	if err != nil || swarmPort <= 0 {
+		msg := fmt.Sprintf("Invalid AvailablePort: %s (parsed as %d)", containerResult.AvailablePort, swarmPort)
+		taskCtx.LogAndUpdateStatus(msg, shared_types.Failed)
+		if err != nil {
+			return fmt.Errorf("failed to parse AvailablePort: %w", err)
+		}
+		return fmt.Errorf("invalid AvailablePort: must be positive, got %d", swarmPort)
+	}
+	if err := s.configureRecoveryDomains(ctx, app, swarmPort, taskCtx); err != nil {
+		taskCtx.LogAndUpdateStatus("Failed to configure domains: "+err.Error(), shared_types.Failed)
+		return fmt.Errorf("failed to configure domains: %w", err)
+	}
 
 	taskCtx.LogAndUpdateStatus("Recovery completed successfully", shared_types.Deployed)
 	return nil
 }
 
-func (s *TaskService) configureRecoveryDomains(ctx context.Context, app *shared_types.Application, swarmPort int, taskCtx *TaskContext) {
+func (s *TaskService) configureRecoveryDomains(ctx context.Context, app *shared_types.Application, swarmPort int, taskCtx *TaskContext) error {
 	domains, err := s.Storage.GetApplicationDomains(app.ID)
 	if err != nil {
-		taskCtx.AddLog("Warning: failed to load domains for proxy setup: " + err.Error())
-		return
+		return fmt.Errorf("failed to load domains for proxy setup: %w", err)
 	}
 	if len(domains) == 0 {
-		return
+		return nil
 	}
 
 	upstreamHost, err := GetSSHHostForOrganization(ctx, app.OrganizationID)
 	if err != nil {
-		taskCtx.AddLog("Warning: failed to get SSH host for domain setup: " + err.Error())
-		return
+		return fmt.Errorf("failed to get SSH host for domain setup: %w", err)
 	}
 
-	isCompose := app.BuildPack == shared_types.DockerCompose
-	var routes []caddy.DomainRoute
-	for i := range domains {
-		d := &domains[i]
-		if d.Domain == "" {
-			continue
-		}
+	routes := caddy.BuildMultiUpstreamRoutes(
+		ctx, s.Storage, &s.Logger,
+		*app, domains,
+		upstreamHost, swarmPort,
+	)
 
-		port := swarmPort
-		if isCompose {
-			port = d.ResolvePort()
-			if port == 0 {
-				taskCtx.AddLog(fmt.Sprintf("Skipping orphaned compose domain %s during recovery", d.Domain))
-				continue
-			}
-		}
-
-		routes = append(routes, caddy.DomainRoute{
-			Domain:       d.Domain,
-			UpstreamDial: caddy.FormatDial(upstreamHost, port),
-		})
-	}
 	if len(routes) == 0 {
-		return
+		return nil
 	}
 
-	if err := caddy.AddDomainsWithRetry(ctx, nil, &s.Logger, routes); err != nil {
-		taskCtx.AddLog("Warning: failed to configure proxy: " + err.Error())
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, app.OrganizationID.String())
+	if err := caddy.AddDomainsAtomic(orgCtx, nil, &s.Logger, routes); err != nil {
+		return fmt.Errorf("failed to configure domains: %w", err)
 	}
+	for _, r := range routes {
+		taskCtx.AddLog("Domain " + r.Domain + " configured for recovery")
+	}
+	return nil
 }
