@@ -76,7 +76,7 @@ func ImageS3Key(orgID, appID, deploymentID uuid.UUID) string {
 // The reader should produce a gzipped docker save output.
 func (s *ImageStore) UploadImage(ctx context.Context, key string, reader io.Reader) (int64, error) {
 	uploader := manager.NewUploader(s.client, func(u *manager.Uploader) {
-		u.PartSize = 64 * 1024 * 1024 // 64 MB parts
+		u.PartSize = 6 * 1024 * 1024
 		u.Concurrency = 3
 	})
 

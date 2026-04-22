@@ -2,7 +2,9 @@ package tasks
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/config"
@@ -10,17 +12,20 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	sshpkg "github.com/nixopus/nixopus/api/internal/features/ssh"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type ExportConfig struct {
 	ImageTag     string
+	ImageTags    []string
 	OrgID        uuid.UUID
 	AppID        uuid.UUID
 	DeploymentID uuid.UUID
 }
 
-// ExportImageToS3 runs `docker save <tag> | gzip` on the remote server via SSH
+// ExportImageToS3 runs `docker save <tag(s)> | gzip` on the remote server via SSH
 // and streams the output directly to S3 as a multipart upload.
+// Supports single image (ImageTag) or multiple images (ImageTags) for compose.
 // Returns the S3 key and uploaded size in bytes.
 func (s *TaskService) ExportImageToS3(ctx context.Context, cfg ExportConfig, taskCtx *TaskContext) (string, int64, error) {
 	store, err := s3store.NewImageStore(config.AppConfig.S3)
@@ -47,8 +52,19 @@ func (s *TaskService) ExportImageToS3(ctx context.Context, cfg ExportConfig, tas
 		return "", 0, fmt.Errorf("failed to create SSH session: %w", err)
 	}
 
-	escape := func(x string) string { return "'" + fmt.Sprintf("%s", x) + "'" }
-	cmd := fmt.Sprintf("docker save %s | gzip", escape(cfg.ImageTag))
+	escape := func(x string) string { return "'" + x + "'" }
+
+	var saveArgs string
+	if len(cfg.ImageTags) > 0 {
+		quoted := make([]string, len(cfg.ImageTags))
+		for i, tag := range cfg.ImageTags {
+			quoted[i] = escape(tag)
+		}
+		saveArgs = strings.Join(quoted, " ")
+	} else {
+		saveArgs = escape(cfg.ImageTag)
+	}
+	cmd := fmt.Sprintf("docker save %s | gzip", saveArgs)
 
 	stdout, err := session.StdoutPipe()
 	if err != nil {
@@ -90,8 +106,14 @@ func (s *TaskService) ExportAndRecordImage(ctx context.Context, payload shared_t
 
 	deploymentCopy := payload.ApplicationDeployment
 	go func() {
+		bgCtx := context.Background()
+		bgCtx = context.WithValue(bgCtx, shared_types.OrganizationIDKey, payload.Application.OrganizationID.String())
+		if serverID, ok := ctx.Value(shared_types.ServerIDKey).(string); ok {
+			bgCtx = context.WithValue(bgCtx, shared_types.ServerIDKey, serverID)
+		}
+
 		s.Logger.Log(logger.Info, "Starting async S3 image export", deploymentCopy.ID.String())
-		key, size, err := s.ExportImageToS3(ctx, ExportConfig{
+		key, size, err := s.ExportImageToS3(bgCtx, ExportConfig{
 			ImageTag:     commitTag,
 			OrgID:        payload.Application.OrganizationID,
 			AppID:        payload.Application.ID,
@@ -107,7 +129,142 @@ func (s *TaskService) ExportAndRecordImage(ctx context.Context, payload shared_t
 		if err := s.Storage.UpdateApplicationDeployment(&deploymentCopy); err != nil {
 			s.Logger.Log(logger.Warning, "Failed to record S3 image metadata: "+err.Error(), deploymentCopy.ID.String())
 		}
+		taskCtx.FlushLogs()
 	}()
+}
+
+// ExportComposeImagesToS3 lists images used by a compose project and exports them
+// to S3 as a single tarball. Runs asynchronously and is non-fatal.
+func (s *TaskService) ExportComposeImagesToS3(ctx context.Context, payload shared_types.TaskPayload, composeFilePath string, envVars map[string]string, taskCtx *TaskContext) {
+	if !s3store.IsConfigured(config.AppConfig.S3) {
+		return
+	}
+
+	deploymentCopy := payload.ApplicationDeployment
+	// List images synchronously while the SSH context is still alive,
+	// then run the S3 upload in a background goroutine with a detached context.
+	imageTags, err := s.listComposeImages(ctx, composeFilePath, envVars)
+	if err != nil {
+		s.Logger.Log(logger.Warning, "Failed to list compose images (non-fatal): "+err.Error(), deploymentCopy.ID.String())
+		return
+	}
+	if len(imageTags) == 0 {
+		s.Logger.Log(logger.Warning, "No compose images found to export", deploymentCopy.ID.String())
+		return
+	}
+
+	s.Logger.Log(logger.Info, fmt.Sprintf("Found %d compose image(s) to export: %s", len(imageTags), strings.Join(imageTags, ", ")), deploymentCopy.ID.String())
+
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				s.Logger.Log(logger.Error, fmt.Sprintf("panic in compose S3 export: %v", r), deploymentCopy.ID.String())
+			}
+		}()
+		bgCtx := context.Background()
+		bgCtx = context.WithValue(bgCtx, shared_types.OrganizationIDKey, payload.Application.OrganizationID.String())
+		if serverID, ok := ctx.Value(shared_types.ServerIDKey).(string); ok {
+			bgCtx = context.WithValue(bgCtx, shared_types.ServerIDKey, serverID)
+		}
+
+		taskCtx.AddLog(fmt.Sprintf("Exporting %d compose image(s) to S3: %s", len(imageTags), strings.Join(imageTags, ", ")))
+
+		key, size, err := s.ExportImageToS3(bgCtx, ExportConfig{
+			ImageTags:    imageTags,
+			OrgID:        payload.Application.OrganizationID,
+			AppID:        payload.Application.ID,
+			DeploymentID: deploymentCopy.ID,
+		}, taskCtx)
+		if err != nil {
+			s.Logger.Log(logger.Warning, "Failed to export compose images to S3 (non-fatal): "+err.Error(), deploymentCopy.ID.String())
+			return
+		}
+
+		deploymentCopy.ImageS3Key = key
+		deploymentCopy.ImageSize = size
+		if err := s.Storage.UpdateApplicationDeployment(&deploymentCopy); err != nil {
+			s.Logger.Log(logger.Warning, "Failed to record S3 image metadata: "+err.Error(), deploymentCopy.ID.String())
+		}
+		taskCtx.FlushLogs()
+	}()
+}
+
+// listComposeImages runs `docker compose images` via SSH and returns the image tags.
+func (s *TaskService) listComposeImages(ctx context.Context, composeFilePath string, envVars map[string]string) ([]string, error) {
+	sshManager, err := sshpkg.GetSSHManagerFromContext(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+
+	var envPrefix string
+	if len(envVars) > 0 {
+		var parts []string
+		for k, v := range envVars {
+			parts = append(parts, fmt.Sprintf("export %s=%s", k, utils.ShellQuote(v)))
+		}
+		envPrefix = strings.Join(parts, " && ") + " && "
+	}
+
+	cmd := fmt.Sprintf("%sdocker compose -f %s images --format json 2>&1",
+		envPrefix, utils.ShellQuote(composeFilePath))
+
+	output, err := sshManager.RunCommand(cmd)
+	if err != nil {
+		return nil, fmt.Errorf("docker compose images failed (output: %s): %w", output, err)
+	}
+
+	return parseComposeImagesOutput(output)
+}
+
+type composeImageEntry struct {
+	Repository string `json:"Repository"`
+	Tag        string `json:"Tag"`
+}
+
+func parseComposeImagesOutput(output string) ([]string, error) {
+	output = strings.TrimSpace(output)
+	if output == "" {
+		return nil, nil
+	}
+
+	// Try JSON array first
+	var entries []composeImageEntry
+	if err := json.Unmarshal([]byte(output), &entries); err == nil {
+		return extractImageTags(entries), nil
+	}
+
+	// Try JSON-lines (one JSON object per line)
+	var tags []string
+	seen := make(map[string]bool)
+	for _, line := range strings.Split(output, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var entry composeImageEntry
+		if err := json.Unmarshal([]byte(line), &entry); err != nil {
+			continue
+		}
+		tag := entry.Repository + ":" + entry.Tag
+		if tag != ":" && !seen[tag] {
+			seen[tag] = true
+			tags = append(tags, tag)
+		}
+	}
+	return tags, nil
+}
+
+func extractImageTags(entries []composeImageEntry) []string {
+	var tags []string
+	seen := make(map[string]bool)
+	for _, e := range entries {
+		tag := e.Repository + ":" + e.Tag
+		if tag != ":" && !seen[tag] {
+			seen[tag] = true
+			tags = append(tags, tag)
+		}
+	}
+	return tags
 }
 
 // LoadImageFromS3 downloads an image from S3 and loads it into Docker on the remote server.
