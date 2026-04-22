@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
@@ -131,17 +132,29 @@ func cleanDatabase() error {
 	// Truncate all public tables instead of dropping them.
 	// Schema is managed by the auth service's drizzle migrations,
 	// so we only clear data between tests.
-	_, err := testDB.ExecContext(ctx, `
-		DO $$ DECLARE
-			r RECORD;
-		BEGIN
-			FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
-				EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
-			END LOOP;
-		END $$;
-	`)
-	if err != nil {
+	// Retry on deadlock since parallel test packages share the same DB.
+	var err error
+	for attempt := 0; attempt < 5; attempt++ {
+		_, err = testDB.ExecContext(ctx, `
+			DO $$ DECLARE
+				r RECORD;
+			BEGIN
+				FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+					EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
+				END LOOP;
+			END $$;
+		`)
+		if err == nil {
+			break
+		}
+		if strings.Contains(err.Error(), "deadlock") {
+			time.Sleep(time.Duration(100*(attempt+1)) * time.Millisecond)
+			continue
+		}
 		return fmt.Errorf("failed to truncate tables: %w", err)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to truncate tables after retries: %w", err)
 	}
 
 	// Flush Redis to clear any cached state (e.g. admin_registered).
@@ -434,22 +447,71 @@ func (s *TestSetup) SeedCredentialAccount(userID string) error {
 	return err
 }
 
+// SeedDeploymentWithArtifact inserts a deployment row with S3 artifact metadata
+// for an existing application. Returns the deployment ID.
+func (s *TestSetup) SeedDeploymentWithArtifact(appID, s3Key string, imageSize int64) (string, error) {
+	var deploymentID string
+	err := s.DB.NewRaw(
+		`INSERT INTO application_deployment
+			(id, application_id, commit_hash, image_s3_key, image_size, created_at, updated_at)
+		 VALUES
+			(gen_random_uuid(), ?, 'abc123', ?, ?, NOW(), NOW())
+		 RETURNING id`,
+		appID, s3Key, imageSize,
+	).Scan(ctx, &deploymentID)
+	if err != nil {
+		return "", fmt.Errorf("failed to seed deployment with artifact: %w", err)
+	}
+	return deploymentID, nil
+}
+
+// SeedDeploymentWithoutArtifact inserts a deployment row without S3 artifact metadata.
+func (s *TestSetup) SeedDeploymentWithoutArtifact(appID string) (string, error) {
+	var deploymentID string
+	err := s.DB.NewRaw(
+		`INSERT INTO application_deployment
+			(id, application_id, commit_hash, image_s3_key, image_size, created_at, updated_at)
+		 VALUES
+			(gen_random_uuid(), ?, 'def456', '', 0, NOW(), NOW())
+		 RETURNING id`,
+		appID,
+	).Scan(ctx, &deploymentID)
+	if err != nil {
+		return "", fmt.Errorf("failed to seed deployment without artifact: %w", err)
+	}
+	return deploymentID, nil
+}
+
+// SeedOrganizationSettings inserts or updates organization settings with the given data.
+func (s *TestSetup) SeedOrganizationSettings(organizationID string, settingsJSON string) error {
+	_, err := s.DB.NewRaw(
+		`INSERT INTO organization_settings (id, organization_id, settings, created_at, updated_at)
+		 VALUES (gen_random_uuid(), ?, ?::jsonb, NOW(), NOW())
+		 ON CONFLICT (organization_id)
+		 DO UPDATE SET settings = ?::jsonb, updated_at = NOW()`,
+		organizationID, settingsJSON, settingsJSON,
+	).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to seed organization settings: %w", err)
+	}
+	return nil
+}
+
 // SeedApplication inserts a minimal application record so that healthcheck
 // (and similar) tests can reference a valid application_id without requiring
 // the full deploy pipeline.
 func (s *TestSetup) SeedApplication(userID, organizationID string) (string, error) {
-	appID := "00000000-0000-0000-0000-000000000001"
+	appID := uuid.New().String()
 	_, err := s.DB.NewRaw(
 		`INSERT INTO applications
 			(id, name, port, environment, build_variables, environment_variables,
 			 build_pack, repository, branch, pre_run_command, post_run_command,
 			 user_id, organization_id)
 		 VALUES
-			(?, 'test-app', 3000, 'production', '', '',
+			(?, 'test-app-'||substr(?::text,1,8), 3000, 'production', '', '',
 			 'dockerfile', 'https://github.com/test/repo', 'main', '', '',
-			 ?, ?)
-		 ON CONFLICT (id) DO NOTHING`,
-		appID, userID, organizationID,
+			 ?, ?)`,
+		appID, appID, userID, organizationID,
 	).Exec(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to seed application: %w", err)

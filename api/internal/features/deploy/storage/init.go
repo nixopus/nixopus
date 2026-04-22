@@ -35,6 +35,7 @@ type DeployRepository interface {
 	GetApplications(page int, pageSize int, sortBy string, sortDirection string, organizationID uuid.UUID, serverID *uuid.UUID) ([]shared_types.Application, int, error)
 	UpdateApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
 	GetApplicationById(id string, organizationID uuid.UUID) (shared_types.Application, error)
+	GetApplicationBasicById(id string, organizationID uuid.UUID) (shared_types.Application, error)
 	AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error
 	AddApplicationDeploymentStatus(deployment_status *shared_types.ApplicationDeploymentStatus) error
 	UpdateApplicationDeploymentStatus(applicationStatus *shared_types.ApplicationDeploymentStatus) error
@@ -72,6 +73,7 @@ type DeployRepository interface {
 	EnsureApplicationServers(appID uuid.UUID, orgID uuid.UUID) error
 	CopyApplicationServers(srcAppID, dstAppID uuid.UUID) error
 	DeleteApplicationDeploymentByID(id uuid.UUID) error
+	ClearDeploymentArtifactFields(deploymentID uuid.UUID) error
 }
 
 func (s *DeployStorage) RunInTransaction(fn func(tx bun.Tx) error) error {
@@ -202,6 +204,16 @@ func (s *DeployStorage) UpdateApplicationDeployment(deployment *shared_types.App
 		return err
 	}
 	return nil
+}
+
+func (s *DeployStorage) ClearDeploymentArtifactFields(deploymentID uuid.UUID) error {
+	_, err := s.DB.NewUpdate().
+		TableExpr("application_deployments").
+		Set("image_s3_key = ''").
+		Set("image_size = 0").
+		Where("id = ?", deploymentID).
+		Exec(s.Ctx)
+	return err
 }
 
 func (s *DeployStorage) AddApplicationDeploymentStatus(deployment_status *shared_types.ApplicationDeploymentStatus) error {
@@ -346,6 +358,24 @@ func (s *DeployStorage) GetApplicationById(id string, organizationID uuid.UUID) 
 		Relation("Status").
 		Relation("Domains.ComposeService").
 		Relation("Servers.Server").
+		Where("a.id = ? AND a.organization_id = ?", id, organizationID).
+		Scan(s.Ctx)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return shared_types.Application{}, fmt.Errorf("application not found")
+		}
+		return shared_types.Application{}, err
+	}
+
+	return application, nil
+}
+
+func (s *DeployStorage) GetApplicationBasicById(id string, organizationID uuid.UUID) (shared_types.Application, error) {
+	var application shared_types.Application
+
+	err := s.DB.NewSelect().
+		Model(&application).
 		Where("a.id = ? AND a.organization_id = ?", id, organizationID).
 		Scan(s.Ctx)
 

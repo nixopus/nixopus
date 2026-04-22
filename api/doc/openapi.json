@@ -1711,6 +1711,82 @@
 				},
 				"type": "object"
 			},
+			"ArtifactDeleteResponse": {
+				"description": "ArtifactDeleteResponse schema",
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ArtifactDownloadResponse": {
+				"description": "ArtifactDownloadResponse schema",
+				"properties": {
+					"data": {
+						"properties": {
+							"expires_in_seconds": {
+								"type": "integer"
+							},
+							"url": {
+								"type": "string"
+							}
+						},
+						"type": "object"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ArtifactListResponse": {
+				"description": "ArtifactListResponse schema",
+				"properties": {
+					"data": {
+						"items": {
+							"properties": {
+								"app_name": {
+									"type": "string"
+								},
+								"application_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"created_at": {
+									"type": "string"
+								},
+								"deployment_id": {
+									"format": "uuid",
+									"type": "string"
+								},
+								"s3_key": {
+									"type": "string"
+								},
+								"size": {
+									"format": "int64",
+									"type": "integer"
+								}
+							},
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"BackupListResponse": {
 				"description": "BackupListResponse schema",
 				"properties": {
@@ -15196,6 +15272,414 @@
 				]
 			}
 		},
+		"/api/v1/deploy/artifacts": {
+			"get": {
+				"description": "List deployment artifacts for an application.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "listDeploymentArtifactsForAnApplication",
+				"parameters": [
+					{
+						"description": "Application ID",
+						"in": "query",
+						"name": "application_id",
+						"required": true,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					},
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": [],
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ArtifactListResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": [],
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ArtifactListResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Unauthorized"
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Forbidden - application belongs to another organization"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "List deployment artifacts for an application",
+				"tags": [
+					"api/v1/deploy",
+					"artifacts"
+				]
+			}
+		},
+		"/api/v1/deploy/artifacts/{deployment_id}": {
+			"delete": {
+				"description": "Delete deployment artifact.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "deleteDeploymentArtifact",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "deployment_id",
+						"required": true,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ArtifactDeleteResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ArtifactDeleteResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Unauthorized"
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Forbidden - deployment belongs to another organization"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Deployment not found"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Delete deployment artifact",
+				"tags": [
+					"{deployment_id}",
+					"api/v1/deploy",
+					"artifacts"
+				]
+			}
+		},
+		"/api/v1/deploy/artifacts/{deployment_id}/download": {
+			"get": {
+				"description": "Get artifact download URL.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getArtifactDownloadURL",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "deployment_id",
+						"required": true,
+						"schema": {
+							"format": "uuid",
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ArtifactDownloadResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": {},
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ArtifactDownloadResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Unauthorized"
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Forbidden - deployment belongs to another organization"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Deployment not found"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get artifact download URL",
+				"tags": [
+					"{deployment_id}",
+					"api/v1/deploy",
+					"artifacts"
+				]
+			}
+		},
 		"/api/v1/domain": {
 			"get": {
 				"description": "List domains.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
@@ -25717,6 +26201,9 @@
 			"name": "applications"
 		},
 		{
+			"name": "artifacts"
+		},
+		{
 			"name": "avatar"
 		},
 		{
@@ -25898,6 +26385,9 @@
 		},
 		{
 			"name": "{container_id}"
+		},
+		{
+			"name": "{deployment_id}"
 		},
 		{
 			"name": "{id}"

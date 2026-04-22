@@ -204,6 +204,7 @@ func GetOrganizationSettings(ctx context.Context, db *bun.DB, orgID uuid.UUID) (
 		BackupScheduleDayOfWeek:          defaults.BackupScheduleDayOfWeek,
 		BackupRetentionCount:             defaults.BackupRetentionCount,
 		AIIncidentsEnabled:               defaults.AIIncidentsEnabled,
+		S3ArtifactUploadEnabled:          defaults.S3ArtifactUploadEnabled,
 	}
 
 	if settings.Settings.ContainerLogTailLines != nil {
@@ -256,6 +257,9 @@ func GetOrganizationSettings(ctx context.Context, db *bun.DB, orgID uuid.UUID) (
 	}
 	if settings.Settings.AIIncidentsEnabled != nil {
 		result.AIIncidentsEnabled = settings.Settings.AIIncidentsEnabled
+	}
+	if settings.Settings.S3ArtifactUploadEnabled != nil {
+		result.S3ArtifactUploadEnabled = settings.Settings.S3ArtifactUploadEnabled
 	}
 
 	return result, nil

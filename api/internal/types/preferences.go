@@ -65,6 +65,9 @@ type OrganizationSettingsData struct {
 
 	// AI settings
 	AIIncidentsEnabled *bool `json:"ai_incidents_enabled,omitempty"`
+
+	// S3 artifact storage
+	S3ArtifactUploadEnabled *bool `json:"s3_artifact_upload_enabled,omitempty"`
 }
 
 // OrganizationSettings represents organization-level settings stored in the database
@@ -132,6 +135,7 @@ func DefaultOrganizationSettingsData() OrganizationSettingsData {
 	backupRetentionCount := 7
 
 	aiIncidentsEnabled := false
+	s3ArtifactUploadEnabled := false
 
 	return OrganizationSettingsData{
 		WebsocketReconnectAttempts:       5,
@@ -155,5 +159,6 @@ func DefaultOrganizationSettingsData() OrganizationSettingsData {
 		BackupScheduleDayOfWeek:          &backupScheduleDayOfWeek,
 		BackupRetentionCount:             &backupRetentionCount,
 		AIIncidentsEnabled:               &aiIncidentsEnabled,
+		S3ArtifactUploadEnabled:          &s3ArtifactUploadEnabled,
 	}
 }

@@ -19,6 +19,9 @@ func (router *Router) RegisterDeployRoutes(deployGroup *fuego.Server, deployCont
 	)
 	deployApplicationGroup := fuego.Group(deployGroup, "/application")
 	router.RegisterDeployApplicationRoutes(deployApplicationGroup, deployController)
+
+	artifactGroup := fuego.Group(deployGroup, "/artifacts")
+	router.RegisterArtifactRoutes(artifactGroup, deployController)
 }
 
 // RegisterDeployApplicationRoutes registers application-specific deployment routes
@@ -207,5 +210,28 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 		"/servers",
 		deployController.SetApplicationServers,
 		fuego.OptionSummary("Set application servers"),
+	)
+}
+
+// RegisterArtifactRoutes registers deployment artifact (S3 image) routes
+func (router *Router) RegisterArtifactRoutes(artifactGroup *fuego.Server, deployController *deploy.DeployController) {
+	fuego.Get(
+		artifactGroup,
+		"",
+		deployController.ListArtifacts,
+		fuego.OptionSummary("List deployment artifacts for an application"),
+		fuego.OptionQuery("application_id", "Application ID", fuego.ParamRequired()),
+	)
+	fuego.Get(
+		artifactGroup,
+		"/{deployment_id}/download",
+		deployController.GetArtifactDownloadURL,
+		fuego.OptionSummary("Get artifact download URL"),
+	)
+	fuego.Delete(
+		artifactGroup,
+		"/{deployment_id}",
+		deployController.DeleteArtifact,
+		fuego.OptionSummary("Delete deployment artifact"),
 	)
 }

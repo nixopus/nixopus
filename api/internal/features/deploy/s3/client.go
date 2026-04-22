@@ -2,16 +2,19 @@ package s3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
-	"github.com/nixopus/nixopus/api/internal/types"
+	nixopustypes "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type ImageStore struct {
@@ -19,11 +22,11 @@ type ImageStore struct {
 	bucket string
 }
 
-func IsConfigured(cfg types.S3Config) bool {
+func IsConfigured(cfg nixopustypes.S3Config) bool {
 	return cfg.Bucket != "" && cfg.Endpoint != "" && cfg.AccessKey != "" && cfg.SecretKey != ""
 }
 
-func NewImageStore(cfg types.S3Config) (*ImageStore, error) {
+func NewImageStore(cfg nixopustypes.S3Config) (*ImageStore, error) {
 	if !IsConfigured(cfg) {
 		return nil, fmt.Errorf("S3 configuration is incomplete")
 	}
@@ -76,7 +79,7 @@ func ImageS3Key(orgID, appID, deploymentID uuid.UUID) string {
 // The reader should produce a gzipped docker save output.
 func (s *ImageStore) UploadImage(ctx context.Context, key string, reader io.Reader) (int64, error) {
 	uploader := manager.NewUploader(s.client, func(u *manager.Uploader) {
-		u.PartSize = 64 * 1024 * 1024 // 64 MB parts
+		u.PartSize = 6 * 1024 * 1024
 		u.Concurrency = 3
 	})
 
@@ -154,6 +157,35 @@ func (s *ImageStore) GetObject(ctx context.Context, key string) (io.ReadCloser, 
 		return nil, fmt.Errorf("failed to get S3 object %s: %w", key, err)
 	}
 	return output.Body, nil
+}
+
+// PresignedDownloadURL generates a pre-signed URL for downloading an image from S3.
+func (s *ImageStore) PresignedDownloadURL(ctx context.Context, key string, expiry time.Duration) (string, error) {
+	presignClient := s3.NewPresignClient(s.client)
+	req, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	}, s3.WithPresignExpires(expiry))
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+	return req.URL, nil
+}
+
+// ObjectExists checks if an object exists in the bucket.
+func (s *ImageStore) ObjectExists(ctx context.Context, key string) (bool, error) {
+	_, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		var notFound *types.NotFound
+		if errors.As(err, &notFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 }
 
 func WorkspaceS3Prefix(appID uuid.UUID) string {

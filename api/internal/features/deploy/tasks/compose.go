@@ -48,6 +48,10 @@ func (t *TaskService) deployDockerCompose(ctx context.Context, TaskPayload share
 		return err
 	}
 
+	if TaskPayload.Application.Source != shared_types.SourceTemplate {
+		t.ExportComposeImagesToS3(orgCtx, TaskPayload, composeFilePath, envVars, taskCtx)
+	}
+
 	if err := t.addDomainsForCompose(orgCtx, TaskPayload, taskCtx); err != nil {
 		return err
 	}
