@@ -170,8 +170,8 @@ func TestGetArtifactDownloadURL(t *testing.T) {
 			cookies:        cookies,
 			organizationID: orgID,
 			deploymentID:   fakeDeploymentID,
-			expectedStatus: http.StatusInternalServerError,
-			description:    "Should return 500 when deployment doesn't exist",
+			expectedStatus: http.StatusNotFound,
+			description:    "Should return 404 when deployment doesn't exist",
 		},
 	}
 
@@ -217,11 +217,11 @@ func TestGetArtifactDownloadURLNoS3Key(t *testing.T) {
 
 	t.Run("Download artifact when deployment has no S3 key", func(t *testing.T) {
 		Test(t,
-			Description("Should return 500 when deployment has no artifact uploaded"),
+			Description("Should return 400 when deployment has no artifact uploaded"),
 			Get(tests.GetDeployArtifactDownloadURL(deployID)),
 			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-ID").Add(orgID),
-			Expect().Status().Equal(http.StatusInternalServerError),
+			Expect().Status().Equal(http.StatusBadRequest),
 		)
 	})
 }
@@ -266,8 +266,8 @@ func TestDeleteArtifact(t *testing.T) {
 			cookies:        cookies,
 			organizationID: orgID,
 			deploymentID:   fakeDeploymentID,
-			expectedStatus: http.StatusInternalServerError,
-			description:    "Should return 500 when deployment doesn't exist",
+			expectedStatus: http.StatusNotFound,
+			description:    "Should return 404 when deployment doesn't exist",
 		},
 	}
 
@@ -313,11 +313,11 @@ func TestDeleteArtifactNoS3Key(t *testing.T) {
 
 	t.Run("Delete artifact when deployment has no artifact", func(t *testing.T) {
 		Test(t,
-			Description("Should return 500 when deployment has no artifact to delete"),
+			Description("Should return 400 when deployment has no artifact to delete"),
 			Delete(tests.GetDeployArtifactDeleteURL(deployID)),
 			Send().Headers("Cookie").Add(cookies),
 			Send().Headers("X-Organization-ID").Add(orgID),
-			Expect().Status().Equal(http.StatusInternalServerError),
+			Expect().Status().Equal(http.StatusBadRequest),
 		)
 	})
 }
@@ -369,33 +369,33 @@ func TestArtifactsCrossOrgIsolation(t *testing.T) {
 	// Cross-org: user B tries to list artifacts for org A's app
 	t.Run("Org B cannot list org A artifacts", func(t *testing.T) {
 		Test(t,
-			Description("Cross-org list should fail or return empty"),
+			Description("Cross-org list should fail with 403"),
 			Get(tests.GetDeployArtifactsURL(appID)),
 			Send().Headers("Cookie").Add(cookiesB),
 			Send().Headers("X-Organization-ID").Add(orgB),
-			Expect().Status().OneOf(http.StatusInternalServerError, http.StatusForbidden),
+			Expect().Status().Equal(http.StatusForbidden),
 		)
 	})
 
 	// Cross-org: user B tries to download org A's artifact
 	t.Run("Org B cannot download org A artifact", func(t *testing.T) {
 		Test(t,
-			Description("Cross-org download should fail"),
+			Description("Cross-org download should fail with 403"),
 			Get(tests.GetDeployArtifactDownloadURL(deployID)),
 			Send().Headers("Cookie").Add(cookiesB),
 			Send().Headers("X-Organization-ID").Add(orgB),
-			Expect().Status().OneOf(http.StatusInternalServerError, http.StatusForbidden),
+			Expect().Status().Equal(http.StatusForbidden),
 		)
 	})
 
 	// Cross-org: user B tries to delete org A's artifact
 	t.Run("Org B cannot delete org A artifact", func(t *testing.T) {
 		Test(t,
-			Description("Cross-org delete should fail"),
+			Description("Cross-org delete should fail with 403"),
 			Delete(tests.GetDeployArtifactDeleteURL(deployID)),
 			Send().Headers("Cookie").Add(cookiesB),
 			Send().Headers("X-Organization-ID").Add(orgB),
-			Expect().Status().OneOf(http.StatusInternalServerError, http.StatusForbidden),
+			Expect().Status().Equal(http.StatusForbidden),
 		)
 	})
 

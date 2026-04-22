@@ -1,7 +1,9 @@
 package controller
 
 import (
+	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
@@ -28,9 +30,12 @@ func (c *DeployController) ListArtifacts(f fuego.ContextNoBody) (*types.Artifact
 	artifacts, err := c.service.ListArtifacts(appID, orgID)
 	if err != nil {
 		c.logger.Log(logger.Error, "Failed to list artifacts: "+err.Error(), "")
+		if errors.Is(err, types.ErrPermissionDenied) {
+			return nil, fuego.ForbiddenError{Detail: "permission denied"}
+		}
 		return nil, fuego.HTTPError{
 			Err:    err,
-			Detail: err.Error(),
+			Detail: "failed to list artifacts",
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -52,17 +57,30 @@ func (c *DeployController) GetArtifactDownloadURL(f fuego.ContextNoBody) (*types
 		return nil, fuego.BadRequestError{Detail: "deployment_id is required"}
 	}
 
+	if _, err := uuid.Parse(deploymentID); err != nil {
+		return nil, fuego.BadRequestError{Detail: "deployment_id must be a valid UUID"}
+	}
+
 	orgID := utils.GetOrganizationID(f.Request())
 	if orgID == uuid.Nil {
 		return nil, fuego.UnauthorizedError{Detail: "organization not found"}
 	}
 
-	url, err := c.service.GetArtifactDownloadURL(deploymentID, orgID)
+	url, err := c.service.GetArtifactDownloadURL(f.Context(), deploymentID, orgID)
 	if err != nil {
 		c.logger.Log(logger.Error, "Failed to get artifact download URL: "+err.Error(), "")
+		if errors.Is(err, types.ErrPermissionDenied) {
+			return nil, fuego.ForbiddenError{Detail: "permission denied"}
+		}
+		if strings.Contains(err.Error(), "deployment not found") {
+			return nil, fuego.NotFoundError{Detail: "deployment not found"}
+		}
+		if strings.Contains(err.Error(), "no artifact available") {
+			return nil, fuego.BadRequestError{Detail: "no artifact available"}
+		}
 		return nil, fuego.HTTPError{
 			Err:    err,
-			Detail: err.Error(),
+			Detail: "failed to get download URL",
 			Status: http.StatusInternalServerError,
 		}
 	}
@@ -82,16 +100,29 @@ func (c *DeployController) DeleteArtifact(f fuego.ContextNoBody) (*types.Artifac
 		return nil, fuego.BadRequestError{Detail: "deployment_id is required"}
 	}
 
+	if _, err := uuid.Parse(deploymentID); err != nil {
+		return nil, fuego.BadRequestError{Detail: "deployment_id must be a valid UUID"}
+	}
+
 	orgID := utils.GetOrganizationID(f.Request())
 	if orgID == uuid.Nil {
 		return nil, fuego.UnauthorizedError{Detail: "organization not found"}
 	}
 
-	if err := c.service.DeleteArtifact(deploymentID, orgID); err != nil {
+	if err := c.service.DeleteArtifact(f.Context(), deploymentID, orgID); err != nil {
 		c.logger.Log(logger.Error, "Failed to delete artifact: "+err.Error(), "")
+		if errors.Is(err, types.ErrPermissionDenied) {
+			return nil, fuego.ForbiddenError{Detail: "permission denied"}
+		}
+		if strings.Contains(err.Error(), "deployment not found") {
+			return nil, fuego.NotFoundError{Detail: "deployment not found"}
+		}
+		if strings.Contains(err.Error(), "no artifact") {
+			return nil, fuego.BadRequestError{Detail: "no artifact available"}
+		}
 		return nil, fuego.HTTPError{
 			Err:    err,
-			Detail: err.Error(),
+			Detail: "failed to delete artifact",
 			Status: http.StatusInternalServerError,
 		}
 	}

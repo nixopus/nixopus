@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/google/uuid"
@@ -105,7 +106,11 @@ func (s *TaskService) ExportAndRecordImage(ctx context.Context, payload shared_t
 	}
 
 	orgSettings, err := utils.GetOrganizationSettings(ctx, s.Store.DB, payload.Application.OrganizationID)
-	if err == nil && (orgSettings.S3ArtifactUploadEnabled == nil || !*orgSettings.S3ArtifactUploadEnabled) {
+	if err != nil {
+		s.Logger.Log(logger.Warning, "Failed to get organization settings for S3 export: "+err.Error(), payload.ApplicationDeployment.ID.String())
+		return
+	}
+	if orgSettings.S3ArtifactUploadEnabled == nil || !*orgSettings.S3ArtifactUploadEnabled {
 		return
 	}
 
@@ -146,7 +151,11 @@ func (s *TaskService) ExportComposeImagesToS3(ctx context.Context, payload share
 	}
 
 	orgSettings, err := utils.GetOrganizationSettings(ctx, s.Store.DB, payload.Application.OrganizationID)
-	if err == nil && (orgSettings.S3ArtifactUploadEnabled == nil || !*orgSettings.S3ArtifactUploadEnabled) {
+	if err != nil {
+		s.Logger.Log(logger.Warning, "Failed to get organization settings for S3 export: "+err.Error(), payload.ApplicationDeployment.ID.String())
+		return
+	}
+	if orgSettings.S3ArtifactUploadEnabled == nil || !*orgSettings.S3ArtifactUploadEnabled {
 		return
 	}
 
@@ -208,8 +217,12 @@ func (s *TaskService) listComposeImages(ctx context.Context, composeFilePath str
 
 	var envPrefix string
 	if len(envVars) > 0 {
+		validKeyRegex := regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*$`)
 		var parts []string
 		for k, v := range envVars {
+			if !validKeyRegex.MatchString(k) {
+				return nil, fmt.Errorf("invalid environment variable key: %s", k)
+			}
 			parts = append(parts, fmt.Sprintf("export %s=%s", k, utils.ShellQuote(v)))
 		}
 		envPrefix = strings.Join(parts, " && ") + " && "

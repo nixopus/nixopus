@@ -437,15 +437,15 @@ func (s *TestSetup) SeedCredentialAccount(userID string) error {
 // SeedDeploymentWithArtifact inserts a deployment row with S3 artifact metadata
 // for an existing application. Returns the deployment ID.
 func (s *TestSetup) SeedDeploymentWithArtifact(appID, s3Key string, imageSize int64) (string, error) {
-	deploymentID := "00000000-0000-0000-0000-000000000099"
-	_, err := s.DB.NewRaw(
+	var deploymentID string
+	err := s.DB.NewRaw(
 		`INSERT INTO application_deployment
 			(id, application_id, commit_hash, image_s3_key, image_size, created_at, updated_at)
 		 VALUES
-			(?, ?, 'abc123', ?, ?, NOW(), NOW())
-		 ON CONFLICT (id) DO NOTHING`,
-		deploymentID, appID, s3Key, imageSize,
-	).Exec(ctx)
+			(gen_random_uuid(), ?, 'abc123', ?, ?, NOW(), NOW())
+		 RETURNING id`,
+		appID, s3Key, imageSize,
+	).Scan(ctx, &deploymentID)
 	if err != nil {
 		return "", fmt.Errorf("failed to seed deployment with artifact: %w", err)
 	}
@@ -454,15 +454,15 @@ func (s *TestSetup) SeedDeploymentWithArtifact(appID, s3Key string, imageSize in
 
 // SeedDeploymentWithoutArtifact inserts a deployment row without S3 artifact metadata.
 func (s *TestSetup) SeedDeploymentWithoutArtifact(appID string) (string, error) {
-	deploymentID := "00000000-0000-0000-0000-000000000098"
-	_, err := s.DB.NewRaw(
+	var deploymentID string
+	err := s.DB.NewRaw(
 		`INSERT INTO application_deployment
 			(id, application_id, commit_hash, created_at, updated_at)
 		 VALUES
-			(?, ?, 'def456', NOW(), NOW())
-		 ON CONFLICT (id) DO NOTHING`,
-		deploymentID, appID,
-	).Exec(ctx)
+			(gen_random_uuid(), ?, 'def456', NOW(), NOW())
+		 RETURNING id`,
+		appID,
+	).Scan(ctx, &deploymentID)
 	if err != nil {
 		return "", fmt.Errorf("failed to seed deployment without artifact: %w", err)
 	}

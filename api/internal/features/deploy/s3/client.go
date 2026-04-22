@@ -2,6 +2,7 @@ package s3
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -11,8 +12,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/google/uuid"
-	"github.com/nixopus/nixopus/api/internal/types"
+	nixopustypes "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type ImageStore struct {
@@ -20,11 +22,11 @@ type ImageStore struct {
 	bucket string
 }
 
-func IsConfigured(cfg types.S3Config) bool {
+func IsConfigured(cfg nixopustypes.S3Config) bool {
 	return cfg.Bucket != "" && cfg.Endpoint != "" && cfg.AccessKey != "" && cfg.SecretKey != ""
 }
 
-func NewImageStore(cfg types.S3Config) (*ImageStore, error) {
+func NewImageStore(cfg nixopustypes.S3Config) (*ImageStore, error) {
 	if !IsConfigured(cfg) {
 		return nil, fmt.Errorf("S3 configuration is incomplete")
 	}
@@ -177,7 +179,11 @@ func (s *ImageStore) ObjectExists(ctx context.Context, key string) (bool, error)
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return false, nil
+		var notFound *types.NotFound
+		if errors.As(err, &notFound) {
+			return false, nil
+		}
+		return false, err
 	}
 	return true, nil
 }
