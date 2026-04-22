@@ -434,6 +434,56 @@ func (s *TestSetup) SeedCredentialAccount(userID string) error {
 	return err
 }
 
+// SeedDeploymentWithArtifact inserts a deployment row with S3 artifact metadata
+// for an existing application. Returns the deployment ID.
+func (s *TestSetup) SeedDeploymentWithArtifact(appID, s3Key string, imageSize int64) (string, error) {
+	deploymentID := "00000000-0000-0000-0000-000000000099"
+	_, err := s.DB.NewRaw(
+		`INSERT INTO application_deployment
+			(id, application_id, commit_hash, image_s3_key, image_size, created_at, updated_at)
+		 VALUES
+			(?, ?, 'abc123', ?, ?, NOW(), NOW())
+		 ON CONFLICT (id) DO NOTHING`,
+		deploymentID, appID, s3Key, imageSize,
+	).Exec(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to seed deployment with artifact: %w", err)
+	}
+	return deploymentID, nil
+}
+
+// SeedDeploymentWithoutArtifact inserts a deployment row without S3 artifact metadata.
+func (s *TestSetup) SeedDeploymentWithoutArtifact(appID string) (string, error) {
+	deploymentID := "00000000-0000-0000-0000-000000000098"
+	_, err := s.DB.NewRaw(
+		`INSERT INTO application_deployment
+			(id, application_id, commit_hash, created_at, updated_at)
+		 VALUES
+			(?, ?, 'def456', NOW(), NOW())
+		 ON CONFLICT (id) DO NOTHING`,
+		deploymentID, appID,
+	).Exec(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to seed deployment without artifact: %w", err)
+	}
+	return deploymentID, nil
+}
+
+// SeedOrganizationSettings inserts or updates organization settings with the given data.
+func (s *TestSetup) SeedOrganizationSettings(organizationID string, settingsJSON string) error {
+	_, err := s.DB.NewRaw(
+		`INSERT INTO organization_settings (id, organization_id, settings, created_at, updated_at)
+		 VALUES (gen_random_uuid(), ?, ?::jsonb, NOW(), NOW())
+		 ON CONFLICT (organization_id)
+		 DO UPDATE SET settings = ?::jsonb, updated_at = NOW()`,
+		organizationID, settingsJSON, settingsJSON,
+	).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to seed organization settings: %w", err)
+	}
+	return nil
+}
+
 // SeedApplication inserts a minimal application record so that healthcheck
 // (and similar) tests can reference a valid application_id without requiring
 // the full deploy pipeline.

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
@@ -154,6 +155,31 @@ func (s *ImageStore) GetObject(ctx context.Context, key string) (io.ReadCloser, 
 		return nil, fmt.Errorf("failed to get S3 object %s: %w", key, err)
 	}
 	return output.Body, nil
+}
+
+// PresignedDownloadURL generates a pre-signed URL for downloading an image from S3.
+func (s *ImageStore) PresignedDownloadURL(ctx context.Context, key string, expiry time.Duration) (string, error) {
+	presignClient := s3.NewPresignClient(s.client)
+	req, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	}, s3.WithPresignExpires(expiry))
+	if err != nil {
+		return "", fmt.Errorf("failed to generate presigned URL: %w", err)
+	}
+	return req.URL, nil
+}
+
+// ObjectExists checks if an object exists in the bucket.
+func (s *ImageStore) ObjectExists(ctx context.Context, key string) (bool, error) {
+	_, err := s.client.HeadObject(ctx, &s3.HeadObjectInput{
+		Bucket: aws.String(s.bucket),
+		Key:    aws.String(key),
+	})
+	if err != nil {
+		return false, nil
+	}
+	return true, nil
 }
 
 func WorkspaceS3Prefix(appID uuid.UUID) string {

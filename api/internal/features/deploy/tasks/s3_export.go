@@ -104,6 +104,11 @@ func (s *TaskService) ExportAndRecordImage(ctx context.Context, payload shared_t
 		return
 	}
 
+	orgSettings, err := utils.GetOrganizationSettings(ctx, s.Store.DB, payload.Application.OrganizationID)
+	if err == nil && (orgSettings.S3ArtifactUploadEnabled == nil || !*orgSettings.S3ArtifactUploadEnabled) {
+		return
+	}
+
 	deploymentCopy := payload.ApplicationDeployment
 	go func() {
 		bgCtx := context.Background()
@@ -137,6 +142,11 @@ func (s *TaskService) ExportAndRecordImage(ctx context.Context, payload shared_t
 // to S3 as a single tarball. Runs asynchronously and is non-fatal.
 func (s *TaskService) ExportComposeImagesToS3(ctx context.Context, payload shared_types.TaskPayload, composeFilePath string, envVars map[string]string, taskCtx *TaskContext) {
 	if !s3store.IsConfigured(config.AppConfig.S3) {
+		return
+	}
+
+	orgSettings, err := utils.GetOrganizationSettings(ctx, s.Store.DB, payload.Application.OrganizationID)
+	if err == nil && (orgSettings.S3ArtifactUploadEnabled == nil || !*orgSettings.S3ArtifactUploadEnabled) {
 		return
 	}
 

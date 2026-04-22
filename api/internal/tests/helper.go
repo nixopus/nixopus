@@ -384,6 +384,19 @@ func GetContainerPruneBuildCacheURL() string {
 	return baseURL + "/container/prune/build-cache"
 }
 
+// Artifacts
+func GetDeployArtifactsURL(applicationID string) string {
+	return baseURL + "/deploy/artifacts?application_id=" + applicationID
+}
+
+func GetDeployArtifactDownloadURL(deploymentID string) string {
+	return baseURL + "/deploy/artifacts/" + deploymentID + "/download"
+}
+
+func GetDeployArtifactDeleteURL(deploymentID string) string {
+	return baseURL + "/deploy/artifacts/" + deploymentID
+}
+
 // Audit
 func GetAuditURL() string {
 	return baseURL + "/audit"

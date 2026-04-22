@@ -333,6 +333,36 @@ type IndexCodebaseResponseData struct {
 	Skipped int `json:"skipped"`
 }
 
+// Artifact represents a deployment's S3 image artifact metadata.
+type Artifact struct {
+	DeploymentID  string `json:"deployment_id"`
+	ApplicationID string `json:"application_id"`
+	AppName       string `json:"app_name"`
+	S3Key         string `json:"s3_key"`
+	Size          int64  `json:"size"`
+	CreatedAt     string `json:"created_at"`
+}
+
+type ArtifactListResponse struct {
+	Status  string     `json:"status"`
+	Message string     `json:"message"`
+	Data    []Artifact `json:"data"`
+}
+
+type ArtifactDownloadResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Data    struct {
+		URL       string `json:"url"`
+		ExpiresIn int    `json:"expires_in_seconds"`
+	} `json:"data"`
+}
+
+type ArtifactDeleteResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}
+
 var (
 	ErrAtLeastOneServerRequired         = errors.New("at least one server is required")
 	ErrS3NotConfigured                  = errors.New("S3 image storage is not configured")

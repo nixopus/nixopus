@@ -257,6 +257,9 @@ func GetOrganizationSettings(ctx context.Context, db *bun.DB, orgID uuid.UUID) (
 	if settings.Settings.AIIncidentsEnabled != nil {
 		result.AIIncidentsEnabled = settings.Settings.AIIncidentsEnabled
 	}
+	if settings.Settings.S3ArtifactUploadEnabled != nil {
+		result.S3ArtifactUploadEnabled = settings.Settings.S3ArtifactUploadEnabled
+	}
 
 	return result, nil
 }
