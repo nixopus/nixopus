@@ -4,8 +4,8 @@ import {
   AdminRegisteredError,
   AdminRegistrationSuccess,
   RegisterFormComponent
-} from '../../packages/components/register';
-import { AdminRegistered } from '../../packages/components/register';
+} from '../../packages/components/auth/register';
+import { AdminRegistered } from '../../packages/components/auth/register';
 import useRegister from '../../packages/hooks/auth/use-register';
 import { useIsAdminRegisteredQuery } from '@/redux/services/users/authApi';
 import { usePasswordLoginEnabled } from '@/packages/hooks/shared/use-config';

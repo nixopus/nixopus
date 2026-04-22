@@ -58,8 +58,8 @@ import {
   EmptyState,
   PortDisplay,
   ResourceLimitsForm
-} from '@/packages/components/container';
-import { ImagesSectionSkeleton } from '@/packages/components/container-skeletons';
+} from '@/packages/components/containers/container';
+import { ImagesSectionSkeleton } from '@/packages/components/containers/container-skeletons';
 import { useContainerOverview } from '@/packages/hooks/containers/use-container-overview';
 import { Container } from '@/redux/services/container/containerApi';
 import {

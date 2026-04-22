@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { SettingsContent } from '@/packages/components/settings';
+import { SettingsContent } from '@/packages/components/settings/settings';
 
 const VALID_CATEGORIES = [
   'general',

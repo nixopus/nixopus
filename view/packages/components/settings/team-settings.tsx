@@ -22,9 +22,9 @@ import {
   EditUserDialogProps,
   TeamMembersProps,
   TeamStatsProps
-} from '../types/settings';
-import { useTeamMembers, useTeamStats } from '../hooks/settings/use-team-members';
-import { useEditUserDialog } from '../hooks/settings/use-edit-user-dialog';
+} from '../../types/settings';
+import { useTeamMembers, useTeamStats } from '../../hooks/settings/use-team-members';
+import { useEditUserDialog } from '../../hooks/settings/use-edit-user-dialog';
 
 export function AddMember({
   isAddUserDialogOpen,

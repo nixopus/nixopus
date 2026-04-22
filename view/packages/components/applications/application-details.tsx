@@ -15,10 +15,10 @@ import { DialogWrapper } from '@nixopus/ui';
 import { Label } from '@nixopus/ui';
 import { SelectWrapper } from '@nixopus/ui';
 import { Input } from '@nixopus/ui';
-import { ResourceGuard } from '@/packages/components/rbac';
+import { ResourceGuard } from '@/packages/components/rbac/rbac';
 import { SubPageHeader } from '@nixopus/ui';
 import { useApplicationHeader } from '@/packages/hooks/applications/use_application_header';
-import DeploymentLogsTable from '@/packages/components/deployment-logs';
+import DeploymentLogsTable from '@/packages/components/deployments/deployment-logs';
 import { Skeleton } from '@nixopus/ui';
 import { useProjectFamilySwitcher } from '@/packages/hooks/applications/use_project_family_switcher';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@nixopus/ui';
@@ -26,23 +26,23 @@ import { useDeploymentOverview } from '@/packages/hooks/applications/use_deploym
 import { useDeploymentHealthChart } from '@/packages/hooks/applications/use_deployment_health_chart';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { useApplicationLogs } from '@/packages/hooks/applications/use-application-logs';
-import { InfoLine } from '@/packages/components/container-sections';
+import { InfoLine } from '@/packages/components/containers/container-sections';
 import { cn } from '@/lib/utils';
 import { useStatusIndicator } from '@/packages/hooks/applications/use_status_indicator';
 import { useLatestDeployment } from '@/packages/hooks/applications/use_latest_deployment';
 import { DraggableGrid } from '@nixopus/ui';
 import { useMonitoring } from '@/packages/hooks/applications/use-monitoring';
-import { DeploymentsListProps, UseMonitoringReturn } from '../types/application';
-import { MonitorProps } from '../types/application';
-import { DeploymentOverviewProps } from '../types/application';
-import { DeploymentHealthChartProps } from '../types/application';
-import { LatestDeploymentProps } from '../types/application';
-import { SectionLabelProps } from '../types/application';
-import { StatBlockProps } from '../types/application';
-import { StatusIndicatorProps } from '../types/application';
-import { DuplicateProjectDialogProps } from '../types/application';
-import { ApplicationLogsProps } from '../types/application';
-import { ProjectFamilySwitcherProps } from '../types/application';
+import { DeploymentsListProps, UseMonitoringReturn } from '../../types/application';
+import { MonitorProps } from '../../types/application';
+import { DeploymentOverviewProps } from '../../types/application';
+import { DeploymentHealthChartProps } from '../../types/application';
+import { LatestDeploymentProps } from '../../types/application';
+import { SectionLabelProps } from '../../types/application';
+import { StatBlockProps } from '../../types/application';
+import { StatusIndicatorProps } from '../../types/application';
+import { DuplicateProjectDialogProps } from '../../types/application';
+import { ApplicationLogsProps } from '../../types/application';
+import { ProjectFamilySwitcherProps } from '../../types/application';
 
 function DeploymentsList({
   deployments,

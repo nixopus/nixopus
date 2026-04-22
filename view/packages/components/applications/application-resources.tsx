@@ -9,15 +9,15 @@ import { useApplicationContainers } from '@/packages/hooks/containers/use-applic
 import { useInlineContainerDetail } from '@/packages/hooks/containers/use-inline-container-detail';
 import { useViewMode } from '@/packages/hooks/containers/use-view-mode';
 import { Container } from '@/redux/services/container/containerApi';
-import { ContainerCard, EmptyState, ContainerDetailsHeader } from '@/packages/components/container';
-import ContainersTable from '@/packages/components/container';
+import { ContainerCard, EmptyState, ContainerDetailsHeader } from '@/packages/components/containers/container';
+import ContainersTable from '@/packages/components/containers/container';
 import {
   OverviewTab,
   Terminal as TerminalComponent,
   Images
-} from '@/packages/components/container-sections';
-import ContainerDetailsLoading from '@/packages/components/container-skeletons';
-import { ResourceGuard } from '@/packages/components/rbac';
+} from '@/packages/components/containers/container-sections';
+import ContainerDetailsLoading from '@/packages/components/containers/container-skeletons';
+import { ResourceGuard } from '@/packages/components/rbac/rbac';
 
 interface ApplicationResourcesProps {
   applicationId: string;

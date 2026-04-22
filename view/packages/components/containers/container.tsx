@@ -40,7 +40,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@nixopus/ui';
 import { Input } from '@nixopus/ui';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@nixopus/ui';
-import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac';
+import { ResourceGuard, AnyPermissionGuard } from '@/packages/components/rbac/rbac';
 import type { Resource, Action as RBACAction } from '@/packages/utils/rbac';
 import { SubPageHeader } from '@nixopus/ui';
 import { cn } from '@/lib/utils';

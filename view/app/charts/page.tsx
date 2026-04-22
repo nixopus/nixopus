@@ -3,10 +3,10 @@
 import React from 'react';
 import { useDashboard } from '@/packages/hooks/dashboard/use-dashboard';
 import { RefreshCw } from 'lucide-react';
-import DisabledFeature from '@/packages/components/rbac';
+import DisabledFeature from '@/packages/components/rbac/rbac';
 import { Button } from '@nixopus/ui';
 import { Banner } from '@nixopus/ui';
-import { ResourceGuard } from '@/packages/components/rbac';
+import { ResourceGuard } from '@/packages/components/rbac/rbac';
 import { Skeleton } from '@nixopus/ui';
 import {
   SystemInfoCardSkeleton,
@@ -14,11 +14,11 @@ import {
   LoadAverageCardSkeleton,
   MemoryUsageCardSkeleton,
   DiskUsageCardSkeleton
-} from '@/packages/components/dashboard-skeletons';
-import { ContainersWidgetSkeleton } from '@/packages/components/container-skeletons';
+} from '@/packages/components/dashboard/dashboard-skeletons';
+import { ContainersWidgetSkeleton } from '@/packages/components/containers/container-skeletons';
 import PageLayout from '@/packages/layouts/page-layout';
 import { DraggableGrid } from '@nixopus/ui';
-import { WidgetSelector } from '@/packages/components/dashboard';
+import { WidgetSelector } from '@/packages/components/dashboard/dashboard';
 import { DashboardItem } from '@/packages/types/layout';
 import { ContainerData, SystemStatsType } from '@/redux/types/monitor';
 import { MainPageHeader } from '@nixopus/ui';

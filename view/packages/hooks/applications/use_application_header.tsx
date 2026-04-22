@@ -37,9 +37,9 @@ import { DeleteDialog } from '@/components/ui/delete-dialog';
 import {
   ProjectFamilySwitcher,
   DuplicateProjectDialog
-} from '@/packages/components/application-details';
-import { DomainDropdown } from '@/packages/components/multi-domains';
-import { AnyPermissionGuard } from '@/packages/components/rbac';
+} from '@/packages/components/applications/application-details';
+import { DomainDropdown } from '@/packages/components/domains/multi-domains';
+import { AnyPermissionGuard } from '@/packages/components/rbac/rbac';
 import { useTranslation } from '../shared/use-translation';
 import { useSudoMode } from '@/packages/hooks/security/use-sudo-mode';
 

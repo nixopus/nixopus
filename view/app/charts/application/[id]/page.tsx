@@ -2,8 +2,8 @@
 import React from 'react';
 import TabsWrapper, { TabsWrapperList, Skeleton } from '@nixopus/ui';
 import useApplicationDetails from '../../../../packages/hooks/applications/use_application_details';
-import { ApplicationDetailsHeader } from '@/packages/components/application-details';
-import { ResourceGuard } from '@/packages/components/rbac';
+import { ApplicationDetailsHeader } from '@/packages/components/applications/application-details';
+import { ResourceGuard } from '@/packages/components/rbac/rbac';
 import PageLayout from '@/packages/layouts/page-layout';
 
 function ApplicationDetailsSkeleton() {

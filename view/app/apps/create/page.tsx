@@ -3,8 +3,8 @@ import React from 'react';
 import {
   ListRepositories,
   GithubRepositoriesSkeletonLoader
-} from '@/packages/components/github-repositories';
-import { ResourceGuard } from '@/packages/components/rbac';
+} from '@/packages/components/github/github-repositories';
+import { ResourceGuard } from '@/packages/components/rbac/rbac';
 import { Skeleton } from '@nixopus/ui';
 import PageLayout from '@/packages/layouts/page-layout';
 import { MainPageHeader } from '@nixopus/ui';

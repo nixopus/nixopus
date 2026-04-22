@@ -6,7 +6,7 @@ import { SelectWrapper } from '@nixopus/ui';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2 } from 'lucide-react';
 import { TypographySmall, TypographyMuted } from '@nixopus/ui';
-import { DahboardUtilityHeader } from '@/packages/components/utility-header';
+import { DahboardUtilityHeader } from '@/packages/components/layout/utility-header';
 import { PaginationWrapper } from '@nixopus/ui';
 import { DataTable, TableColumn } from '@nixopus/ui';
 import { ActivityMessage } from '@/redux/types/audit';
