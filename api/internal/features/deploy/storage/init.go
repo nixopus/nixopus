@@ -73,6 +73,7 @@ type DeployRepository interface {
 	EnsureApplicationServers(appID uuid.UUID, orgID uuid.UUID) error
 	CopyApplicationServers(srcAppID, dstAppID uuid.UUID) error
 	DeleteApplicationDeploymentByID(id uuid.UUID) error
+	ClearDeploymentArtifactFields(deploymentID uuid.UUID) error
 }
 
 func (s *DeployStorage) RunInTransaction(fn func(tx bun.Tx) error) error {
@@ -203,6 +204,16 @@ func (s *DeployStorage) UpdateApplicationDeployment(deployment *shared_types.App
 		return err
 	}
 	return nil
+}
+
+func (s *DeployStorage) ClearDeploymentArtifactFields(deploymentID uuid.UUID) error {
+	_, err := s.DB.NewUpdate().
+		TableExpr("application_deployments").
+		Set("image_s3_key = ''").
+		Set("image_size = 0").
+		Where("id = ?", deploymentID).
+		Exec(s.Ctx)
+	return err
 }
 
 func (s *DeployStorage) AddApplicationDeploymentStatus(deployment_status *shared_types.ApplicationDeploymentStatus) error {

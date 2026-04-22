@@ -132,17 +132,29 @@ func cleanDatabase() error {
 	// Truncate all public tables instead of dropping them.
 	// Schema is managed by the auth service's drizzle migrations,
 	// so we only clear data between tests.
-	_, err := testDB.ExecContext(ctx, `
-		DO $$ DECLARE
-			r RECORD;
-		BEGIN
-			FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
-				EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
-			END LOOP;
-		END $$;
-	`)
-	if err != nil {
+	// Retry on deadlock since parallel test packages share the same DB.
+	var err error
+	for attempt := 0; attempt < 5; attempt++ {
+		_, err = testDB.ExecContext(ctx, `
+			DO $$ DECLARE
+				r RECORD;
+			BEGIN
+				FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+					EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
+				END LOOP;
+			END $$;
+		`)
+		if err == nil {
+			break
+		}
+		if strings.Contains(err.Error(), "deadlock") {
+			time.Sleep(time.Duration(100*(attempt+1)) * time.Millisecond)
+			continue
+		}
 		return fmt.Errorf("failed to truncate tables: %w", err)
+	}
+	if err != nil {
+		return fmt.Errorf("failed to truncate tables after retries: %w", err)
 	}
 
 	// Flush Redis to clear any cached state (e.g. admin_registered).

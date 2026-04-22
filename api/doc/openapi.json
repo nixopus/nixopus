@@ -15346,6 +15346,26 @@
 						},
 						"description": "Bad Request _(validation or deserialization error)_"
 					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Unauthorized"
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Forbidden - application belongs to another organization"
+					},
 					"500": {
 						"content": {
 							"application/json": {
@@ -15399,6 +15419,7 @@
 						"name": "deployment_id",
 						"required": true,
 						"schema": {
+							"format": "uuid",
 							"type": "string"
 						}
 					}
@@ -15451,6 +15472,36 @@
 							}
 						},
 						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Unauthorized"
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Forbidden - deployment belongs to another organization"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Deployment not found"
 					},
 					"500": {
 						"content": {
@@ -15506,6 +15557,7 @@
 						"name": "deployment_id",
 						"required": true,
 						"schema": {
+							"format": "uuid",
 							"type": "string"
 						}
 					}
@@ -15560,6 +15612,36 @@
 							}
 						},
 						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"401": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Unauthorized"
+					},
+					"403": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Forbidden - deployment belongs to another organization"
+					},
+					"404": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Deployment not found"
 					},
 					"500": {
 						"content": {

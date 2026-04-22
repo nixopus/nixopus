@@ -40,10 +40,6 @@ func (c *DeployController) ListArtifacts(f fuego.ContextNoBody) (*types.Artifact
 		}
 	}
 
-	if artifacts == nil {
-		artifacts = []types.Artifact{}
-	}
-
 	return &types.ArtifactListResponse{
 		Status:  "success",
 		Message: "Artifacts retrieved successfully",
