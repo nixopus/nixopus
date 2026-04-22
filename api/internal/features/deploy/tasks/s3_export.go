@@ -53,17 +53,15 @@ func (s *TaskService) ExportImageToS3(ctx context.Context, cfg ExportConfig, tas
 		return "", 0, fmt.Errorf("failed to create SSH session: %w", err)
 	}
 
-	escape := func(x string) string { return "'" + x + "'" }
-
 	var saveArgs string
 	if len(cfg.ImageTags) > 0 {
 		quoted := make([]string, len(cfg.ImageTags))
 		for i, tag := range cfg.ImageTags {
-			quoted[i] = escape(tag)
+			quoted[i] = utils.ShellQuote(tag)
 		}
 		saveArgs = strings.Join(quoted, " ")
 	} else {
-		saveArgs = escape(cfg.ImageTag)
+		saveArgs = utils.ShellQuote(cfg.ImageTag)
 	}
 	cmd := fmt.Sprintf("docker save %s | gzip", saveArgs)
 
