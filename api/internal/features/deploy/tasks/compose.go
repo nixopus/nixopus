@@ -251,7 +251,15 @@ func (t *TaskService) getComposeServiceNames(ctx context.Context, composeFilePat
 	var err error
 
 	if payload.Application.Source == shared_types.SourceTemplate && payload.Application.TemplateID != "" {
-		localPath := filepath.Join(".", "templates", payload.Application.TemplateID, "docker-compose.yml")
+		basePath := payload.Application.BasePath
+		if basePath == "" || basePath == "/" {
+			basePath = "."
+		}
+		composeFileName := "docker-compose.yml"
+		if payload.Application.DockerfilePath != "" && payload.Application.DockerfilePath != "Dockerfile" {
+			composeFileName = payload.Application.DockerfilePath
+		}
+		localPath := filepath.Join(".", "templates", payload.Application.TemplateID, basePath, composeFileName)
 		data, err = os.ReadFile(localPath)
 	} else {
 		data, err = utils.ReadFileBytes(ctx, composeFilePath)
@@ -302,7 +310,15 @@ func (t *TaskService) discoverAndPersistComposeServices(ctx context.Context, com
 	var err error
 
 	if TaskPayload.Application.Source == shared_types.SourceTemplate && TaskPayload.Application.TemplateID != "" {
-		localPath := filepath.Join(".", "templates", TaskPayload.Application.TemplateID, "docker-compose.yml")
+		basePath := TaskPayload.Application.BasePath
+		if basePath == "" || basePath == "/" {
+			basePath = "."
+		}
+		composeFileName := "docker-compose.yml"
+		if TaskPayload.Application.DockerfilePath != "" && TaskPayload.Application.DockerfilePath != "Dockerfile" {
+			composeFileName = TaskPayload.Application.DockerfilePath
+		}
+		localPath := filepath.Join(".", "templates", TaskPayload.Application.TemplateID, basePath, composeFileName)
 		data, readErr := os.ReadFile(localPath)
 		if readErr != nil {
 			return fmt.Errorf("failed to read template compose file: %w", readErr)
