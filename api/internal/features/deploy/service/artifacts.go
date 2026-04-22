@@ -15,11 +15,7 @@ import (
 )
 
 func (s *DeployService) ListArtifacts(applicationID uuid.UUID, organizationID uuid.UUID) ([]types.Artifact, error) {
-	if !s3store.IsConfigured(config.AppConfig.S3) {
-		return nil, types.ErrS3NotConfigured
-	}
-
-	app, err := s.storage.GetApplicationById(applicationID.String(), organizationID)
+	app, err := s.storage.GetApplicationBasicById(applicationID.String(), organizationID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) || strings.Contains(err.Error(), "not found") {
 			return nil, types.ErrPermissionDenied
@@ -62,14 +58,13 @@ func (s *DeployService) GetArtifactDownloadURL(ctx context.Context, deploymentID
 		return "", err
 	}
 
-	app, err := s.storage.GetApplicationById(deployment.ApplicationID.String(), organizationID)
+	_, err = s.storage.GetApplicationBasicById(deployment.ApplicationID.String(), organizationID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) || strings.Contains(err.Error(), "not found") {
 			return "", types.ErrPermissionDenied
 		}
 		return "", err
 	}
-	_ = app
 
 	if deployment.ImageS3Key == "" {
 		return "", fmt.Errorf("no artifact available for this deployment")
@@ -108,14 +103,13 @@ func (s *DeployService) DeleteArtifact(ctx context.Context, deploymentID string,
 		return err
 	}
 
-	app, err := s.storage.GetApplicationById(deployment.ApplicationID.String(), organizationID)
+	_, err = s.storage.GetApplicationBasicById(deployment.ApplicationID.String(), organizationID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) || strings.Contains(err.Error(), "not found") {
 			return types.ErrPermissionDenied
 		}
 		return err
 	}
-	_ = app
 
 	if deployment.ImageS3Key == "" {
 		return fmt.Errorf("no artifact to delete for this deployment")

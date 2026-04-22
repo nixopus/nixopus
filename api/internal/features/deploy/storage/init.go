@@ -35,6 +35,7 @@ type DeployRepository interface {
 	GetApplications(page int, pageSize int, sortBy string, sortDirection string, organizationID uuid.UUID, serverID *uuid.UUID) ([]shared_types.Application, int, error)
 	UpdateApplicationStatus(applicationStatus *shared_types.ApplicationStatus) error
 	GetApplicationById(id string, organizationID uuid.UUID) (shared_types.Application, error)
+	GetApplicationBasicById(id string, organizationID uuid.UUID) (shared_types.Application, error)
 	AddApplicationDeployment(deployment *shared_types.ApplicationDeployment) error
 	AddApplicationDeploymentStatus(deployment_status *shared_types.ApplicationDeploymentStatus) error
 	UpdateApplicationDeploymentStatus(applicationStatus *shared_types.ApplicationDeploymentStatus) error
@@ -346,6 +347,24 @@ func (s *DeployStorage) GetApplicationById(id string, organizationID uuid.UUID) 
 		Relation("Status").
 		Relation("Domains.ComposeService").
 		Relation("Servers.Server").
+		Where("a.id = ? AND a.organization_id = ?", id, organizationID).
+		Scan(s.Ctx)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return shared_types.Application{}, fmt.Errorf("application not found")
+		}
+		return shared_types.Application{}, err
+	}
+
+	return application, nil
+}
+
+func (s *DeployStorage) GetApplicationBasicById(id string, organizationID uuid.UUID) (shared_types.Application, error) {
+	var application shared_types.Application
+
+	err := s.DB.NewSelect().
+		Model(&application).
 		Where("a.id = ? AND a.organization_id = ?", id, organizationID).
 		Scan(s.Ctx)
 

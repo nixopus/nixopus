@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
@@ -457,9 +458,9 @@ func (s *TestSetup) SeedDeploymentWithoutArtifact(appID string) (string, error) 
 	var deploymentID string
 	err := s.DB.NewRaw(
 		`INSERT INTO application_deployment
-			(id, application_id, commit_hash, created_at, updated_at)
+			(id, application_id, commit_hash, image_s3_key, image_size, created_at, updated_at)
 		 VALUES
-			(gen_random_uuid(), ?, 'def456', NOW(), NOW())
+			(gen_random_uuid(), ?, 'def456', '', 0, NOW(), NOW())
 		 RETURNING id`,
 		appID,
 	).Scan(ctx, &deploymentID)
@@ -488,18 +489,17 @@ func (s *TestSetup) SeedOrganizationSettings(organizationID string, settingsJSON
 // (and similar) tests can reference a valid application_id without requiring
 // the full deploy pipeline.
 func (s *TestSetup) SeedApplication(userID, organizationID string) (string, error) {
-	appID := "00000000-0000-0000-0000-000000000001"
+	appID := uuid.New().String()
 	_, err := s.DB.NewRaw(
 		`INSERT INTO applications
 			(id, name, port, environment, build_variables, environment_variables,
 			 build_pack, repository, branch, pre_run_command, post_run_command,
 			 user_id, organization_id)
 		 VALUES
-			(?, 'test-app', 3000, 'production', '', '',
+			(?, 'test-app-'||substr(?::text,1,8), 3000, 'production', '', '',
 			 'dockerfile', 'https://github.com/test/repo', 'main', '', '',
-			 ?, ?)
-		 ON CONFLICT (id) DO NOTHING`,
-		appID, userID, organizationID,
+			 ?, ?)`,
+		appID, appID, userID, organizationID,
 	).Exec(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to seed application: %w", err)
