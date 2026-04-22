@@ -85,12 +85,12 @@ type DockerRepository interface {
 	RestartContainer(containerID string, opts container.StopOptions) error
 	UpdateContainerResources(containerID string, resources container.UpdateConfig) (container.ContainerUpdateOKBody, error)
 
-	ComposeUp(composeFilePath string, envVars map[string]string) (string, error)
-	ComposeUpWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string)) (string, error)
-	ComposeDown(composeFilePath string, envVars map[string]string) error
-	ComposeDownWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string)) error
-	ComposeRestart(composeFilePath string, envVars map[string]string, outputCallback func(string)) error
-	ComposeBuild(composeFilePath string, envVars map[string]string) error
+	ComposeUp(composeFilePath string, envVars map[string]string, overrideFiles ...string) (string, error)
+	ComposeUpWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string), overrideFiles ...string) (string, error)
+	ComposeDown(composeFilePath string, envVars map[string]string, overrideFiles ...string) error
+	ComposeDownWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string), overrideFiles ...string) error
+	ComposeRestart(composeFilePath string, envVars map[string]string, outputCallback func(string), overrideFiles ...string) error
+	ComposeBuild(composeFilePath string, envVars map[string]string, overrideFiles ...string) error
 	RemoveImage(imageName string, opts image.RemoveOptions) error
 	PruneBuildCache(opts types.BuildCachePruneOptions) error
 	PruneImages(opts filters.Args) (image.PruneReport, error)
@@ -540,13 +540,13 @@ func (s *DockerService) ContainerLogs(Ctx context.Context, containerID string, o
 }
 
 // ComposeUp starts the Docker Compose services defined in the specified compose file
-func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]string) (string, error) {
-	return s.ComposeUpWithCallback(composeFilePath, envVars, nil)
+func (s *DockerService) ComposeUp(composeFilePath string, envVars map[string]string, overrideFiles ...string) (string, error) {
+	return s.ComposeUpWithCallback(composeFilePath, envVars, nil, overrideFiles...)
 }
 
 // ComposeUpWithCallback starts Docker Compose services and streams output in real-time via callback
-func (s *DockerService) ComposeUpWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string)) (string, error) {
-	command, err := s.buildComposeCommand("up -d --remove-orphans", composeFilePath, envVars)
+func (s *DockerService) ComposeUpWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string), overrideFiles ...string) (string, error) {
+	command, err := s.buildComposeCommand("up -d --remove-orphans", composeFilePath, envVars, overrideFiles...)
 	if err != nil {
 		return "", err
 	}
@@ -554,13 +554,13 @@ func (s *DockerService) ComposeUpWithCallback(composeFilePath string, envVars ma
 }
 
 // ComposeDown stops and removes the Docker Compose services
-func (s *DockerService) ComposeDown(composeFilePath string, envVars map[string]string) error {
-	return s.ComposeDownWithCallback(composeFilePath, envVars, nil)
+func (s *DockerService) ComposeDown(composeFilePath string, envVars map[string]string, overrideFiles ...string) error {
+	return s.ComposeDownWithCallback(composeFilePath, envVars, nil, overrideFiles...)
 }
 
 // ComposeDownWithCallback stops and removes Docker Compose services with streaming output
-func (s *DockerService) ComposeDownWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string)) error {
-	command, err := s.buildComposeCommand("down", composeFilePath, envVars)
+func (s *DockerService) ComposeDownWithCallback(composeFilePath string, envVars map[string]string, outputCallback func(string), overrideFiles ...string) error {
+	command, err := s.buildComposeCommand("down", composeFilePath, envVars, overrideFiles...)
 	if err != nil {
 		return err
 	}
@@ -569,8 +569,8 @@ func (s *DockerService) ComposeDownWithCallback(composeFilePath string, envVars 
 }
 
 // ComposeRestart restarts Docker Compose services with streaming output
-func (s *DockerService) ComposeRestart(composeFilePath string, envVars map[string]string, outputCallback func(string)) error {
-	command, err := s.buildComposeCommand("restart", composeFilePath, envVars)
+func (s *DockerService) ComposeRestart(composeFilePath string, envVars map[string]string, outputCallback func(string), overrideFiles ...string) error {
+	command, err := s.buildComposeCommand("restart", composeFilePath, envVars, overrideFiles...)
 	if err != nil {
 		return err
 	}
@@ -579,12 +579,16 @@ func (s *DockerService) ComposeRestart(composeFilePath string, envVars map[strin
 }
 
 // buildComposeCommand builds a docker compose command with safe environment variables
-func (s *DockerService) buildComposeCommand(composeAction string, composeFilePath string, envVars map[string]string) (string, error) {
+func (s *DockerService) buildComposeCommand(composeAction string, composeFilePath string, envVars map[string]string, overrideFiles ...string) (string, error) {
 	envVarsStr, err := buildSafeEnvExports(envVars)
 	if err != nil {
 		return "", fmt.Errorf("invalid environment variables: %w", err)
 	}
-	return fmt.Sprintf("%sdocker compose -f %s %s 2>&1", envVarsStr, utils.ShellQuote(composeFilePath), composeAction), nil
+	fileFlags := fmt.Sprintf("-f %s", utils.ShellQuote(composeFilePath))
+	for _, f := range overrideFiles {
+		fileFlags += fmt.Sprintf(" -f %s", utils.ShellQuote(f))
+	}
+	return fmt.Sprintf("%sdocker compose %s %s 2>&1", envVarsStr, fileFlags, composeAction), nil
 }
 
 func (s *DockerService) executeSSHCommandWithOutput(command string, outputCallback func(string), errorMsgPrefix string) (string, error) {
@@ -647,16 +651,15 @@ func (s *DockerService) streamOutput(reader io.Reader, outputBuilder *strings.Bu
 }
 
 // ComposeBuild builds the Docker Compose services
-func (s *DockerService) ComposeBuild(composeFilePath string, envVars map[string]string) error {
+func (s *DockerService) ComposeBuild(composeFilePath string, envVars map[string]string, overrideFiles ...string) error {
 	manager, err := ssh.GetSSHManagerFromContext(s.Ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	envVarsStr, err := buildSafeEnvExports(envVars)
+	command, err := s.buildComposeCommand("build", composeFilePath, envVars, overrideFiles...)
 	if err != nil {
 		return fmt.Errorf("invalid environment variables: %w", err)
 	}
-	command := fmt.Sprintf("%sdocker compose -f %s build", envVarsStr, utils.ShellQuote(composeFilePath))
 	output, err := manager.RunCommand(command)
 	if err != nil {
 		return fmt.Errorf("failed to build docker compose services: %v, output: %s", err, output)

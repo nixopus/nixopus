@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/nixopus/nixopus/api/internal/features/deploy/caddy"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/nixopus/nixopus/api/internal/utils"
+	"github.com/pkg/sftp"
 )
 
 func (t *TaskService) deployDockerCompose(ctx context.Context, TaskPayload shared_types.TaskPayload, deploymentType string) error {
@@ -28,10 +31,20 @@ func (t *TaskService) deployDockerCompose(ctx context.Context, TaskPayload share
 	if err := t.discoverAndPersistComposeServices(orgCtx, composeFilePath, TaskPayload, taskCtx, envVars); err != nil {
 		taskCtx.AddLog("Warning: failed to discover compose services: " + err.Error())
 	}
+
+	overrideFile, err := t.writeComposeLabelsOverride(orgCtx, composeFilePath, TaskPayload, taskCtx)
+	if err != nil {
+		taskCtx.AddLog("Warning: failed to write labels override: " + err.Error())
+	}
+	var overrideFiles []string
+	if overrideFile != "" {
+		overrideFiles = append(overrideFiles, overrideFile)
+	}
+
 	outputCallback := t.createOutputCallback(taskCtx)
 
 	deploymentTypeEnum := shared_types.DeploymentType(deploymentType)
-	if err := t.executeComposeDeployment(orgCtx, deploymentTypeEnum, composeFilePath, envVars, outputCallback, taskCtx); err != nil {
+	if err := t.executeComposeDeployment(orgCtx, deploymentTypeEnum, composeFilePath, envVars, outputCallback, taskCtx, overrideFiles); err != nil {
 		return err
 	}
 
@@ -86,20 +99,20 @@ func (t *TaskService) createOutputCallback(taskCtx *TaskContext) func(string) {
 	}
 }
 
-func (t *TaskService) executeComposeDeployment(ctx context.Context, deploymentType shared_types.DeploymentType, composeFilePath string, envVars map[string]string, outputCallback func(string), taskCtx *TaskContext) error {
+func (t *TaskService) executeComposeDeployment(ctx context.Context, deploymentType shared_types.DeploymentType, composeFilePath string, envVars map[string]string, outputCallback func(string), taskCtx *TaskContext, overrideFiles []string) error {
 	switch deploymentType {
 	case shared_types.DeploymentTypeCreate:
-		return t.composeUp(ctx, composeFilePath, envVars, outputCallback, taskCtx, "Starting Docker Compose services", "Docker Compose services started successfully")
+		return t.composeUp(ctx, composeFilePath, envVars, outputCallback, taskCtx, overrideFiles, "Starting Docker Compose services", "Docker Compose services started successfully")
 
 	case shared_types.DeploymentTypeReDeploy, shared_types.DeploymentTypeUpdate, shared_types.DeploymentTypeRollback:
-		if err := t.composeDown(ctx, composeFilePath, envVars, outputCallback, taskCtx); err != nil {
+		if err := t.composeDown(ctx, composeFilePath, envVars, outputCallback, taskCtx, overrideFiles); err != nil {
 			return err
 		}
 		taskCtx.AddLog("Existing services stopped, starting with new code")
-		return t.composeUp(ctx, composeFilePath, envVars, outputCallback, taskCtx, "Starting Docker Compose services", "Docker Compose services restarted successfully")
+		return t.composeUp(ctx, composeFilePath, envVars, outputCallback, taskCtx, overrideFiles, "Starting Docker Compose services", "Docker Compose services restarted successfully")
 
 	case shared_types.DeploymentTypeRestart:
-		return t.composeRestart(ctx, composeFilePath, envVars, outputCallback, taskCtx)
+		return t.composeRestart(ctx, composeFilePath, envVars, outputCallback, taskCtx, overrideFiles)
 
 	default:
 		taskCtx.LogAndUpdateStatus("Unknown deployment type: "+string(deploymentType), shared_types.Failed)
@@ -107,7 +120,7 @@ func (t *TaskService) executeComposeDeployment(ctx context.Context, deploymentTy
 	}
 }
 
-func (t *TaskService) composeUp(ctx context.Context, composeFilePath string, envVars map[string]string, outputCallback func(string), taskCtx *TaskContext, startMsg, successMsg string) error {
+func (t *TaskService) composeUp(ctx context.Context, composeFilePath string, envVars map[string]string, outputCallback func(string), taskCtx *TaskContext, overrideFiles []string, startMsg, successMsg string) error {
 	taskCtx.AddLog(startMsg)
 
 	dockerSvc, err := t.getDockerService(ctx)
@@ -117,13 +130,13 @@ func (t *TaskService) composeUp(ctx context.Context, composeFilePath string, env
 	}
 
 	if ds, ok := dockerSvc.(*docker.DockerService); ok {
-		_, err := ds.ComposeUpWithCallback(composeFilePath, envVars, outputCallback)
+		_, err := ds.ComposeUpWithCallback(composeFilePath, envVars, outputCallback, overrideFiles...)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to start docker compose services: "+err.Error(), shared_types.Failed)
 			return err
 		}
 	} else {
-		output, err := dockerSvc.ComposeUp(composeFilePath, envVars)
+		output, err := dockerSvc.ComposeUp(composeFilePath, envVars, overrideFiles...)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to start docker compose services: "+err.Error(), shared_types.Failed)
 			return err
@@ -137,7 +150,7 @@ func (t *TaskService) composeUp(ctx context.Context, composeFilePath string, env
 	return nil
 }
 
-func (t *TaskService) composeDown(ctx context.Context, composeFilePath string, envVars map[string]string, outputCallback func(string), taskCtx *TaskContext) error {
+func (t *TaskService) composeDown(ctx context.Context, composeFilePath string, envVars map[string]string, outputCallback func(string), taskCtx *TaskContext, overrideFiles []string) error {
 	taskCtx.AddLog("Stopping existing Docker Compose services")
 
 	dockerSvc, err := t.getDockerService(ctx)
@@ -147,13 +160,13 @@ func (t *TaskService) composeDown(ctx context.Context, composeFilePath string, e
 	}
 
 	if ds, ok := dockerSvc.(*docker.DockerService); ok {
-		err := ds.ComposeDownWithCallback(composeFilePath, envVars, outputCallback)
+		err := ds.ComposeDownWithCallback(composeFilePath, envVars, outputCallback, overrideFiles...)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to stop docker compose services: "+err.Error(), shared_types.Failed)
 			return err
 		}
 	} else {
-		err := dockerSvc.ComposeDown(composeFilePath, envVars)
+		err := dockerSvc.ComposeDown(composeFilePath, envVars, overrideFiles...)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to stop docker compose services: "+err.Error(), shared_types.Failed)
 			return err
@@ -163,7 +176,7 @@ func (t *TaskService) composeDown(ctx context.Context, composeFilePath string, e
 	return nil
 }
 
-func (t *TaskService) composeRestart(ctx context.Context, composeFilePath string, envVars map[string]string, outputCallback func(string), taskCtx *TaskContext) error {
+func (t *TaskService) composeRestart(ctx context.Context, composeFilePath string, envVars map[string]string, outputCallback func(string), taskCtx *TaskContext, overrideFiles []string) error {
 	taskCtx.AddLog("Restarting Docker Compose services")
 
 	dockerSvc, err := t.getDockerService(ctx)
@@ -173,16 +186,16 @@ func (t *TaskService) composeRestart(ctx context.Context, composeFilePath string
 	}
 
 	if ds, ok := dockerSvc.(*docker.DockerService); ok {
-		err := ds.ComposeRestart(composeFilePath, envVars, outputCallback)
+		err := ds.ComposeRestart(composeFilePath, envVars, outputCallback, overrideFiles...)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to restart docker compose services: "+err.Error(), shared_types.Failed)
 			return err
 		}
 	} else {
-		if err := t.composeDown(ctx, composeFilePath, envVars, outputCallback, taskCtx); err != nil {
+		if err := t.composeDown(ctx, composeFilePath, envVars, outputCallback, taskCtx, overrideFiles); err != nil {
 			return err
 		}
-		output, err := dockerSvc.ComposeUp(composeFilePath, envVars)
+		output, err := dockerSvc.ComposeUp(composeFilePath, envVars, overrideFiles...)
 		if err != nil {
 			taskCtx.LogAndUpdateStatus("Failed to start docker compose services: "+err.Error(), shared_types.Failed)
 			return err
@@ -194,6 +207,94 @@ func (t *TaskService) composeRestart(ctx context.Context, composeFilePath string
 
 	taskCtx.AddLog("Docker Compose services restarted successfully")
 	return nil
+}
+
+func (t *TaskService) writeComposeLabelsOverride(ctx context.Context, composeFilePath string, payload shared_types.TaskPayload, taskCtx *TaskContext) (string, error) {
+	overridePath := strings.TrimSuffix(composeFilePath, filepath.Ext(composeFilePath)) + ".nixopus-labels.yml"
+
+	serviceNames, err := t.getComposeServiceNames(ctx, composeFilePath, payload)
+	if err != nil {
+		return "", fmt.Errorf("failed to read compose services: %w", err)
+	}
+	if len(serviceNames) == 0 {
+		return "", nil
+	}
+
+	labels := map[string]string{
+		"com.application.id":   payload.Application.ID.String(),
+		"com.application.name": payload.Application.Name,
+		"com.deployment.id":    payload.ApplicationDeployment.ID.String(),
+		"com.commit_hash":      payload.ApplicationDeployment.CommitHash,
+		"com.user_id":          payload.Application.UserID.String(),
+	}
+	overrideYAML := generateComposeLabelsOverrideYAML(serviceNames, labels)
+
+	err = utils.WithSFTPClientFromPool(ctx, func(sftpClient *sftp.Client) error {
+		f, createErr := sftpClient.Create(overridePath)
+		if createErr != nil {
+			return fmt.Errorf("failed to create labels override file: %w", createErr)
+		}
+		defer f.Close()
+		_, writeErr := f.Write(overrideYAML)
+		return writeErr
+	})
+	if err != nil {
+		return "", err
+	}
+
+	taskCtx.AddLog("Wrote Nixopus labels override: " + overridePath)
+	return overridePath, nil
+}
+
+func (t *TaskService) getComposeServiceNames(ctx context.Context, composeFilePath string, payload shared_types.TaskPayload) ([]string, error) {
+	var data []byte
+	var err error
+
+	if payload.Application.Source == shared_types.SourceTemplate && payload.Application.TemplateID != "" {
+		localPath := filepath.Join(".", "templates", payload.Application.TemplateID, "docker-compose.yml")
+		data, err = os.ReadFile(localPath)
+	} else {
+		data, err = utils.ReadFileBytes(ctx, composeFilePath)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	envVars := GetMapFromString(payload.Application.EnvironmentVariables)
+	parsed, err := ParseComposeYAML(data, envVars)
+	if err != nil {
+		return nil, err
+	}
+
+	names := make([]string, 0, len(parsed))
+	for _, svc := range parsed {
+		names = append(names, svc.ServiceName)
+	}
+	sort.Strings(names)
+	return names, nil
+}
+
+func generateComposeLabelsOverrideYAML(serviceNames []string, labels map[string]string) []byte {
+	var b strings.Builder
+	b.WriteString("services:\n")
+	for _, name := range serviceNames {
+		b.WriteString("  ")
+		b.WriteString(name)
+		b.WriteString(":\n    labels:\n")
+		keys := make([]string, 0, len(labels))
+		for k := range labels {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			b.WriteString("      ")
+			b.WriteString(k)
+			b.WriteString(": \"")
+			b.WriteString(strings.ReplaceAll(labels[k], "\"", "\\\""))
+			b.WriteString("\"\n")
+		}
+	}
+	return []byte(b.String())
 }
 
 func (t *TaskService) discoverAndPersistComposeServices(ctx context.Context, composeFilePath string, TaskPayload shared_types.TaskPayload, taskCtx *TaskContext, envVars map[string]string) error {
