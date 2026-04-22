@@ -49,10 +49,6 @@ func (s *DeployService) ListArtifacts(applicationID uuid.UUID, organizationID uu
 }
 
 func (s *DeployService) GetArtifactDownloadURL(ctx context.Context, deploymentID string, organizationID uuid.UUID) (string, error) {
-	if !s3store.IsConfigured(config.AppConfig.S3) {
-		return "", types.ErrS3NotConfigured
-	}
-
 	deployment, err := s.storage.GetApplicationDeploymentById(deploymentID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -73,6 +69,10 @@ func (s *DeployService) GetArtifactDownloadURL(ctx context.Context, deploymentID
 
 	if deployment.ImageS3Key == "" {
 		return "", fmt.Errorf("no artifact available for this deployment")
+	}
+
+	if !s3store.IsConfigured(config.AppConfig.S3) {
+		return "", types.ErrS3NotConfigured
 	}
 
 	store, err := s3store.NewImageStore(config.AppConfig.S3)
@@ -99,10 +99,6 @@ func (s *DeployService) GetArtifactDownloadURL(ctx context.Context, deploymentID
 }
 
 func (s *DeployService) DeleteArtifact(ctx context.Context, deploymentID string, organizationID uuid.UUID) error {
-	if !s3store.IsConfigured(config.AppConfig.S3) {
-		return types.ErrS3NotConfigured
-	}
-
 	deployment, err := s.storage.GetApplicationDeploymentById(deploymentID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -123,6 +119,10 @@ func (s *DeployService) DeleteArtifact(ctx context.Context, deploymentID string,
 
 	if deployment.ImageS3Key == "" {
 		return fmt.Errorf("no artifact to delete for this deployment")
+	}
+
+	if !s3store.IsConfigured(config.AppConfig.S3) {
+		return types.ErrS3NotConfigured
 	}
 
 	store, err := s3store.NewImageStore(config.AppConfig.S3)

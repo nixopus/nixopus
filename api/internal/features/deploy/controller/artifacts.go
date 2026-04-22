@@ -74,6 +74,9 @@ func (c *DeployController) GetArtifactDownloadURL(f fuego.ContextNoBody) (*types
 		if strings.Contains(err.Error(), "no artifact available") {
 			return nil, fuego.BadRequestError{Detail: "no artifact available"}
 		}
+		if errors.Is(err, types.ErrS3NotConfigured) {
+			return nil, fuego.HTTPError{Detail: "S3 storage is not configured", Status: http.StatusServiceUnavailable}
+		}
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: "failed to get download URL",
@@ -115,6 +118,9 @@ func (c *DeployController) DeleteArtifact(f fuego.ContextNoBody) (*types.Artifac
 		}
 		if strings.Contains(err.Error(), "no artifact") {
 			return nil, fuego.BadRequestError{Detail: "no artifact available"}
+		}
+		if errors.Is(err, types.ErrS3NotConfigured) {
+			return nil, fuego.HTTPError{Detail: "S3 storage is not configured", Status: http.StatusServiceUnavailable}
 		}
 		return nil, fuego.HTTPError{
 			Err:    err,
