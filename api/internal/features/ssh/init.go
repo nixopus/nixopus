@@ -713,7 +713,7 @@ func (m *SSHManager) cleanupIdleConnections() {
 						close(entry.stopKeepalive)
 						entry.stopKeepalive = nil
 					}
-					entry.client.Close()
+					closeGophClientPooled(entry.client)
 					entry.client = nil
 					delete(m.pool, id)
 				}
@@ -722,6 +722,15 @@ func (m *SSHManager) cleanupIdleConnections() {
 			m.poolMu.Unlock()
 		}
 	}
+}
+
+// closeGophClientPooled closes a pooled goph client. It is a no-op when the client is nil
+// or the embedded *ssh.Client is nil (e.g. test injectors that return &goph.Client{}).
+func closeGophClientPooled(c *goph.Client) {
+	if c == nil || c.Client == nil {
+		return
+	}
+	_ = c.Close()
 }
 
 // CloseConnection closes a specific connection in the pool
@@ -737,7 +746,7 @@ func (m *SSHManager) CloseConnection(id string) {
 			entry.stopKeepalive = nil
 		}
 		if entry.client != nil {
-			entry.client.Close()
+			closeGophClientPooled(entry.client)
 			entry.client = nil
 		}
 		entry.mu.Unlock()
@@ -765,7 +774,7 @@ func (m *SSHManager) Close() {
 			entry.stopKeepalive = nil
 		}
 		if entry.client != nil {
-			entry.client.Close()
+			closeGophClientPooled(entry.client)
 			entry.client = nil
 		}
 		entry.mu.Unlock()
