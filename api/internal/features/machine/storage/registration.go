@@ -250,14 +250,15 @@ func (s *RegistrationStorage) MarkMachineActive(id uuid.UUID) error {
 	return err
 }
 
-func (s *RegistrationStorage) MarkMachineInactive(id uuid.UUID) {
-	_, _ = s.db.NewUpdate().
+func (s *RegistrationStorage) MarkMachineInactive(id uuid.UUID) error {
+	_, err := s.db.NewUpdate().
 		Model((*api_types.SSHKey)(nil)).
 		Set("is_active = ?", false).
 		Set("updated_at = ?", time.Now()).
 		Where("id = ?", id).
 		Where("deleted_at IS NULL").
 		Exec(s.ctx)
+	return err
 }
 
 func (s *RegistrationStorage) GetAnyActiveInfraServerID() (string, error) {

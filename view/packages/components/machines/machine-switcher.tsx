@@ -61,9 +61,10 @@ export function MachineSwitcher() {
           <Server className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           <span className="truncate max-w-[150px]">
             {currentServer?.name?.trim() ||
+              currentServer?.provision?.domain?.trim() ||
               currentServer?.host?.trim() ||
               currentServer?.id ||
-              'Select machine'}
+              'Select Machine'}
           </span>
           <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </Button>
@@ -85,7 +86,7 @@ export function MachineSwitcher() {
               )}
             />
             <span className="truncate text-sm flex-1 min-w-0">
-              {server.name?.trim() || server.host?.trim() || server.id}
+              {server.name?.trim() || server.provision?.domain?.trim() || server.host?.trim() || server.id}
             </span>
             {!server.is_active ? (
               <Button

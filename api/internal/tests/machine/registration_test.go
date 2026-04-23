@@ -203,7 +203,7 @@ func TestVerifyMachine_UnreachableHost(t *testing.T) {
 		t.Fatalf("failed to parse org ID: %v", err)
 	}
 
-	created := createMachineHelper(t, auth, "unreachable-machine", "192.0.2.1", 22, "root")
+	created := createMachineHelper(t, auth, "unreachable-machine", "127.0.0.1", 65000, "root")
 
 	keyID, err := uuid.Parse(created.ID)
 	require.NoError(t, err)

@@ -6,8 +6,10 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"database/sql"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -159,7 +161,9 @@ func (s *RegistrationService) VerifyMachine(orgID uuid.UUID, machineID uuid.UUID
 	client, err := cryptossh.Dial("tcp", addr, config)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("SSH dial failed for machine %s: %v", machineID, err), orgID.String())
-		s.storage.MarkMachineInactive(machineID)
+		if dbErr := s.storage.MarkMachineInactive(machineID); dbErr != nil {
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to mark machine %s inactive after SSH dial error: %v", machineID, dbErr), orgID.String())
+		}
 		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
 	}
 	defer client.Close()
@@ -167,14 +171,18 @@ func (s *RegistrationService) VerifyMachine(orgID uuid.UUID, machineID uuid.UUID
 	session, err := client.NewSession()
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("SSH session failed for machine %s: %v", machineID, err), orgID.String())
-		s.storage.MarkMachineInactive(machineID)
+		if dbErr := s.storage.MarkMachineInactive(machineID); dbErr != nil {
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to mark machine %s inactive after SSH session error: %v", machineID, dbErr), orgID.String())
+		}
 		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
 	}
 	defer session.Close()
 
 	if err := session.Run("echo ok"); err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("SSH command failed for machine %s: %v", machineID, err), orgID.String())
-		s.storage.MarkMachineInactive(machineID)
+		if dbErr := s.storage.MarkMachineInactive(machineID); dbErr != nil {
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to mark machine %s inactive after SSH command error: %v", machineID, dbErr), orgID.String())
+		}
 		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
 	}
 
@@ -196,10 +204,20 @@ func (s *RegistrationService) RenameMachine(orgID uuid.UUID, machineID uuid.UUID
 
 	_, err := s.storage.GetSSHKeyByID(machineID, orgID)
 	if err != nil {
-		return nil, fmt.Errorf("machine not found: %w", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			s.logger.Log(logger.Error, fmt.Sprintf("Machine not found for rename: machineID=%s, orgID=%s", machineID, orgID), orgID.String())
+			return nil, types.ErrMachineNotFound
+		}
+		s.logger.Log(logger.Error, fmt.Sprintf("Failed to get machine for rename: machineID=%s, error=%v", machineID, err), orgID.String())
+		return nil, fmt.Errorf("failed to get machine: %w", err)
 	}
 
 	if err := s.storage.UpdateMachineName(machineID, trimmed); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			s.logger.Log(logger.Error, fmt.Sprintf("Machine not found during rename update: machineID=%s", machineID), orgID.String())
+			return nil, types.ErrMachineNotFound
+		}
+		s.logger.Log(logger.Error, fmt.Sprintf("Failed to update machine name: machineID=%s, error=%v", machineID, err), orgID.String())
 		return nil, fmt.Errorf("failed to rename machine: %w", err)
 	}
 

@@ -205,6 +205,7 @@ const InlineEditName = React.memo(function InlineEditName({
   className?: string;
 }) {
   const [isEditing, setIsEditing] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
   const [value, setValue] = React.useState(currentName);
   const [renameMachine, { isLoading }] = useRenameMachineMutation();
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -221,23 +222,31 @@ const InlineEditName = React.memo(function InlineEditName({
   }, [isEditing]);
 
   const handleSave = async () => {
+    if (isSaving) return;
+
     const trimmed = value.trim();
     if (!trimmed || trimmed === currentName) {
       setValue(currentName);
       setIsEditing(false);
       return;
     }
+
+    setIsSaving(true);
     try {
       await renameMachine({ id: machineId, name: trimmed }).unwrap();
       setIsEditing(false);
     } catch {
-      toast.error('Failed to rename machine');
+      toast.error(t('machines.renameError'));
       setValue(currentName);
       setIsEditing(false);
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (isSaving) return;
+
     if (e.key === 'Enter') {
       e.preventDefault();
       handleSave();
@@ -264,7 +273,7 @@ const InlineEditName = React.memo(function InlineEditName({
             e.stopPropagation();
             handleKeyDown(e);
           }}
-          disabled={isLoading}
+          disabled={isLoading || isSaving}
           className={`h-7 text-base font-semibold px-1.5 py-0 ${className || ''}`}
           maxLength={255}
         />
@@ -273,14 +282,15 @@ const InlineEditName = React.memo(function InlineEditName({
   }
 
   return (
-    <button
+    <Button
+      variant="ghost"
       data-machine-action-zone="true"
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation();
         setIsEditing(true);
       }}
-      className={`group/edit inline-flex items-center gap-1.5 text-left cursor-pointer hover:opacity-80 transition-opacity ${className || ''}`}
+      className={`group/edit inline-flex items-center gap-1.5 text-left cursor-pointer hover:opacity-80 transition-opacity h-auto p-0 ${className || ''}`}
     >
       <span
         className="text-base font-semibold"
@@ -289,7 +299,7 @@ const InlineEditName = React.memo(function InlineEditName({
         {currentName}
       </span>
       <Pencil className="h-3 w-3 shrink-0 opacity-0 group-hover/edit:opacity-60 transition-opacity" />
-    </button>
+    </Button>
   );
 });
 
