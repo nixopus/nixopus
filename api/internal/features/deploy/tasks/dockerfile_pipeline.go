@@ -61,7 +61,7 @@ func (t *TaskService) dockerfileStageResolveSource(ctx context.Context, taskCtx 
 	return repoPath, nil
 }
 
-func (t *TaskService) dockerfileStageBuildImage(ctx context.Context, orgCtx context.Context, taskCtx *TaskContext, payload shared_types.TaskPayload, repoPath string, mode dockerfilePipelineMode) (string, error) {
+func (t *TaskService) dockerfileStageBuildImage(orgCtx context.Context, taskCtx *TaskContext, payload shared_types.TaskPayload, repoPath string, mode dockerfilePipelineMode) (string, error) {
 	force, forceNoCache := dockerfileBuildFlagsForMode(mode, payload)
 	taskCtx.AddLog("Building image from Dockerfile " + repoPath + " for application " + payload.Application.Name)
 	buildImageResult, err := t.BuildImage(BuildConfig{
@@ -83,7 +83,7 @@ func (t *TaskService) dockerfileStagePublishArtifactAsync(orgCtx context.Context
 	t.ExportAndRecordImage(orgCtx, payload, imageTag, taskCtx)
 }
 
-func (t *TaskService) dockerfileStageAtomicUpdateContainer(_ context.Context, orgCtx context.Context, taskCtx *TaskContext, payload shared_types.TaskPayload, mode dockerfilePipelineMode) (AtomicUpdateContainerResult, error) {
+func (t *TaskService) dockerfileStageAtomicUpdateContainer(orgCtx context.Context, taskCtx *TaskContext, payload shared_types.TaskPayload, mode dockerfilePipelineMode) (AtomicUpdateContainerResult, error) {
 	containerResult, err := t.AtomicUpdateContainer(orgCtx, payload, taskCtx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to update container: "+err.Error(), shared_types.Failed)
@@ -151,7 +151,7 @@ func (t *TaskService) runDockerfilePipelineFromSource(ctx context.Context, paylo
 
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, payload.Application.OrganizationID.String())
 
-	imageTag, err := t.dockerfileStageBuildImage(ctx, orgCtx, taskCtx, payload, repoPath, mode)
+	imageTag, err := t.dockerfileStageBuildImage(orgCtx, taskCtx, payload, repoPath, mode)
 	if err != nil {
 		if ctx.Err() != nil {
 			taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
@@ -174,17 +174,15 @@ func (t *TaskService) runDockerfilePipelineFromSource(ctx context.Context, paylo
 		return err
 	}
 
-	containerResult, err := t.dockerfileStageAtomicUpdateContainer(ctx, orgCtx, taskCtx, payload, mode)
+	containerResult, err := t.dockerfileStageAtomicUpdateContainer(orgCtx, taskCtx, payload, mode)
 	if err != nil {
 		t.emitDeployFailed(payload, err)
 		return err
 	}
 
-	if len(payload.Application.Domains) > 0 {
-		if err := t.dockerfileStageConfigureDomains(ctx, orgCtx, taskCtx, payload, containerResult); err != nil {
-			t.emitDeployFailed(payload, err)
-			return err
-		}
+	if err := t.dockerfileStageConfigureDomains(ctx, orgCtx, taskCtx, payload, containerResult); err != nil {
+		t.emitDeployFailed(payload, err)
+		return err
 	}
 
 	return nil

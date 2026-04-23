@@ -18,20 +18,23 @@ import (
 func (t *TaskService) deployDockerCompose(ctx context.Context, TaskPayload shared_types.TaskPayload, deploymentType string) error {
 	taskCtx := t.NewTaskContext(TaskPayload)
 
-	repoPath, err := t.composeStageResolveRepo(ctx, TaskPayload, deploymentType, taskCtx)
+	repoPath, err := t.cloneRepositoryForCompose(ctx, TaskPayload, deploymentType, taskCtx)
 	if err != nil {
 		return err
 	}
 
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
 
-	composeFilePath, overrideFiles, envVars, err := t.composeStagePrepareProject(orgCtx, TaskPayload, repoPath, taskCtx)
-	if err != nil {
-		return err
+	deploymentTypeEnum := shared_types.DeploymentType(deploymentType)
+	switch deploymentTypeEnum {
+	case shared_types.DeploymentTypeCreate, shared_types.DeploymentTypeReDeploy, shared_types.DeploymentTypeUpdate, shared_types.DeploymentTypeRollback, shared_types.DeploymentTypeRestart:
+	default:
+		return fmt.Errorf("unknown deployment type: %q", deploymentType)
 	}
 
+	composeFilePath, overrideFiles, envVars := t.composeStagePrepareProject(orgCtx, TaskPayload, repoPath, taskCtx)
+
 	outputCallback := t.createOutputCallback(taskCtx)
-	deploymentTypeEnum := shared_types.DeploymentType(deploymentType)
 	if err := t.composeStageExecuteStack(orgCtx, deploymentTypeEnum, composeFilePath, envVars, outputCallback, taskCtx, overrideFiles); err != nil {
 		return err
 	}
@@ -42,7 +45,11 @@ func (t *TaskService) deployDockerCompose(ctx context.Context, TaskPayload share
 }
 
 func (t *TaskService) cloneRepositoryForCompose(ctx context.Context, TaskPayload shared_types.TaskPayload, deploymentType string, taskCtx *TaskContext) (string, error) {
-	taskCtx.LogAndUpdateStatus("Starting deployment process", shared_types.Cloning)
+	if deploymentType == string(shared_types.DeploymentTypeReDeploy) {
+		taskCtx.LogAndUpdateStatus("Starting redeploy process", shared_types.Cloning)
+	} else {
+		taskCtx.LogAndUpdateStatus("Starting deployment process", shared_types.Cloning)
+	}
 
 	resolver := t.GetSourceResolver(TaskPayload.Application.Source)
 	repoPath, err := resolver.Resolve(ctx, SourceResolveConfig{

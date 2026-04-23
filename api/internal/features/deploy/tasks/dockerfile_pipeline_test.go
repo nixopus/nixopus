@@ -16,9 +16,11 @@ func TestDockerfilePipelineMode_deploymentType(t *testing.T) {
 		{dockerfilePipelineUpdate, shared_types.DeploymentTypeUpdate},
 	}
 	for _, tt := range tests {
-		if got := tt.mode.deploymentType(); got != tt.want {
-			t.Fatalf("mode %v: got %v want %v", tt.mode, got, tt.want)
-		}
+		t.Run(string(tt.want), func(t *testing.T) {
+			if got := tt.mode.deploymentType(); got != tt.want {
+				t.Fatalf("got %v want %v", got, tt.want)
+			}
+		})
 	}
 }
 
@@ -29,16 +31,22 @@ func TestDockerfilePipeline_buildFlags_fromPayload(t *testing.T) {
 			ForceWithoutCache: true,
 		},
 	}
-	force, noCache := dockerfileBuildFlagsForMode(dockerfilePipelineCreate, payload)
-	if force || noCache {
-		t.Fatalf("create mode must ignore UpdateOptions: force=%v noCache=%v", force, noCache)
-	}
-	force, noCache = dockerfileBuildFlagsForMode(dockerfilePipelineReDeploy, payload)
-	if !force || !noCache {
-		t.Fatalf("redeploy must pass UpdateOptions through: force=%v noCache=%v", force, noCache)
-	}
-	force, noCache = dockerfileBuildFlagsForMode(dockerfilePipelineUpdate, payload)
-	if !force || !noCache {
-		t.Fatalf("update must pass UpdateOptions through: force=%v noCache=%v", force, noCache)
-	}
+	t.Run("create_ignores_update_options", func(t *testing.T) {
+		force, noCache := dockerfileBuildFlagsForMode(dockerfilePipelineCreate, payload)
+		if force || noCache {
+			t.Fatalf("force=%v noCache=%v", force, noCache)
+		}
+	})
+	t.Run("redeploy_uses_update_options", func(t *testing.T) {
+		force, noCache := dockerfileBuildFlagsForMode(dockerfilePipelineReDeploy, payload)
+		if !force || !noCache {
+			t.Fatalf("force=%v noCache=%v", force, noCache)
+		}
+	})
+	t.Run("update_uses_update_options", func(t *testing.T) {
+		force, noCache := dockerfileBuildFlagsForMode(dockerfilePipelineUpdate, payload)
+		if !force || !noCache {
+			t.Fatalf("force=%v noCache=%v", force, noCache)
+		}
+	})
 }

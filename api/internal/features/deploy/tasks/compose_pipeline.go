@@ -1,3 +1,5 @@
+// Compose deploy broken into stages (resolve repo, prepare compose project, execute stack, S3 export, proxy).
+// Same extension idea as dockerfile_pipeline: future split host / DAG can call stages with different context.
 package tasks
 
 import (
@@ -6,11 +8,7 @@ import (
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
-func (t *TaskService) composeStageResolveRepo(ctx context.Context, payload shared_types.TaskPayload, deploymentType string, taskCtx *TaskContext) (string, error) {
-	return t.cloneRepositoryForCompose(ctx, payload, deploymentType, taskCtx)
-}
-
-func (t *TaskService) composeStagePrepareProject(orgCtx context.Context, payload shared_types.TaskPayload, repoPath string, taskCtx *TaskContext) (composeFilePath string, overrideFiles []string, envVars map[string]string, err error) {
+func (t *TaskService) composeStagePrepareProject(orgCtx context.Context, payload shared_types.TaskPayload, repoPath string, taskCtx *TaskContext) (composeFilePath string, overrideFiles []string, envVars map[string]string) {
 	composeFilePath = t.buildComposeFilePath(payload, repoPath, taskCtx)
 	envVars = GetMapFromString(payload.Application.EnvironmentVariables)
 
@@ -25,7 +23,7 @@ func (t *TaskService) composeStagePrepareProject(orgCtx context.Context, payload
 	if overrideFile != "" {
 		overrideFiles = append(overrideFiles, overrideFile)
 	}
-	return composeFilePath, overrideFiles, envVars, nil
+	return composeFilePath, overrideFiles, envVars
 }
 
 func (t *TaskService) composeStageExecuteStack(orgCtx context.Context, deploymentTypeEnum shared_types.DeploymentType, composeFilePath string, envVars map[string]string, outputCallback func(string), taskCtx *TaskContext, overrideFiles []string) error {
