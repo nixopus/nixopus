@@ -32,13 +32,14 @@ function mapServerToMachine(server: Server): Machine {
     }
   }
 
-  const domain = provision?.domain?.trim() || server.host?.trim() || server.name;
+  const displayName =
+    server.name?.trim() || provision?.domain?.trim() || server.host?.trim() || server.id;
 
   return {
     id: provision?.id || server.id,
     ssh_key_id: server.id,
-    name: server.name,
-    domain,
+    name: displayName,
+    domain: provision?.domain?.trim() || server.host?.trim() || server.id,
     status,
     is_active: server.is_active,
     total_vcpu: server.total_vcpu,

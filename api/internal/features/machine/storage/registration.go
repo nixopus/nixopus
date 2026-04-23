@@ -226,6 +226,17 @@ func (s *RegistrationStorage) SetMachineActive(serverID uuid.UUID, active bool) 
 	return err
 }
 
+func (s *RegistrationStorage) UpdateMachineName(id uuid.UUID, name string) error {
+	_, err := s.db.NewUpdate().
+		Model((*api_types.SSHKey)(nil)).
+		Set("name = ?", name).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", id).
+		Where("deleted_at IS NULL").
+		Exec(s.ctx)
+	return err
+}
+
 func (s *RegistrationStorage) MarkMachineActive(id uuid.UUID) error {
 	now := time.Now()
 	_, err := s.db.NewUpdate().

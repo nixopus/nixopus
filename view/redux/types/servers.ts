@@ -98,6 +98,16 @@ export interface MachineSshStatusResponse {
   last_used_at?: string;
 }
 
+export interface RenameMachineRequest {
+  id: string;
+  name: string;
+}
+
+export interface RenameMachineResponse {
+  id: string;
+  name: string;
+}
+
 export interface DeleteMachineResponse {
   status: string;
 }

@@ -40,6 +40,15 @@ type ProvisionStatusResponse struct {
 	Error       *string `json:"error"`
 }
 
+type RenameMachineRequest struct {
+	Name string `json:"name" validate:"required"`
+}
+
+type RenameMachineResponse struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type DeleteMachineResponse struct {
 	Status string `json:"status"`
 }
@@ -55,4 +64,6 @@ var (
 	ErrDuplicateHost       = errors.New("duplicate host and port for this organization")
 	ErrMachineHasApps      = errors.New("machine has active deployments")
 	ErrInsufficientCredits = errors.New("insufficient credits")
+	ErrNameRequired        = errors.New("name is required")
+	ErrNameTooLong         = errors.New("name exceeds 255 characters")
 )
