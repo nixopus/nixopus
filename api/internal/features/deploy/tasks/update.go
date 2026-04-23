@@ -3,10 +3,8 @@ package tasks
 import (
 	"context"
 	"fmt"
-	"strconv"
 
 	"github.com/google/uuid"
-	"github.com/nixopus/nixopus/api/internal/features/deploy/caddy"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
@@ -89,113 +87,7 @@ func (s *TaskService) HandleUpdateDeployment(ctx context.Context, TaskPayload sh
 
 // HandleUpdateDockerfileDeployment handles update deployment of a Dockerfile-based application
 func (s *TaskService) HandleUpdateDockerfileDeployment(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
-	taskCtx := s.NewTaskContext(TaskPayload)
-
-	taskCtx.LogAndUpdateStatus("Starting deployment process", shared_types.Cloning)
-
-	resolver := s.GetSourceResolver(TaskPayload.Application.Source)
-	repoPath, err := resolver.Resolve(ctx, SourceResolveConfig{
-		TaskPayload:    TaskPayload,
-		DeploymentType: string(shared_types.DeploymentTypeUpdate),
-		TaskContext:    taskCtx,
-	})
-	if err != nil {
-		taskCtx.LogAndUpdateStatus("Failed to resolve source: "+err.Error(), shared_types.Failed)
-		s.emitDeployFailed(TaskPayload, err)
-		return err
-	}
-
-	taskCtx.LogAndUpdateStatus("Source resolved successfully", shared_types.Building)
-
-	if err := checkCancelled(ctx); err != nil {
-		taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
-		return err
-	}
-
-	// Add organization ID to context for docker service
-	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
-
-	taskCtx.AddLog("Building image from Dockerfile " + repoPath + " for application " + TaskPayload.Application.Name)
-	buildImageResult, err := s.BuildImage(BuildConfig{
-		TaskPayload:       TaskPayload,
-		ContextPath:       repoPath,
-		Force:             TaskPayload.UpdateOptions.Force,
-		ForceWithoutCache: TaskPayload.UpdateOptions.ForceWithoutCache,
-		TaskContext:       taskCtx,
-		Context:           orgCtx,
-	})
-	if err != nil {
-		if ctx.Err() != nil {
-			taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
-			return ctx.Err()
-		}
-		taskCtx.LogAndUpdateStatus("Failed to build image: "+err.Error(), shared_types.Failed)
-		return err
-	}
-
-	if err := checkCancelled(ctx); err != nil {
-		taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
-		return err
-	}
-
-	taskCtx.AddLog("Image built successfully: " + buildImageResult + " for application " + TaskPayload.Application.Name)
-
-	s.ExportAndRecordImage(orgCtx, TaskPayload, buildImageResult, taskCtx)
-
-	taskCtx.UpdateStatus(shared_types.Deploying)
-
-	if err := checkCancelled(ctx); err != nil {
-		taskCtx.LogAndUpdateStatus("Deployment cancelled by user", shared_types.Cancelled)
-		return err
-	}
-
-	containerResult, err := s.AtomicUpdateContainer(orgCtx, TaskPayload, taskCtx)
-	if err != nil {
-		taskCtx.LogAndUpdateStatus("Failed to update container: "+err.Error(), shared_types.Failed)
-		s.emitDeployFailed(TaskPayload, err)
-		return err
-	}
-
-	taskCtx.AddLog("Container updated successfully for application " + TaskPayload.Application.Name + " with container id " + containerResult.ContainerID)
-	taskCtx.LogAndUpdateStatus("Deployment completed successfully", shared_types.Deployed)
-
-	if len(TaskPayload.Application.Domains) > 0 {
-		port, err := strconv.Atoi(containerResult.AvailablePort)
-		if err != nil {
-			taskCtx.LogAndUpdateStatus("Failed to convert port to int: "+err.Error(), shared_types.Failed)
-			s.emitDeployFailed(TaskPayload, err)
-			return err
-		}
-
-		upstreamHost, err := GetSSHHostForOrganization(ctx, TaskPayload.Application.OrganizationID)
-		if err != nil {
-			taskCtx.LogAndUpdateStatus("Failed to get SSH host: "+err.Error(), shared_types.Failed)
-			s.emitDeployFailed(TaskPayload, err)
-			return err
-		}
-
-		appDomains := make([]shared_types.ApplicationDomain, len(TaskPayload.Application.Domains))
-		for i, d := range TaskPayload.Application.Domains {
-			appDomains[i] = *d
-		}
-		routes := caddy.BuildMultiUpstreamRoutes(
-			ctx, s.Storage, &s.Logger,
-			TaskPayload.Application, appDomains,
-			upstreamHost, port,
-		)
-
-		if err := caddy.AddDomainsAtomic(orgCtx, nil, &s.Logger, routes); err != nil {
-			taskCtx.LogAndUpdateStatus("Failed to configure proxy: "+err.Error(), shared_types.Failed)
-			s.emitDeployFailed(TaskPayload, err)
-			s.cleanupServiceOnFailure(orgCtx, TaskPayload.Application.Name, taskCtx)
-			return err
-		}
-		for _, r := range routes {
-			taskCtx.AddLog("Domain " + r.Domain + " added successfully with TLS")
-		}
-	}
-
-	return nil
+	return s.runDockerfilePipelineFromSource(ctx, TaskPayload, dockerfilePipelineUpdate)
 }
 
 // HandleUpdateDockerComposeDeployment handles update deployment of a Docker Compose application
