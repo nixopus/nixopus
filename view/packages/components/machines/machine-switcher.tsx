@@ -11,13 +11,17 @@ import {
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useGetServersQuery, useVerifyMachineMutation } from '@/redux/services/servers/serversApi';
+import { useAppSelector } from '@/redux/hooks';
 import { useMachineContext } from '@/packages/contexts/machine-context';
+import { getMachineSwitchTarget } from '@/packages/utils/get-machine-switch-target';
+import { setLastSelectedMachineId } from '@/packages/utils/last-selected-machine-id';
 import { toast } from 'sonner';
 
 export function MachineSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
   const { machineId: contextMachineId } = useMachineContext();
+  const orgId = useAppSelector((state) => state.user.activeOrganization?.id);
   const { data } = useGetServersQuery({ page: 1, page_size: 100 });
   const [verifyMachine] = useVerifyMachineMutation();
   const [retryingId, setRetryingId] = useState<string | null>(null);
@@ -35,10 +39,8 @@ export function MachineSwitcher() {
     if (server.id === activeMachineId) return;
     if (!server.is_active) return;
 
-    const target = urlMatch
-      ? `/machines/${server.id}${pathname.replace(urlMatch[0], '')}`
-      : `/machines/${server.id}${pathname}`;
-    router.push(target);
+    setLastSelectedMachineId(orgId, server.id);
+    router.push(getMachineSwitchTarget(server.id, pathname));
   };
 
   const handleRetry = async (e: React.MouseEvent, serverId: string) => {
