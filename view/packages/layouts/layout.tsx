@@ -1,5 +1,5 @@
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useTheme } from 'next-themes';
 import { Blocks, ChevronRight, LayoutGrid, MessageSquare } from 'lucide-react';
@@ -382,8 +382,11 @@ export function AppSidebar({
   ...props
 }: AppSidebarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { resolvedTheme } = useTheme();
   const { activeTab, setActiveTab } = useSidebarTab();
+  const isExtensionsRoute =
+    pathname === '/extensions' || (pathname != null && pathname.startsWith('/extensions/'));
 
   if (!user || !activeOrg) {
     return null;
@@ -441,7 +444,11 @@ export function AppSidebar({
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              onClick={() => router.push('/extensions')}
+              isActive={isExtensionsRoute}
+              onClick={() => {
+                setActiveNav('/extensions');
+                router.push('/extensions');
+              }}
               className="cursor-pointer"
             >
               <Blocks />
