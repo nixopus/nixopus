@@ -8,6 +8,11 @@ import (
 	"time"
 )
 
+// specMarshalJSON is the JSON encoder for PostProcessSpec; override in tests to force errors.
+var specMarshalJSON = func(v any) ([]byte, error) {
+	return json.MarshalIndent(v, "", "\t")
+}
+
 // PostProcessSpecWithRetry waits for the generated OpenAPI file to exist and
 // applies LLM-focused contract enhancements.
 func PostProcessSpecWithRetry(specPath string, timeout time.Duration) error {
@@ -79,7 +84,7 @@ func PostProcessSpec(specPath string) error {
 
 	ensureErrorEnvelopeSchema(schemas)
 
-	encoded, err := json.MarshalIndent(doc, "", "\t")
+	encoded, err := specMarshalJSON(doc)
 	if err != nil {
 		return err
 	}
@@ -94,9 +99,6 @@ func normalizeOperationID(op map[string]any, method, routePath string, seen map[
 	base := toLowerCamel(summary)
 	if base == "" {
 		base = toLowerCamel(fallbackSummary(method, routePath))
-	}
-	if base == "" {
-		base = strings.ToLower(method) + "Operation"
 	}
 
 	seen[base]++
