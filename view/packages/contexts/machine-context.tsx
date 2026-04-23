@@ -2,7 +2,11 @@
 import { createContext, useContext, useEffect, useMemo, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import { useGetServersQuery } from '@/redux/services/servers/serversApi';
-import { useAppDispatch } from '@/redux/hooks';
+import { useAppDispatch, useAppSelector } from '@/redux/hooks';
+import {
+  getLastSelectedMachineId,
+  setLastSelectedMachineId
+} from '@/packages/utils/last-selected-machine-id';
 import { deployApi } from '@/redux/services/deploy/applicationsApi';
 import { containerApi } from '@/redux/services/container/containerApi';
 import { imagesApi } from '@/redux/services/container/imagesApi';
@@ -29,6 +33,7 @@ interface MachineProviderProps {
 export function MachineProvider({ machineId, children }: MachineProviderProps) {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
+  const orgId = useAppSelector((state) => state.user.activeOrganization?.id);
 
   const urlMachineId = useMemo(() => {
     const match = pathname.match(/^\/machines\/([^/]+)/);
@@ -37,9 +42,22 @@ export function MachineProvider({ machineId, children }: MachineProviderProps) {
 
   const explicitId = machineId ?? urlMachineId;
   const isExplicit = !!explicitId;
-  const { data } = useGetServersQuery({ page: 1, page_size: 1 }, { skip: isExplicit });
+  const { data } = useGetServersQuery({ page: 1, page_size: 100 }, { skip: isExplicit });
 
-  const resolvedId = isExplicit ? explicitId! : (data?.servers?.[0]?.id ?? null);
+  const resolvedId = useMemo(() => {
+    if (isExplicit) {
+      return explicitId!;
+    }
+    const list = data?.servers ?? [];
+    if (list.length === 0) {
+      return null;
+    }
+    const last = orgId ? getLastSelectedMachineId(orgId) : null;
+    if (last && list.some((s) => s.id === last)) {
+      return last;
+    }
+    return list[0]?.id ?? null;
+  }, [isExplicit, explicitId, data?.servers, orgId]);
 
   // Track the last resolved machine ID so we can distinguish:
   //   - initial null -> first real value (just initialization, do NOT wipe caches)
@@ -59,6 +77,12 @@ export function MachineProvider({ machineId, children }: MachineProviderProps) {
     dispatch(machineBackupApi.util.resetApiState());
     PLUGIN_MACHINE_APIS.forEach((path) => dispatch({ type: `${path}/resetApiState` }));
   }, [resolvedId, dispatch]);
+
+  useEffect(() => {
+    if (urlMachineId && orgId) {
+      setLastSelectedMachineId(orgId, urlMachineId);
+    }
+  }, [urlMachineId, orgId]);
 
   const value = useMemo(() => ({ machineId: resolvedId, isExplicit }), [resolvedId, isExplicit]);
 
