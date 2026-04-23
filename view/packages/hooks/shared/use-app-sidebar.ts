@@ -389,6 +389,15 @@ Add any other context about the problem here.`;
     if (pathname) {
       const effectivePath = machineUrlPrefix ? pathname.replace(machineUrlPrefix, '') : pathname;
 
+      // Extensions live in the footer, not in navMain — still sync so main nav
+      // does not keep highlighting the previous route.
+      if (effectivePath === '/extensions' || effectivePath.startsWith('/extensions/')) {
+        if (activeNav !== '/extensions') {
+          setActiveNav('/extensions');
+        }
+        return;
+      }
+
       const matchingNavItem = data.navMain.find((item) => {
         if (effectivePath === item.url || effectivePath.startsWith(item.url + '/')) return true;
         if ('items' in item && item.items) {
