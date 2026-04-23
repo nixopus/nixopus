@@ -138,6 +138,96 @@ func TestVerifyMachine_InvalidID(t *testing.T) {
 	)
 }
 
+func TestVerifyMachine_NotFound(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("POST /machines/:id/verify for non-existent machine returns 500"),
+		Post(tests.GetMachineVerifyURL(uuid.New().String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusInternalServerError),
+	)
+}
+
+func TestVerifyMachine_MissingKeyData(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	orgID, err := uuid.Parse(auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to parse org ID: %v", err)
+	}
+
+	keyID := uuid.New()
+	key := &api_types.SSHKey{
+		ID:             keyID,
+		OrganizationID: orgID,
+		Name:           "no-key-machine",
+		Host:           strPtr("192.0.2.50"),
+		Port:           intPtr(22),
+		AuthMethod:     "key",
+		IsActive:       false,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+	insertSSHKeyHelper(t, setup, key)
+
+	Test(t,
+		Description("POST /machines/:id/verify with missing private key returns failed status"),
+		Post(tests.GetMachineVerifyURL(keyID.String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".status").Equal("failed"),
+		Expect().Body().JSON().JQ(".is_active").Equal(false),
+	)
+}
+
+func TestVerifyMachine_UnreachableHost(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	orgID, err := uuid.Parse(auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to parse org ID: %v", err)
+	}
+
+	created := createMachineHelper(t, auth, "unreachable-machine", "192.0.2.1", 22, "root")
+
+	keyID, err := uuid.Parse(created.ID)
+	require.NoError(t, err)
+
+	// Confirm the key exists in the DB with a private key
+	var sshKey api_types.SSHKey
+	require.NoError(t, setup.DB.NewSelect().
+		Model(&sshKey).
+		Where("id = ?", keyID).
+		Where("organization_id = ?", orgID).
+		Scan(setup.Ctx))
+	require.NotNil(t, sshKey.PrivateKeyEncrypted, "key should have private key after creation")
+
+	Test(t,
+		Description("POST /machines/:id/verify with unreachable host returns failed status"),
+		Post(tests.GetMachineVerifyURL(keyID.String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".status").Equal("failed"),
+		Expect().Body().JSON().JQ(".is_active").Equal(false),
+	)
+}
+
 // --- Delete machine ---
 
 func TestDeleteMachine_NoAuth(t *testing.T) {
