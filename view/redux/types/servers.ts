@@ -90,6 +90,7 @@ export interface ProvisionStatusResponse {
 
 export interface MachineVerifyResponse {
   status: string;
+  is_active: boolean;
 }
 
 export interface MachineSshStatusResponse {

@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback } from 'react';
 import {
   useCreateMachineMutation,
-  useVerifyMachineMutation,
-  useLazyGetMachineSshStatusQuery
+  useVerifyMachineMutation
 } from '@/redux/services/servers/serversApi';
 
 type WizardStep = 'enter-details' | 'copy-key' | 'verify-connection';
@@ -30,11 +29,9 @@ export function useAddMachine(onSuccess?: () => void) {
     'idle' | 'polling' | 'success' | 'failed'
   >('idle');
   const [error, setError] = useState<string | null>(null);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [createMachine, { isLoading: isCreating }] = useCreateMachineMutation();
   const [verifyMachine, { isLoading: isVerifying }] = useVerifyMachineMutation();
-  const [triggerSshStatus] = useLazyGetMachineSshStatusQuery();
 
   const updateForm = useCallback((field: keyof MachineForm, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -61,56 +58,39 @@ export function useAddMachine(onSuccess?: () => void) {
   const handleKeyConfirmed = useCallback(async () => {
     if (!machineId) return;
     setError(null);
+    setVerificationStatus('polling');
+    setStep('verify-connection');
     try {
-      await verifyMachine(machineId).unwrap();
-      setVerificationStatus('polling');
-      setStep('verify-connection');
-    } catch (err: any) {
-      setError(err?.data?.detail || err?.message || 'Failed to start verification');
-    }
-  }, [machineId, verifyMachine]);
-
-  useEffect(() => {
-    if (verificationStatus !== 'polling' || !machineId) return;
-
-    let attempts = 0;
-    const maxAttempts = 10;
-
-    pollRef.current = setInterval(async () => {
-      attempts++;
-      try {
-        const result = await triggerSshStatus(machineId).unwrap();
-        if (result.is_active) {
-          setVerificationStatus('success');
-          if (pollRef.current) clearInterval(pollRef.current);
-          onSuccess?.();
-        }
-      } catch {
-        // continue polling
-      }
-
-      if (attempts >= maxAttempts) {
+      const result = await verifyMachine(machineId).unwrap();
+      if (result.is_active) {
+        setVerificationStatus('success');
+        onSuccess?.();
+      } else {
         setVerificationStatus('failed');
-        if (pollRef.current) clearInterval(pollRef.current);
       }
-    }, 2000);
-
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
-  }, [verificationStatus, machineId, triggerSshStatus, onSuccess]);
+    } catch (err: any) {
+      setVerificationStatus('failed');
+      setError(err?.data?.detail || err?.message || 'Verification failed');
+    }
+  }, [machineId, verifyMachine, onSuccess]);
 
   const handleRetryVerification = useCallback(async () => {
     if (!machineId) return;
-    setVerificationStatus('idle');
+    setVerificationStatus('polling');
     setError(null);
     try {
-      await verifyMachine(machineId).unwrap();
-      setVerificationStatus('polling');
+      const result = await verifyMachine(machineId).unwrap();
+      if (result.is_active) {
+        setVerificationStatus('success');
+        onSuccess?.();
+      } else {
+        setVerificationStatus('failed');
+      }
     } catch (err: any) {
-      setError(err?.data?.detail || err?.message || 'Failed to start verification');
+      setVerificationStatus('failed');
+      setError(err?.data?.detail || err?.message || 'Verification failed');
     }
-  }, [machineId, verifyMachine]);
+  }, [machineId, verifyMachine, onSuccess]);
 
   const reset = useCallback(() => {
     setStep('enter-details');
@@ -119,7 +99,6 @@ export function useAddMachine(onSuccess?: () => void) {
     setPublicKey(null);
     setVerificationStatus('idle');
     setError(null);
-    if (pollRef.current) clearInterval(pollRef.current);
   }, []);
 
   const canProceedStep1 = form.name.trim() !== '' && form.host.trim() !== '';

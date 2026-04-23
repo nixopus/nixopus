@@ -57,11 +57,12 @@ func (c *MachineController) VerifyMachine(f fuego.ContextNoBody) (*types.VerifyM
 		return nil, fuego.BadRequestError{Detail: "invalid machine ID"}
 	}
 
-	if err := c.registrationService.VerifyMachine(orgID, machineID); err != nil {
+	response, err := c.registrationService.VerifyMachine(orgID, machineID)
+	if err != nil {
 		return nil, mapRegistrationError(c.logger, err, orgID)
 	}
 
-	return &types.VerifyMachineResponse{Status: "verification_queued"}, nil
+	return response, nil
 }
 
 func (c *MachineController) DeleteMachine(f fuego.ContextNoBody) (*types.DeleteMachineResponse, error) {

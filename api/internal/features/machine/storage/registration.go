@@ -226,6 +226,29 @@ func (s *RegistrationStorage) SetMachineActive(serverID uuid.UUID, active bool) 
 	return err
 }
 
+func (s *RegistrationStorage) MarkMachineActive(id uuid.UUID) error {
+	now := time.Now()
+	_, err := s.db.NewUpdate().
+		Model((*api_types.SSHKey)(nil)).
+		Set("is_active = ?", true).
+		Set("last_used_at = ?", now).
+		Set("updated_at = ?", now).
+		Where("id = ?", id).
+		Where("deleted_at IS NULL").
+		Exec(s.ctx)
+	return err
+}
+
+func (s *RegistrationStorage) MarkMachineInactive(id uuid.UUID) {
+	_, _ = s.db.NewUpdate().
+		Model((*api_types.SSHKey)(nil)).
+		Set("is_active = ?", false).
+		Set("updated_at = ?", time.Now()).
+		Where("id = ?", id).
+		Where("deleted_at IS NULL").
+		Exec(s.ctx)
+}
+
 func (s *RegistrationStorage) GetAnyActiveInfraServerID() (string, error) {
 	var serverID string
 	err := s.db.NewSelect().

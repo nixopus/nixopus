@@ -19,7 +19,8 @@ type CreateMachineResponse struct {
 }
 
 type VerifyMachineResponse struct {
-	Status string `json:"status"`
+	Status   string `json:"status"`
+	IsActive bool   `json:"is_active"`
 }
 
 type ProvisionMachineRequest struct {
