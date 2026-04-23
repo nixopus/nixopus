@@ -1,3 +1,8 @@
+// Dockerfile deploy flows are expressed as explicit stages in this file (resolve source, build image,
+// best-effort async S3 export, Swarm container update, optional Caddy domains). A future split
+// build/run mode or workflow/DAG runner can execute subsets of these stages on different machines
+// by swapping context (for example ServerIDKey) between calls; the ordering and side effects here
+// intentionally match the pre-refactor handlers.
 package tasks
 
 import (
@@ -78,7 +83,7 @@ func (t *TaskService) dockerfileStagePublishArtifactAsync(orgCtx context.Context
 	t.ExportAndRecordImage(orgCtx, payload, imageTag, taskCtx)
 }
 
-func (t *TaskService) dockerfileStageAtomicUpdateContainer(ctx context.Context, orgCtx context.Context, taskCtx *TaskContext, payload shared_types.TaskPayload, mode dockerfilePipelineMode) (AtomicUpdateContainerResult, error) {
+func (t *TaskService) dockerfileStageAtomicUpdateContainer(_ context.Context, orgCtx context.Context, taskCtx *TaskContext, payload shared_types.TaskPayload, mode dockerfilePipelineMode) (AtomicUpdateContainerResult, error) {
 	containerResult, err := t.AtomicUpdateContainer(orgCtx, payload, taskCtx)
 	if err != nil {
 		taskCtx.LogAndUpdateStatus("Failed to update container: "+err.Error(), shared_types.Failed)
@@ -130,8 +135,6 @@ func (t *TaskService) dockerfileStageConfigureDomains(ctx context.Context, orgCt
 	return nil
 }
 
-// runDockerfilePipelineFromSource runs resolve → build → async S3 export → container update → optional Caddy domains.
-// Stages are ordered to match the previous HandleCreateDockerfileDeployment / redeploy / update handlers exactly.
 func (t *TaskService) runDockerfilePipelineFromSource(ctx context.Context, payload shared_types.TaskPayload, mode dockerfilePipelineMode) error {
 	taskCtx := t.NewTaskContext(payload)
 
