@@ -163,6 +163,10 @@ func GetMachineVerifyURL(id string) string {
 	return baseURL + "/machines/" + id + "/verify"
 }
 
+func GetMachineRenameURL(id string) string {
+	return baseURL + "/machines/" + id + "/rename"
+}
+
 func GetMachineSSHKeyStatusURL(id string) string {
 	return baseURL + "/machines/" + id + "/ssh/status"
 }

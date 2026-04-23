@@ -13,6 +13,7 @@ import {
   DataTable,
   Badge,
   Button,
+  Input,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -33,9 +34,13 @@ import {
   Trash2,
   ChartColumnDecreasing,
   DatabaseBackup,
-  Layers
+  Layers,
+  Pencil
 } from 'lucide-react';
-import { useDeleteMachineMutation } from '@/redux/services/servers/serversApi';
+import {
+  useDeleteMachineMutation,
+  useRenameMachineMutation
+} from '@/redux/services/servers/serversApi';
 import { DeleteDialog } from '@/components/ui/delete-dialog';
 import { toast } from 'sonner';
 import { AddMachineWizard } from '@/packages/components/machines/add-machine-wizard';
@@ -190,6 +195,104 @@ const MachineActionOverlay = React.memo(function MachineActionOverlay({
   );
 });
 
+const InlineEditName = React.memo(function InlineEditName({
+  machineId,
+  currentName,
+  className
+}: {
+  machineId: string;
+  currentName: string;
+  className?: string;
+}) {
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [value, setValue] = React.useState(currentName);
+  const [renameMachine, { isLoading }] = useRenameMachineMutation();
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    setValue(currentName);
+  }, [currentName]);
+
+  React.useEffect(() => {
+    if (isEditing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [isEditing]);
+
+  const handleSave = async () => {
+    const trimmed = value.trim();
+    if (!trimmed || trimmed === currentName) {
+      setValue(currentName);
+      setIsEditing(false);
+      return;
+    }
+    try {
+      await renameMachine({ id: machineId, name: trimmed }).unwrap();
+      setIsEditing(false);
+    } catch {
+      toast.error('Failed to rename machine');
+      setValue(currentName);
+      setIsEditing(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSave();
+    }
+    if (e.key === 'Escape') {
+      setValue(currentName);
+      setIsEditing(false);
+    }
+  };
+
+  if (isEditing) {
+    return (
+      <div
+        data-machine-action-zone="true"
+        onPointerDown={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Input
+          ref={inputRef}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onBlur={handleSave}
+          onKeyDown={(e) => {
+            e.stopPropagation();
+            handleKeyDown(e);
+          }}
+          disabled={isLoading}
+          className={`h-7 text-base font-semibold px-1.5 py-0 ${className || ''}`}
+          maxLength={255}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <button
+      data-machine-action-zone="true"
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        setIsEditing(true);
+      }}
+      className={`group/edit inline-flex items-center gap-1.5 text-left cursor-pointer hover:opacity-80 transition-opacity ${className || ''}`}
+    >
+      <span
+        className="text-base font-semibold"
+        style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}
+      >
+        {currentName}
+      </span>
+      <Pencil className="h-3 w-3 shrink-0 opacity-0 group-hover/edit:opacity-60 transition-opacity" />
+    </button>
+  );
+});
+
 const MACHINE_NAV_OPTIONS = [
   { label: 'Charts', icon: ChartColumnDecreasing, path: 'charts' },
   { label: 'Apps', icon: Layers, path: 'apps' },
@@ -199,7 +302,7 @@ const MACHINE_NAV_OPTIONS = [
 export const MachineCard = React.memo(function MachineCard({ machine }: { machine: Machine }) {
   const router = useRouter();
   const { isInteractive, isFailed } = useMachineCard(machine);
-  const machineLabel = machine.domain || '';
+  const machineLabel = machine.name;
   const isProvisioning = machine.status === 'provisioning';
   const isActive = machine.status === 'active' || (!isProvisioning && !isFailed);
 
@@ -246,16 +349,7 @@ export const MachineCard = React.memo(function MachineCard({ machine }: { machin
                   <div className="min-w-0 flex-1 max-w-full">
                     <div className="flex items-start gap-2 flex-wrap">
                       <div className="min-w-0 max-w-full">
-                        <CardTitle
-                          className="text-base font-semibold wrap-break-word max-w-full"
-                          style={{
-                            wordBreak: 'break-word',
-                            overflowWrap: 'break-word',
-                            maxWidth: '100%'
-                          }}
-                        >
-                          {machineLabel}
-                        </CardTitle>
+                        <InlineEditName machineId={machine.ssh_key_id} currentName={machineLabel} />
                       </div>
                     </div>
                   </div>
@@ -600,7 +694,7 @@ const MachineRowActions = React.memo(function MachineRowActions({ machine }: { m
         onAction={handleAction}
         onBackup={handleTriggerBackup}
         isBackupInProgress={isBackupInProgress}
-        machineLabel={machine.domain || 'Domain pending'}
+        machineLabel={machine.name}
       />
     </div>
   );
@@ -631,15 +725,21 @@ const MachineRowStatus = React.memo(function MachineRowStatus({ machine }: { mac
   return null;
 });
 
+const MachineTableName = React.memo(function MachineTableName({ machine }: { machine: Machine }) {
+  return (
+    <InlineEditName
+      machineId={machine.ssh_key_id}
+      currentName={machine.name}
+      className="max-w-[260px]"
+    />
+  );
+});
+
 const MACHINE_TABLE_COLUMNS = [
   {
-    key: 'domain',
-    title: 'Domain',
-    render: (_: unknown, machine: Machine) => (
-      <span className="text-sm font-medium truncate block max-w-[260px]">
-        {machine.domain || 'Domain pending'}
-      </span>
-    )
+    key: 'name',
+    title: 'Name',
+    render: (_: unknown, machine: Machine) => <MachineTableName machine={machine} />
   },
   {
     key: 'status',

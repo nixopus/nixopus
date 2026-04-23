@@ -10,6 +10,8 @@ import type {
   CreateMachineRequest,
   CreateMachineResponse,
   MachineVerifyResponse,
+  RenameMachineRequest,
+  RenameMachineResponse,
   ProvisionMachineRequest,
   ProvisionStatusResponse,
   MachineSshStatusResponse,
@@ -66,6 +68,14 @@ export const machinesApi = createApi({
         url: `${SERVERURLS.PROVISION_STATUS}/${id}/status`,
         method: 'GET'
       })
+    }),
+    renameMachine: builder.mutation<RenameMachineResponse, RenameMachineRequest>({
+      query: ({ id, name }) => ({
+        url: `${SERVERURLS.VERIFY_MACHINE}/${id}/rename`,
+        method: 'PATCH',
+        body: { name }
+      }),
+      invalidatesTags: ['Server']
     }),
     deleteMachine: builder.mutation<DeleteMachineResponse, string>({
       query: (id) => ({
@@ -172,6 +182,7 @@ export const {
   useVerifyMachineMutation,
   useProvisionMachineMutation,
   useGetProvisionStatusQuery,
+  useRenameMachineMutation,
   useDeleteMachineMutation,
   useGetMachineSshStatusQuery,
   useLazyGetMachineSshStatusQuery,

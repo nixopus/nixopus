@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -182,6 +183,30 @@ func (s *RegistrationService) VerifyMachine(orgID uuid.UUID, machineID uuid.UUID
 	}
 
 	return &types.VerifyMachineResponse{Status: "success", IsActive: true}, nil
+}
+
+func (s *RegistrationService) RenameMachine(orgID uuid.UUID, machineID uuid.UUID, name string) (*types.RenameMachineResponse, error) {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return nil, types.ErrNameRequired
+	}
+	if len(trimmed) > 255 {
+		return nil, types.ErrNameTooLong
+	}
+
+	_, err := s.storage.GetSSHKeyByID(machineID, orgID)
+	if err != nil {
+		return nil, fmt.Errorf("machine not found: %w", err)
+	}
+
+	if err := s.storage.UpdateMachineName(machineID, trimmed); err != nil {
+		return nil, fmt.Errorf("failed to rename machine: %w", err)
+	}
+
+	return &types.RenameMachineResponse{
+		ID:   machineID.String(),
+		Name: trimmed,
+	}, nil
 }
 
 func (s *RegistrationService) DeleteMachine(orgID uuid.UUID, machineID uuid.UUID) error {
