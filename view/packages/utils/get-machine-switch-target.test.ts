@@ -17,6 +17,9 @@ describe('getMachineSwitchTarget', () => {
     expect(getMachineSwitchTarget(m2, '/machines/m1/apps/application/x')).toBe(
       `/machines/${m2}/apps`
     );
+    expect(getMachineSwitchTarget(m2, '/machines/m1/apps/create/something')).toBe(
+      `/machines/${m2}/apps`
+    );
   });
 
   it('keeps machine-scoped index routes and only swaps machine id', () => {
