@@ -18,46 +18,27 @@ import (
 func (t *TaskService) deployDockerCompose(ctx context.Context, TaskPayload shared_types.TaskPayload, deploymentType string) error {
 	taskCtx := t.NewTaskContext(TaskPayload)
 
-	repoPath, err := t.cloneRepositoryForCompose(ctx, TaskPayload, deploymentType, taskCtx)
+	repoPath, err := t.composeStageResolveRepo(ctx, TaskPayload, deploymentType, taskCtx)
 	if err != nil {
 		return err
 	}
 
 	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, TaskPayload.Application.OrganizationID.String())
 
-	composeFilePath := t.buildComposeFilePath(TaskPayload, repoPath, taskCtx)
-	envVars := GetMapFromString(TaskPayload.Application.EnvironmentVariables)
-
-	if err := t.discoverAndPersistComposeServices(orgCtx, composeFilePath, TaskPayload, taskCtx, envVars); err != nil {
-		taskCtx.AddLog("Warning: failed to discover compose services: " + err.Error())
-	}
-
-	overrideFile, err := t.writeComposeLabelsOverride(orgCtx, composeFilePath, TaskPayload, taskCtx)
+	composeFilePath, overrideFiles, envVars, err := t.composeStagePrepareProject(orgCtx, TaskPayload, repoPath, taskCtx)
 	if err != nil {
-		taskCtx.AddLog("Warning: failed to write labels override: " + err.Error())
-	}
-	var overrideFiles []string
-	if overrideFile != "" {
-		overrideFiles = append(overrideFiles, overrideFile)
+		return err
 	}
 
 	outputCallback := t.createOutputCallback(taskCtx)
-
 	deploymentTypeEnum := shared_types.DeploymentType(deploymentType)
-	if err := t.executeComposeDeployment(orgCtx, deploymentTypeEnum, composeFilePath, envVars, outputCallback, taskCtx, overrideFiles); err != nil {
+	if err := t.composeStageExecuteStack(orgCtx, deploymentTypeEnum, composeFilePath, envVars, outputCallback, taskCtx, overrideFiles); err != nil {
 		return err
 	}
 
-	if TaskPayload.Application.Source != shared_types.SourceTemplate {
-		t.ExportComposeImagesToS3(orgCtx, TaskPayload, composeFilePath, envVars, taskCtx)
-	}
+	t.composeStagePublishArtifacts(orgCtx, TaskPayload, composeFilePath, envVars, taskCtx)
 
-	if err := t.addDomainsForCompose(orgCtx, TaskPayload, taskCtx); err != nil {
-		return err
-	}
-
-	taskCtx.LogAndUpdateStatus("Docker Compose deployment completed successfully", shared_types.Deployed)
-	return nil
+	return t.composeStageConfigureProxy(orgCtx, TaskPayload, taskCtx)
 }
 
 func (t *TaskService) cloneRepositoryForCompose(ctx context.Context, TaskPayload shared_types.TaskPayload, deploymentType string, taskCtx *TaskContext) (string, error) {
