@@ -53,7 +53,7 @@ export function ServerSelector({
               )}
               onClick={() => onToggleServer(server.id)}
             >
-              {server.name}
+              {server.name?.trim() || server.host?.trim() || server.id}
               {server.is_default && <span className="ml-1 text-xs opacity-70">(default)</span>}
             </Badge>
           );
@@ -90,7 +90,7 @@ export function ServerSelector({
                 <SelectContent>
                   {selectedServers.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
-                      {s.name}
+                      {s.name?.trim() || s.host?.trim() || s.id}
                       {s.is_default && ' (default)'}
                     </SelectItem>
                   ))}

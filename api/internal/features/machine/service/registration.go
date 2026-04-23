@@ -6,16 +6,19 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"database/sql"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	ff_service "github.com/nixopus/nixopus/api/internal/features/feature-flags/service"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/machine/storage"
 	"github.com/nixopus/nixopus/api/internal/features/machine/types"
-	"github.com/nixopus/nixopus/api/internal/queue"
 	api_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 	cryptossh "golang.org/x/crypto/ssh"
@@ -123,19 +126,105 @@ func (s *RegistrationService) CreateMachine(orgID uuid.UUID, userID uuid.UUID, r
 	}, nil
 }
 
-func (s *RegistrationService) VerifyMachine(orgID uuid.UUID, machineID uuid.UUID) error {
-	_, err := s.storage.GetSSHKeyByID(machineID, orgID)
+func (s *RegistrationService) VerifyMachine(orgID uuid.UUID, machineID uuid.UUID) (*types.VerifyMachineResponse, error) {
+	sshKey, err := s.storage.GetSSHKeyByID(machineID, orgID)
 	if err != nil {
-		return fmt.Errorf("machine not found: %w", err)
+		return nil, fmt.Errorf("machine not found: %w", err)
 	}
 
-	serverID, _ := s.storage.GetAnyActiveInfraServerID()
+	if sshKey.PrivateKeyEncrypted == nil || sshKey.Host == nil {
+		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
+	}
 
-	return queue.EnqueueMachineVerifyTask(s.ctx, queue.MachineVerifyPayload{
-		MachineID: machineID.String(),
-		OrgID:     orgID.String(),
-		ServerID:  serverID,
-	})
+	signer, err := cryptossh.ParsePrivateKey([]byte(*sshKey.PrivateKeyEncrypted))
+	if err != nil {
+		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
+	}
+
+	port := 22
+	if sshKey.Port != nil {
+		port = *sshKey.Port
+	}
+	user := "root"
+	if sshKey.User != nil {
+		user = *sshKey.User
+	}
+
+	config := &cryptossh.ClientConfig{
+		User:            user,
+		Auth:            []cryptossh.AuthMethod{cryptossh.PublicKeys(signer)},
+		HostKeyCallback: cryptossh.InsecureIgnoreHostKey(),
+		Timeout:         10 * time.Second,
+	}
+
+	addr := fmt.Sprintf("%s:%d", *sshKey.Host, port)
+	client, err := cryptossh.Dial("tcp", addr, config)
+	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("SSH dial failed for machine %s: %v", machineID, err), orgID.String())
+		if dbErr := s.storage.MarkMachineInactive(machineID); dbErr != nil {
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to mark machine %s inactive after SSH dial error: %v", machineID, dbErr), orgID.String())
+		}
+		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
+	}
+	defer client.Close()
+
+	session, err := client.NewSession()
+	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("SSH session failed for machine %s: %v", machineID, err), orgID.String())
+		if dbErr := s.storage.MarkMachineInactive(machineID); dbErr != nil {
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to mark machine %s inactive after SSH session error: %v", machineID, dbErr), orgID.String())
+		}
+		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
+	}
+	defer session.Close()
+
+	if err := session.Run("echo ok"); err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("SSH command failed for machine %s: %v", machineID, err), orgID.String())
+		if dbErr := s.storage.MarkMachineInactive(machineID); dbErr != nil {
+			s.logger.Log(logger.Error, fmt.Sprintf("Failed to mark machine %s inactive after SSH command error: %v", machineID, dbErr), orgID.String())
+		}
+		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
+	}
+
+	if err := s.storage.MarkMachineActive(machineID); err != nil {
+		return nil, fmt.Errorf("failed to update machine status: %w", err)
+	}
+
+	return &types.VerifyMachineResponse{Status: "success", IsActive: true}, nil
+}
+
+func (s *RegistrationService) RenameMachine(orgID uuid.UUID, machineID uuid.UUID, name string) (*types.RenameMachineResponse, error) {
+	trimmed := strings.TrimSpace(name)
+	if trimmed == "" {
+		return nil, types.ErrNameRequired
+	}
+	if len(trimmed) > 255 {
+		return nil, types.ErrNameTooLong
+	}
+
+	_, err := s.storage.GetSSHKeyByID(machineID, orgID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			s.logger.Log(logger.Error, fmt.Sprintf("Machine not found for rename: machineID=%s, orgID=%s", machineID, orgID), orgID.String())
+			return nil, types.ErrMachineNotFound
+		}
+		s.logger.Log(logger.Error, fmt.Sprintf("Failed to get machine for rename: machineID=%s, error=%v", machineID, err), orgID.String())
+		return nil, fmt.Errorf("failed to get machine: %w", err)
+	}
+
+	if err := s.storage.UpdateMachineName(machineID, trimmed); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			s.logger.Log(logger.Error, fmt.Sprintf("Machine not found during rename update: machineID=%s", machineID), orgID.String())
+			return nil, types.ErrMachineNotFound
+		}
+		s.logger.Log(logger.Error, fmt.Sprintf("Failed to update machine name: machineID=%s, error=%v", machineID, err), orgID.String())
+		return nil, fmt.Errorf("failed to rename machine: %w", err)
+	}
+
+	return &types.RenameMachineResponse{
+		ID:   machineID.String(),
+		Name: trimmed,
+	}, nil
 }
 
 func (s *RegistrationService) DeleteMachine(orgID uuid.UUID, machineID uuid.UUID) error {

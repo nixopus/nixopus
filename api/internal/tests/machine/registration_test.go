@@ -138,6 +138,192 @@ func TestVerifyMachine_InvalidID(t *testing.T) {
 	)
 }
 
+func TestVerifyMachine_NotFound(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("POST /machines/:id/verify for non-existent machine returns 500"),
+		Post(tests.GetMachineVerifyURL(uuid.New().String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusInternalServerError),
+	)
+}
+
+func TestVerifyMachine_MissingKeyData(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	orgID, err := uuid.Parse(auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to parse org ID: %v", err)
+	}
+
+	keyID := uuid.New()
+	key := &api_types.SSHKey{
+		ID:             keyID,
+		OrganizationID: orgID,
+		Name:           "no-key-machine",
+		Host:           strPtr("192.0.2.50"),
+		Port:           intPtr(22),
+		AuthMethod:     "key",
+		IsActive:       false,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+	insertSSHKeyHelper(t, setup, key)
+
+	Test(t,
+		Description("POST /machines/:id/verify with missing private key returns failed status"),
+		Post(tests.GetMachineVerifyURL(keyID.String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".status").Equal("failed"),
+		Expect().Body().JSON().JQ(".is_active").Equal(false),
+	)
+}
+
+func TestVerifyMachine_UnreachableHost(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	orgID, err := uuid.Parse(auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to parse org ID: %v", err)
+	}
+
+	created := createMachineHelper(t, auth, "unreachable-machine", "127.0.0.1", 65000, "root")
+
+	keyID, err := uuid.Parse(created.ID)
+	require.NoError(t, err)
+
+	// Confirm the key exists in the DB with a private key
+	var sshKey api_types.SSHKey
+	require.NoError(t, setup.DB.NewSelect().
+		Model(&sshKey).
+		Where("id = ?", keyID).
+		Where("organization_id = ?", orgID).
+		Scan(setup.Ctx))
+	require.NotNil(t, sshKey.PrivateKeyEncrypted, "key should have private key after creation")
+
+	Test(t,
+		Description("POST /machines/:id/verify with unreachable host returns failed status"),
+		Post(tests.GetMachineVerifyURL(keyID.String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".status").Equal("failed"),
+		Expect().Body().JSON().JQ(".is_active").Equal(false),
+	)
+}
+
+// --- Rename machine ---
+
+func TestRenameMachine_NoAuth(t *testing.T) {
+	machineID := uuid.New().String()
+	Test(t,
+		Description("PATCH /machines/:id/rename without auth returns 401"),
+		Method(http.MethodPatch, tests.GetMachineRenameURL(machineID)),
+		Send().Body().JSON(types.RenameMachineRequest{Name: "new-name"}),
+		Expect().Status().Equal(http.StatusUnauthorized),
+	)
+}
+
+func TestRenameMachine_InvalidID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("PATCH /machines/not-a-uuid/rename returns 400"),
+		Method(http.MethodPatch, tests.GetMachineRenameURL("not-a-uuid")),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(types.RenameMachineRequest{Name: "new-name"}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestRenameMachine_NotFound(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("PATCH /machines/:id/rename for non-existent machine returns 500"),
+		Method(http.MethodPatch, tests.GetMachineRenameURL(uuid.New().String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(types.RenameMachineRequest{Name: "new-name"}),
+		Expect().Status().Equal(http.StatusInternalServerError),
+	)
+}
+
+func TestRenameMachine_EmptyName(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	created := createMachineHelper(t, auth, "rename-test-empty", "192.0.2.60", 22, "root")
+
+	Test(t,
+		Description("PATCH /machines/:id/rename with empty name returns 400"),
+		Method(http.MethodPatch, tests.GetMachineRenameURL(created.ID)),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(types.RenameMachineRequest{Name: "   "}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestRenameMachine_Success(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	created := createMachineHelper(t, auth, "rename-test-ok", "192.0.2.61", 22, "root")
+
+	Test(t,
+		Description("PATCH /machines/:id/rename with valid name returns 200"),
+		Method(http.MethodPatch, tests.GetMachineRenameURL(created.ID)),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(types.RenameMachineRequest{Name: "my-production-box"}),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".id").Equal(created.ID),
+		Expect().Body().JSON().JQ(".name").Equal("my-production-box"),
+	)
+
+	keyID, err := uuid.Parse(created.ID)
+	require.NoError(t, err)
+	var sshKey api_types.SSHKey
+	require.NoError(t, setup.DB.NewSelect().
+		Model(&sshKey).
+		Column("name").
+		Where("id = ?", keyID).
+		Scan(setup.Ctx))
+	require.Equal(t, "my-production-box", sshKey.Name)
+}
+
 // --- Delete machine ---
 
 func TestDeleteMachine_NoAuth(t *testing.T) {

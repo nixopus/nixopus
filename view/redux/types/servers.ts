@@ -90,11 +90,22 @@ export interface ProvisionStatusResponse {
 
 export interface MachineVerifyResponse {
   status: string;
+  is_active: boolean;
 }
 
 export interface MachineSshStatusResponse {
   is_active: boolean;
   last_used_at?: string;
+}
+
+export interface RenameMachineRequest {
+  id: string;
+  name: string;
+}
+
+export interface RenameMachineResponse {
+  id: string;
+  name: string;
 }
 
 export interface DeleteMachineResponse {

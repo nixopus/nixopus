@@ -57,11 +57,42 @@ func (c *MachineController) VerifyMachine(f fuego.ContextNoBody) (*types.VerifyM
 		return nil, fuego.BadRequestError{Detail: "invalid machine ID"}
 	}
 
-	if err := c.registrationService.VerifyMachine(orgID, machineID); err != nil {
+	response, err := c.registrationService.VerifyMachine(orgID, machineID)
+	if err != nil {
 		return nil, mapRegistrationError(c.logger, err, orgID)
 	}
 
-	return &types.VerifyMachineResponse{Status: "verification_queued"}, nil
+	return response, nil
+}
+
+func (c *MachineController) RenameMachine(f fuego.ContextWithBody[types.RenameMachineRequest]) (*types.RenameMachineResponse, error) {
+	w, r := f.Response(), f.Request()
+	user := utils.GetUser(w, r)
+	if user == nil {
+		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
+	}
+
+	orgID := utils.GetOrganizationID(r)
+	if orgID == uuid.Nil {
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
+	}
+
+	machineID, err := uuid.Parse(f.PathParam("id"))
+	if err != nil {
+		return nil, fuego.BadRequestError{Detail: "invalid machine ID"}
+	}
+
+	body, err := f.Body()
+	if err != nil {
+		return nil, fuego.BadRequestError{Detail: "invalid request body"}
+	}
+
+	response, err := c.registrationService.RenameMachine(orgID, machineID, body.Name)
+	if err != nil {
+		return nil, mapRegistrationError(c.logger, err, orgID)
+	}
+
+	return response, nil
 }
 
 func (c *MachineController) DeleteMachine(f fuego.ContextNoBody) (*types.DeleteMachineResponse, error) {
@@ -122,6 +153,10 @@ func mapRegistrationError(l logger.Logger, err error, orgID uuid.UUID) error {
 	case errors.Is(err, types.ErrMachineLimitReached):
 		return fuego.ForbiddenError{Detail: err.Error()}
 	case errors.Is(err, types.ErrDuplicateHost):
+		return fuego.BadRequestError{Detail: err.Error()}
+	case errors.Is(err, types.ErrNameRequired):
+		return fuego.BadRequestError{Detail: err.Error()}
+	case errors.Is(err, types.ErrNameTooLong):
 		return fuego.BadRequestError{Detail: err.Error()}
 	case errors.Is(err, types.ErrMachineHasApps):
 		return fuego.ConflictError{Detail: err.Error()}

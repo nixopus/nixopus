@@ -31,6 +31,8 @@
     "next": "Next",
     "back": "Back",
     "close": "Close",
-    "done": "Done"
+    "done": "Done",
+    "selectMachine": "Select machine",
+    "renameError": "Failed to rename machine"
   }
 }

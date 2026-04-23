@@ -61,7 +61,13 @@ export function MachineSwitcher() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="gap-1.5 px-2 h-7 text-sm font-medium">
           <Server className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate max-w-[150px]">{currentServer?.name ?? 'Select machine'}</span>
+          <span className="truncate max-w-[150px]">
+            {currentServer?.name?.trim() ||
+              currentServer?.provision?.domain?.trim() ||
+              currentServer?.host?.trim() ||
+              currentServer?.id ||
+              'Select Machine'}
+          </span>
           <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         </Button>
       </DropdownMenuTrigger>
@@ -81,7 +87,9 @@ export function MachineSwitcher() {
                 server.is_active ? 'bg-green-500' : 'bg-red-500'
               )}
             />
-            <span className="truncate text-sm flex-1 min-w-0">{server.name}</span>
+            <span className="truncate text-sm flex-1 min-w-0">
+              {server.name?.trim() || server.provision?.domain?.trim() || server.host?.trim() || server.id}
+            </span>
             {!server.is_active ? (
               <Button
                 variant="ghost"
