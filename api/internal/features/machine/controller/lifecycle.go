@@ -43,22 +43,12 @@ func (c *MachineController) GetMachineStatus(f fuego.ContextNoBody) (*types.Mach
 		return nil, fuego.BadRequestError{Detail: "server_id is required"}
 	}
 
-	userOwned, _ := c.billingService.IsServerUserOwned(orgID, *serverID)
-	if userOwned {
-		ctx := context.WithValue(r.Context(), sharedtypes.ServerIDKey, serverID.String())
-		response, err := c.service.GetMachineStatus(ctx, orgID)
-		if err != nil {
-			c.logger.Log(logger.Error, err.Error(), orgID.String())
-			return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
-		}
-		return response, nil
-	}
-
-	response, err := c.lifecycleService.GetStatus(r.Context(), orgID, serverID)
+	ctx := context.WithValue(r.Context(), sharedtypes.ServerIDKey, serverID.String())
+	response, err := c.service.GetMachineStatus(ctx, orgID)
 	if err != nil {
-		return nil, mapLifecycleError(c.logger, err, orgID, "get status")
+		c.logger.Log(logger.Error, err.Error(), orgID.String())
+		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
-
 	return response, nil
 }
 

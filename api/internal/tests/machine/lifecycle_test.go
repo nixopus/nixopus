@@ -121,6 +121,13 @@ func TestRestartMachine_MissingServerID(t *testing.T) {
 // Pause and resume are pure DB flag flips, safe to run in CI without a real SSH host.
 func seedBYOSMachine(t *testing.T, setup *testutils.TestSetup, orgID uuid.UUID, userID uuid.UUID, isActive bool) uuid.UUID {
 	t.Helper()
+	return seedTestSSHMachine(t, setup, orgID, userID, isActive, "user_owned")
+}
+
+// seedTestSSHMachine inserts an SSH key and user_provision_details row.
+// provisionType is e.g. user_owned, trial (non-user-owned uses the same GET /machines/status path as BYOS).
+func seedTestSSHMachine(t *testing.T, setup *testutils.TestSetup, orgID uuid.UUID, userID uuid.UUID, isActive bool, provisionType string) uuid.UUID {
+	t.Helper()
 
 	keyID := uuid.New()
 	key := &api_types.SSHKey{
@@ -144,7 +151,7 @@ func seedBYOSMachine(t *testing.T, setup *testutils.TestSetup, orgID uuid.UUID, 
 		UserID:         userID,
 		OrganizationID: orgID,
 		SSHKeyID:       &keyID,
-		Type:           "user_owned",
+		Type:           provisionType,
 		Step:           &step,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
@@ -280,6 +287,34 @@ func TestBYOSGetStatus_PausedMachine(t *testing.T) {
 
 	Test(t,
 		Description("GET /machines/status for paused BYOS machine returns 200 with Paused state"),
+		Get(tests.GetMachineStatusURL(keyID.String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".status").Equal("success"),
+		Expect().Body().JSON().JQ(".data.state").Equal("Paused"),
+	)
+}
+
+// TestNonUserOwnedGetStatus_PausedMachine verifies GET /machines/status uses the same
+// MachineService path as BYOS for non-user_owned provisions (no LXD lifecycle lookup).
+func TestNonUserOwnedGetStatus_PausedMachine(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	orgID, err := uuid.Parse(auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to parse org ID: %v", err)
+	}
+	userID := auth.User.ID
+
+	keyID := seedTestSSHMachine(t, setup, orgID, userID, false, "trial")
+
+	Test(t,
+		Description("GET /machines/status for paused non-user-owned machine returns 200 with Paused state"),
 		Get(tests.GetMachineStatusURL(keyID.String())),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
