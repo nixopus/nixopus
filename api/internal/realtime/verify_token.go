@@ -24,6 +24,10 @@ import (
 //   - the organization ID if available.
 //   - an error if the token is invalid.
 func (s *SocketServer) verifyToken(tokenString string, originalRequest *http.Request) (*types.User, string, error) {
+	if s.verifyTokenOverride != nil {
+		return s.verifyTokenOverride(tokenString, originalRequest)
+	}
+
 	var req *http.Request
 
 	// Prefer using the original request with actual cookies from the browser

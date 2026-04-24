@@ -63,6 +63,9 @@ type SocketServer struct {
 
 	liveDevHandler   LiveDevNotificationHandler
 	liveDevHandlerMu sync.RWMutex
+
+	// verifyTokenOverride, if set, replaces Better Auth session checks. Used by unit tests.
+	verifyTokenOverride func(string, *http.Request) (*types.User, string, error)
 }
 
 // NewSocketServer initializes and returns a new instance of SocketServer.
@@ -85,11 +88,19 @@ func NewSocketServer(deployController *deploy.DeployController, db *bun.DB, ctx 
 		dashboardMonitors:   make(map[*websocket.Conn]*dashboard.DashboardMonitor),
 		applicationMonitors: make(map[*websocket.Conn]*realtime.ApplicationMonitor),
 	}
-	err := StartListeningAndNotify(&server.postgres_listener, ctx, server)
+	err := startListeningForSocketServer(&server.postgres_listener, ctx, server)
 	if err != nil {
 		return nil, err
 	}
 	return server, nil
+}
+
+// startListeningForSocketServer is StartListeningAndNotify by default; unit tests may replace
+// it to avoid starting a PostgreSQL notification listener.
+var startListeningForSocketServer = startListeningForSocketServerImpl
+
+func startListeningForSocketServerImpl(pl *PostgresListener, ctx context.Context, s *SocketServer) error {
+	return StartListeningAndNotify(pl, ctx, s)
 }
 
 // HandleHTTP handles incoming HTTP connections and upgrades them to WebSocket connections.
