@@ -1,4 +1,4 @@
-package scheduler
+package machines
 
 import (
 	"context"
@@ -24,7 +24,8 @@ const (
 	weeklyMinGap = 6 * 24 * time.Hour
 )
 
-type BackupScheduler struct {
+// Backup enqueues scheduled machine backups per organization settings.
+type Backup struct {
 	cron         *cron.Cron
 	billingStore *machine_storage.BillingStorage
 	backupStore  *machine_storage.BackupStorage
@@ -33,8 +34,9 @@ type BackupScheduler struct {
 	ctx          context.Context
 }
 
-func NewBackupScheduler(db *bun.DB, ctx context.Context, l logger.Logger) *BackupScheduler {
-	return &BackupScheduler{
+// NewBackup creates a machine backup cron scheduler.
+func NewBackup(db *bun.DB, ctx context.Context, l logger.Logger) *Backup {
+	return &Backup{
 		cron:         cron.New(cron.WithChain(cron.Recover(cron.DefaultLogger))),
 		billingStore: machine_storage.NewBillingStorage(db, ctx),
 		backupStore:  machine_storage.NewBackupStorage(db, ctx),
@@ -44,7 +46,8 @@ func NewBackupScheduler(db *bun.DB, ctx context.Context, l logger.Logger) *Backu
 	}
 }
 
-func (b *BackupScheduler) Start() {
+// Start registers and runs the backup cron.
+func (b *Backup) Start() {
 	_, err := b.cron.AddFunc(backupScheduleCheck, b.run)
 	if err != nil {
 		b.logger.Log(logger.Error, fmt.Sprintf("backup scheduler: failed to register cron: %v", err), "")
@@ -54,11 +57,12 @@ func (b *BackupScheduler) Start() {
 	b.logger.Log(logger.Info, fmt.Sprintf("backup scheduler started with schedule: %s", backupScheduleCheck), "")
 }
 
-func (b *BackupScheduler) Stop() {
+// Stop stops the backup cron.
+func (b *Backup) Stop() {
 	b.cron.Stop()
 }
 
-func (b *BackupScheduler) run() {
+func (b *Backup) run() {
 	now := time.Now().UTC()
 	currentHour := now.Hour()
 	currentDay := int(now.Weekday())
@@ -115,7 +119,7 @@ func (b *BackupScheduler) run() {
 	}
 }
 
-func (b *BackupScheduler) enqueueIfDue(orgID uuid.UUID, freq string, now time.Time) error {
+func (b *Backup) enqueueIfDue(orgID uuid.UUID, freq string, now time.Time) error {
 	hasRunning, err := b.backupStore.HasInProgressBackup(b.ctx, orgID, nil)
 	if err != nil {
 		return fmt.Errorf("check in-progress: %w", err)

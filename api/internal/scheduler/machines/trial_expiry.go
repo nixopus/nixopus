@@ -1,4 +1,4 @@
-package scheduler
+package machines
 
 import (
 	"context"
@@ -16,7 +16,8 @@ import (
 
 const trialExpirySchedule = "0 * * * *"
 
-type TrialExpiryScheduler struct {
+// TrialExpiry deletes expired trail trial VMs and emits notifications.
+type TrialExpiry struct {
 	cron       *cron.Cron
 	storage    *trail_storage.TrailStorage
 	logger     logger.Logger
@@ -26,11 +27,12 @@ type TrialExpiryScheduler struct {
 	notifier   shared_types.Notifier
 }
 
-func NewTrialExpiryScheduler(db *bun.DB, ctx context.Context, l logger.Logger, trialDays int) *TrialExpiryScheduler {
+// NewTrialExpiry creates a trail trial expiry cron scheduler.
+func NewTrialExpiry(db *bun.DB, ctx context.Context, l logger.Logger, trialDays int) *TrialExpiry {
 	if trialDays <= 0 {
 		trialDays = 7
 	}
-	return &TrialExpiryScheduler{
+	return &TrialExpiry{
 		cron:      cron.New(cron.WithChain(cron.Recover(cron.DefaultLogger))),
 		storage:   trail_storage.NewTrailStorage(db, ctx),
 		logger:    l,
@@ -39,19 +41,21 @@ func NewTrialExpiryScheduler(db *bun.DB, ctx context.Context, l logger.Logger, t
 	}
 }
 
-func (t *TrialExpiryScheduler) SetNotifier(n shared_types.Notifier) {
+// SetNotifier sets the notification dispatcher (optional).
+func (t *TrialExpiry) SetNotifier(n shared_types.Notifier) {
 	t.notifierMu.Lock()
 	defer t.notifierMu.Unlock()
 	t.notifier = n
 }
 
-func (t *TrialExpiryScheduler) getNotifier() shared_types.Notifier {
+func (t *TrialExpiry) getNotifier() shared_types.Notifier {
 	t.notifierMu.RLock()
 	defer t.notifierMu.RUnlock()
 	return t.notifier
 }
 
-func (t *TrialExpiryScheduler) Start() {
+// Start registers and runs the trial expiry cron.
+func (t *TrialExpiry) Start() {
 	_, err := t.cron.AddFunc(trialExpirySchedule, t.run)
 	if err != nil {
 		t.logger.Log(logger.Error, fmt.Sprintf("trial expiry scheduler: failed to register cron: %v", err), "")
@@ -61,11 +65,12 @@ func (t *TrialExpiryScheduler) Start() {
 	t.logger.Log(logger.Info, fmt.Sprintf("trial expiry scheduler started with schedule: %s (trial_period_days=%d)", trialExpirySchedule, t.trialDays), "")
 }
 
-func (t *TrialExpiryScheduler) Stop() {
+// Stop stops the trial expiry cron.
+func (t *TrialExpiry) Stop() {
 	t.cron.Stop()
 }
 
-func (t *TrialExpiryScheduler) run() {
+func (t *TrialExpiry) run() {
 	users, err := t.storage.GetExpiredTrialUsers(t.ctx, t.trialDays)
 	if err != nil {
 		t.logger.Log(logger.Error, fmt.Sprintf("trial expiry: query failed: %v", err), "")

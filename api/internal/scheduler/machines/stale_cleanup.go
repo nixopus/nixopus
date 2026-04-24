@@ -1,4 +1,4 @@
-package scheduler
+package machines
 
 import (
 	"context"
@@ -14,7 +14,8 @@ import (
 
 const staleMachineCleanupSchedule = "0 * * * *"
 
-type StaleMachineCleanupScheduler struct {
+// StaleCleanup removes stale BYOS machine registrations per org.
+type StaleCleanup struct {
 	cron    *cron.Cron
 	storage *machine_storage.RegistrationStorage
 	db      *bun.DB
@@ -22,8 +23,9 @@ type StaleMachineCleanupScheduler struct {
 	ctx     context.Context
 }
 
-func NewStaleMachineCleanupScheduler(db *bun.DB, ctx context.Context, l logger.Logger) *StaleMachineCleanupScheduler {
-	return &StaleMachineCleanupScheduler{
+// NewStaleCleanup creates a stale machine cleanup cron scheduler.
+func NewStaleCleanup(db *bun.DB, ctx context.Context, l logger.Logger) *StaleCleanup {
+	return &StaleCleanup{
 		cron:    cron.New(cron.WithChain(cron.Recover(cron.DefaultLogger))),
 		storage: machine_storage.NewRegistrationStorage(db, ctx),
 		db:      db,
@@ -32,7 +34,8 @@ func NewStaleMachineCleanupScheduler(db *bun.DB, ctx context.Context, l logger.L
 	}
 }
 
-func (s *StaleMachineCleanupScheduler) Start() {
+// Start registers and runs the stale cleanup cron.
+func (s *StaleCleanup) Start() {
 	_, err := s.cron.AddFunc(staleMachineCleanupSchedule, s.run)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("stale machine cleanup: failed to register cron: %v", err), "")
@@ -42,11 +45,12 @@ func (s *StaleMachineCleanupScheduler) Start() {
 	s.logger.Log(logger.Info, fmt.Sprintf("stale machine cleanup scheduler started with schedule: %s", staleMachineCleanupSchedule), "")
 }
 
-func (s *StaleMachineCleanupScheduler) Stop() {
+// Stop stops the stale cleanup cron.
+func (s *StaleCleanup) Stop() {
 	s.cron.Stop()
 }
 
-func (s *StaleMachineCleanupScheduler) run() {
+func (s *StaleCleanup) run() {
 	var orgSettings []*types.OrganizationSettings
 	err := s.db.NewSelect().
 		Model(&orgSettings).

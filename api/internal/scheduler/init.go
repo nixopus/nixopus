@@ -7,19 +7,21 @@ import (
 	healthcheck_service "github.com/nixopus/nixopus/api/internal/features/healthcheck/service"
 	healthcheck_storage "github.com/nixopus/nixopus/api/internal/features/healthcheck/storage"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/scheduler/billing"
 	"github.com/nixopus/nixopus/api/internal/scheduler/cleanup"
 	"github.com/nixopus/nixopus/api/internal/scheduler/container"
+	"github.com/nixopus/nixopus/api/internal/scheduler/machines"
 	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 type Schedulers struct {
 	Main                *Scheduler
 	HealthCheck         *HealthCheckScheduler
-	Billing             *BillingScheduler
-	Backup              *BackupScheduler
-	TrialExpiry         *TrialExpiryScheduler
-	StaleMachineCleanup *StaleMachineCleanupScheduler
-	MachineHealthCheck  *MachineHealthCheckScheduler
+	Billing             *billing.Billing
+	Backup              *machines.Backup
+	TrialExpiry         *machines.TrialExpiry
+	StaleMachineCleanup *machines.StaleCleanup
+	MachineHealthCheck  *machines.HealthCheck
 }
 
 // InitSchedulers creates and configures all schedulers
@@ -38,11 +40,11 @@ func InitSchedulers(store *shared_storage.Store, ctx context.Context) *Scheduler
 	healthCheckService := healthcheck_service.NewHealthCheckService(store, ctx, l, &healthCheckStorage)
 	healthCheckScheduler := NewHealthCheckScheduler(healthCheckService, l, ctx, nil)
 
-	billingScheduler := NewBillingScheduler(store.DB, ctx, l)
-	backupScheduler := NewBackupScheduler(store.DB, ctx, l)
-	trialExpiryScheduler := NewTrialExpiryScheduler(store.DB, ctx, l, config.AppConfig.Trail.TrialPeriodDays)
-	staleMachineCleanup := NewStaleMachineCleanupScheduler(store.DB, ctx, l)
-	machineHealthCheck := NewMachineHealthCheckScheduler(store.DB, ctx, l)
+	billingScheduler := billing.New(store.DB, ctx, l)
+	backupScheduler := machines.NewBackup(store.DB, ctx, l)
+	trialExpiryScheduler := machines.NewTrialExpiry(store.DB, ctx, l, config.AppConfig.Trail.TrialPeriodDays)
+	staleMachineCleanup := machines.NewStaleCleanup(store.DB, ctx, l)
+	machineHealthCheck := machines.NewHealthCheck(store.DB, ctx, l)
 
 	return &Schedulers{
 		Main:                sched,

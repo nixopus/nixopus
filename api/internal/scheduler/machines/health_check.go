@@ -1,4 +1,4 @@
-package scheduler
+package machines
 
 import (
 	"context"
@@ -15,7 +15,8 @@ import (
 
 const machineHealthCheckSchedule = "*/30 * * * *"
 
-type MachineHealthCheckScheduler struct {
+// HealthCheck enqueues periodic machine verification for idle user-owned machines.
+type HealthCheck struct {
 	cron    *cron.Cron
 	storage *machine_storage.RegistrationStorage
 	db      *bun.DB
@@ -23,8 +24,9 @@ type MachineHealthCheckScheduler struct {
 	ctx     context.Context
 }
 
-func NewMachineHealthCheckScheduler(db *bun.DB, ctx context.Context, l logger.Logger) *MachineHealthCheckScheduler {
-	return &MachineHealthCheckScheduler{
+// NewHealthCheck creates a machine health check cron scheduler.
+func NewHealthCheck(db *bun.DB, ctx context.Context, l logger.Logger) *HealthCheck {
+	return &HealthCheck{
 		cron:    cron.New(cron.WithChain(cron.Recover(cron.DefaultLogger))),
 		storage: machine_storage.NewRegistrationStorage(db, ctx),
 		db:      db,
@@ -33,7 +35,8 @@ func NewMachineHealthCheckScheduler(db *bun.DB, ctx context.Context, l logger.Lo
 	}
 }
 
-func (s *MachineHealthCheckScheduler) Start() {
+// Start registers and runs the health check cron.
+func (s *HealthCheck) Start() {
 	_, err := s.cron.AddFunc(machineHealthCheckSchedule, s.run)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("machine health check: failed to register cron: %v", err), "")
@@ -43,11 +46,12 @@ func (s *MachineHealthCheckScheduler) Start() {
 	s.logger.Log(logger.Info, fmt.Sprintf("machine health check scheduler started with schedule: %s", machineHealthCheckSchedule), "")
 }
 
-func (s *MachineHealthCheckScheduler) Stop() {
+// Stop stops the health check cron.
+func (s *HealthCheck) Stop() {
 	s.cron.Stop()
 }
 
-func (s *MachineHealthCheckScheduler) run() {
+func (s *HealthCheck) run() {
 	var orgSettings []*types.OrganizationSettings
 	err := s.db.NewSelect().
 		Model(&orgSettings).
