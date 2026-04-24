@@ -1,16 +1,14 @@
-package tests
+package queue
 
 import (
 	"encoding/json"
 	"testing"
-
-	"github.com/nixopus/nixopus/api/internal/queue"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestMachineLifecyclePayload_JSON(t *testing.T) {
-	payload := queue.MachineLifecyclePayload{
+	payload := MachineLifecyclePayload{
 		RequestID:    "abc-123",
 		InstanceName: "trail-xyz",
 		Action:       "status",
@@ -21,7 +19,7 @@ func TestMachineLifecyclePayload_JSON(t *testing.T) {
 	data, err := json.Marshal(payload)
 	require.NoError(t, err)
 
-	var decoded queue.MachineLifecyclePayload
+	var decoded MachineLifecyclePayload
 	require.NoError(t, json.Unmarshal(data, &decoded))
 
 	assert.Equal(t, payload.RequestID, decoded.RequestID)
@@ -32,7 +30,7 @@ func TestMachineLifecyclePayload_JSON(t *testing.T) {
 }
 
 func TestMachineLifecycleResult_JSON(t *testing.T) {
-	result := queue.MachineLifecycleResult{
+	result := MachineLifecycleResult{
 		RequestID: "abc-123",
 		Success:   true,
 		Action:    "status",
@@ -42,7 +40,7 @@ func TestMachineLifecycleResult_JSON(t *testing.T) {
 	data, err := json.Marshal(result)
 	require.NoError(t, err)
 
-	var decoded queue.MachineLifecycleResult
+	var decoded MachineLifecycleResult
 	require.NoError(t, json.Unmarshal(data, &decoded))
 
 	assert.True(t, decoded.Success)
@@ -51,7 +49,7 @@ func TestMachineLifecycleResult_JSON(t *testing.T) {
 }
 
 func TestMachineLifecycleResult_ErrorJSON(t *testing.T) {
-	result := queue.MachineLifecycleResult{
+	result := MachineLifecycleResult{
 		RequestID: "abc-456",
 		Success:   false,
 		Action:    "pause",
@@ -61,7 +59,7 @@ func TestMachineLifecycleResult_ErrorJSON(t *testing.T) {
 	data, err := json.Marshal(result)
 	require.NoError(t, err)
 
-	var decoded queue.MachineLifecycleResult
+	var decoded MachineLifecycleResult
 	require.NoError(t, json.Unmarshal(data, &decoded))
 
 	assert.False(t, decoded.Success)
