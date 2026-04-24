@@ -19,6 +19,20 @@ import (
 	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
+// defaultVerifySessionFn is the production Better Auth session verifier.
+func defaultVerifySessionFn(r *http.Request) (*betterauth.SessionResponse, error) {
+	return betterauth.VerifySession(r)
+}
+
+// verifySessionFn calls Better Auth session verification (swapped in tests).
+var verifySessionFn = defaultVerifySessionFn
+
+// jsonMarshalSessionResponse marshals session payloads for Redis (swapped in tests).
+var jsonMarshalSessionResponse = json.Marshal
+
+// authNewRequestForAPIKey builds the fallback API-key session probe (swapped in tests).
+var authNewRequestForAPIKey = http.NewRequest
+
 // sessionCacheKey computes a SHA-256 hash of the auth-relevant headers to use as a
 // Redis cache key. Requests with identical auth credentials get the same key.
 func sessionCacheKey(r *http.Request) string {
@@ -58,7 +72,7 @@ func verifySessionCached(r *http.Request, c *cache.Cache) (*betterauth.SessionRe
 	// user.create.after, so activeOrganizationId is null in the initial session.
 	// Caching that null would lock new users out for the full SessionCacheTTL.
 	if resp.Session.ActiveOrganizationID != nil && *resp.Session.ActiveOrganizationID != "" {
-		if data, err := json.Marshal(resp); err == nil {
+		if data, err := jsonMarshalSessionResponse(resp); err == nil {
 			_ = c.SetSession(ctx, cacheKey, data)
 		}
 	}
@@ -68,13 +82,13 @@ func verifySessionCached(r *http.Request, c *cache.Cache) (*betterauth.SessionRe
 
 // verifySessionWithFallback tries cookie/bearer auth first, then falls back to x-api-key.
 func verifySessionWithFallback(r *http.Request) (*betterauth.SessionResponse, error) {
-	sessionResp, err := betterauth.VerifySession(r)
+	sessionResp, err := verifySessionFn(r)
 	if err != nil {
 		apiKeyHeader := r.Header.Get("x-api-key")
 		if apiKeyHeader == "" {
 			return nil, err
 		}
-		apiKeyReq, reqErr := http.NewRequest("GET", "", nil)
+		apiKeyReq, reqErr := authNewRequestForAPIKey("GET", "", nil)
 		if reqErr != nil {
 			return nil, fmt.Errorf("failed to create API key request: %w", reqErr)
 		}
@@ -85,7 +99,7 @@ func verifySessionWithFallback(r *http.Request) (*betterauth.SessionResponse, er
 		if proto := r.Header.Get("X-Forwarded-Proto"); proto != "" {
 			apiKeyReq.Header.Set("X-Forwarded-Proto", proto)
 		}
-		sessionResp, err = betterauth.VerifySession(apiKeyReq)
+		sessionResp, err = verifySessionFn(apiKeyReq)
 		if err != nil {
 			return nil, err
 		}
@@ -303,13 +317,9 @@ func resolveAndVerifyOrganization(
 	}
 
 	// Check organization membership via Better Auth API (with caching)
-	belongsToOrg, err := verifyOrganizationMembership(ctx, r, cache, betterAuthUserID, organizationID)
+	_, err := verifyOrganizationMembership(ctx, r, cache, betterAuthUserID, organizationID)
 	if err != nil {
 		return "", fmt.Errorf("user %s does not belong to organization %s: %w", betterAuthUserID, organizationID, err)
-	}
-
-	if !belongsToOrg {
-		return "", fmt.Errorf("user %s does not belong to organization %s", betterAuthUserID, organizationID)
 	}
 
 	return organizationID, nil

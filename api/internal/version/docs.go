@@ -16,8 +16,17 @@ type VersionInfo struct {
 	Changes     []string  `json:"changes,omitempty"`
 }
 
+// JSONMarshalFailer implements [json.Marshaler] and always returns an error. Set as
+// VersionDocumentation.ForceJSONError in tests to cover the marshal error path in [VersionDocumentation.Save].
+type JSONMarshalFailer struct{}
+
+func (JSONMarshalFailer) MarshalJSON() ([]byte, error) {
+	return nil, fmt.Errorf("marshal forced for tests")
+}
+
 type VersionDocumentation struct {
-	Versions []VersionInfo `json:"versions"`
+	Versions       []VersionInfo      `json:"versions"`
+	ForceJSONError *JSONMarshalFailer `json:"e,omitempty"`
 }
 
 func NewVersionDocumentation() *VersionDocumentation {

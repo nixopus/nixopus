@@ -17,11 +17,24 @@ var (
 	jwksMu       sync.RWMutex
 	jwksExpiry   time.Time
 	jwksCacheTTL = 15 * time.Minute
+
+	// jwksTestingAwaitBeforeWriteLock, when non-nil, is invoked after the initial RLock
+	// section and before acquiring the write lock (tests only).
+	jwksTestingAwaitBeforeWriteLock func()
 )
 
 func isJWT(token string) bool {
 	parts := strings.Split(token, ".")
 	return len(parts) == 3
+}
+
+// jwksIfWarmLocked returns the cached JWKS when it is still valid. The caller must
+// hold jwksMu (write lock).
+func jwksIfWarmLocked() (jwk.Set, bool) {
+	if jwksCache != nil && time.Now().Before(jwksExpiry) {
+		return jwksCache, true
+	}
+	return nil, false
 }
 
 func validateM2MJWT(ctx context.Context, rawToken string, headerOrgID string) (orgID string, err error) {
@@ -68,11 +81,15 @@ func fetchJWKS(ctx context.Context) (jwk.Set, error) {
 	}
 	jwksMu.RUnlock()
 
+	if fn := jwksTestingAwaitBeforeWriteLock; fn != nil {
+		fn()
+	}
+
 	jwksMu.Lock()
 	defer jwksMu.Unlock()
 
-	if jwksCache != nil && time.Now().Before(jwksExpiry) {
-		return jwksCache, nil
+	if set, ok := jwksIfWarmLocked(); ok {
+		return set, nil
 	}
 
 	jwksURL := os.Getenv("AUTH_JWKS_URL")

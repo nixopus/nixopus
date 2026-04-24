@@ -29,6 +29,10 @@ var (
 	TaskResourceUpdate       *taskq.Task
 )
 
+func handleResourceUpdateTask(ctx context.Context, payload ResourceUpdatePayload) error {
+	return nil
+}
+
 func SetupResourceUpdateQueue() {
 	onceResourceUpdateQueues.Do(func() {
 		ResourceUpdateQueue = registerProducerQueue(&taskq.QueueOptions{
@@ -38,9 +42,7 @@ func SetupResourceUpdateQueue() {
 		TaskResourceUpdate = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       taskResourceUpdate,
 			RetryLimit: 1,
-			Handler: func(ctx context.Context, payload ResourceUpdatePayload) error {
-				return nil
-			},
+			Handler:    handleResourceUpdateTask,
 		})
 	})
 }

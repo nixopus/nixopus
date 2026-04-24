@@ -1,4 +1,4 @@
-package scheduler
+package billing
 
 import (
 	"context"
@@ -18,25 +18,26 @@ const (
 	billingJobSchedule = "0 * * * *"
 )
 
-type BillingScheduler struct {
+// Billing runs periodic wallet sweep and grace-period enforcement for machine plans.
+type Billing struct {
 	cron    *cron.Cron
 	storage *billing_storage.BillingStorage
-	db      *bun.DB
 	logger  logger.Logger
 	ctx     context.Context
 }
 
-func NewBillingScheduler(db *bun.DB, ctx context.Context, l logger.Logger) *BillingScheduler {
-	return &BillingScheduler{
+// New creates a billing cron scheduler.
+func New(db *bun.DB, ctx context.Context, l logger.Logger) *Billing {
+	return &Billing{
 		cron:    cron.New(cron.WithChain(cron.Recover(cron.DefaultLogger))),
 		storage: billing_storage.NewBillingStorage(db, ctx),
-		db:      db,
 		logger:  l,
 		ctx:     ctx,
 	}
 }
 
-func (b *BillingScheduler) Start() {
+// Start registers and runs the billing cron.
+func (b *Billing) Start() {
 	_, err := b.cron.AddFunc(billingJobSchedule, b.run)
 	if err != nil {
 		b.logger.Log(logger.Error, fmt.Sprintf("billing scheduler: failed to register cron: %v", err), "")
@@ -46,16 +47,17 @@ func (b *BillingScheduler) Start() {
 	b.logger.Log(logger.Info, fmt.Sprintf("billing scheduler started with schedule: %s", billingJobSchedule), "")
 }
 
-func (b *BillingScheduler) Stop() {
+// Stop stops the billing cron.
+func (b *Billing) Stop() {
 	b.cron.Stop()
 }
 
-func (b *BillingScheduler) run() {
+func (b *Billing) run() {
 	b.runSweep()
 	b.runGraceCheck()
 }
 
-func (b *BillingScheduler) runSweep() {
+func (b *Billing) runSweep() {
 	rows, err := b.storage.GetDueBillings(b.ctx)
 	if err != nil {
 		b.logger.Log(logger.Error, fmt.Sprintf("billing sweep: failed to get due billings: %v", err), "")
@@ -101,7 +103,7 @@ func (b *BillingScheduler) runSweep() {
 	b.logger.Log(logger.Info, fmt.Sprintf("billing sweep: processed %d, charged %d, grace %d", len(rows), charged, grace), "")
 }
 
-func (b *BillingScheduler) runGraceCheck() {
+func (b *Billing) runGraceCheck() {
 	rows, err := b.storage.GetGraceBillings(b.ctx)
 	if err != nil {
 		b.logger.Log(logger.Error, fmt.Sprintf("grace check: failed to get grace billings: %v", err), "")
@@ -154,7 +156,7 @@ func (b *BillingScheduler) runGraceCheck() {
 	}
 }
 
-func (b *BillingScheduler) triggerServerReset(orgID uuid.UUID, sshKeyID *uuid.UUID) {
+func (b *Billing) triggerServerReset(orgID uuid.UUID, sshKeyID *uuid.UUID) {
 	info, err := b.storage.GetProvisionInfo(b.ctx, orgID, sshKeyID)
 	if err != nil || info == nil {
 		b.logger.Log(logger.Error, fmt.Sprintf("server reset: no provision found for org %s", orgID), "")

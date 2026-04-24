@@ -30,9 +30,6 @@ func RouteContractOption() fuego.RouteOption {
 		if opID == "" {
 			opID = toLowerCamel(fallbackSummary(r.Method, r.Path))
 		}
-		if opID == "" {
-			opID = strings.ToLower(r.Method) + "Operation"
-		}
 		opID = ensureUniqueOperationID(opID)
 		fuego.OptionOperationID(opID)(r)
 

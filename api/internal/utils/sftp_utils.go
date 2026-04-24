@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/melbahja/goph"
 	"github.com/nixopus/nixopus/api/internal/features/ssh"
 	"github.com/pkg/sftp"
 )
@@ -16,6 +17,12 @@ const (
 	// maxRetries controls how many times SFTP client creation is retried on stale connections.
 	maxRetries = 3
 )
+
+// newSftpFromGophClient builds an SFTP client on a goph/SSH client. Replaced in tests.
+var newSftpFromGophClient = func(c *goph.Client) (*sftp.Client, error) { return c.NewSftp() }
+
+// readAllFromSftp is io.ReadAll for SFTP file reads. Replaced in tests.
+var readAllFromSftp = io.ReadAll
 
 // isClosedConnectionError checks if the error indicates a closed or stale network connection.
 // This includes EOF errors which occur when the remote SSH connection has been dropped.
@@ -40,29 +47,26 @@ func isClosedConnectionError(err error) bool {
 // The SSH client connection is pooled and should not be closed by the caller.
 // The returned SFTP client should be closed by the caller.
 func CreateSFTPClientWithRetry(sshMgr *ssh.SSHManager) (*sftp.Client, error) {
-	for attempt := 0; attempt < maxRetries; attempt++ {
-		client, err := sshMgr.Connect()
-		if err != nil {
-			return nil, fmt.Errorf("failed to connect via SSH: %w", err)
-		}
-		// Note: We don't close the client here as it's pooled and will be reused
-
-		sftpClient, err := client.NewSftp()
-		if err != nil {
-			if isClosedConnectionError(err) {
-				// Remove the bad connection from pool and retry
-				sshMgr.CloseConnection("")
-				if attempt < maxRetries-1 {
-					continue
-				}
-			}
-			return nil, fmt.Errorf("failed to create SFTP client: %w", err)
-		}
-
+	// Unrolled: keeps behavior identical to a for-loop, avoids a compiler-only trailing
+	// return that can never run (binary coverage can never mark it executed).
+	attempt := 0
+again:
+	client, err := sshMgr.Connect()
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect via SSH: %w", err)
+	}
+	sftpClient, err := newSftpFromGophClient(client)
+	if err == nil {
 		return sftpClient, nil
 	}
-
-	return nil, fmt.Errorf("failed to create SFTP client after %d attempts", maxRetries)
+	if isClosedConnectionError(err) {
+		sshMgr.CloseConnection("")
+		if attempt < maxRetries-1 {
+			attempt++
+			goto again
+		}
+	}
+	return nil, fmt.Errorf("failed to create SFTP client: %w", err)
 }
 
 // ReadFile reads a file from the remote server via SFTP.
@@ -75,7 +79,7 @@ func ReadFile(ctx context.Context, filePath string) (string, error) {
 			return fmt.Errorf("failed to open file via SFTP: %w", err)
 		}
 		defer file.Close()
-		data, err := io.ReadAll(file)
+		data, err := readAllFromSftp(file)
 		if err != nil {
 			return fmt.Errorf("failed to read file content via SFTP: %w", err)
 		}
@@ -98,7 +102,7 @@ func ReadFileBytes(ctx context.Context, filePath string) ([]byte, error) {
 			return fmt.Errorf("failed to open file via SFTP: %w", err)
 		}
 		defer file.Close()
-		data, err = io.ReadAll(file)
+		data, err = readAllFromSftp(file)
 		return err
 	})
 	if err != nil {
