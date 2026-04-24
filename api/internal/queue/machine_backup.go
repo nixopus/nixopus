@@ -55,7 +55,22 @@ var (
 	machineBackupQueue    taskq.Queue
 	taskMachineBackupTask *taskq.Task
 	backupReplyMux        *ReplyMultiplexer
+	backupWorker          *BackupWorker
 )
+
+func machineBackupTaskHandler(ctx context.Context, payload MachineBackupPayload) error {
+	return backupWorker.Handle(ctx, payload)
+}
+
+// backupSSHRunner is satisfied by *sshpkg.SSHManager; swappable in tests.
+type backupSSHRunner interface {
+	RunCommand(cmd string) (string, error)
+}
+
+// getSSHManagerForServerForBackup is the hook used by BackupWorker; tests may replace it.
+var getSSHManagerForServerForBackup = func(ctx context.Context, orgID, serverID uuid.UUID) (backupSSHRunner, error) {
+	return sshpkg.GetSSHManagerForServer(ctx, orgID, serverID)
+}
 
 type BackupWorker struct {
 	db          *bun.DB
@@ -102,7 +117,7 @@ func (w *BackupWorker) Handle(ctx context.Context, payload MachineBackupPayload)
 		return nil
 	}
 
-	sshMgr, err := sshpkg.GetSSHManagerForServer(ctx, orgID, serverID)
+	sshMgr, err := getSSHManagerForServerForBackup(ctx, orgID, serverID)
 	if err != nil {
 		log.Log(logger.Error, fmt.Sprintf("failed to get SSH manager: %v", err), payload.OrgID)
 		return w.failBackup(ctx, rowID, fmt.Sprintf("SSH connection failed: %v", err))
@@ -242,14 +257,12 @@ func SetupMachineBackupQueue(ctx context.Context, db *bun.DB) {
 			Name: queueMachineBackup,
 		})
 
-		worker := newBackupWorker(db, ctx)
+		backupWorker = newBackupWorker(db, ctx)
 
 		taskMachineBackupTask = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       taskMachineBackup,
 			RetryLimit: 1,
-			Handler: func(ctx context.Context, payload MachineBackupPayload) error {
-				return worker.Handle(ctx, payload)
-			},
+			Handler:    machineBackupTaskHandler,
 		})
 
 		backupReplyMux = NewReplyMultiplexerWithPrefix(backupReplyPrefix)

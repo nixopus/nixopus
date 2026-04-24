@@ -35,6 +35,14 @@ var (
 	TaskRemoveCustomDomain   *taskq.Task
 )
 
+func handleRegisterCustomDomainTask(ctx context.Context, payload CustomDomainPayload) error {
+	return nil
+}
+
+func handleRemoveCustomDomainTask(ctx context.Context, payload RemoveCustomDomainPayload) error {
+	return nil
+}
+
 func SetupCustomDomainQueue() {
 	onceCustomDomainQueues.Do(func() {
 		CustomDomainQueue = registerProducerQueue(&taskq.QueueOptions{
@@ -44,17 +52,13 @@ func SetupCustomDomainQueue() {
 		TaskRegisterCustomDomain = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       taskRegisterCustomDomain,
 			RetryLimit: 1,
-			Handler: func(ctx context.Context, payload CustomDomainPayload) error {
-				return nil
-			},
+			Handler:    handleRegisterCustomDomainTask,
 		})
 
 		TaskRemoveCustomDomain = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       taskRemoveCustomDomain,
 			RetryLimit: 1,
-			Handler: func(ctx context.Context, payload RemoveCustomDomainPayload) error {
-				return nil
-			},
+			Handler:    handleRemoveCustomDomainTask,
 		})
 	})
 }
