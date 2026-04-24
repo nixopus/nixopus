@@ -1,16 +1,14 @@
-package tests
+package queue
 
 import (
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/nixopus/nixopus/api/internal/queue"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestReplyMux_RegisterAndRemoveWaiter(t *testing.T) {
-	mux := queue.NewReplyMultiplexer()
+	mux := NewReplyMultiplexer()
 
 	ch := mux.RegisterWaiter("req-1")
 	assert.NotNil(t, ch, "RegisterWaiter should return a non-nil channel")
@@ -23,7 +21,7 @@ func TestReplyMux_RegisterAndRemoveWaiter(t *testing.T) {
 }
 
 func TestReplyMux_DispatchToCorrectWaiter(t *testing.T) {
-	mux := queue.NewReplyMultiplexer()
+	mux := NewReplyMultiplexer()
 
 	ch1 := mux.RegisterWaiter("req-1")
 	ch2 := mux.RegisterWaiter("req-2")
@@ -48,14 +46,14 @@ func TestReplyMux_DispatchToCorrectWaiter(t *testing.T) {
 }
 
 func TestReplyMux_DispatchUnknownRequestIgnored(t *testing.T) {
-	mux := queue.NewReplyMultiplexer()
+	mux := NewReplyMultiplexer()
 	assert.NotPanics(t, func() {
 		mux.Dispatch("nonexistent", `{"data":"ignored"}`)
 	})
 }
 
 func TestReplyMux_ConcurrentWaiters(t *testing.T) {
-	mux := queue.NewReplyMultiplexer()
+	mux := NewReplyMultiplexer()
 	const n = 20
 
 	ids := make([]string, n)
@@ -90,7 +88,7 @@ func TestReplyMux_ConcurrentWaiters(t *testing.T) {
 }
 
 func TestReplyMux_ChannelBuffered(t *testing.T) {
-	mux := queue.NewReplyMultiplexer()
+	mux := NewReplyMultiplexer()
 	ch := mux.RegisterWaiter("req-buf")
 
 	mux.Dispatch("req-buf", `{"buffered":true}`)
@@ -114,7 +112,7 @@ func TestReplyMux_ExtractRequestID(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		got := queue.ExtractRequestIDFromChannel(tt.channel)
+		got := ExtractRequestIDFromChannel(tt.channel)
 		assert.Equal(t, tt.want, got, "ExtractRequestIDFromChannel(%q)", tt.channel)
 	}
 }
