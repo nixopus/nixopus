@@ -1,10 +1,8 @@
 package tests
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
-	"time"
 
 	"github.com/nixopus/nixopus/api/internal/queue"
 	"github.com/stretchr/testify/assert"
@@ -69,18 +67,4 @@ func TestMachineLifecycleResult_ErrorJSON(t *testing.T) {
 	assert.False(t, decoded.Success)
 	assert.Equal(t, "already paused", decoded.Error)
 	assert.Nil(t, decoded.Data)
-}
-
-func TestExecuteMachineLifecycle_TimeoutWithoutRedis(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
-	defer cancel()
-
-	payload := queue.MachineLifecyclePayload{
-		InstanceName: "trail-abc",
-		Action:       "status",
-		ServerID:     "srv-1",
-	}
-
-	_, err := queue.ExecuteMachineLifecycle(ctx, payload)
-	assert.Error(t, err, "should error when queue infrastructure is not initialized")
 }

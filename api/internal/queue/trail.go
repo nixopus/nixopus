@@ -20,6 +20,10 @@ const (
 	taskProvision  = "task_provision_trail"
 )
 
+func handleProvisionTrailTask(ctx context.Context, payload trail_types.ProvisionPayload) error {
+	return nil
+}
+
 func SetupProvisionQueue() {
 	onceTrailQueues.Do(func() {
 		ProvisionQueue = registerProducerQueue(&taskq.QueueOptions{
@@ -29,9 +33,7 @@ func SetupProvisionQueue() {
 		TaskProvision = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       taskProvision,
 			RetryLimit: 1,
-			Handler: func(ctx context.Context, payload trail_types.ProvisionPayload) error {
-				return nil
-			},
+			Handler:    handleProvisionTrailTask,
 		})
 	})
 }

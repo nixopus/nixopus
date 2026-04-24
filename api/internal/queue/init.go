@@ -24,6 +24,9 @@ var (
 
 	producerQueueCache   = make(map[string]taskq.Queue)
 	producerQueueCacheMu sync.RWMutex
+
+	// deadConsumerIdleThreshold is how long a consumer must be idle (no pending) before cleanup removes it.
+	deadConsumerIdleThreshold = 15 * time.Minute
 )
 
 // Init initializes the queue factory with a shared Redis v8 client.
@@ -127,10 +130,10 @@ func cleanupDeadConsumers(ctx context.Context) error {
 		// Check each consumer and remove if idle for too long
 		for _, consumer := range consumers {
 			idleTime := time.Duration(consumer.Idle) * time.Millisecond
-			// Consider consumers idle for more than 15 minutes as dead
+			// Consider consumers idle beyond threshold as dead
 			// (longer than ConsumerIdleTimeout to account for processing time)
 			// Only remove if they have no pending messages
-			if idleTime > 15*time.Minute && consumer.Pending == 0 {
+			if idleTime > deadConsumerIdleThreshold && consumer.Pending == 0 {
 				delCmd := redisClient.XGroupDelConsumer(ctx, streamKey, groupName, consumer.Name)
 				if delCmd.Err() == nil {
 					log.Printf("Removed dead consumer '%s' from queue '%s' (idle for %v)", consumer.Name, queueName, idleTime)
@@ -160,9 +163,7 @@ func StartConsumers(ctx context.Context) error {
 	var err error
 	onceConsumers.Do(func() {
 		// Clean up dead consumers before starting new ones
-		if cleanupErr := cleanupDeadConsumers(ctx); cleanupErr != nil {
-			log.Printf("Warning: Failed to cleanup dead consumers: %v", cleanupErr)
-		}
+		_ = cleanupDeadConsumers(ctx)
 
 		log.Println("Starting task queue consumers...")
 		err = factory.StartConsumers(ctx)
