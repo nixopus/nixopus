@@ -18,6 +18,12 @@ import (
 	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
+// rbacReadResponseBody reads Better Auth HTTP response bodies (swapped in tests).
+var rbacReadResponseBody = io.ReadAll
+
+// rbacNewRequestWithContext builds outbound Better Auth membership requests (swapped in tests).
+var rbacNewRequestWithContext = http.NewRequestWithContext
+
 // rbacCache is a package-level cache instance for RBAC permissions
 var rbacCache *cache.Cache
 
@@ -179,7 +185,7 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 	url := fmt.Sprintf("%s/organization/list-members?organizationId=%s", betterAuthAPI, organizationID)
 
 	// Create request with timeout
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := rbacNewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
@@ -205,12 +211,12 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := rbacReadResponseBody(resp.Body)
 		return nil, fmt.Errorf("Better Auth API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	// Parse response
-	body, err := io.ReadAll(resp.Body)
+	body, err := rbacReadResponseBody(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
