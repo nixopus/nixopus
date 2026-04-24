@@ -8,6 +8,18 @@ import (
 	"strings"
 )
 
+// Test hooks for filesystem and home directory (defaults match stdlib).
+var (
+	osGetwdFn           = os.Getwd
+	userHomeDirFn       = os.UserHomeDir
+	mkdirAllFn          = os.MkdirAll
+	osReadFileFn        = os.ReadFile
+	osWriteFileFn       = os.WriteFile
+	osRemoveFn          = os.Remove
+	osStatFn            = os.Stat
+	jsonMarshalIndentFn = json.MarshalIndent
+)
+
 // AuthConfig represents global authentication configuration stored in user's home directory
 type AuthConfig struct {
 	AccessToken    string `json:"access_token,omitempty"`    // Bearer token for API authentication
@@ -75,7 +87,7 @@ type SyncConfig struct {
 
 // getConfigPath returns the path to the .nixopus file in the project root
 func getConfigPath() (string, error) {
-	cwd, err := os.Getwd()
+	cwd, err := osGetwdFn()
 	if err != nil {
 		return "", fmt.Errorf("failed to get current directory: %w", err)
 	}
@@ -84,7 +96,7 @@ func getConfigPath() (string, error) {
 	dir := cwd
 	for {
 		gitPath := filepath.Join(dir, ".git")
-		if _, err := os.Stat(gitPath); err == nil {
+		if _, err := osStatFn(gitPath); err == nil {
 			// Found .git directory, use this as project root
 			return filepath.Join(dir, getMoverConfigFileName()), nil
 		}
@@ -109,12 +121,12 @@ func Load() (*Config, error) {
 	}
 
 	// Check if config file exists
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+	if _, err := osStatFn(configPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("config not found. Run 'nixopus live' to initialize and start deployment")
 	}
 
 	// Read config file
-	data, err := os.ReadFile(configPath)
+	data, err := osReadFileFn(configPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
@@ -186,13 +198,13 @@ func (c *Config) Save() error {
 	}
 
 	// Marshal to JSON with indentation
-	data, err := json.MarshalIndent(saveConfig, "", "  ")
+	data, err := jsonMarshalIndentFn(saveConfig, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal config: %w", err)
 	}
 
 	// Write to file
-	if err := os.WriteFile(configPath, data, 0600); err != nil {
+	if err := osWriteFileFn(configPath, data, 0600); err != nil {
 		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
@@ -237,13 +249,13 @@ func ValidateEnvPath(envPath string) error {
 	}
 
 	// Check if file exists
-	cwd, err := os.Getwd()
+	cwd, err := osGetwdFn()
 	if err != nil {
 		return fmt.Errorf("failed to get current directory: %w", err)
 	}
 
 	fullPath := filepath.Join(cwd, cleanPath)
-	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+	if _, err := osStatFn(fullPath); os.IsNotExist(err) {
 		return fmt.Errorf("env file not found: %s", envPath)
 	}
 
@@ -252,7 +264,7 @@ func ValidateEnvPath(envPath string) error {
 
 // getAuthPath returns the path to the global auth file in ~/.config/nixopus/auth.json
 func getAuthPath() (string, error) {
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := userHomeDirFn()
 	if err != nil {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
 	}
@@ -268,7 +280,7 @@ func GetSyncStatePath() (string, error) {
 	if err := ensureAuthDir(); err != nil {
 		return "", err
 	}
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := userHomeDirFn()
 	if err != nil {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
 	}
@@ -277,13 +289,13 @@ func GetSyncStatePath() (string, error) {
 
 // ensureAuthDir ensures the auth directory exists
 func ensureAuthDir() error {
-	homeDir, err := os.UserHomeDir()
+	homeDir, err := userHomeDirFn()
 	if err != nil {
 		return fmt.Errorf("failed to get home directory: %w", err)
 	}
 
 	configDir := filepath.Join(homeDir, ".config", "nixopus")
-	if err := os.MkdirAll(configDir, 0700); err != nil {
+	if err := mkdirAllFn(configDir, 0700); err != nil {
 		return fmt.Errorf("failed to create auth directory: %w", err)
 	}
 
@@ -298,13 +310,13 @@ func LoadAuth() (*AuthConfig, error) {
 	}
 
 	// Check if auth file exists
-	if _, err := os.Stat(authPath); os.IsNotExist(err) {
+	if _, err := osStatFn(authPath); os.IsNotExist(err) {
 		// Return empty auth config if file doesn't exist
 		return &AuthConfig{}, nil
 	}
 
 	// Read auth file
-	data, err := os.ReadFile(authPath)
+	data, err := osReadFileFn(authPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read auth file: %w", err)
 	}
@@ -339,13 +351,13 @@ func SaveAuth(accessToken, refreshToken string) error {
 	}
 
 	// Marshal to JSON with indentation
-	data, err := json.MarshalIndent(auth, "", "  ")
+	data, err := jsonMarshalIndentFn(auth, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal auth: %w", err)
 	}
 
 	// Write to file with restricted permissions (0600 = rw-------)
-	if err := os.WriteFile(authPath, data, 0600); err != nil {
+	if err := osWriteFileFn(authPath, data, 0600); err != nil {
 		return fmt.Errorf("failed to write auth file: %w", err)
 	}
 
@@ -370,12 +382,12 @@ func SaveOrganizationID(organizationID string) error {
 		return err
 	}
 
-	data, err := json.MarshalIndent(auth, "", "  ")
+	data, err := jsonMarshalIndentFn(auth, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal auth: %w", err)
 	}
 
-	if err := os.WriteFile(authPath, data, 0600); err != nil {
+	if err := osWriteFileFn(authPath, data, 0600); err != nil {
 		return fmt.Errorf("failed to write auth file: %w", err)
 	}
 
@@ -418,8 +430,8 @@ func ClearAuth() error {
 	}
 
 	// Remove auth file if it exists
-	if _, err := os.Stat(authPath); err == nil {
-		if err := os.Remove(authPath); err != nil {
+	if _, err := osStatFn(authPath); err == nil {
+		if err := osRemoveFn(authPath); err != nil {
 			return fmt.Errorf("failed to remove auth file: %w", err)
 		}
 	}

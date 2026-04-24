@@ -40,6 +40,10 @@ var (
 	replyMux                 *ReplyMultiplexer
 )
 
+func handleMachineLifecycleTask(ctx context.Context, payload MachineLifecyclePayload) error {
+	return nil
+}
+
 func SetupMachineLifecycleQueue(ctx context.Context) {
 	onceMachineLifecycle.Do(func() {
 		machineLifecycleQueue = registerProducerQueue(&taskq.QueueOptions{
@@ -49,9 +53,7 @@ func SetupMachineLifecycleQueue(ctx context.Context) {
 		taskMachineLifecycleTask = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       taskMachineLifecycle,
 			RetryLimit: 0,
-			Handler: func(ctx context.Context, payload MachineLifecyclePayload) error {
-				return nil
-			},
+			Handler:    handleMachineLifecycleTask,
 		})
 
 		replyMux = NewReplyMultiplexer()
@@ -66,8 +68,10 @@ func ExecuteMachineLifecycle(ctx context.Context, payload MachineLifecyclePayloa
 		return nil, fmt.Errorf("machine lifecycle queue not initialized - call SetupMachineLifecycleQueue first")
 	}
 
-	requestID := uuid.New().String()
-	payload.RequestID = requestID
+	if payload.RequestID == "" {
+		payload.RequestID = uuid.New().String()
+	}
+	requestID := payload.RequestID
 	payload.ExpiresAt = time.Now().Add(15 * time.Second).Unix()
 
 	waiterCh := replyMux.RegisterWaiter(requestID)

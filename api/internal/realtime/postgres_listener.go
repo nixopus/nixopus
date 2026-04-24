@@ -12,6 +12,9 @@ import (
 	"github.com/nixopus/nixopus/api/internal/types"
 )
 
+// pgxConnect is the pgx connect function (overridden in unit tests to avoid a real database).
+var pgxConnect = pgx.Connect
+
 type PostgresListener struct {
 	config           types.Config
 	notificationChan chan *PostgresNotification
@@ -53,7 +56,7 @@ func getConnString(c types.Config) string {
 //
 // You should call this function once per instance of the PostgresListener struct.
 func (c *PostgresListener) ListenToApplicationChanges(ctx context.Context) (<-chan *PostgresNotification, error) {
-	conn, err := pgx.Connect(ctx, getConnString(c.config))
+	conn, err := pgxConnect(ctx, getConnString(c.config))
 	if err != nil {
 		return nil, err
 	}

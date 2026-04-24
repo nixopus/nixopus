@@ -31,17 +31,54 @@ var (
 	taskMachineVerifyTask *taskq.Task
 )
 
+// defaultMachineVerifySSHProbe performs dial, session, and echo check; replaced in tests.
+func defaultMachineVerifySSHProbe(ctx context.Context, addr string, config *cryptossh.ClientConfig) error {
+	client, err := cryptossh.Dial("tcp", addr, config)
+	if err != nil {
+		return fmt.Errorf("SSH dial failed: %w", err)
+	}
+	defer client.Close()
+
+	session, err := client.NewSession()
+	if err != nil {
+		return fmt.Errorf("SSH session failed: %w", err)
+	}
+	defer session.Close()
+
+	runErr := make(chan error, 1)
+	go func() { runErr <- session.Run("echo ok") }()
+
+	select {
+	case err := <-runErr:
+		if err != nil {
+			return fmt.Errorf("SSH command failed: %w", err)
+		}
+	case <-ctx.Done():
+		session.Close()
+		return ctx.Err()
+	}
+	return nil
+}
+
+// machineVerifySSHProbe is swapped in tests to avoid real TCP/SSH.
+var machineVerifySSHProbe = defaultMachineVerifySSHProbe
+
+var machineVerifyDB *bun.DB
+
+func machineVerifyTaskHandler(ctx context.Context, payload MachineVerifyPayload) error {
+	return handleMachineVerify(ctx, machineVerifyDB, payload)
+}
+
 func SetupMachineVerifyQueue(ctx context.Context, db *bun.DB) {
 	onceMachineVerify.Do(func() {
+		machineVerifyDB = db
 		machineVerifyQueue = registerProducerQueue(&taskq.QueueOptions{
 			Name: queueMachineVerify,
 		})
 		taskMachineVerifyTask = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       taskMachineVerify,
 			RetryLimit: 1,
-			Handler: func(ctx context.Context, payload MachineVerifyPayload) error {
-				return handleMachineVerify(ctx, db, payload)
-			},
+			Handler:    machineVerifyTaskHandler,
 		})
 		log.Printf("Machine verify queue initialized")
 	})
@@ -91,33 +128,9 @@ func handleMachineVerify(ctx context.Context, db *bun.DB, payload MachineVerifyP
 	}
 
 	addr := fmt.Sprintf("%s:%d", *sshKey.Host, port)
-	client, err := cryptossh.Dial("tcp", addr, config)
-	if err != nil {
+	if err := machineVerifySSHProbe(ctx, addr, config); err != nil {
 		markMachineInactive(ctx, db, payload.MachineID)
-		return fmt.Errorf("SSH dial failed: %w", err)
-	}
-	defer client.Close()
-
-	session, err := client.NewSession()
-	if err != nil {
-		markMachineInactive(ctx, db, payload.MachineID)
-		return fmt.Errorf("SSH session failed: %w", err)
-	}
-	defer session.Close()
-
-	runErr := make(chan error, 1)
-	go func() { runErr <- session.Run("echo ok") }()
-
-	select {
-	case err := <-runErr:
-		if err != nil {
-			markMachineInactive(ctx, db, payload.MachineID)
-			return fmt.Errorf("SSH command failed: %w", err)
-		}
-	case <-ctx.Done():
-		session.Close()
-		markMachineInactive(ctx, db, payload.MachineID)
-		return ctx.Err()
+		return err
 	}
 
 	now := time.Now()
@@ -126,7 +139,7 @@ func handleMachineVerify(ctx context.Context, db *bun.DB, payload MachineVerifyP
 		Set("is_active = ?", true).
 		Set("last_used_at = ?", now).
 		Set("updated_at = ?", now).
-		Where("id = ?::uuid", payload.MachineID).
+		Where("id = ?", machineUUID).
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to update ssh key status: %w", err)
@@ -137,11 +150,16 @@ func handleMachineVerify(ctx context.Context, db *bun.DB, payload MachineVerifyP
 }
 
 func markMachineInactive(ctx context.Context, db *bun.DB, machineID string) {
+	id, parseErr := uuid.Parse(machineID)
+	if parseErr != nil {
+		log.Printf("[machine-verify] failed to mark inactive: invalid machine_id=%s err=%v", machineID, parseErr)
+		return
+	}
 	_, err := db.NewUpdate().
 		Model((*shared_types.SSHKey)(nil)).
 		Set("is_active = ?", false).
 		Set("updated_at = ?", time.Now()).
-		Where("id = ?::uuid", machineID).
+		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
 		log.Printf("[machine-verify] failed to mark inactive: machine_id=%s err=%v", machineID, err)

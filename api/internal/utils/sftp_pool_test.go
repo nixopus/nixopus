@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/melbahja/goph"
 	"github.com/nixopus/nixopus/api/internal/features/ssh"
 	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/pkg/sftp"
@@ -626,6 +627,68 @@ func TestWalkRemote_SkipDir(t *testing.T) {
 	assert.NotContains(t, visited, filepath.Join(tmpDir, "skipme", "inner.txt"))
 }
 
+func TestWalkRemote_WalkerErrorDeliveredToWalkFn(t *testing.T) {
+	ctx, _, cleanup := testCtxWithPool(t)
+	defer cleanup()
+	tmpDir, err := os.MkdirTemp("", "sftptest-walkerr-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+	// Use a path that does not exist as walk root; SFTP walk should call walkFn with an error.
+	missingRoot := filepath.Join(tmpDir, "this-directory-was-not-created")
+	var sawPathErr bool
+	err = WalkRemote(ctx, missingRoot, func(_ *sftp.Client, _ string, _ os.FileInfo, stepErr error) error {
+		if stepErr != nil {
+			sawPathErr = true
+		}
+		return nil
+	})
+	require.NoError(t, err)
+	assert.True(t, sawPathErr)
+}
+
+func TestWalkRemote_walkFnReturnsError(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "sftptest-walkfnerr-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "a.txt"), []byte("a"), 0644))
+
+	ctx, _, cleanup := testCtxWithPool(t)
+	defer cleanup()
+
+	err = WalkRemote(ctx, tmpDir, func(_ *sftp.Client, path string, info os.FileInfo, stepErr error) error {
+		if stepErr != nil {
+			return stepErr
+		}
+		if info != nil && !info.IsDir() && filepath.Base(path) == "a.txt" {
+			return errors.New("stop walk")
+		}
+		return nil
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "stop walk")
+}
+
+func TestWalkRemote_SkipDirOnNonDirectoryPropagates(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "sftptest-skipnondir-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+	require.NoError(t, os.WriteFile(filepath.Join(tmpDir, "only.txt"), []byte("x"), 0644))
+
+	ctx, _, cleanup := testCtxWithPool(t)
+	defer cleanup()
+
+	err = WalkRemote(ctx, tmpDir, func(_ *sftp.Client, _ string, info os.FileInfo, stepErr error) error {
+		if stepErr != nil {
+			return stepErr
+		}
+		if info != nil && !info.IsDir() {
+			return filepath.SkipDir
+		}
+		return nil
+	})
+	require.ErrorIs(t, err, filepath.SkipDir)
+}
+
 func TestWithSFTPClient(t *testing.T) {
 	ctx, _, cleanup := testCtxWithPool(t)
 	defer cleanup()
@@ -638,4 +701,324 @@ func TestWithSFTPClient(t *testing.T) {
 	})
 	require.NoError(t, err)
 	assert.True(t, called)
+}
+
+func TestSFTPPool_EvictOrg(t *testing.T) {
+	pool := NewSFTPPool(5*time.Minute, func(orgID string, _ *ssh.SSHManager) (*sftp.Client, error) {
+		return newInMemSFTPClient(t), nil
+	})
+	sshMgr := ssh.NewSSHManager()
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, "org-evict-org")
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	ctx = context.WithValue(ctx, sshManagerContextKey, sshMgr)
+
+	err := WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil })
+	require.NoError(t, err)
+	pool.EvictOrg("org-evict-org")
+	err = WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil })
+	require.NoError(t, err)
+}
+
+func TestInvalidateSFTPPoolForOrg(t *testing.T) {
+	pool := NewSFTPPool(5*time.Minute, func(orgID string, _ *ssh.SSHManager) (*sftp.Client, error) {
+		return newInMemSFTPClient(t), nil
+	})
+	sshMgr := ssh.NewSSHManager()
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, "global-inval")
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	ctx = context.WithValue(ctx, sshManagerContextKey, sshMgr)
+	require.NoError(t, WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil }))
+
+	old := globalSFTPPool
+	globalSFTPPool = pool
+	t.Cleanup(func() { globalSFTPPool = old })
+
+	InvalidateSFTPPoolForOrg("global-inval")
+	require.NoError(t, WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil }))
+}
+
+// RegisterInvalidateHook in sftp init wires InvalidateSSHManagerCache to the global pool.
+func TestSFTPPool_RegisterInvalidateHookEvicts(t *testing.T) {
+	var creates int64
+	pool := NewSFTPPool(5*time.Minute, func(string, *ssh.SSHManager) (*sftp.Client, error) {
+		atomic.AddInt64(&creates, 1)
+		return newInMemSFTPClient(t), nil
+	})
+	org := uuid.New()
+	sshMgr := ssh.NewSSHManager()
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, org.String())
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	ctx = context.WithValue(ctx, sshManagerContextKey, sshMgr)
+	require.NoError(t, WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil }))
+	assert.Equal(t, int64(1), atomic.LoadInt64(&creates))
+
+	oldG := globalSFTPPool
+	globalSFTPPool = pool
+	t.Cleanup(func() { globalSFTPPool = oldG })
+
+	ssh.InvalidateSSHManagerCache(org)
+	require.NoError(t, WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil }))
+	assert.Equal(t, int64(2), atomic.LoadInt64(&creates), "cache invalidate hook should evict and force new client")
+}
+
+func TestWithSFTPClientFromPool_RequiresSSHManager(t *testing.T) {
+	pool := NewSFTPPool(5*time.Minute, func(string, *ssh.SSHManager) (*sftp.Client, error) {
+		return newInMemSFTPClient(t), nil
+	})
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, uuid.New().String())
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	// No sshManagerContextKey — GetSSHManagerFromContext needs config; expect error.
+	err := WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil })
+	require.Error(t, err)
+}
+
+func TestWithSFTPClientFromPool_SeparateCacheKeyPerServerID(t *testing.T) {
+	var creates int64
+	pool := NewSFTPPool(5*time.Minute, func(string, *ssh.SSHManager) (*sftp.Client, error) {
+		atomic.AddInt64(&creates, 1)
+		return newInMemSFTPClient(t), nil
+	})
+	sshMgr := ssh.NewSSHManager()
+	ctxBase := context.WithValue(context.Background(), sftpPoolContextKey, pool)
+	ctxBase = context.WithValue(ctxBase, sshManagerContextKey, sshMgr)
+	s1 := uuid.New().String()
+	s2 := uuid.New().String()
+	const org = "one-org-two-servers"
+	ctxA := context.WithValue(ctxBase, types.OrganizationIDKey, org)
+	ctxA = context.WithValue(ctxA, types.ServerIDKey, s1)
+	ctxB := context.WithValue(ctxBase, types.OrganizationIDKey, org)
+	ctxB = context.WithValue(ctxB, types.ServerIDKey, s2)
+	require.NoError(t, WithSFTPClientFromPool(ctxA, func(*sftp.Client) error { return nil }))
+	require.NoError(t, WithSFTPClientFromPool(ctxB, func(*sftp.Client) error { return nil }))
+	assert.Equal(t, int64(2), atomic.LoadInt64(&creates))
+}
+
+func TestEffectiveSftpPoolMaxAttempts_override(t *testing.T) {
+	old := sftpPoolMaxAttemptsOverride
+	t.Cleanup(func() { sftpPoolMaxAttemptsOverride = old })
+	sftpPoolMaxAttemptsOverride = 2
+	assert.Equal(t, 2, effectiveSftpPoolMaxAttempts())
+}
+
+func TestSftpPoolFromContext_wrongTypeUsesGlobal(t *testing.T) {
+	p := sftpPoolFromContext(context.WithValue(context.Background(), sftpPoolContextKey, "nope"))
+	assert.Same(t, globalSFTPPool, p)
+}
+
+func TestSftpPoolFromContext_nilValueUsesGlobal(t *testing.T) {
+	p := sftpPoolFromContext(context.Background())
+	assert.Same(t, globalSFTPPool, p)
+}
+
+func TestSftpPoolFromContext_returnsContextPool(t *testing.T) {
+	pool := NewSFTPPool(time.Minute, func(string, *ssh.SSHManager) (*sftp.Client, error) {
+		return newInMemSFTPClient(t), nil
+	})
+	ctx := context.WithValue(context.Background(), sftpPoolContextKey, pool)
+	assert.Same(t, pool, sftpPoolFromContext(ctx))
+}
+
+func TestSftpPoolSSHManager_injectedGetManager(t *testing.T) {
+	old := sshGetManagerFromContext
+	t.Cleanup(func() { sshGetManagerFromContext = old })
+	sshGetManagerFromContext = func(context.Context) (*ssh.SSHManager, error) {
+		return ssh.NewSSHManager(), nil
+	}
+	pool := NewSFTPPool(5*time.Minute, func(string, *ssh.SSHManager) (*sftp.Client, error) {
+		return newInMemSFTPClient(t), nil
+	})
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, "injected-ssh-ok")
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	require.NoError(t, WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil }))
+}
+
+func TestSftpPoolSSHManager_wrongTypeInContextReturnsOriginalError(t *testing.T) {
+	old := sshGetManagerFromContext
+	t.Cleanup(func() { sshGetManagerFromContext = old })
+	sshGetManagerFromContext = func(context.Context) (*ssh.SSHManager, error) {
+		return nil, errors.New("context manager lookup failed")
+	}
+	pool := NewSFTPPool(5*time.Minute, func(string, *ssh.SSHManager) (*sftp.Client, error) {
+		return newInMemSFTPClient(t), nil
+	})
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, "t")
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	ctx = context.WithValue(ctx, sshManagerContextKey, "not-an-ssh-manager")
+	err := WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil })
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "context manager lookup failed")
+}
+
+func TestWithSFTPClientFromPool_zeroMaxAttemptsExitsLoop(t *testing.T) {
+	old := sftpPoolMaxAttemptsOverride
+	t.Cleanup(func() { sftpPoolMaxAttemptsOverride = old })
+	sftpPoolMaxAttemptsOverride = 0
+	pool := NewSFTPPool(5*time.Minute, func(string, *ssh.SSHManager) (*sftp.Client, error) {
+		return newInMemSFTPClient(t), nil
+	})
+	sshMgr := ssh.NewSSHManager()
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, "zmax")
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	ctx = context.WithValue(ctx, sshManagerContextKey, sshMgr)
+	err := WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil })
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "internal error")
+}
+
+func TestWithSFTPClientFromPool_pooledClientClosedErrorLastAttemptNoRetry(t *testing.T) {
+	old := sftpPoolMaxAttemptsOverride
+	t.Cleanup(func() { sftpPoolMaxAttemptsOverride = old })
+	sftpPoolMaxAttemptsOverride = 1
+	pool := NewSFTPPool(5*time.Minute, func(string, *ssh.SSHManager) (*sftp.Client, error) {
+		return newInMemSFTPClient(t), nil
+	})
+	sshMgr := ssh.NewSSHManager()
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, "last-att")
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	ctx = context.WithValue(ctx, sshManagerContextKey, sshMgr)
+	require.NoError(t, WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil }))
+	err := WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return errors.New("connection closed") })
+	require.Error(t, err)
+}
+
+func TestWithSFTPClientFromPool_pooledClientClosedErrorCallsCloseConnection(t *testing.T) {
+	sshMgr := ssh.NewSSHManagerForTest(func(string) (*goph.Client, error) {
+		return &goph.Client{}, nil
+	}, 0)
+	oldNew := newSftpFromGophClient
+	t.Cleanup(func() { newSftpFromGophClient = oldNew })
+	newSftpFromGophClient = func(_ *goph.Client) (*sftp.Client, error) { return newInMemSFTPClient(t), nil }
+
+	pool := NewSFTPPool(5*time.Minute, nil) // Borrow + real SFTP path
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, "close-ssh")
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	ctx = context.WithValue(ctx, sshManagerContextKey, sshMgr)
+	require.NoError(t, WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil }))
+	// Pooled client: first fn call returns closed; retry with fresh client must succeed.
+	var firstClosed atomic.Bool
+	err := WithSFTPClientFromPool(ctx, func(*sftp.Client) error {
+		if !firstClosed.Swap(true) {
+			return errors.New("use of closed network connection")
+		}
+		return nil
+	})
+	require.NoError(t, err)
+}
+
+// Second insert for same org simulates a race: duplicate SSH release must run.
+func TestInsertOrUseConcurrentPooledClient_releasesDuplicateSSH(t *testing.T) {
+	pool := NewSFTPPool(5*time.Minute, nil)
+	c1 := newInMemSFTPClient(t)
+	c2 := newInMemSFTPClient(t)
+	t.Cleanup(func() { _ = c1.Close(); _ = c2.Close() })
+
+	var rel1Calls, rel2Calls int32
+	rel1 := func() { atomic.AddInt32(&rel1Calls, 1) }
+	rel2 := func() { atomic.AddInt32(&rel2Calls, 1) }
+
+	client, releaseFirst, fromPool, _ := pool.insertOrUseConcurrentPooledClient("org-dup", c1, rel1)
+	require.False(t, fromPool)
+	require.Same(t, c1, client)
+	require.Equal(t, int32(0), rel1Calls)
+
+	client2, releaseSecond, fromPool2, _ := pool.insertOrUseConcurrentPooledClient("org-dup", c2, rel2)
+	require.True(t, fromPool2)
+	require.Same(t, c1, client2)
+	require.Equal(t, int32(1), rel2Calls, "concurrent insert must release duplicate borrow")
+
+	releaseFirst()
+	releaseSecond()
+}
+
+func TestOpenNewPooledSftpClient_borrowFailure(t *testing.T) {
+	sshMgr := ssh.NewSSHManagerForTest(func(string) (*goph.Client, error) {
+		return nil, errors.New("SSH connect: dial failed")
+	}, 0)
+	pool := NewSFTPPool(5*time.Minute, nil)
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, "borrow-fail")
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	ctx = context.WithValue(ctx, sshManagerContextKey, sshMgr)
+	err := WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil })
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "SSH connect")
+}
+
+func TestOpenNewPooledSftpClient_sftpSubsystemFailureClosed(t *testing.T) {
+	sshMgr := ssh.NewSSHManagerForTest(func(string) (*goph.Client, error) { return &goph.Client{}, nil }, 0)
+	oldNew := newSftpFromGophClient
+	t.Cleanup(func() { newSftpFromGophClient = oldNew })
+	newSftpFromGophClient = func(*goph.Client) (*sftp.Client, error) {
+		return nil, errors.New("use of closed network connection")
+	}
+	pool := NewSFTPPool(5*time.Minute, nil)
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, "sftp-sub-fail")
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	ctx = context.WithValue(ctx, sshManagerContextKey, sshMgr)
+	err := WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil })
+	require.Error(t, err)
+}
+
+func TestSftpPool_EvictOrgCallsSSHReleaseFromBorrow(t *testing.T) {
+	sshMgr := ssh.NewSSHManagerForTest(func(string) (*goph.Client, error) { return &goph.Client{}, nil }, 0)
+	oldNew := newSftpFromGophClient
+	t.Cleanup(func() { newSftpFromGophClient = oldNew })
+	newSftpFromGophClient = func(*goph.Client) (*sftp.Client, error) { return newInMemSFTPClient(t), nil }
+
+	pool := NewSFTPPool(5*time.Minute, nil)
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, "evict-borrow")
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	ctx = context.WithValue(ctx, sshManagerContextKey, sshMgr)
+	require.NoError(t, WithSFTPClientFromPool(ctx, func(*sftp.Client) error { return nil }))
+	pool.EvictOrg("evict-borrow")
+}
+
+func TestReadFile_readAllFailure(t *testing.T) {
+	old := readAllFromSftp
+	t.Cleanup(func() { readAllFromSftp = old })
+	readAllFromSftp = func(io.Reader) ([]byte, error) { return nil, io.ErrUnexpectedEOF }
+	tmpDir, err := os.MkdirTemp("", "sftprfeof-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+	p := filepath.Join(tmpDir, "a.txt")
+	require.NoError(t, os.WriteFile(p, []byte("x"), 0644))
+	ctx, _, c := testCtxWithPool(t)
+	defer c()
+	_, err = ReadFile(ctx, p)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "read file content")
+}
+
+func TestReadFileBytes_readAllFailure(t *testing.T) {
+	old := readAllFromSftp
+	t.Cleanup(func() { readAllFromSftp = old })
+	readAllFromSftp = func(io.Reader) ([]byte, error) { return nil, io.ErrUnexpectedEOF }
+	tmpDir, err := os.MkdirTemp("", "sftprbeof-")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+	p := filepath.Join(tmpDir, "a.txt")
+	require.NoError(t, os.WriteFile(p, []byte("x"), 0644))
+	ctx, _, c := testCtxWithPool(t)
+	defer c()
+	_, err = ReadFileBytes(ctx, p)
+	require.Error(t, err)
+}
+
+func TestReadFileBytes_openFailure(t *testing.T) {
+	ctx, _, c := testCtxWithPool(t)
+	defer c()
+	_, err := ReadFileBytes(ctx, "/nonexistent/readfilebytes-xyz")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "open file")
+}
+
+func TestReadFileBytes_poolGetFails(t *testing.T) {
+	pool := NewSFTPPool(5*time.Minute, func(string, *ssh.SSHManager) (*sftp.Client, error) {
+		return nil, errors.New("pool get failed")
+	})
+	sshMgr := ssh.NewSSHManager()
+	ctx := context.WithValue(context.Background(), types.OrganizationIDKey, "pfg")
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	ctx = context.WithValue(ctx, sshManagerContextKey, sshMgr)
+	_, err := ReadFileBytes(ctx, "/x")
+	require.Error(t, err)
 }

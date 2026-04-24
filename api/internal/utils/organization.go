@@ -14,10 +14,17 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// verifySessionFn is the session verifier (Better Auth). Swapped in tests.
+var verifySessionFn = auth.VerifySession
+
+// getOrganizationSettingsAfterFailedInsert is optional (tests only). When set, it runs after
+// a failed insert in GetOrganizationSettings so tests can model concurrent writers before re-read.
+var getOrganizationSettingsAfterFailedInsert func(ctx context.Context, db *bun.DB, orgID uuid.UUID)
+
 // GetOrganizationIDFromBetterAuth gets organization ID from Better Auth session
 // Returns empty string if not found
 func GetOrganizationIDFromBetterAuth(r *http.Request) (string, error) {
-	sessionResp, err := auth.VerifySession(r)
+	sessionResp, err := verifySessionFn(r)
 	if err != nil {
 		return "", fmt.Errorf("failed to verify session: %w", err)
 	}
@@ -166,6 +173,9 @@ func GetOrganizationSettings(ctx context.Context, db *bun.DB, orgID uuid.UUID) (
 				Exec(ctx)
 			if insertErr == nil {
 				return defaultSettings.Settings, nil
+			}
+			if h := getOrganizationSettingsAfterFailedInsert; h != nil {
+				h(ctx, db, orgID)
 			}
 			// If insert failed, try to read again (might have been created concurrently)
 			err = db.NewSelect().

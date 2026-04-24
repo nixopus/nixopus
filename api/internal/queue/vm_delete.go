@@ -26,6 +26,10 @@ type VMDeletePayload struct {
 	ServerID string `json:"server_id,omitempty"`
 }
 
+func handleVMDeleteTask(ctx context.Context, payload VMDeletePayload) error {
+	return nil
+}
+
 func SetupVMDeleteQueue() {
 	onceVMDeleteQueue.Do(func() {
 		VMDeleteQueue = registerProducerQueue(&taskq.QueueOptions{
@@ -35,9 +39,7 @@ func SetupVMDeleteQueue() {
 		TaskVMDelete = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       taskVMDelete,
 			RetryLimit: 1,
-			Handler: func(ctx context.Context, payload VMDeletePayload) error {
-				return nil
-			},
+			Handler:    handleVMDeleteTask,
 		})
 	})
 }
