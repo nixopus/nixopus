@@ -14,6 +14,12 @@ import (
 var (
 	clients    = make(map[string]*client)
 	clientsMtx sync.Mutex
+
+	// rateLimiterStaleClientAfter is how long an idle per-IP bucket may sit before
+	// NewRateLimiterWithConfig's background cleanup deletes it. Tests shorten this.
+	rateLimiterStaleClientAfter = 5 * time.Minute
+	// rateLimiterCleanupTick is the sleep between cleanup passes for NewRateLimiterWithConfig.
+	rateLimiterCleanupTick = time.Minute
 )
 
 type client struct {
@@ -124,10 +130,10 @@ func NewRateLimiterWithConfig(rps float64, burst int) func(http.Handler) http.Ha
 	startCleanup := func() {
 		go func() {
 			for {
-				time.Sleep(time.Minute)
+				time.Sleep(rateLimiterCleanupTick)
 				rlMtx.Lock()
 				for ip, c := range rlClients {
-					if time.Since(c.lastSeen) > 5*time.Minute {
+					if time.Since(c.lastSeen) > rateLimiterStaleClientAfter {
 						delete(rlClients, ip)
 					}
 				}
