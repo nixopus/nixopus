@@ -12,6 +12,9 @@ import (
 	"github.com/nixopus/nixopus/api/internal/types"
 )
 
+// jsonMarshal is json.Marshal by default; tests swap it to cover marshal error paths.
+var jsonMarshal = json.Marshal
+
 const (
 	UserCacheKeyPrefix          = "user:"
 	UserByIDCacheKeyPrefix      = "user_id:"
@@ -90,7 +93,7 @@ func (c *Cache) SetUser(ctx context.Context, email string, user *types.User) err
 		return nil
 	}
 
-	data, err := json.Marshal(userCopy)
+	data, err := jsonMarshal(userCopy)
 	if err != nil {
 		return err
 	}
@@ -129,7 +132,7 @@ func (c *Cache) SetUserByID(ctx context.Context, userID string, user *types.User
 		return nil
 	}
 	key := UserByIDCacheKeyPrefix + userID
-	data, err := json.Marshal(user)
+	data, err := jsonMarshal(user)
 	if err != nil {
 		return err
 	}
@@ -230,7 +233,7 @@ func (c *Cache) SetRBACPermissions(ctx context.Context, userID, orgID string, pe
 	}
 
 	key := fmt.Sprintf("%s%s:%s", RBACCacheKeyPrefix, userID, orgID)
-	data, err := json.Marshal(perms)
+	data, err := jsonMarshal(perms)
 	if err != nil {
 		return err
 	}
