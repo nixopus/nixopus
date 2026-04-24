@@ -17,9 +17,26 @@ import (
 	"github.com/spf13/viper"
 )
 
+func defaultInitStoreInit(s *storage.Store, ctx context.Context) error {
+	return s.Init(ctx)
+}
+
 var (
 	AppConfig   types.Config
 	GlobalStore *storage.Store // Global storage instance, set during Init()
+)
+
+// Test hooks (overridden in tests; defaults wire production behavior).
+var (
+	executableFn         = os.Executable
+	filepathAbsFn        = filepath.Abs
+	initNewDB            = storage.NewDB
+	initStoreInit        = defaultInitStoreInit
+	initLogFatalf        = log.Fatalf
+	initLogFatal         = log.Fatal
+	initNewSecretManager = secrets.NewSecretManager
+	// initAfterViperHook runs after initViper() in Init (tests may poison viper before Unmarshal).
+	initAfterViperHook func()
 )
 
 // getMigrationsPath returns the migrations path from environment variable or defaults to path relative to executable
@@ -31,10 +48,10 @@ func getMigrationsPath() string {
 
 	// Default: use migrations directory relative to executable location
 	// If executable is at api/nixopus-mcp-server or api/nixopus-api, migrations are at api/migrations
-	if execPath, err := os.Executable(); err == nil {
+	if execPath, err := executableFn(); err == nil {
 		execDir := filepath.Dir(execPath)
 		migrationsPath := filepath.Join(execDir, "migrations")
-		if absPath, err := filepath.Abs(migrationsPath); err == nil {
+		if absPath, err := filepathAbsFn(migrationsPath); err == nil {
 			if _, err := os.Stat(absPath); err == nil {
 				return absPath
 			}
@@ -53,7 +70,7 @@ func Init() *storage.Store {
 	// This allows secrets to override .env file values
 	secretConfig := secrets.LoadSecretManagerConfig("api")
 	if secretConfig.Enabled {
-		secretManager, err := secrets.NewSecretManager(secretConfig)
+		secretManager, err := initNewSecretManager(secretConfig)
 		if err != nil {
 			log.Printf("Warning: Failed to initialize secret manager: %v. Falling back to .env files", err)
 		} else {
@@ -75,21 +92,29 @@ func Init() *storage.Store {
 
 	initViper()
 
+	if initAfterViperHook != nil {
+		initAfterViperHook()
+	}
+
 	AppConfig = types.Config{}
 	if err := viper.Unmarshal(&AppConfig); err != nil {
-		log.Fatalf("Failed to unmarshal config: %v", err)
+		initLogFatalf("Failed to unmarshal config: %v", err)
 	}
 
 	if AppConfig.Database.URL != "" {
 		if err := parseDatabaseURL(&AppConfig.Database); err != nil {
-			log.Fatalf("Failed to parse DATABASE_URL: %v", err)
+			initLogFatalf("Failed to parse DATABASE_URL: %v", err)
 		}
+	}
+
+	if AppConfig.Server.Port == "" {
+		AppConfig.Server.Port = "8080"
 	}
 
 	log.Printf("Configuration loaded successfully for environment: %s", AppConfig.App.Environment)
 
 	if err := validateConfig(AppConfig); err != nil {
-		log.Fatalf("Configuration validation failed: %v", err)
+		initLogFatalf("Configuration validation failed: %v", err)
 	}
 
 	// Log key configuration values (without sensitive data)
@@ -113,21 +138,17 @@ func Init() *storage.Store {
 		MigrationsPath: migrationsPath,
 	}
 
-	store, err := storage.NewDB(&storage_config)
+	store, err := initNewDB(&storage_config)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	if AppConfig.Server.Port == "" {
-		AppConfig.Server.Port = "8080"
+		initLogFatal(err)
 	}
 
 	storageInstance := storage.NewStore(store)
 
-	err = storageInstance.Init(context.Background())
+	err = initStoreInit(storageInstance, context.Background())
 
 	if err != nil {
-		log.Fatalf("Failed to initialize storage: %v", err)
+		initLogFatalf("Failed to initialize storage: %v", err)
 	}
 
 	// Set global store for use throughout the application
