@@ -13,7 +13,7 @@ import {
 } from '@/packages/lib/agent-client';
 import { type ChatContext, formatContextsForAgent } from './chat-context';
 import { v4 as uuid } from 'uuid';
-import { chatStreamStore } from './chat-stream-store';
+import { chatStreamStore, isRateLimitError } from './chat-stream-store';
 
 export type MessagePart =
   | { type: 'text'; content: string }
@@ -42,6 +42,7 @@ export interface ChatMessage {
   contexts?: ChatContext[];
   kind?: 'status';
   usage?: TokenUsage;
+  errorKind?: 'rate-limited' | 'generic-error';
 }
 
 interface UseAgentChatOptions {
@@ -342,7 +343,11 @@ export function useAgentChat({
         if (err instanceof Error && err.name === 'AbortError') return;
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to get response from AI agent';
-        chatStreamStore.finishStream(threadId, errorMessage);
+        chatStreamStore.finishStream(
+          threadId,
+          errorMessage,
+          isRateLimitError(err) ? 'rate-limited' : 'generic-error'
+        );
         return;
       }
       chatStreamStore.finishStream(threadId);

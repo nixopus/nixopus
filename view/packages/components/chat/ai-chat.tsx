@@ -39,7 +39,8 @@ import {
   ChevronRight,
   ChevronDown,
   Copy,
-  Zap
+  Zap,
+  AlertTriangle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from '@/packages/hooks/shared/use-translation';
@@ -1015,6 +1016,7 @@ function MessageBubble({
             }
             return null;
           })}
+          {message.errorKind === 'rate-limited' && <RateLimitErrorBanner />}
           <div className="flex items-center gap-1 mt-1 px-1">
             <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
             <CopyButton text={message.content} />
@@ -1061,45 +1063,49 @@ function MessageBubble({
             ))}
           </div>
         )}
-        <div
-          className={cn(
-            'rounded-2xl px-4 py-3',
-            isUser
-              ? 'bg-primary text-primary-foreground rounded-tr-md'
-              : 'bg-muted/60 text-foreground rounded-tl-md'
-          )}
-        >
-          {isUser ? (
-            <p className="text-sm whitespace-pre-wrap">
-              {stripContextFromMessageText(message.content)}
-            </p>
-          ) : isStreaming && isLastAssistantMessage && !message.content.trim() ? (
-            <span className="text-sm text-muted-foreground">
-              Thinking
-              <span className="inline-flex">
-                <span className="animate-pulse" style={{ animationDelay: '0ms' }}>
-                  .
-                </span>
-                <span className="animate-pulse" style={{ animationDelay: '150ms' }}>
-                  .
-                </span>
-                <span className="animate-pulse" style={{ animationDelay: '300ms' }}>
-                  .
+        {message.errorKind === 'rate-limited' && !isUser ? (
+          <RateLimitErrorBanner />
+        ) : (
+          <div
+            className={cn(
+              'rounded-2xl px-4 py-3',
+              isUser
+                ? 'bg-primary text-primary-foreground rounded-tr-md'
+                : 'bg-muted/60 text-foreground rounded-tl-md'
+            )}
+          >
+            {isUser ? (
+              <p className="text-sm whitespace-pre-wrap">
+                {stripContextFromMessageText(message.content)}
+              </p>
+            ) : isStreaming && isLastAssistantMessage && !message.content.trim() ? (
+              <span className="text-sm text-muted-foreground">
+                Thinking
+                <span className="inline-flex">
+                  <span className="animate-pulse" style={{ animationDelay: '0ms' }}>
+                    .
+                  </span>
+                  <span className="animate-pulse" style={{ animationDelay: '150ms' }}>
+                    .
+                  </span>
+                  <span className="animate-pulse" style={{ animationDelay: '300ms' }}>
+                    .
+                  </span>
                 </span>
               </span>
-            </span>
-          ) : (
-            <Streamdown
-              plugins={STREAMDOWN_PLUGINS}
-              controls={STREAMDOWN_CONTROLS}
-              animated={STREAMDOWN_ANIMATED}
-              isAnimating={isStreaming && isLastAssistantMessage}
-              caret={isStreaming && isLastAssistantMessage ? 'block' : undefined}
-            >
-              {message.content}
-            </Streamdown>
-          )}
-        </div>
+            ) : (
+              <Streamdown
+                plugins={STREAMDOWN_PLUGINS}
+                controls={STREAMDOWN_CONTROLS}
+                animated={STREAMDOWN_ANIMATED}
+                isAnimating={isStreaming && isLastAssistantMessage}
+                caret={isStreaming && isLastAssistantMessage ? 'block' : undefined}
+              >
+                {message.content}
+              </Streamdown>
+            )}
+          </div>
+        )}
         <div
           className={cn(
             'flex items-center gap-1 mt-1 px-1',
@@ -1109,6 +1115,23 @@ function MessageBubble({
           <span className="text-xs text-muted-foreground">{formatTime(message.timestamp)}</span>
           {!isUser && <CopyButton text={message.content} />}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function RateLimitErrorBanner() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex gap-2.5 rounded-xl border border-orange-500/30 bg-orange-500/5 px-4 py-3.5">
+      <AlertTriangle className="size-4 shrink-0 mt-0.5 text-orange-500" />
+      <div className="flex flex-col gap-1 min-w-0">
+        <p className="text-sm font-medium text-orange-600 dark:text-orange-400">
+          {t('ai.rateLimitError.title' as Parameters<typeof t>[0])}
+        </p>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          {t('ai.rateLimitError.description' as Parameters<typeof t>[0])}
+        </p>
       </div>
     </div>
   );

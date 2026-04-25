@@ -14,6 +14,10 @@
       "placeholder": "Pregunta lo que quieras...",
       "hint": "Presiona Enter para enviar, Shift + Enter para nueva línea"
     },
+    "rateLimitError": {
+      "title": "Límite de velocidad del proveedor de IA alcanzado",
+      "description": "La cuota del modelo de IA se ha agotado. Esta es una limitación del proveedor, no un problema de Nixopus. Espera un momento e intenta de nuevo, o cambia a otro modelo."
+    },
     "guidedPrefill": {
       "defaultPrompt": "I am new to Nixopus. Use this sample repository to guide me step by step: what Nixopus does, how deployments work, and what I can do next.",
       "helperText": "Starter prompt loaded - edit before sending.",

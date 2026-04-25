@@ -1,6 +1,20 @@
 import type { StreamChunk } from '@/packages/lib/agent-client';
 import type { ChatMessage, PendingToolApproval, OmStatus, TokenUsage } from './use-agent-chat';
 
+export function isRateLimitError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const e = error as Record<string, unknown>;
+  if (e.statusCode === 429 || e.status === 429) return true;
+  const msg = typeof e.message === 'string' ? e.message.toLowerCase() : '';
+  return (
+    msg.includes('quota') ||
+    msg.includes('rate limit') ||
+    msg.includes('rate_limit') ||
+    msg.includes('resource_exhausted') ||
+    msg.includes('too_many_requests')
+  );
+}
+
 export interface SessionSnapshot {
   messages: ChatMessage[];
   isStreaming: boolean;
@@ -356,6 +370,16 @@ class ChatStreamStore {
     if (chunk.type === 'finish' && chunk.payload) {
       const finishPayload = chunk.payload as Record<string, unknown>;
 
+      const payloadError = finishPayload.error;
+      if (payloadError) {
+        const kind = isRateLimitError(payloadError) ? 'rate-limited' : 'generic-error';
+        const errMsg =
+          ((payloadError as Record<string, unknown>).message as string | undefined) ??
+          'An unexpected error occurred';
+        this.finishStream(threadId, errMsg, kind);
+        return;
+      }
+
       const msg = s.snapshot.messages.find((m) => m.id === amId);
       if (!msg?.usage) {
         const finishUsage = extractUsageFromPayload(finishPayload);
@@ -441,7 +465,11 @@ class ChatStreamStore {
     }
   }
 
-  finishStream(threadId: string, errorMessage?: string) {
+  finishStream(
+    threadId: string,
+    errorMessage?: string,
+    errorKind?: 'rate-limited' | 'generic-error'
+  ) {
     const s = this.sessions.get(threadId);
     if (!s) return;
     const amId = s.assistantMessageId;
@@ -475,7 +503,7 @@ class ChatStreamStore {
             : durationMs != null
               ? { promptTokens: 0, completionTokens: 0, totalTokens: 0, durationMs }
               : m.usage;
-          return { ...m, content, parts, usage };
+          return { ...m, content, parts, usage, ...(errorKind ? { errorKind } : {}) };
         })
       };
     }

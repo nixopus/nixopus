@@ -14,6 +14,10 @@
       "placeholder": "ಏನಾದರೂ ಕೇಳಿ...",
       "hint": "ಕಳುಹಿಸಲು Enter ಒತ್ತಿ, ಹೊಸ ಸಾಲಿಗೆ Shift + Enter"
     },
+    "rateLimitError": {
+      "title": "AI ಪ್ರೊವೈಡರ್ ದರ ಮಿತಿ ತಲುಪಿದೆ",
+      "description": "AI ಮಾದರಿಯ ಕೋಟಾ ಖಾಲಿಯಾಗಿದೆ. ಇದು ಪ್ರೊವೈಡರ್ ಮಿತಿಯಾಗಿದ್ದು, Nixopus ನ ತೊಂದರೆ ಅಲ್ಲ. ದಯವಿಟ್ಟು ಸ್ವಲ್ಪ ಕಾಯ್ದು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ ಅಥವಾ ಬೇರೆ ಮಾದರಿ ಆಯ್ಕೆ ಮಾಡಿ."
+    },
     "guidedPrefill": {
       "defaultPrompt": "I am new to Nixopus. Use this sample repository to guide me step by step: what Nixopus does, how deployments work, and what I can do next.",
       "helperText": "Starter prompt loaded - edit before sending.",
