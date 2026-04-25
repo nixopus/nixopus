@@ -328,5 +328,15 @@ func isValidPublicGitURL(u string) bool {
 		return false
 	}
 	host := strings.TrimPrefix(u, "https://")
-	return strings.Contains(host, "/") && len(strings.SplitN(host, "/", 2)[0]) > 0
+	hostParts := strings.SplitN(host, "/", 2)
+	if len(hostParts) != 2 {
+		return false
+	}
+	if len(hostParts[0]) == 0 {
+		return false
+	}
+	if strings.TrimSpace(hostParts[1]) == "" {
+		return false
+	}
+	return true
 }

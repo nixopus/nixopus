@@ -1,6 +1,7 @@
 package tasks
 
 import (
+	"fmt"
 	"testing"
 
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
@@ -52,6 +53,10 @@ func TestGetSourceResolver_AllSourceTypes(t *testing.T) {
 			resolver := svc.GetSourceResolver(tt.source)
 			if resolver == nil {
 				t.Fatalf("expected non-nil resolver for %s", tt.source)
+			}
+			actualType := fmt.Sprintf("%T", resolver)
+			if actualType != tt.expectedType {
+				t.Errorf("expected type %s, got %s", tt.expectedType, actualType)
 			}
 		})
 	}
