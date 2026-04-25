@@ -105,6 +105,8 @@ services:
       NEXT_PUBLIC_PORT: "7443"
       PASSWORD_LOGIN_ENABLED: "true"
       SELF_HOSTED: "true"
+      AGENT_MODEL: "${AGENT_MODEL:-}"
+      AGENT_LIGHT_MODEL: "${AGENT_LIGHT_MODEL:-}"
     networks:
       - nixopus-network
     depends_on:

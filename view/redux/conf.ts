@@ -105,3 +105,11 @@ export async function getTurnstileSiteKey() {
   const c = await fetchConfig();
   return (c?.turnstileSiteKey || '') as string;
 }
+
+export async function getAgentModels(): Promise<{ agentModel: string; agentLightModel: string }> {
+  const c = await fetchConfig();
+  return {
+    agentModel: (c?.agentModel || '') as string,
+    agentLightModel: (c?.agentLightModel || '') as string
+  };
+}
