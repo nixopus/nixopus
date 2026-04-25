@@ -311,5 +311,5 @@ This project is [FSL-1.1-ALv2](./LICENSE.md) licensed.
 [image-feat-framework]: assets/graphics/7.png
 [image-feat-multi-server]: assets/graphics/5.png
 [image-feat-terminal]: assets/graphics/6.png
-[image-overview]: assets/graphics/1.png
+[image-overview]: assets/graphics/8.png
 [website-link]: https://nixopus.com
