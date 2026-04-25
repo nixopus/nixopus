@@ -1,12 +1,18 @@
 import type { StreamChunk } from '@/packages/lib/agent-client';
 import type { ChatMessage, PendingToolApproval, OmStatus, TokenUsage } from './use-agent-chat';
 
-function isRateLimitError(error: unknown): boolean {
+export function isRateLimitError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
   const e = error as Record<string, unknown>;
-  if (e.statusCode === 429) return true;
+  if (e.statusCode === 429 || e.status === 429) return true;
   const msg = typeof e.message === 'string' ? e.message.toLowerCase() : '';
-  return msg.includes('quota') || msg.includes('rate limit') || msg.includes('resource_exhausted');
+  return (
+    msg.includes('quota') ||
+    msg.includes('rate limit') ||
+    msg.includes('rate_limit') ||
+    msg.includes('resource_exhausted') ||
+    msg.includes('too_many_requests')
+  );
 }
 
 export interface SessionSnapshot {
@@ -367,7 +373,9 @@ class ChatStreamStore {
       const payloadError = finishPayload.error;
       if (payloadError) {
         const kind = isRateLimitError(payloadError) ? 'rate-limited' : 'generic-error';
-        const errMsg = (payloadError as Record<string, unknown>).message as string | undefined;
+        const errMsg =
+          ((payloadError as Record<string, unknown>).message as string | undefined) ??
+          'An unexpected error occurred';
         this.finishStream(threadId, errMsg, kind);
         return;
       }
