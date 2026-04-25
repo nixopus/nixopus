@@ -232,6 +232,110 @@ const (
 	DeploymentTypeRestart  = "restart"
 )
 
+// RoutingStrategy OpenAPI methods
+
+func (RoutingStrategy) OpenAPISchemaType() []string { return []string{"string"} }
+func (RoutingStrategy) OpenAPISchemaEnum() []any {
+	return []any{
+		string(RoutingStrategySingle),
+		string(RoutingStrategyRoundRobin),
+		string(RoutingStrategyPrimaryFailover),
+		string(RoutingStrategyPerServerDomain),
+	}
+}
+func (RoutingStrategy) Description() string {
+	return "Traffic routing strategy: single (one server), round_robin (distribute across servers), primary_failover (failover to backup), per_server_domain (unique domain per server)."
+}
+
+// Status OpenAPI methods
+
+func (Status) OpenAPISchemaType() []string { return []string{"string"} }
+func (Status) OpenAPISchemaEnum() []any {
+	return []any{
+		string(Draft),
+		string(Started),
+		string(Running),
+		string(Stopped),
+		string(Failed),
+		string(Cloning),
+		string(Building),
+		string(Deploying),
+		string(Deployed),
+		string(Cancelled),
+		string(PartialFailure),
+	}
+}
+func (Status) Description() string {
+	return "Application or deployment lifecycle status."
+}
+
+// Environment OpenAPI methods
+
+func (Environment) OpenAPISchemaType() []string { return []string{"string"} }
+func (Environment) Description() string {
+	return "Environment name. Must match pattern ^[a-z0-9]+(-[a-z0-9]+)*$ and be 1-50 chars. Common values: production, staging, development."
+}
+
+// ProxyServer OpenAPI methods
+
+func (ProxyServer) OpenAPISchemaType() []string { return []string{"string"} }
+func (ProxyServer) OpenAPISchemaEnum() []any {
+	return []any{
+		string(Nginx),
+		string(Caddy),
+	}
+}
+func (ProxyServer) Description() string {
+	return "Reverse proxy server used to route traffic to the application."
+}
+
+// BuildPack OpenAPI methods
+
+func (BuildPack) OpenAPISchemaType() []string { return []string{"string"} }
+func (BuildPack) OpenAPISchemaEnum() []any {
+	return []any{
+		string(DockerFile),
+		string(DockerCompose),
+		string(Static),
+	}
+}
+func (BuildPack) Description() string {
+	return "Build strategy for the application: dockerfile, docker-compose, or static site."
+}
+
+// Source OpenAPI methods
+
+func (Source) OpenAPISchemaType() []string { return []string{"string"} }
+func (Source) OpenAPISchemaEnum() []any {
+	return []any{
+		string(SourceGithub),
+		string(SourceS3),
+		string(SourceZip),
+		string(SourceStaging),
+		string(SourceTemplate),
+		string(SourcePublicGit),
+	}
+}
+func (Source) Description() string {
+	return "Origin of the application source code."
+}
+
+// DeploymentType OpenAPI methods
+
+func (DeploymentType) OpenAPISchemaType() []string { return []string{"string"} }
+func (DeploymentType) OpenAPISchemaEnum() []any {
+	return []any{
+		DeploymentTypeCreate,
+		DeploymentTypeUpdate,
+		DeploymentTypeReDeploy,
+		DeploymentTypeRollback,
+		DeploymentTypeRestart,
+	}
+}
+func (DeploymentType) Description() string {
+	return "Kind of deployment operation to perform."
+}
+
 type WebhookPayload struct {
 	Repository struct {
 		ID       uint64 `json:"id"`

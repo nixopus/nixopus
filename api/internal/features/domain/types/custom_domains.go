@@ -7,15 +7,15 @@ import (
 )
 
 type AddCustomDomainRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" validate:"required,min=3,max=255" description:"Fully qualified domain name to add" example:"app.example.com"`
 }
 
 type VerifyCustomDomainRequest struct {
-	ID string `json:"id"`
+	ID string `json:"id" validate:"required" description:"Custom domain ID to verify DNS records for" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
 type RemoveCustomDomainRequest struct {
-	ID string `json:"id"`
+	ID string `json:"id" validate:"required" description:"Custom domain ID to remove" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
 type CustomDomainResponse struct {

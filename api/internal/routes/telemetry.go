@@ -6,5 +6,5 @@ import (
 )
 
 func (router *Router) RegisterTelemetryRoutes(group *fuego.Server, controller *telemetry.TelemetryController) {
-	fuego.Post(group, "", controller.HandleTrackInstall, fuego.OptionSummary("Track CLI installation event"))
+	fuego.Post(group, "", controller.HandleTrackInstall, fuego.OptionSummary("Track CLI installation event"), fuego.OptionDefaultStatusCode(201))
 }

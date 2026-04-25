@@ -11,11 +11,11 @@ type UserOrganizationsResponse struct {
 }
 
 type UpdateUserNameRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" validate:"required,min=3,max=50" description:"New username. Must be 3-50 characters with no spaces" example:"johndoe"`
 }
 
 type UpdateAvatarRequest struct {
-	AvatarData string `json:"avatarData"`
+	AvatarData string `json:"avatarData" validate:"required" description:"Base64-encoded image data URI. Must start with data:image/{jpeg,jpg,png,gif};base64," example:"data:image/png;base64,iVBORw0KGgo..."`
 }
 
 type AvatarResponse struct {

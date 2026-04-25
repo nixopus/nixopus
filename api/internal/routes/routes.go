@@ -9,6 +9,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
+	"github.com/go-fuego/fuego/option"
 	"github.com/joho/godotenv"
 	"github.com/nixopus/nixopus/api/internal/cache"
 	"github.com/nixopus/nixopus/api/internal/config"
@@ -111,8 +112,10 @@ func (router *Router) createServer(port string) *fuego.Server {
 			}),
 			fuego.WithOpenAPIGeneratorSchemaCustomizer(openapi.SchemaCustomizer),
 		),
+		fuego.WithoutAutoGroupTags(),
 		fuego.WithGlobalMiddlewares(
 			middleware.RecoveryMiddleware,
+			middleware.RequestIDMiddleware,
 			middleware.CorsMiddleware,
 			middleware.LoggingMiddleware,
 			api.VersionMiddleware,
@@ -221,15 +224,17 @@ func (router *Router) SetupRoutes() {
 			log.Printf("Warning: failed to post-process OpenAPI spec: %v", err)
 		}
 	}()
+
+	openapi.CleanSpecTags(server.OpenAPI)
 	server.Run()
 }
 
 // registerPublicRoutes registers routes that don't require authentication
 func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Version, dispatcher *notification.Dispatcher, deployController *deploy.DeployController) {
-	healthGroup := fuego.Group(server, apiV1.Path+"/health")
+	healthGroup := fuego.Group(server, apiV1.Path+"/health", option.Tags("Health"))
 	router.RegisterHealthRoutes(healthGroup)
 
-	webhookGroup := fuego.Group(server, apiV1.Path+"/webhook")
+	webhookGroup := fuego.Group(server, apiV1.Path+"/webhook", option.Tags("Webhooks"))
 	fuego.Post(
 		webhookGroup,
 		"",
@@ -240,19 +245,19 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 	router.RegisterWebSocketRoutes(server, deployController, router.schedulers.HealthCheck)
 
 	trailInternalController := machine_controller.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
-	trailInternalGroup := fuego.Group(server, apiV1.Path+"/trail")
+	trailInternalGroup := fuego.Group(server, apiV1.Path+"/trail", option.Tags("Trial"))
 	router.RegisterTrailInternalRoutes(trailInternalGroup, trailInternalController)
 
 	authController := router.createAuthController(dispatcher)
-	authGroup := fuego.Group(server, apiV1.Path+"/auth")
+	authGroup := fuego.Group(server, apiV1.Path+"/auth", option.Tags("Auth"))
 	router.RegisterAuthRoutes(authGroup, authController)
 
 	mcpPublicCtrl := mcpController.NewMCPController(router.app.Store, router.app.Ctx, router.logger)
-	mcpPublicGroup := fuego.Group(server, apiV1.Path+"/mcp")
+	mcpPublicGroup := fuego.Group(server, apiV1.Path+"/mcp", option.Tags("MCP"))
 	router.RegisterMCPPublicRoutes(mcpPublicGroup, mcpPublicCtrl)
 
 	telemetryCtrl := telemetry.NewTelemetryController(router.app.Store.DB, router.app.Ctx, router.logger)
-	telemetryGroup := fuego.Group(server, apiV1.Path+"/cli/telemetry")
+	telemetryGroup := fuego.Group(server, apiV1.Path+"/cli/telemetry", option.Tags("Telemetry"))
 	fuego.Use(telemetryGroup, middleware.NewRateLimiterWithConfig(0.01, 3))
 	router.RegisterTelemetryRoutes(telemetryGroup, telemetryCtrl)
 }
@@ -260,22 +265,22 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 // registerProtectedRoutes registers routes that require authentication
 func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Version, dispatcher *notification.Dispatcher, deployController *deploy.DeployController) {
 	authController := router.createAuthController(dispatcher)
-	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth")
+	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth", option.Tags("Auth"))
 	router.applyMiddleware(authProtectedGroup, MiddlewareConfig{RBAC: false, Audit: false, ResourceName: "auth"})
 	router.RegisterAuthProtectedRoutes(authProtectedGroup, authController)
 
 	userController := user.NewUserController(router.app.Store, router.app.Ctx, router.logger, router.cache)
-	userGroup := fuego.Group(server, apiV1.Path+"/user")
+	userGroup := fuego.Group(server, apiV1.Path+"/user", option.Tags("User"))
 	router.applyMiddleware(userGroup, MiddlewareConfig{RBAC: false, Audit: false, ResourceName: "user"})
 	router.RegisterUserRoutes(userGroup, userController)
 
 	domainController := domain.NewDomainsController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
-	domainGroup := fuego.Group(server, apiV1.Path+"/domain")
+	domainGroup := fuego.Group(server, apiV1.Path+"/domain", option.Tags("Domains"))
 	router.applyMiddleware(domainGroup, MiddlewareConfig{RBAC: true, FeatureFlag: "domain", Audit: true, ResourceName: "domain"})
 	router.RegisterDomainRoutes(domainGroup, domainController)
 
 	githubConnectorController := githubConnector.NewGithubConnectorController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
-	githubConnectorGroup := fuego.Group(server, apiV1.Path+"/github-connector")
+	githubConnectorGroup := fuego.Group(server, apiV1.Path+"/github-connector", option.Tags("GitHub Connector"))
 	router.applyMiddleware(githubConnectorGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "github_connector",
@@ -285,7 +290,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterGithubConnectorRoutes(githubConnectorGroup, githubConnectorController)
 
 	notifController := notificationController.NewNotificationController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
-	notificationGroup := fuego.Group(server, apiV1.Path+"/notification")
+	notificationGroup := fuego.Group(server, apiV1.Path+"/notification", option.Tags("Notifications"))
 	router.applyMiddleware(notificationGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "notifications",
@@ -295,7 +300,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterNotificationRoutes(notificationGroup, notifController)
 
 	fileManagerController := file_manager.NewFileManagerController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
-	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager")
+	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager", option.Tags("File Manager"))
 	fuego.Use(fileManagerGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(fileManagerGroup, MiddlewareConfig{
 		RBAC:         true,
@@ -305,7 +310,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterFileManagerRoutes(fileManagerGroup, fileManagerController)
 
-	deployGroup := fuego.Group(server, apiV1.Path+"/deploy")
+	deployGroup := fuego.Group(server, apiV1.Path+"/deploy", option.Tags("Deploy"))
 	router.applyMiddleware(deployGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "deploy",
@@ -315,18 +320,18 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterDeployRoutes(deployGroup, deployController)
 
 	auditController := audit.NewAuditController(router.app.Store.DB, router.app.Ctx, router.logger)
-	auditGroup := fuego.Group(server, apiV1.Path+"/audit")
+	auditGroup := fuego.Group(server, apiV1.Path+"/audit", option.Tags("Audit"))
 	router.applyMiddleware(auditGroup, MiddlewareConfig{RBAC: true, FeatureFlag: "audit", Audit: true, ResourceName: "audit"})
 	router.RegisterAuditRoutes(auditGroup, auditController)
 
 	updateService := update_service.NewUpdateService(router.app, &router.logger, router.app.Ctx)
 	updateController := update.NewUpdateController(updateService, &router.logger)
-	updateGroup := fuego.Group(server, apiV1.Path+"/update")
+	updateGroup := fuego.Group(server, apiV1.Path+"/update", option.Tags("Update"))
 	router.RegisterUpdateRoutes(updateGroup, updateController)
 
 	featureFlagController := router.createFeatureFlagController()
-	featureFlagReadGroup := fuego.Group(server, apiV1.Path+"/feature-flags")
-	featureFlagWriteGroup := fuego.Group(server, apiV1.Path+"/feature-flags")
+	featureFlagReadGroup := fuego.Group(server, apiV1.Path+"/feature-flags", option.Tags("Feature Flags"))
+	featureFlagWriteGroup := fuego.Group(server, apiV1.Path+"/feature-flags", option.Tags("Feature Flags"))
 	featureFlagMiddleware := MiddlewareConfig{RBAC: true, Audit: true, ResourceName: "feature_flags"}
 	router.applyMiddleware(featureFlagReadGroup, featureFlagMiddleware)
 	router.applyMiddleware(featureFlagWriteGroup, featureFlagMiddleware)
@@ -336,7 +341,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	if err != nil {
 		log.Fatalf("Failed to create container controller: %v", err)
 	}
-	containerGroup := fuego.Group(server, apiV1.Path+"/container")
+	containerGroup := fuego.Group(server, apiV1.Path+"/container", option.Tags("Containers"))
 	fuego.Use(containerGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(containerGroup, MiddlewareConfig{
 		RBAC:         true,
@@ -347,7 +352,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterContainerRoutes(containerGroup, containerController)
 
 	healthCheckController := healthcheck.NewHealthCheckController(router.app.Store, router.app.Ctx, router.logger)
-	healthCheckGroup := fuego.Group(server, apiV1.Path+"/healthcheck")
+	healthCheckGroup := fuego.Group(server, apiV1.Path+"/healthcheck", option.Tags("Health Checks"))
 	router.applyMiddleware(healthCheckGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "deploy",
@@ -357,7 +362,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterHealthCheckRoutes(healthCheckGroup, healthCheckController)
 
 	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, router.logger, config.AppConfig.Redis.URL)
-	extensionGroup := fuego.Group(server, apiV1.Path+"/extensions")
+	extensionGroup := fuego.Group(server, apiV1.Path+"/extensions", option.Tags("Extensions"))
 	router.applyMiddleware(extensionGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "extension",
@@ -369,7 +374,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	machineTimescaleStore, _ := machine_storage.NewTimescaleStore(router.app.Ctx, config.AppConfig.Timescale.URL)
 	machineController := machine_controller.NewMachineController(router.app.Store, router.app.Ctx, router.logger, machineTimescaleStore)
 
-	machinesGroup := fuego.Group(server, apiV1.Path+"/machines")
+	machinesGroup := fuego.Group(server, apiV1.Path+"/machines", option.Tags("Machines"))
 	router.applyMiddleware(machinesGroup, MiddlewareConfig{
 		RBAC:         true,
 		Audit:        true,
@@ -378,7 +383,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterMachinesRoutes(machinesGroup, machineController)
 	router.RegisterMachineRegistrationRoutes(machinesGroup, machineController)
 
-	machinesOpsGroup := fuego.Group(server, apiV1.Path+"/machines")
+	machinesOpsGroup := fuego.Group(server, apiV1.Path+"/machines", option.Tags("Machines"))
 	fuego.Use(machinesOpsGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(machinesOpsGroup, MiddlewareConfig{
 		RBAC:         true,
@@ -387,7 +392,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterMachineRoutes(machinesOpsGroup, machineController)
 
-	machinesBillingGroup := fuego.Group(server, apiV1.Path+"/machines")
+	machinesBillingGroup := fuego.Group(server, apiV1.Path+"/machines", option.Tags("Machines"))
 	fuego.Use(machinesBillingGroup, middleware.ServerIDMiddleware)
 	router.applyMiddleware(machinesBillingGroup, MiddlewareConfig{
 		RBAC:         false,
@@ -397,7 +402,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterMachineBillingRoutes(machinesBillingGroup, machineController)
 
 	trailController := machine_controller.NewTrailController(router.app.Store, router.app.Ctx, router.logger, router.cache)
-	trailGroup := fuego.Group(server, apiV1.Path+"/machines/trial")
+	trailGroup := fuego.Group(server, apiV1.Path+"/machines/trial", option.Tags("Machines"))
 	router.applyMiddleware(trailGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "trail",
@@ -407,7 +412,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterTrailRoutes(trailGroup, trailController)
 
 	mcpCtrl := mcpController.NewMCPController(router.app.Store, router.app.Ctx, router.logger)
-	mcpGroup := fuego.Group(server, apiV1.Path+"/mcp")
+	mcpGroup := fuego.Group(server, apiV1.Path+"/mcp", option.Tags("MCP"))
 	router.applyMiddleware(mcpGroup, MiddlewareConfig{
 		RBAC:         true,
 		FeatureFlag:  "mcp",

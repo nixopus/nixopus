@@ -28,8 +28,8 @@ type client struct {
 }
 
 type rateLimitResponse struct {
-	Status  string `json:"status"`
-	Message string `json:"message,omitempty"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
 func StartCleanupTask() {
@@ -103,12 +103,15 @@ func RateLimiter(next http.Handler) http.Handler {
 		if !allowed {
 			clientsMtx.Unlock()
 			fmt.Printf("Rate limit exceeded for IP: %s\n", ip)
-			message := rateLimitResponse{
-				Status:  "Request Failed",
-				Message: "The API is at capacity, try again later.",
-			}
+			w.Header().Set("Content-Type", "application/json")
+			w.Header().Set("X-RateLimit-Limit", "10")
+			w.Header().Set("X-RateLimit-Remaining", "0")
+			w.Header().Set("Retry-After", "1")
 			w.WriteHeader(http.StatusTooManyRequests)
-			json.NewEncoder(w).Encode(&message)
+			json.NewEncoder(w).Encode(&rateLimitResponse{
+				Code:    "rate_limited",
+				Message: "The API is at capacity, try again later.",
+			})
 			return
 		}
 
@@ -165,12 +168,15 @@ func NewRateLimiterWithConfig(rps float64, burst int) func(http.Handler) http.Ha
 
 			if !allowed {
 				rlMtx.Unlock()
-				msg := rateLimitResponse{
-					Status:  "Request Failed",
-					Message: "Too many requests, try again later.",
-				}
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("X-RateLimit-Limit", fmt.Sprintf("%d", burst))
+				w.Header().Set("X-RateLimit-Remaining", "0")
+				w.Header().Set("Retry-After", "1")
 				w.WriteHeader(http.StatusTooManyRequests)
-				json.NewEncoder(w).Encode(&msg)
+				json.NewEncoder(w).Encode(&rateLimitResponse{
+					Code:    "rate_limited",
+					Message: "Too many requests, try again later.",
+				})
 				return
 			}
 

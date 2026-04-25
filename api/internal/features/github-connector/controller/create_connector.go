@@ -18,8 +18,8 @@ func (c *GithubConnectorController) CreateGithubConnector(f fuego.ContextWithBod
 	}
 
 	w, r := f.Response(), f.Request()
-	if !c.parseAndValidate(w, r, &githubConnectorRequest) {
-		return nil, fuego.BadRequestError{Detail: "invalid request"}
+	if err := c.parseAndValidate(w, r, &githubConnectorRequest); err != nil {
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	user := utils.GetUser(w, r)

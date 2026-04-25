@@ -13,8 +13,9 @@ type jsonSuccessResponse struct {
 }
 
 type jsonErrorResponse struct {
-	Status string `json:"status"`
-	Error  string `json:"error,omitempty"`
+	Code    string            `json:"code"`
+	Message string            `json:"message"`
+	Details map[string]string `json:"details,omitempty"`
 }
 
 // SendJSONResponse writes a JSON response to the given http.ResponseWriter.
@@ -33,8 +34,8 @@ func SendJSONResponse(w http.ResponseWriter, status string, message string, data
 			log.Printf("Error marshaling response data: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			_ = json.NewEncoder(w).Encode(jsonErrorResponse{
-				Status: "error",
-				Error:  "failed to encode response data",
+				Code:    "internal_error",
+				Message: "failed to encode response data",
 			})
 			return
 		}
@@ -51,10 +52,31 @@ func SendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	response := jsonErrorResponse{
-		Status: "error",
-		Error:  message,
+		Code:    errorCodeFromStatus(statusCode),
+		Message: message,
 	}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Printf("Error encoding error response: %v", err)
+	}
+}
+
+func errorCodeFromStatus(statusCode int) string {
+	switch statusCode {
+	case 400:
+		return "invalid_request"
+	case 401:
+		return "unauthorized"
+	case 403:
+		return "forbidden"
+	case 404:
+		return "not_found"
+	case 409:
+		return "conflict"
+	case 422:
+		return "unprocessable_entity"
+	case 429:
+		return "rate_limited"
+	default:
+		return "internal_error"
 	}
 }

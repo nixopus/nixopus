@@ -17,40 +17,40 @@ type AuthResponse struct {
 
 // PASSWORDLESS AUTHENTICATION - Commented out password-based login request
 type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email    string `json:"email" validate:"required" description:"User email address" example:"user@example.com"`
+	Password string `json:"password" validate:"required" description:"User password" example:"P@ssw0rd!"`
 }
 
 // PASSWORDLESS AUTHENTICATION - Commented out password-based register request
 type RegisterRequest struct {
-	Username     string `json:"username"`
-	Email        string `json:"email"`
-	Password     string `json:"password"`
-	Type         string `json:"type"`
-	Organization string `json:"organization"`
+	Username     string `json:"username" validate:"required,max=50" description:"Username, max 50 characters, no spaces" example:"johndoe"`
+	Email        string `json:"email" validate:"required,email" description:"User email address" example:"user@example.com"`
+	Password     string `json:"password" validate:"required,min=8" description:"Password with min 8 chars, 1 number, 1 special char, 1 uppercase, 1 lowercase" example:"P@ssw0rd!"`
+	Type         string `json:"type" validate:"required" description:"User type" example:"admin"`
+	Organization string `json:"organization" validate:"required" description:"Organization name" example:"my-org"`
 }
 
 type UpdateUserRequest struct {
-	Username string `json:"username"`
-	Email    string `json:"email"`
-	Avatar   string `json:"avatar"`
-	Role     string `json:"role"`
+	Username string `json:"username" validate:"omitempty,max=50" description:"Updated username" example:"johndoe"`
+	Email    string `json:"email" validate:"omitempty,email" description:"Updated email address" example:"user@example.com"`
+	Avatar   string `json:"avatar" validate:"omitempty" description:"URL of user avatar image" example:"https://example.com/avatar.png"`
+	Role     string `json:"role" validate:"omitempty" description:"User role" example:"admin"`
 }
 
 type DeleteUserRequest struct {
-	Password string `json:"password"`
+	Password string `json:"password" validate:"required" description:"Current password for account deletion confirmation" example:"P@ssw0rd!"`
 }
 
 type ResetPasswordRequest struct {
-	Password string `json:"password"`
+	Password string `json:"password" validate:"required,min=8" description:"New password with min 8 chars, 1 number, 1 special char, 1 uppercase, 1 lowercase" example:"N3wP@ssw0rd!"`
 }
 
 type LogoutRequest struct {
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refresh_token" validate:"required" description:"Refresh token to revoke" example:"eyJhbGciOiJIUzI1NiIs..."`
 }
 
 type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refresh_token" validate:"required" description:"Refresh token to exchange for a new access token" example:"eyJhbGciOiJIUzI1NiIs..."`
 }
 
 type VerificationToken struct {
@@ -67,7 +67,7 @@ type TwoFactorSetupResponse struct {
 }
 
 type TwoFactorVerifyRequest struct {
-	Code string `json:"code"`
+	Code string `json:"code" validate:"required,len=6" description:"6-digit TOTP verification code" example:"123456"`
 }
 
 // PASSWORDLESS AUTHENTICATION - Commented out password-based 2FA login request

@@ -39,20 +39,18 @@ func NewGithubConnectorController(
 	}
 }
 
-func (c *GithubConnectorController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
+func (c *GithubConnectorController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) error {
 	user := utils.GetUser(w, r)
 
 	if user == nil {
 		c.logger.Log(logger.Error, shared_types.ErrFailedToGetUserFromContext.Error(), shared_types.ErrFailedToGetUserFromContext.Error())
-		utils.SendErrorResponse(w, shared_types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
-		return false
+		return shared_types.ErrFailedToGetUserFromContext
 	}
 
 	if err := c.validator.ValidateRequest(req); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return false
+		return err
 	}
 
-	return true
+	return nil
 }

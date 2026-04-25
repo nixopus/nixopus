@@ -2,17 +2,19 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
+	"github.com/go-fuego/fuego/option"
 	notificationController "github.com/nixopus/nixopus/api/internal/features/notification/controller"
 )
 
 // RegisterNotificationRoutes registers notification routes
 func (router *Router) RegisterNotificationRoutes(notificationGroup *fuego.Server, notificationController *notificationController.NotificationController) {
-	smtpGroup := fuego.Group(notificationGroup, "/smtp")
+	smtpGroup := fuego.Group(notificationGroup, "/smtp", option.Tags("Notifications"))
 	fuego.Post(
 		smtpGroup,
 		"",
 		notificationController.AddSmtp,
 		fuego.OptionSummary("Create SMTP config"),
+		fuego.OptionDefaultStatusCode(201),
 	)
 	fuego.Get(
 		smtpGroup,
@@ -34,8 +36,8 @@ func (router *Router) RegisterNotificationRoutes(notificationGroup *fuego.Server
 		fuego.OptionSummary("Delete SMTP config"),
 	)
 
-	preferenceGroup := fuego.Group(notificationGroup, "/preferences")
-	fuego.Post(
+	preferenceGroup := fuego.Group(notificationGroup, "/preferences", option.Tags("Notifications"))
+	fuego.Patch(
 		preferenceGroup,
 		"",
 		notificationController.UpdatePreference,
@@ -48,12 +50,13 @@ func (router *Router) RegisterNotificationRoutes(notificationGroup *fuego.Server
 		fuego.OptionSummary("Get notification preferences"),
 	)
 
-	webhookGroup := fuego.Group(notificationGroup, "/webhook")
+	webhookGroup := fuego.Group(notificationGroup, "/webhook", option.Tags("Notifications"))
 	fuego.Post(
 		webhookGroup,
 		"",
 		notificationController.CreateWebhookConfig,
 		fuego.OptionSummary("Create webhook config"),
+		fuego.OptionDefaultStatusCode(201),
 	)
 	fuego.Get(
 		webhookGroup,

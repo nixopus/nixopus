@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	cache "github.com/nixopus/nixopus/api/internal/cache"
@@ -36,34 +37,17 @@ func NewUserController(
 	}
 }
 
-// parseAndValidate parses and validates the request body.
-//
-// This method attempts to parse the request body into the provided 'req' interface
-// using the controller's validator. If parsing fails, an error response is sent
-// and the method returns false. It also validates the parsed request object and
-// returns false if validation fails. If both operations are successful, it returns true.
-//
-// Parameters:
-//
-//	w - the HTTP response writer to send error responses.
-//	r - the HTTP request containing the body to parse.
-//	req - the interface to populate with the parsed request body.
-//
-// Returns:
-//
-//	bool - true if parsing and validation succeed, false otherwise.
-func (c *UserController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
+func (c *UserController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) error {
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		return false
+		return errors.New("authentication required")
 	}
 
 	if err := c.validator.ValidateRequest(req, *user); err != nil {
 		c.logger.Log(logger.Error, err.Error(), err.Error())
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
-		return false
+		return err
 	}
 
-	return true
+	return nil
 }

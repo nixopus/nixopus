@@ -8,52 +8,52 @@ import (
 
 // CreateHealthCheckRequest represents a request to create a health check
 type CreateHealthCheckRequest struct {
-	ApplicationID    string            `json:"application_id" validate:"required,uuid"`
-	Endpoint         string            `json:"endpoint"`
-	Method           string            `json:"method"`
-	ExpectedStatus   []int             `json:"expected_status_codes,omitempty"`
-	TimeoutSeconds   int               `json:"timeout_seconds,omitempty"`
-	IntervalSeconds  int               `json:"interval_seconds,omitempty"`
-	FailureThreshold int               `json:"failure_threshold,omitempty"`
-	SuccessThreshold int               `json:"success_threshold,omitempty"`
-	Headers          map[string]string `json:"headers,omitempty"`
-	Body             string            `json:"body,omitempty"`
-	RetentionDays    int               `json:"retention_days,omitempty"`
+	ApplicationID    string            `json:"application_id" validate:"required,uuid" description:"ID of the application to monitor" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Endpoint         string            `json:"endpoint" description:"Health check endpoint path or URL. Defaults to /" example:"/health"`
+	Method           string            `json:"method" description:"HTTP method to use. Must be GET, POST, or HEAD. Defaults to GET" example:"GET"`
+	ExpectedStatus   []int             `json:"expected_status_codes,omitempty" description:"Expected HTTP status codes. Defaults to [200]"`
+	TimeoutSeconds   int               `json:"timeout_seconds,omitempty" validate:"omitempty,min=5,max=120" description:"Request timeout in seconds (5-120). Defaults to 30" example:"30"`
+	IntervalSeconds  int               `json:"interval_seconds,omitempty" validate:"omitempty,min=30,max=3600" description:"Check interval in seconds (30-3600). Defaults to 60" example:"60"`
+	FailureThreshold int               `json:"failure_threshold,omitempty" validate:"omitempty,min=1,max=10" description:"Consecutive failures before marking unhealthy (1-10). Defaults to 3" example:"3"`
+	SuccessThreshold int               `json:"success_threshold,omitempty" validate:"omitempty,min=1,max=10" description:"Consecutive successes before marking healthy (1-10). Defaults to 1" example:"1"`
+	Headers          map[string]string `json:"headers,omitempty" description:"Custom HTTP headers to include in health check requests"`
+	Body             string            `json:"body,omitempty" description:"Request body to send with health check requests"`
+	RetentionDays    int               `json:"retention_days,omitempty" validate:"omitempty,min=1,max=365" description:"Number of days to retain health check results (1-365). Defaults to 30" example:"30"`
 }
 
 // UpdateHealthCheckRequest represents a request to update a health check
 type UpdateHealthCheckRequest struct {
-	ApplicationID    string            `json:"application_id" validate:"required,uuid"`
-	Endpoint         string            `json:"endpoint,omitempty"`
-	Method           string            `json:"method,omitempty"`
-	ExpectedStatus   []int             `json:"expected_status_codes,omitempty"`
-	TimeoutSeconds   int               `json:"timeout_seconds,omitempty"`
-	IntervalSeconds  int               `json:"interval_seconds,omitempty"`
-	FailureThreshold int               `json:"failure_threshold,omitempty"`
-	SuccessThreshold int               `json:"success_threshold,omitempty"`
-	Headers          map[string]string `json:"headers,omitempty"`
-	Body             string            `json:"body,omitempty"`
-	RetentionDays    int               `json:"retention_days,omitempty"`
+	ApplicationID    string            `json:"application_id" validate:"required,uuid" description:"ID of the application to update health check for" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Endpoint         string            `json:"endpoint,omitempty" description:"Health check endpoint path or URL. Must start with /, http://, or https://" example:"/health"`
+	Method           string            `json:"method,omitempty" description:"HTTP method to use. Must be GET, POST, or HEAD" example:"GET"`
+	ExpectedStatus   []int             `json:"expected_status_codes,omitempty" description:"Expected HTTP status codes"`
+	TimeoutSeconds   int               `json:"timeout_seconds,omitempty" validate:"omitempty,min=5,max=120" description:"Request timeout in seconds (5-120)" example:"30"`
+	IntervalSeconds  int               `json:"interval_seconds,omitempty" validate:"omitempty,min=30,max=3600" description:"Check interval in seconds (30-3600)" example:"60"`
+	FailureThreshold int               `json:"failure_threshold,omitempty" validate:"omitempty,min=1,max=10" description:"Consecutive failures before marking unhealthy (1-10)" example:"3"`
+	SuccessThreshold int               `json:"success_threshold,omitempty" validate:"omitempty,min=1,max=10" description:"Consecutive successes before marking healthy (1-10)" example:"1"`
+	Headers          map[string]string `json:"headers,omitempty" description:"Custom HTTP headers to include in health check requests"`
+	Body             string            `json:"body,omitempty" description:"Request body to send with health check requests"`
+	RetentionDays    int               `json:"retention_days,omitempty" validate:"omitempty,min=1,max=365" description:"Number of days to retain health check results (1-365)" example:"30"`
 }
 
 // ToggleHealthCheckRequest represents a request to enable/disable a health check
 type ToggleHealthCheckRequest struct {
-	ApplicationID string `json:"application_id" validate:"required,uuid"`
-	Enabled       bool   `json:"enabled"`
+	ApplicationID string `json:"application_id" validate:"required,uuid" description:"ID of the application to toggle health check for" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Enabled       bool   `json:"enabled" description:"Whether the health check should be enabled"`
 }
 
 // GetHealthCheckResultsRequest represents a request to get health check results
 type GetHealthCheckResultsRequest struct {
-	ApplicationID string `json:"application_id" validate:"required,uuid"`
-	Limit         int    `json:"limit,omitempty"`
-	StartTime     string `json:"start_time,omitempty"`
-	EndTime       string `json:"end_time,omitempty"`
+	ApplicationID string `json:"application_id" validate:"required,uuid" description:"ID of the application to get results for" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Limit         int    `json:"limit,omitempty" validate:"omitempty,min=0,max=1000" description:"Maximum number of results to return (0-1000). Defaults to 100" example:"100"`
+	StartTime     string `json:"start_time,omitempty" description:"Filter results after this time (RFC 3339 format)" example:"2024-01-01T00:00:00Z"`
+	EndTime       string `json:"end_time,omitempty" description:"Filter results before this time (RFC 3339 format)" example:"2024-12-31T23:59:59Z"`
 }
 
 // GetHealthCheckStatsRequest represents a request to get health check statistics
 type GetHealthCheckStatsRequest struct {
-	ApplicationID string `json:"application_id" validate:"required,uuid"`
-	Period        string `json:"period,omitempty"`
+	ApplicationID string `json:"application_id" validate:"required,uuid" description:"ID of the application to get statistics for" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Period        string `json:"period,omitempty" description:"Time period for statistics aggregation" example:"24h"`
 }
 
 // Domain-specific errors

@@ -23,12 +23,12 @@ type CliInstallation struct {
 }
 
 type TrackInstallRequest struct {
-	EventType string `json:"event_type"`
-	OS        string `json:"os"`
-	Arch      string `json:"arch"`
-	Version   string `json:"version"`
-	Duration  int    `json:"duration"`
-	Error     string `json:"error,omitempty"`
+	EventType string `json:"event_type" validate:"required" description:"Type of installation event" example:"install_success"`
+	OS        string `json:"os" validate:"required" description:"Operating system identifier. Valid values: ubuntu, debian, centos, fedora, rhel, alpine, arch, opensuse, sles, amzn, ol, rocky, almalinux, raspbian, pop, mint, manjaro, kali, nixos, gentoo, void, slackware, clear-linux-os, unknown"`
+	Arch      string `json:"arch" validate:"required" description:"CPU architecture. Valid values: amd64, arm64, unknown"`
+	Version   string `json:"version" validate:"required" description:"Semantic version string (e.g. 1.2.3 or 1.2.3-beta.1)" example:"1.0.0"`
+	Duration  int    `json:"duration" validate:"min=0,max=7200" description:"Installation duration in seconds" example:"120"`
+	Error     string `json:"error,omitempty" validate:"max=200" description:"Error message if installation failed"`
 }
 
 type TrackInstallResponse struct {
