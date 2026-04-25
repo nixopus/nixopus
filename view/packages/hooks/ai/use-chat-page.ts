@@ -86,6 +86,14 @@ function modelsForProvider(agentModel: string): readonly { id: string; label: st
   return [{ id: agentModel, label: agentModel }, ...list];
 }
 
+/** When AGENT_MODEL is unset in .env, infer dropdown from LLM_PROVIDER (exposed in /api/config). */
+function modelsForLlmProvider(llmProvider: string): readonly { id: string; label: string }[] {
+  if (llmProvider === 'openrouter') return OPENROUTER_MODELS;
+  const list = PROVIDER_MODELS[llmProvider];
+  if (list) return list;
+  return OPENROUTER_MODELS;
+}
+
 export let AVAILABLE_MODELS: readonly { id: string; label: string }[] = OPENROUTER_MODELS;
 
 export type ModelId = string;
@@ -175,8 +183,10 @@ export function useChatPage(): UseChatPageReturn {
   useEffect(() => {
     Promise.all([getSelfHosted(), getAgentModels()]).then(([selfHosted, models]) => {
       setIsSelfHosted(selfHosted);
-      if (selfHosted && models.agentModel) {
-        const providerModels = modelsForProvider(models.agentModel);
+      if (selfHosted) {
+        const providerModels = models.agentModel
+          ? modelsForProvider(models.agentModel)
+          : modelsForLlmProvider(models.llmProvider);
         AVAILABLE_MODELS = providerModels;
         setAvailableModels(providerModels);
         setSelectedModel((prev) => {

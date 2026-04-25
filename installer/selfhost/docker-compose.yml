@@ -107,6 +107,7 @@ services:
       SELF_HOSTED: "true"
       AGENT_MODEL: "${AGENT_MODEL:-}"
       AGENT_LIGHT_MODEL: "${AGENT_LIGHT_MODEL:-}"
+      LLM_PROVIDER: "${LLM_PROVIDER:-openrouter}"
     networks:
       - nixopus-network
     depends_on:

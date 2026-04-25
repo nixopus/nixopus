@@ -29,7 +29,8 @@ export async function GET() {
     turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '',
     ...(isSelfHosted && {
       agentModel: process.env.AGENT_MODEL || '',
-      agentLightModel: process.env.AGENT_LIGHT_MODEL || ''
+      agentLightModel: process.env.AGENT_LIGHT_MODEL || '',
+      llmProvider: process.env.LLM_PROVIDER || 'openrouter'
     })
   });
   response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
