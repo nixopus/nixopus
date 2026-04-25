@@ -69,8 +69,7 @@ import {
   useChatPage,
   useChatMessagesScroll,
   useContextSearch,
-  formatTime,
-  AVAILABLE_MODELS
+  formatTime
 } from '@/packages/hooks/ai/use-chat-page';
 
 function ChatMentionSuggestions({
@@ -469,6 +468,7 @@ export function ChatPage() {
                 onAutoRunToolsChange={page.setAutoRunTools}
                 selectedModel={page.selectedModel}
                 onModelChange={page.setSelectedModel}
+                availableModels={page.availableModels}
                 onAddContext={page.addContext}
                 onRemoveContext={page.removeContext}
                 onSubmit={page.handleSubmit}
@@ -492,6 +492,7 @@ export function ChatPage() {
             onAutoRunToolsChange={page.setAutoRunTools}
             selectedModel={page.selectedModel}
             onModelChange={page.setSelectedModel}
+            availableModels={page.availableModels}
             onAddContext={page.addContext}
             onRemoveContext={page.removeContext}
             onSubmit={handleWelcomeSubmit}
@@ -604,6 +605,7 @@ interface ChatWelcomeViewProps {
   onAutoRunToolsChange: (value: boolean) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
+  availableModels: readonly { id: string; label: string }[];
   onAddContext: (ctx: ChatContext) => void;
   onRemoveContext: (ctx: ChatContext) => void;
   onSubmit: (e?: React.FormEvent) => void;
@@ -624,6 +626,7 @@ function ChatWelcomeView({
   onAutoRunToolsChange,
   selectedModel,
   onModelChange,
+  availableModels,
   onAddContext,
   onRemoveContext,
   onSubmit,
@@ -644,7 +647,7 @@ function ChatWelcomeView({
     onKeyDown
   });
   const currentModelLabel =
-    AVAILABLE_MODELS.find((m) => m.id === selectedModel)?.label ?? selectedModel;
+    availableModels.find((m) => m.id === selectedModel)?.label ?? selectedModel;
 
   const suggestions = showGuidedPrefillHint
     ? [
@@ -718,7 +721,7 @@ function ChatWelcomeView({
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-52">
-                    {AVAILABLE_MODELS.map((model) => (
+                    {availableModels.map((model) => (
                       <DropdownMenuItem
                         key={model.id}
                         onClick={() => onModelChange(model.id)}
@@ -1258,6 +1261,7 @@ interface ChatInputProps {
   onAutoRunToolsChange: (value: boolean) => void;
   selectedModel: string;
   onModelChange: (model: string) => void;
+  availableModels: readonly { id: string; label: string }[];
   onAddContext: (ctx: ChatContext) => void;
   onRemoveContext: (ctx: ChatContext) => void;
   onSubmit: (e?: React.FormEvent) => void;
@@ -1277,6 +1281,7 @@ function ChatInput({
   onAutoRunToolsChange,
   selectedModel,
   onModelChange,
+  availableModels,
   onAddContext,
   onRemoveContext,
   onSubmit,
@@ -1295,7 +1300,7 @@ function ChatInput({
     onKeyDown
   });
   const currentModelLabel =
-    AVAILABLE_MODELS.find((m) => m.id === selectedModel)?.label ?? selectedModel;
+    availableModels.find((m) => m.id === selectedModel)?.label ?? selectedModel;
 
   return (
     <div className="shrink-0 border-t border-border/50 bg-background/80 backdrop-blur-sm p-4">
@@ -1339,7 +1344,7 @@ function ChatInput({
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-52">
-              {AVAILABLE_MODELS.map((model) => (
+              {availableModels.map((model) => (
                 <DropdownMenuItem
                   key={model.id}
                   onClick={() => onModelChange(model.id)}
