@@ -8323,6 +8323,31 @@
 				},
 				"type": "object"
 			},
+			"RenameMachineRequest": {
+				"description": "RenameMachineRequest schema",
+				"properties": {
+					"name": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"name"
+				],
+				"type": "object"
+			},
+			"RenameMachineResponse": {
+				"description": "RenameMachineResponse schema",
+				"properties": {
+					"id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"name": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"Response": {
 				"description": "Response schema",
 				"properties": {
@@ -10059,6 +10084,9 @@
 			"VerifyMachineResponse": {
 				"description": "VerifyMachineResponse schema",
 				"properties": {
+					"is_active": {
+						"type": "boolean"
+					},
 					"status": {
 						"type": "string"
 					}
@@ -15346,26 +15374,6 @@
 						},
 						"description": "Bad Request _(validation or deserialization error)_"
 					},
-					"401": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Unauthorized"
-					},
-					"403": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Forbidden - application belongs to another organization"
-					},
 					"500": {
 						"content": {
 							"application/json": {
@@ -15419,7 +15427,6 @@
 						"name": "deployment_id",
 						"required": true,
 						"schema": {
-							"format": "uuid",
 							"type": "string"
 						}
 					}
@@ -15472,36 +15479,6 @@
 							}
 						},
 						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"401": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Unauthorized"
-					},
-					"403": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Forbidden - deployment belongs to another organization"
-					},
-					"404": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Deployment not found"
 					},
 					"500": {
 						"content": {
@@ -15557,7 +15534,6 @@
 						"name": "deployment_id",
 						"required": true,
 						"schema": {
-							"format": "uuid",
 							"type": "string"
 						}
 					}
@@ -15612,36 +15588,6 @@
 							}
 						},
 						"description": "Bad Request _(validation or deserialization error)_"
-					},
-					"401": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Unauthorized"
-					},
-					"403": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Forbidden - deployment belongs to another organization"
-					},
-					"404": {
-						"content": {
-							"application/json": {
-								"schema": {
-									"$ref": "#/components/schemas/ErrorEnvelope"
-								}
-							}
-						},
-						"description": "Deployment not found"
 					},
 					"500": {
 						"content": {
@@ -21876,6 +21822,126 @@
 				]
 			}
 		},
+		"/api/v1/machines/{id}/rename": {
+			"patch": {
+				"description": "Rename a machine.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "renameAMachine",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"name": "string"
+							},
+							"schema": {
+								"$ref": "#/components/schemas/RenameMachineRequest"
+							}
+						}
+					},
+					"description": "Request body for types.RenameMachineRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"id": "00000000-0000-0000-0000-000000000000",
+									"name": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/RenameMachineResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"id": "00000000-0000-0000-0000-000000000000",
+									"name": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/RenameMachineResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Rename a machine",
+				"tags": [
+					"{id}",
+					"api/v1/machines"
+				]
+			}
+		},
 		"/api/v1/machines/{id}/set-default": {
 			"put": {
 				"description": "Set machine as org default.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
@@ -22116,6 +22182,7 @@
 						"content": {
 							"application/json": {
 								"example": {
+									"is_active": true,
 									"status": "string"
 								},
 								"schema": {
@@ -22124,6 +22191,7 @@
 							},
 							"application/xml": {
 								"example": {
+									"is_active": true,
 									"status": "string"
 								},
 								"schema": {
