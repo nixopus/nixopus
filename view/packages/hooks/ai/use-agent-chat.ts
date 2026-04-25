@@ -42,6 +42,7 @@ export interface ChatMessage {
   contexts?: ChatContext[];
   kind?: 'status';
   usage?: TokenUsage;
+  errorKind?: 'rate-limited' | 'generic-error';
 }
 
 interface UseAgentChatOptions {
@@ -342,7 +343,17 @@ export function useAgentChat({
         if (err instanceof Error && err.name === 'AbortError') return;
         const errorMessage =
           err instanceof Error ? err.message : 'Failed to get response from AI agent';
-        chatStreamStore.finishStream(threadId, errorMessage);
+        const isRateLimit =
+          err instanceof Error &&
+          (err.message.includes('429') ||
+            err.message.toLowerCase().includes('quota') ||
+            err.message.toLowerCase().includes('resource_exhausted') ||
+            err.message.toLowerCase().includes('rate limit'));
+        chatStreamStore.finishStream(
+          threadId,
+          errorMessage,
+          isRateLimit ? 'rate-limited' : 'generic-error'
+        );
         return;
       }
       chatStreamStore.finishStream(threadId);

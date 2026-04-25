@@ -14,6 +14,11 @@
       "placeholder": "എന്തെങ്കിലും ചോദിക്കുക...",
       "hint": "അയയ്ക്കാൻ Enter അമർത്തുക, പുതിയ വരിയിലേക്ക് Shift + Enter"
     },
+    "rateLimitError": {
+      "title": "AI പ്രൊവൈഡർ നിരക്ക് പരിധി കഴിഞ്ഞു",
+      "description": "AI മോഡലിന്റെ ക്വോട്ട തീർന്നു. ഇത് പ്രൊവൈഡറിന്റെ പരിമിതിയാണ്, Nixopus ന്റെ പ്രശ്നമല്ല. ഒരു നിമിഷം കാത്തിരുന്ന് വീണ്ടും ശ്രമിക്കുക, അല്ലെങ്കിൽ മറ്റൊരു മോഡൽ തിരഞ്ഞെടുക്കുക.",
+      "action": "മറ്റൊരു മോഡൽ ശ്രമിക്കുക"
+    },
     "guidedPrefill": {
       "defaultPrompt": "I am new to Nixopus. Use this sample repository to guide me step by step: what Nixopus does, how deployments work, and what I can do next.",
       "helperText": "Starter prompt loaded - edit before sending.",

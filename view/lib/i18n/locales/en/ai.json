@@ -65,6 +65,11 @@
         "label": "nixopus/sample-app"
       }
     },
+    "rateLimitError": {
+      "title": "AI provider rate limit reached",
+      "description": "The AI model's quota has been exhausted. This is a provider limitation — not an issue with Nixopus. Please wait a moment and try again, or switch to a different model.",
+      "action": "Try a different model"
+    },
     "threads": {
       "newChat": "New Chat",
       "recentChats": "Recent Chats",
