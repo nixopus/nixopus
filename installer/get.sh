@@ -772,6 +772,13 @@ CADDY
 
 write_files() {
     write_env
+    umask 077
+    {
+        echo "AGENT_MODEL=${AGENT_MODEL:-}"
+        echo "AGENT_LIGHT_MODEL=${AGENT_LIGHT_MODEL:-}"
+        echo "LLM_PROVIDER=${LLM_PROVIDER:-openrouter}"
+    } >"$NIXOPUS_HOME/view-llm.env"
+    chmod 600 "$NIXOPUS_HOME/view-llm.env" 2>/dev/null || true
     copy_compose
     write_caddyfile
     log_ok "Config, Compose, and Caddyfile written to $NIXOPUS_HOME"

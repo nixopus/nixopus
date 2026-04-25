@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
+/** Bracket access avoids build-time inlining of empty process.env in standalone output. */
+function runtimeEnv(name: 'AGENT_MODEL' | 'AGENT_LIGHT_MODEL' | 'LLM_PROVIDER'): string {
+  return process.env[name] ?? '';
+}
+
 function deriveUrls(apiUrl: string) {
   const base = apiUrl.replace(/\/api\/?$/, '');
   const wsScheme = base.startsWith('https') ? 'wss' : 'ws';
@@ -28,9 +35,9 @@ export async function GET() {
     posthogHost: process.env.POSTHOG_HOST || '',
     turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '',
     ...(isSelfHosted && {
-      agentModel: process.env.AGENT_MODEL || '',
-      agentLightModel: process.env.AGENT_LIGHT_MODEL || '',
-      llmProvider: process.env.LLM_PROVIDER || 'openrouter'
+      agentModel: runtimeEnv('AGENT_MODEL'),
+      agentLightModel: runtimeEnv('AGENT_LIGHT_MODEL'),
+      llmProvider: runtimeEnv('LLM_PROVIDER') || 'openrouter'
     })
   });
   response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');

@@ -97,6 +97,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    env_file:
+      - view-llm.env
     environment:
       HOSTNAME: "0.0.0.0"
       PORT: "7443"
@@ -105,9 +107,6 @@ services:
       NEXT_PUBLIC_PORT: "7443"
       PASSWORD_LOGIN_ENABLED: "true"
       SELF_HOSTED: "true"
-      AGENT_MODEL: "${AGENT_MODEL:-}"
-      AGENT_LIGHT_MODEL: "${AGENT_LIGHT_MODEL:-}"
-      LLM_PROVIDER: "${LLM_PROVIDER:-openrouter}"
     networks:
       - nixopus-network
     depends_on:
