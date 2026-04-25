@@ -584,35 +584,39 @@ gather_config() {
             [ -n "${GROQ_API_KEY:-}" ] && { _key_count=$((_key_count+1)); _inferred=groq; }
             if [ "$_key_count" -eq 1 ] && [ -n "${_inferred:-}" ]; then
                 LLM_PROVIDER="${_inferred}"
-            else
-                LLM_PROVIDER="${LLM_PROVIDER:-openrouter}"
             fi
-            case "${LLM_PROVIDER}" in
-                openrouter)
-                    AGENT_MODEL="${AGENT_MODEL:-openrouter/anthropic/claude-sonnet-4}"
-                    AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-openrouter/openai/gpt-4o-mini}"
-                    ;;
-                openai)
-                    AGENT_MODEL="${AGENT_MODEL:-openai/gpt-4o}"
-                    AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-openai/gpt-4o-mini}"
-                    ;;
-                anthropic)
-                    AGENT_MODEL="${AGENT_MODEL:-anthropic/claude-sonnet-4}"
-                    AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-anthropic/claude-haiku-3.5}"
-                    ;;
-                google)
-                    AGENT_MODEL="${AGENT_MODEL:-google/gemini-2.5-flash}"
-                    AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-google/gemini-2.0-flash}"
-                    ;;
-                deepseek)
-                    AGENT_MODEL="${AGENT_MODEL:-deepseek/deepseek-chat}"
-                    AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-deepseek/deepseek-chat}"
-                    ;;
-                groq)
-                    AGENT_MODEL="${AGENT_MODEL:-groq/llama-3.3-70b-versatile}"
-                    AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-groq/llama-3.3-70b-versatile}"
-                    ;;
-            esac
+            # Only set models if LLM_PROVIDER is set and recognized
+            if [ -n "${LLM_PROVIDER:-}" ]; then
+                case "${LLM_PROVIDER}" in
+                    openrouter)
+                        AGENT_MODEL="${AGENT_MODEL:-openrouter/anthropic/claude-sonnet-4}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-openrouter/openai/gpt-4o-mini}"
+                        ;;
+                    openai)
+                        AGENT_MODEL="${AGENT_MODEL:-openai/gpt-4o}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-openai/gpt-4o-mini}"
+                        ;;
+                    anthropic)
+                        AGENT_MODEL="${AGENT_MODEL:-anthropic/claude-sonnet-4}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-anthropic/claude-haiku-3.5}"
+                        ;;
+                    google)
+                        AGENT_MODEL="${AGENT_MODEL:-google/gemini-2.5-flash}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-google/gemini-2.0-flash}"
+                        ;;
+                    deepseek)
+                        AGENT_MODEL="${AGENT_MODEL:-deepseek/deepseek-chat}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-deepseek/deepseek-chat}"
+                        ;;
+                    groq)
+                        AGENT_MODEL="${AGENT_MODEL:-groq/llama-3.3-70b-versatile}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-groq/llama-3.3-70b-versatile}"
+                        ;;
+                    *)
+                        log_warn "Unsupported LLM_PROVIDER: ${LLM_PROVIDER} — skipping model defaults"
+                        ;;
+                esac
+            fi
         fi
     fi
 
