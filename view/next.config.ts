@@ -1,6 +1,11 @@
 import type { NextConfig } from 'next';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const nextConfigDir = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: nextConfigDir,
   output: 'standalone',
   transpilePackages: [],
   basePath: process.env.BASE_PATH || '',

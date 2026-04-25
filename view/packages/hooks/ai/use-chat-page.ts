@@ -18,7 +18,7 @@ import {
   useChatContextProviders
 } from './chat-context';
 import { useMemorySearch, type MemorySearchResult } from './use-memory-search';
-import { getSelfHosted } from '@/redux/conf';
+import { getSelfHosted, getAgentModels } from '@/redux/conf';
 import { useGetAllGithubConnectorQuery } from '@/redux/services/connector/githubConnectorApi';
 import { useGetApplicationsQuery } from '@/redux/services/deploy/applicationsApi';
 import { useGetServersQuery } from '@/redux/services/servers/serversApi';
@@ -47,7 +47,7 @@ function useLocalStorageState(key: string, defaultValue: boolean) {
   return [value, setValue] as const;
 }
 
-export const AVAILABLE_MODELS = [
+export const OPENROUTER_MODELS: readonly { id: string; label: string }[] = [
   { id: 'openrouter/anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
   { id: 'openrouter/anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
   { id: 'openrouter/anthropic/claude-3.7-sonnet', label: 'Claude 3.7 Sonnet' },
@@ -55,9 +55,48 @@ export const AVAILABLE_MODELS = [
   { id: 'openrouter/openai/gpt-4.1-mini', label: 'GPT-4.1 Mini' },
   { id: 'openrouter/openai/gpt-4o-mini', label: 'GPT-4o Mini' },
   { id: 'openrouter/google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' }
-] as const;
+];
 
-export type ModelId = (typeof AVAILABLE_MODELS)[number]['id'];
+const PROVIDER_MODELS: Record<string, readonly { id: string; label: string }[]> = {
+  openai: [
+    { id: 'openai/gpt-4.1', label: 'GPT-4.1' },
+    { id: 'openai/gpt-4.1-mini', label: 'GPT-4.1 Mini' },
+    { id: 'openai/gpt-4o', label: 'GPT-4o' },
+    { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini' }
+  ],
+  anthropic: [
+    { id: 'anthropic/claude-sonnet-4', label: 'Claude Sonnet 4' },
+    { id: 'anthropic/claude-haiku-3.5', label: 'Claude Haiku 3.5' }
+  ],
+  google: [
+    { id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+    { id: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+    { id: 'google/gemini-2.0-flash', label: 'Gemini 2.0 Flash' }
+  ],
+  deepseek: [{ id: 'deepseek/deepseek-chat', label: 'DeepSeek Chat' }],
+  groq: [{ id: 'groq/llama-3.3-70b-versatile', label: 'Llama 3.3 70B' }]
+};
+
+function modelsForProvider(agentModel: string): readonly { id: string; label: string }[] {
+  const provider = agentModel.split('/')[0];
+  if (provider === 'openrouter') return OPENROUTER_MODELS;
+  const list = PROVIDER_MODELS[provider];
+  if (!list) return [{ id: agentModel, label: agentModel }];
+  if (list.some((m) => m.id === agentModel)) return list;
+  return [{ id: agentModel, label: agentModel }, ...list];
+}
+
+/** When AGENT_MODEL is unset in .env, infer dropdown from LLM_PROVIDER (exposed in /api/config). */
+function modelsForLlmProvider(llmProvider: string): readonly { id: string; label: string }[] {
+  if (llmProvider === 'openrouter') return OPENROUTER_MODELS;
+  const list = PROVIDER_MODELS[llmProvider];
+  if (list) return list;
+  return OPENROUTER_MODELS;
+}
+
+export let AVAILABLE_MODELS: readonly { id: string; label: string }[] = OPENROUTER_MODELS;
+
+export type ModelId = string;
 
 export interface UseChatPageReturn {
   selectedContexts: ChatContext[];
@@ -67,6 +106,7 @@ export interface UseChatPageReturn {
   setAutoRunTools: (value: boolean) => void;
   selectedModel: string;
   setSelectedModel: (model: string) => void;
+  availableModels: readonly { id: string; label: string }[];
   isSelfHosted: boolean;
   contextProviders: ContextProviderData[];
   handleNewChat: () => void;
@@ -111,6 +151,8 @@ export function useChatPage(): UseChatPageReturn {
 
   const [selectedContexts, setSelectedContexts] = useState<ChatContext[]>([]);
   const [autoRunTools, setAutoRunTools] = useLocalStorageState('chat_auto_run_tools', true);
+  const [availableModels, setAvailableModels] =
+    useState<readonly { id: string; label: string }[]>(AVAILABLE_MODELS);
   const [selectedModel, setSelectedModel] = useState<string>(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('chat_selected_model') || AVAILABLE_MODELS[0].id;
@@ -139,7 +181,20 @@ export function useChatPage(): UseChatPageReturn {
   const [showGuidedPrefillHint, setShowGuidedPrefillHint] = useState(false);
 
   useEffect(() => {
-    getSelfHosted().then(setIsSelfHosted);
+    Promise.all([getSelfHosted(), getAgentModels()]).then(([selfHosted, models]) => {
+      setIsSelfHosted(selfHosted);
+      if (selfHosted) {
+        const providerModels = models.agentModel
+          ? modelsForProvider(models.agentModel)
+          : modelsForLlmProvider(models.llmProvider);
+        AVAILABLE_MODELS = providerModels;
+        setAvailableModels(providerModels);
+        setSelectedModel((prev) => {
+          if (providerModels.some((m) => m.id === prev)) return prev;
+          return providerModels[0]?.id ?? prev;
+        });
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -347,6 +402,7 @@ export function useChatPage(): UseChatPageReturn {
     setAutoRunTools,
     selectedModel,
     setSelectedModel,
+    availableModels,
     isSelfHosted,
     contextProviders,
     handleNewChat,

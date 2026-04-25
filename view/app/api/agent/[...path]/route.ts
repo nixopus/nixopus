@@ -31,12 +31,14 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
   const accept = req.headers.get('accept');
   const orgId = req.headers.get('x-organization-id');
   const appId = req.headers.get('x-application-id');
+  const modelId = req.headers.get('x-model-id');
   if (authorization) headers.set('Authorization', authorization);
   if (contentType) headers.set('Content-Type', contentType);
   if (cookie) headers.set('Cookie', cookie);
   if (accept) headers.set('Accept', accept);
   if (orgId) headers.set('X-Organization-Id', orgId);
   if (appId) headers.set('X-Application-Id', appId);
+  if (modelId) headers.set('X-Model-Id', modelId);
 
   const init: RequestInit = {
     method: req.method,

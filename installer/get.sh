@@ -527,6 +527,8 @@ gather_config() {
             1|openrouter|"")
                 LLM_PROVIDER="openrouter"
                 prompt_if_tty OPENROUTER_API_KEY "OpenRouter API key (https://openrouter.ai)" ""
+                AGENT_MODEL="${AGENT_MODEL:-openrouter/anthropic/claude-sonnet-4}"
+                AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-openrouter/openai/gpt-4o-mini}"
                 ;;
             2|openai)
                 LLM_PROVIDER="openai"
@@ -562,8 +564,60 @@ gather_config() {
                 log_warn "Unknown provider '$LLM_PROVIDER', defaulting to OpenRouter"
                 LLM_PROVIDER="openrouter"
                 prompt_if_tty OPENROUTER_API_KEY "OpenRouter API key (https://openrouter.ai)" ""
+                AGENT_MODEL="${AGENT_MODEL:-openrouter/anthropic/claude-sonnet-4}"
+                AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-openrouter/openai/gpt-4o-mini}"
                 ;;
         esac
+    fi
+
+    # Non-TTY / pre-seeded keys skip the menu above, so AGENT_MODEL may be empty
+    # even when a provider key is set. OpenRouter was also missing defaults in the
+    # interactive case until the previous block. Infer provider from keys.
+    if has_any_llm_key; then
+        if [ -z "${AGENT_MODEL:-}" ] || [ -z "${AGENT_LIGHT_MODEL:-}" ]; then
+            _key_count=0
+            [ -n "${OPENROUTER_API_KEY:-}" ] && { _key_count=$((_key_count+1)); _inferred=openrouter; }
+            [ -n "${OPENAI_API_KEY:-}" ] && { _key_count=$((_key_count+1)); _inferred=openai; }
+            [ -n "${ANTHROPIC_API_KEY:-}" ] && { _key_count=$((_key_count+1)); _inferred=anthropic; }
+            [ -n "${GOOGLE_GENERATIVE_AI_API_KEY:-}" ] && { _key_count=$((_key_count+1)); _inferred=google; }
+            [ -n "${DEEPSEEK_API_KEY:-}" ] && { _key_count=$((_key_count+1)); _inferred=deepseek; }
+            [ -n "${GROQ_API_KEY:-}" ] && { _key_count=$((_key_count+1)); _inferred=groq; }
+            if [ "$_key_count" -eq 1 ] && [ -n "${_inferred:-}" ]; then
+                LLM_PROVIDER="${_inferred}"
+            fi
+            # Only set models if LLM_PROVIDER is set and recognized
+            if [ -n "${LLM_PROVIDER:-}" ]; then
+                case "${LLM_PROVIDER}" in
+                    openrouter)
+                        AGENT_MODEL="${AGENT_MODEL:-openrouter/anthropic/claude-sonnet-4}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-openrouter/openai/gpt-4o-mini}"
+                        ;;
+                    openai)
+                        AGENT_MODEL="${AGENT_MODEL:-openai/gpt-4o}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-openai/gpt-4o-mini}"
+                        ;;
+                    anthropic)
+                        AGENT_MODEL="${AGENT_MODEL:-anthropic/claude-sonnet-4}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-anthropic/claude-haiku-3.5}"
+                        ;;
+                    google)
+                        AGENT_MODEL="${AGENT_MODEL:-google/gemini-2.5-flash}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-google/gemini-2.0-flash}"
+                        ;;
+                    deepseek)
+                        AGENT_MODEL="${AGENT_MODEL:-deepseek/deepseek-chat}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-deepseek/deepseek-chat}"
+                        ;;
+                    groq)
+                        AGENT_MODEL="${AGENT_MODEL:-groq/llama-3.3-70b-versatile}"
+                        AGENT_LIGHT_MODEL="${AGENT_LIGHT_MODEL:-groq/llama-3.3-70b-versatile}"
+                        ;;
+                    *)
+                        log_warn "Unsupported LLM_PROVIDER: ${LLM_PROVIDER} — skipping model defaults"
+                        ;;
+                esac
+            fi
+        fi
     fi
 
     if ! has_any_llm_key; then
@@ -722,6 +776,13 @@ CADDY
 
 write_files() {
     write_env
+    umask 077
+    {
+        echo "AGENT_MODEL=${AGENT_MODEL:-}"
+        echo "AGENT_LIGHT_MODEL=${AGENT_LIGHT_MODEL:-}"
+        echo "LLM_PROVIDER=${LLM_PROVIDER:-openrouter}"
+    } >"$NIXOPUS_HOME/view-llm.env"
+    chmod 600 "$NIXOPUS_HOME/view-llm.env" 2>/dev/null || true
     copy_compose
     write_caddyfile
     log_ok "Config, Compose, and Caddyfile written to $NIXOPUS_HOME"

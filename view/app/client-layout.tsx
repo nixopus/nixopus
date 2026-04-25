@@ -123,6 +123,15 @@ const AppShellSkeleton = () => (
   </div>
 );
 
+const PUBLIC_ROUTES = [
+  '/login',
+  '/register',
+  '/auth',
+  '/reset-password',
+  '/verify-email',
+  '/auth/organization-invite'
+] as const;
+
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
@@ -143,14 +152,6 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isInitialized, user } = authState;
   const [isLoading, setIsLoading] = useState(true);
 
-  const PUBLIC_ROUTES = [
-    '/login',
-    '/register',
-    '/auth',
-    '/reset-password',
-    '/verify-email',
-    '/auth/organization-invite'
-  ];
   const isPublicRoute = useMemo(
     () => PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + '/')),
     [pathname]

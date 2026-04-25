@@ -97,6 +97,8 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    env_file:
+      - view-llm.env
     environment:
       HOSTNAME: "0.0.0.0"
       PORT: "7443"

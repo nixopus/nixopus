@@ -28,7 +28,23 @@ compose_files() {
     echo "$args"
 }
 
-dc() { load_env; docker compose $(compose_files) --env-file "$NIXOPUS_HOME/.env" "$@"; }
+# nixopus-view loads agent model IDs from view-llm.env (env_file) so values match
+# on-disk .env. Compose "environment: AGENT_MODEL: ${...}" is interpolated in the
+# shell that runs compose and can be empty even when .env is correct, which hid the
+# models from the Next /api/config route.
+sync_view_llm_env() {
+    [ -f "$NIXOPUS_HOME/.env" ] || return 0
+    load_env
+    umask 077
+    {
+        echo "AGENT_MODEL=${AGENT_MODEL:-}"
+        echo "AGENT_LIGHT_MODEL=${AGENT_LIGHT_MODEL:-}"
+        echo "LLM_PROVIDER=${LLM_PROVIDER:-openrouter}"
+    } >"$NIXOPUS_HOME/view-llm.env"
+    chmod 600 "$NIXOPUS_HOME/view-llm.env" 2>/dev/null || true
+}
+
+dc() { load_env; sync_view_llm_env; docker compose $(compose_files) --env-file "$NIXOPUS_HOME/.env" "$@"; }
 
 sedi() {
     if sed --version 2>/dev/null | grep -q GNU; then
@@ -121,6 +137,8 @@ cmd_config() {
             fi
             echo "Set $key"
         done
+        load_env
+        sync_view_llm_env
         echo "Restart services for changes to take effect: nixopus restart"
         return
     fi
