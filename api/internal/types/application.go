@@ -208,11 +208,12 @@ func IsValidBuildPack(bp string) bool {
 type Source string
 
 const (
-	SourceGithub   Source = "github"
-	SourceS3       Source = "s3"
-	SourceZip      Source = "zip"
-	SourceStaging  Source = "staging"
-	SourceTemplate Source = "template"
+	SourceGithub    Source = "github"
+	SourceS3        Source = "s3"
+	SourceZip       Source = "zip"
+	SourceStaging   Source = "staging"
+	SourceTemplate  Source = "template"
+	SourcePublicGit Source = "public_git"
 )
 
 type DeploymentRequestConfig struct {

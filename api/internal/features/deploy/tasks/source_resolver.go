@@ -10,6 +10,7 @@ import (
 
 	"github.com/nixopus/nixopus/api/internal/config"
 	s3store "github.com/nixopus/nixopus/api/internal/features/deploy/s3"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/nixopus/nixopus/api/internal/utils"
 	"github.com/pkg/sftp"
@@ -181,6 +182,49 @@ func (r *ZipSourceResolver) Resolve(ctx context.Context, config SourceResolveCon
 	return "", fmt.Errorf("ZIP source resolver not yet implemented")
 }
 
+type PublicGitSourceResolver struct {
+	task *TaskService
+}
+
+func (r *PublicGitSourceResolver) Resolve(ctx context.Context, cfg SourceResolveConfig) (string, error) {
+	app := cfg.Application
+	repoURL := app.Repository
+	branch := app.Branch
+
+	if repoURL == "" || !strings.HasPrefix(repoURL, "https://") {
+		return "", fmt.Errorf("public_git source requires a valid HTTPS repository URL, got: %q", repoURL)
+	}
+
+	orgCtx := context.WithValue(ctx, shared_types.OrganizationIDKey, app.OrganizationID.String())
+
+	stagingPath := filepath.Join(
+		"/var/nixopus/repos",
+		app.UserID.String(),
+		string(app.Environment),
+		app.ID.String(),
+	)
+
+	sshManager, err := ssh.GetSSHManagerFromContext(orgCtx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get SSH manager: %w", err)
+	}
+
+	cloneCmd := "rm -rf " + utils.ShellQuote(stagingPath) +
+		" && mkdir -p " + utils.ShellQuote(filepath.Dir(stagingPath)) +
+		" && git clone --depth 1"
+	if branch != "" {
+		cloneCmd += " --single-branch -b " + utils.ShellQuote(branch)
+	}
+	cloneCmd += " " + utils.ShellQuote(repoURL) + " " + utils.ShellQuote(stagingPath)
+
+	output, err := sshManager.RunCommand(cloneCmd)
+	if err != nil {
+		return "", fmt.Errorf("git clone failed for %s: %s, output: %s", repoURL, err.Error(), output)
+	}
+
+	return stagingPath, nil
+}
+
 func (t *TaskService) GetSourceResolver(source shared_types.Source) SourceResolver {
 	switch source {
 	case shared_types.SourceS3:
@@ -191,6 +235,8 @@ func (t *TaskService) GetSourceResolver(source shared_types.Source) SourceResolv
 		return &StagingSourceResolver{}
 	case shared_types.SourceTemplate:
 		return &TemplateSourceResolver{}
+	case shared_types.SourcePublicGit:
+		return &PublicGitSourceResolver{task: t}
 	default:
 		return &GithubSourceResolver{task: t}
 	}

@@ -73,6 +73,11 @@ func validateDeploymentRequest(req *types.CreateDeploymentRequest) error {
 	if req.Repository == "" {
 		return errors.New("repository is required")
 	}
+	if req.Source == shared_types.SourcePublicGit {
+		if !isValidPublicGitURL(req.Repository) {
+			return fmt.Errorf("public_git source requires a valid HTTPS git URL, got: %q", req.Repository)
+		}
+	}
 	if req.Branch == "" {
 		return errors.New("branch is required")
 	}
@@ -158,6 +163,11 @@ func validateCreateProjectRequest(req *types.CreateProjectRequest) error {
 	}
 	if req.Repository == "" {
 		return types.ErrMissingRepository
+	}
+	if req.Source == shared_types.SourcePublicGit {
+		if !isValidPublicGitURL(req.Repository) {
+			return fmt.Errorf("public_git source requires a valid HTTPS git URL, got: %q", req.Repository)
+		}
 	}
 	// Set defaults for optional fields
 	if req.Environment == "" {
@@ -311,4 +321,12 @@ func validateDomains(domains []string) error {
 		}
 	}
 	return nil
+}
+
+func isValidPublicGitURL(u string) bool {
+	if !strings.HasPrefix(u, "https://") {
+		return false
+	}
+	host := strings.TrimPrefix(u, "https://")
+	return strings.Contains(host, "/") && len(strings.SplitN(host, "/", 2)[0]) > 0
 }
