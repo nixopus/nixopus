@@ -48,6 +48,7 @@ import { useMachineCard } from '@/packages/hooks/machines/use-machine-card';
 import { useMachinesView } from '@/packages/hooks/machines/use-machines-view';
 import { useMachineLifecycle } from '@/packages/hooks/machines/use-machine-lifecycle';
 import { useMachineBackup } from '@/packages/hooks/backups/use-machine-backup';
+import { useTranslation } from '@/packages/hooks/shared/use-translation';
 import type { Machine } from '@/packages/hooks/machines/use-machines';
 import type { LiveState } from '@/packages/hooks/machines/use-machine-lifecycle';
 
@@ -204,6 +205,7 @@ const InlineEditName = React.memo(function InlineEditName({
   currentName: string;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const [isEditing, setIsEditing] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [value, setValue] = React.useState(currentName);

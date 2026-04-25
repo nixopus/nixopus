@@ -9,7 +9,7 @@ import { Skeleton } from '@nixopus/ui';
 import PageLayout from '@/packages/layouts/page-layout';
 import { MainPageHeader } from '@nixopus/ui';
 
-function page() {
+function Page() {
   return (
     <ResourceGuard
       resource="deploy"
@@ -36,4 +36,4 @@ function page() {
   );
 }
 
-export default page;
+export default Page;
