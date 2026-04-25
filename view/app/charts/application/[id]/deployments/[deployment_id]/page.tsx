@@ -7,7 +7,7 @@ import { Skeleton } from '@nixopus/ui';
 import PageLayout from '@/packages/layouts/page-layout';
 import DeploymentLogsTable from '@/packages/components/deployments/deployment-logs';
 
-function page() {
+function Page() {
   const { deployment_id } = useParams();
   const deploymentId = deployment_id?.toString() || '';
 
@@ -37,4 +37,4 @@ function page() {
   );
 }
 
-export default page;
+export default Page;

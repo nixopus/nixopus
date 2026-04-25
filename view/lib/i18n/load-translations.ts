@@ -116,9 +116,9 @@ export async function loadTranslations(locale: string) {
   // Each domain file exports { domainName: { ... } }, so we merge the objects
   const loadPromises = Object.entries(loaders).map(async ([domain, loader]) => {
     try {
-      const module = await loader();
-      // Each module.default is { domainName: { ... } }, so we merge it into translations
-      return { domain, data: module.default };
+      const mod = await loader();
+      // Each default export is { domainName: { ... } }, merged into translations
+      return { domain, data: mod.default };
     } catch (error) {
       console.warn(`Failed to load translation domain ${domain} for locale ${locale}:`, error);
       return { domain, data: null };

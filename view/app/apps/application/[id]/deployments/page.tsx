@@ -2,15 +2,14 @@
 import { useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
 
-function page() {
+function Page() {
   const router = useRouter();
   useEffect(() => {
     router.push('/apps');
     return () => {};
-  }, []);
+  }, [router]);
 
-  return;
-  <></>;
+  return null;
 }
 
-export default page;
+export default Page;

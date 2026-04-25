@@ -17,12 +17,14 @@ export default function VerifyEmailPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
   const [message, setMessage] = useState(t('auth.verifyEmail.loading'));
   const isVerifying = useRef(false);
+  const tRef = useRef(t);
+  tRef.current = t;
   const token = searchParams.get('token');
 
   useEffect(() => {
     if (!token) {
       setStatus('error');
-      setMessage(t('auth.verifyEmail.error.invalidLink'));
+      setMessage(tRef.current('auth.verifyEmail.error.invalidLink'));
       return;
     }
 
@@ -33,10 +35,10 @@ export default function VerifyEmailPage() {
       try {
         await verifyEmail({ token }).unwrap();
         setStatus('success');
-        setMessage(t('auth.verifyEmail.success.message'));
+        setMessage(tRef.current('auth.verifyEmail.success.message'));
       } catch (error) {
         setStatus('error');
-        setMessage(t('auth.verifyEmail.error.message'));
+        setMessage(tRef.current('auth.verifyEmail.error.message'));
       } finally {
         isVerifying.current = false;
       }
@@ -47,14 +49,14 @@ export default function VerifyEmailPage() {
     return () => {
       isVerifying.current = false;
     };
-  }, [token]);
+  }, [token, verifyEmail]);
 
   useEffect(() => {
     if (status === 'success') {
       router.push('/chats');
-      toast.success(t('auth.verifyEmail.success.message'));
+      toast.success(tRef.current('auth.verifyEmail.success.message'));
     }
-  }, [status]);
+  }, [status, router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center">

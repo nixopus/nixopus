@@ -178,8 +178,6 @@ function AppActionsCell({ app }: { app: Application }) {
 }
 
 function useAppTableColumns() {
-  const router = useRouter();
-
   return useMemo(
     () => [
       {
@@ -236,7 +234,7 @@ function useAppTableColumns() {
         render: (_: any, app: Application) => <AppActionsCell app={app} />
       }
     ],
-    [router]
+    []
   );
 }
 

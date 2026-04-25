@@ -6,7 +6,7 @@ import { ResourceGuard } from '@/packages/components/rbac/rbac';
 import { Skeleton } from '@nixopus/ui';
 import PageLayout from '@/packages/layouts/page-layout';
 
-function page() {
+function Page() {
   const { repository } = useFindRepository();
 
   return (
@@ -46,4 +46,4 @@ function page() {
   );
 }
 
-export default page;
+export default Page;
