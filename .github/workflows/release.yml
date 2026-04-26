@@ -40,7 +40,8 @@ jobs:
           pre-release: 'true'
           pre-release-identifier: 'alpha'
           git-push: 'false'
-          release-count: 0
+          # Prepend one release only; regroup.sh merges semver blocks with existing ## [Month YYYY] sections.
+          release-count: 1
 
       - name: Regroup changelog by month
         if: ${{ steps.changelog.outputs.skipped == 'false' }}
