@@ -2,7 +2,7 @@
   "name": "nixopus",
   "version": "0.1.0-alpha.165",
   "description": "A modern container management platform",
-  "license": "SEE LICENSE IN LICENSE.md",
+  "license": "AGPL-3.0-or-later",
   "private": false,
   "cli-version": "0.1.45",
   "cli-packages": [
