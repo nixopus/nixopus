@@ -238,20 +238,46 @@ format_ip_for_url() {
     fi
 }
 
-detect_ip() {
+detect_ipv4() {
     local ip=""
     for svc in "https://api64.ipify.org" "https://ifconfig.me" "https://icanhazip.com"; do
         ip=$(curl -4 -fsSL --connect-timeout 5 "$svc" 2>/dev/null | tr -d '[:space:]') && [ -n "$ip" ] && break
     done
     if [ -z "$ip" ]; then
-        for svc in "https://api64.ipify.org" "https://ifconfig.me" "https://icanhazip.com"; do
-            ip=$(curl -6 -fsSL --connect-timeout 5 "$svc" 2>/dev/null | tr -d '[:space:]') && [ -n "$ip" ] && break
-        done
-    fi
-    if [ -z "$ip" ]; then
-        ip=$(hostname -I 2>/dev/null | awk '{print $1}')
+        ip=$(hostname -I 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i !~ /:/) {print $i; exit}}')
     fi
     echo "$ip"
+}
+
+detect_ipv6() {
+    local ip=""
+    for svc in "https://api64.ipify.org" "https://ifconfig.me" "https://icanhazip.com"; do
+        ip=$(curl -6 -fsSL --connect-timeout 5 "$svc" 2>/dev/null | tr -d '[:space:]') && [ -n "$ip" ] && break
+    done
+    if [ -z "$ip" ]; then
+        ip=$(hostname -I 2>/dev/null | awk '{
+            for(i=1;i<=NF;i++) {
+                if($i ~ /:/ && $i !~ /^::1/ && $i !~ /^fe80:/ && $i !~ /^fc/ && $i !~ /^fd/ && $i !~ /^ff/) {
+                    print $i;
+                    exit
+                }
+            }
+        }')
+    fi
+    echo "$ip"
+}
+
+detect_ip_dual() {
+    HOST_IP="${HOST_IP:-$(detect_ipv4)}"
+    HOST_IP6="${HOST_IP6:-$(detect_ipv6)}"
+}
+
+detect_ip() {
+    local family="${1:-ipv4}"
+    case "$family" in
+        ipv4) detect_ipv4 ;;
+        ipv6) detect_ipv6 ;;
+    esac
 }
 
 is_private_ip() {
@@ -359,7 +385,7 @@ load_existing_config() {
         NIXOPUS_VERSION="$saved_version"
         NIXOPUS_HOME="$saved_home"
         # Re-detect network config since the server IP may have changed
-        unset HOST_IP SSH_HOST
+        unset HOST_IP HOST_IP6 IP_FAMILY SSH_HOST
         return 0
     fi
 
@@ -401,14 +427,35 @@ gather_config() {
     fi
     prompt_if_tty DOMAIN "Domain (e.g. nixopus.example.com)" ""
 
-    HOST_IP="${HOST_IP:-$(detect_ip)}"
-    if [ -z "$HOST_IP" ] && [ -z "${DOMAIN:-}" ]; then
-        fail "Cannot detect public IP and no domain set. Pass HOST_IP=x.x.x.x"
+    IP_FAMILY="${IP_FAMILY:-ipv4}"
+    case "$IP_FAMILY" in
+        ipv4|ipv6|dual) ;;
+        *) log_warn "Unknown IP_FAMILY '$IP_FAMILY', defaulting to ipv4"; IP_FAMILY="ipv4" ;;
+    esac
+
+    if [ "$IP_FAMILY" = "dual" ]; then
+        detect_ip_dual
+    else
+        HOST_IP="${HOST_IP:-$(detect_ip "$IP_FAMILY")}"
+    fi
+
+    if [ -z "${HOST_IP:-}" ] && [ -z "${HOST_IP6:-}" ] && [ -z "${DOMAIN:-}" ]; then
+        fail "Cannot detect public IP and no domain set. Pass HOST_IP=x.x.x.x or HOST_IP6=xxxx::xxxx"
+    fi
+
+    if [ "$IP_FAMILY" = "dual" ] && [ -z "${DOMAIN:-}" ]; then
+        if [ -z "${HOST_IP:-}" ] || [ -z "${HOST_IP6:-}" ]; then
+            fail "IP_FAMILY=dual requires both HOST_IP and HOST_IP6 when DOMAIN is not set. Detected HOST_IP=${HOST_IP:-<unset>}, HOST_IP6=${HOST_IP6:-<unset>}"
+        fi
     fi
 
     if [ -n "${HOST_IP:-}" ] && is_private_ip "$HOST_IP" && [ -t 0 ]; then
         log_warn "Detected private IP: $HOST_IP (behind NAT?)"
         prompt_if_tty HOST_IP "Public IP (or keep private for LAN-only)" "$HOST_IP"
+    fi
+    if [ -n "${HOST_IP6:-}" ] && is_private_ip "$HOST_IP6" && [ -t 0 ]; then
+        log_warn "Detected private IPv6: $HOST_IP6 (ULA range)"
+        prompt_if_tty HOST_IP6 "Public IPv6 (or keep private for LAN-only)" "$HOST_IP6"
     fi
 
     CADDY_HTTP_PORT="${CADDY_HTTP_PORT:-80}"
@@ -678,6 +725,8 @@ NIXOPUS_HOME=${NIXOPUS_HOME}
 DOMAIN=${DOMAIN:-}
 SITE_ADDRESS=${SITE_ADDRESS}
 HOST_IP=${HOST_IP:-}
+HOST_IP6=${HOST_IP6:-}
+IP_FAMILY=${IP_FAMILY:-ipv4}
 CADDY_HTTP_PORT=${CADDY_HTTP_PORT}
 CADDY_HTTPS_PORT=${CADDY_HTTPS_PORT}
 
@@ -1027,7 +1076,18 @@ show_complete() {
     echo "    nixopus --help     All commands"
     echo ""
     if [ -n "${DOMAIN:-}" ]; then
-        echo -e "  ${YELLOW}Ensure DNS A record for ${DOMAIN} → ${HOST_IP:-your-ip}${NC}"
+        case "${IP_FAMILY:-ipv4}" in
+            ipv4)
+                echo -e "  ${YELLOW}Ensure DNS A record for ${DOMAIN} → ${HOST_IP:-your-ip}${NC}"
+                ;;
+            ipv6)
+                echo -e "  ${YELLOW}Ensure DNS AAAA record for ${DOMAIN} → ${HOST_IP6:-${HOST_IP:-your-ip}}${NC}"
+                ;;
+            dual)
+                [ -n "${HOST_IP:-}" ] && echo -e "  ${YELLOW}Ensure DNS A record for ${DOMAIN} → ${HOST_IP}${NC}"
+                [ -n "${HOST_IP6:-}" ] && echo -e "  ${YELLOW}Ensure DNS AAAA record for ${DOMAIN} → ${HOST_IP6}${NC}"
+                ;;
+        esac
         echo ""
     fi
     echo -e "  ${DIM}Docs: https://docs.nixopus.com | Discord: https://discord.gg/skdcq39Wpv${NC}"

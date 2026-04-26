@@ -157,8 +157,6 @@ func GenerateVerificationToken() string {
 	return hex.EncodeToString(bytes)
 }
 
-// GenerateDNSInstructionsBYOS returns DNS instructions for a self-hosted (BYOS)
-// machine. The user must add an A record pointing their domain to machineIP.
 func GenerateDNSInstructionsBYOS(domain, machineIP, provider string) []types.DNSInstruction {
 	providerDescriptions := map[string]string{
 		"cloudflare":   "Go to your Cloudflare dashboard > DNS > Records > Add Record",
@@ -177,12 +175,20 @@ func GenerateDNSInstructionsBYOS(domain, machineIP, provider string) []types.DNS
 		description = providerDescriptions["other"]
 	}
 
+	recordType := "A"
+	recordLabel := "an A"
+	parsed := net.ParseIP(machineIP)
+	if parsed != nil && parsed.To4() == nil {
+		recordType = "AAAA"
+		recordLabel = "an AAAA"
+	}
+
 	return []types.DNSInstruction{
 		{
-			RecordType:  "A",
+			RecordType:  recordType,
 			Name:        domain,
 			Value:       machineIP,
-			Description: fmt.Sprintf("%s. Add an A record pointing %s to your server IP %s", description, domain, machineIP),
+			Description: fmt.Sprintf("%s. Add %s record pointing %s to your server IP %s", description, recordLabel, domain, machineIP),
 		},
 	}
 }

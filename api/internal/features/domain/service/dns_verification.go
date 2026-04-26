@@ -67,9 +67,10 @@ func CheckDNSPropagation(domain string) (string, error) {
 	return "propagating", nil
 }
 
-// VerifyARecordMatchesMachineIP checks that the domain resolves to machineIP.
+// VerifyDNSRecordMatchesMachineIP checks that the domain resolves to machineIP.
+// Works for both IPv4 (A) and IPv6 (AAAA) records since LookupHost returns both.
 // Used for BYOS machines where traffic goes directly to the user's server.
-func VerifyARecordMatchesMachineIP(domain, machineIP string) (bool, error) {
+func VerifyDNSRecordMatchesMachineIP(domain, machineIP string) (bool, error) {
 	if machineIP == "" {
 		return false, fmt.Errorf("machine IP is not configured")
 	}
@@ -86,7 +87,7 @@ func VerifyARecordMatchesMachineIP(domain, machineIP string) (bool, error) {
 }
 
 // CheckDNSPropagationBYOS checks propagation state for a BYOS domain
-// that should resolve to machineIP via an A record.
+// that should resolve to machineIP via an A or AAAA record.
 func CheckDNSPropagationBYOS(domain, machineIP string) (string, error) {
 	hosts, err := net.LookupHost(domain)
 	if err != nil {

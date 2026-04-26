@@ -133,7 +133,7 @@ func (s *DomainsService) VerifyCustomDomain(ctx context.Context, domainID, orgID
 
 	// BYOS path: target_subdomain holds a machine IP (not a nixopus subdomain)
 	if net.ParseIP(targetSubdomain) != nil {
-		verified, verifyErr = VerifyARecordMatchesMachineIP(domain.Name, targetSubdomain)
+		verified, verifyErr = VerifyDNSRecordMatchesMachineIP(domain.Name, targetSubdomain)
 	} else {
 		verified, verifyErr = VerifyDNSConfiguration(domain.Name, targetSubdomain)
 	}
@@ -257,7 +257,7 @@ func (s *DomainsService) CheckDNSStatus(ctx context.Context, domainID, orgID uui
 
 	// BYOS path: target_subdomain holds machine IP
 	if net.ParseIP(targetSubdomain) != nil {
-		verified, _ := VerifyARecordMatchesMachineIP(domain.Name, targetSubdomain)
+		verified, _ := VerifyDNSRecordMatchesMachineIP(domain.Name, targetSubdomain)
 		if verified {
 			return true, "verified", nil
 		}
