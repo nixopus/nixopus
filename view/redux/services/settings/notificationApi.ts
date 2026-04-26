@@ -71,7 +71,7 @@ export const notificationApi = createApi({
     updateNotificationPreferences: builder.mutation<void, UpdatePreferenceRequest>({
       query: (payload) => ({
         url: USER_NOTIFICATION_SETTINGS.UPDATE_PREFERENCES,
-        method: 'POST',
+        method: 'PATCH',
         body: payload
       }),
       invalidatesTags: [{ type: 'Notification', id: 'LIST' }]
