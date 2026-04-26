@@ -2,7 +2,7 @@
 
 ![][image-overview]
 
-An open-source, AI-powered platform that deploys, monitors, and fixes your apps, autonomously.<br/>
+Nixopus is the first open-source deployment platform with an autonomous AI agent to deploy, monitor, and heal your apps.<br/>
 Self-host on your own infrastructure or use [Nixopus Cloud][dashboard-link] to go live in minutes.
 
 <p align="center">
@@ -54,6 +54,18 @@ Self-host on your own infrastructure or use [Nixopus Cloud][dashboard-link] to g
 
 </details>
 
+## Demo
+
+See Nixopus in action, from deploying apps to day-to-day operations on your infrastructure.
+
+<https://github.com/user-attachments/assets/6d6f24ef-47d5-4fe2-ab63-65f0ed5f7782>
+
+<div align="right">
+
+[![][back-to-top]](#readme-top)
+
+</div>
+
 ## Getting Started & Join Our Community
 
 Nixopus is the deployment platform where an AI agent handles your entire deploy lifecycle, from analyzing your codebase and generating configs to shipping your app and fixing failures. Connect your repo, tell the agent to deploy, and go live. Learn more in the [introduction][docs-introduction] or jump to the [quickstart][docs-quickstart].
@@ -78,6 +90,7 @@ Nixopus is the deployment platform where an AI agent handles your entire deploy 
 [![][back-to-top]](#readme-top)
 
 </div>
+
 
 ## Features
 
@@ -141,17 +154,6 @@ Beyond these features, Nixopus also includes:
 
 </div>
 
-## Demo
-
-See Nixopus in action, from deploying apps to day-to-day operations on your infrastructure.
-
-<https://github.com/user-attachments/assets/6d6f24ef-47d5-4fe2-ab63-65f0ed5f7782>
-
-<div align="right">
-
-[![][back-to-top]](#readme-top)
-
-</div>
 
 ## Self Hosting
 
