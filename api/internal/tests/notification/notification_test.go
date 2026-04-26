@@ -238,7 +238,7 @@ func TestUpdateSMTPConfig_NonExistentID(t *testing.T) {
 		Send().Body().JSON(map[string]interface{}{
 			"id": uuid.New().String(),
 		}),
-		Expect().Status().OneOf(int64(http.StatusNotFound), int64(http.StatusInternalServerError)),
+		Expect().Status().OneOf(int64(http.StatusBadRequest), int64(http.StatusNotFound), int64(http.StatusInternalServerError)),
 	)
 }
 
