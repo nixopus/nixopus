@@ -268,12 +268,11 @@ Nixopus is derived from the combination of "octopus" (representing flexibility a
 
 <details><summary><h4>License</h4></summary>
 
-Distributed under the FSL-1.1-ALv2 License. Visit [LICENSE.md](./LICENSE.md) or the [docs][docs-license] for more information.
+[AGPL-3.0-or-later](./LICENSE.md). Commercial license available for enterprises and teams — see [docs.nixopus.com/license][docs-license].
 
 </details>
 
-Copyright © 2025 [Nixopus][website-link]. <br />
-This project is [FSL-1.1-ALv2](./LICENSE.md) licensed.
+Copyright © 2025 [Nixopus][website-link].
 
 <!-- LINK GROUP -->
 
@@ -301,7 +300,7 @@ This project is [FSL-1.1-ALv2](./LICENSE.md) licensed.
 [github-issues-link]: https://github.com/raghavyuva/nixopus/issues
 [github-issues-shield]: https://img.shields.io/github/issues/raghavyuva/nixopus?color=ff80eb&labelColor=black&style=flat-square
 [github-license-link]: https://github.com/raghavyuva/nixopus/blob/master/LICENSE.md
-[github-license-shield]: https://img.shields.io/badge/license-FSL--1.1--ALv2-white?labelColor=black&style=flat-square
+[github-license-shield]: https://img.shields.io/badge/license-AGPL--3.0-34ad4b?labelColor=black&style=flat-square
 [github-stars-link]: https://github.com/raghavyuva/nixopus/stargazers
 [github-stars-shield]: https://img.shields.io/github/stars/raghavyuva/nixopus?color=ffcb47&labelColor=black&style=flat-square
 [github-trending-shield]: https://trendshift.io/api/badge/repositories/15336

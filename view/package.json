@@ -2,7 +2,7 @@
   "name": "view",
   "version": "0.1.0",
   "private": true,
-  "license": "Fair-Code Sustainable Use License",
+  "license": "AGPL-3.0-or-later",
   "scripts": {
     "predev": "node scripts/generate-plugin-routes.js",
     "prebuild": "node scripts/generate-plugin-routes.js",
