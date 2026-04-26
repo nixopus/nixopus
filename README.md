@@ -2,7 +2,7 @@
 
 ![][image-overview]
 
-Nixopus is the first open-source deployment platform with an autonomous AI agent to deploy, monitor, and heal your apps.<br/>
+First open-source deployment platform with an autonomous AI agent to deploy, monitor, and heal your apps.<br/>
 Self-host on your own infrastructure or use [Nixopus Cloud][dashboard-link] to go live in minutes.
 
 <p align="center">
