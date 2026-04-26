@@ -48,7 +48,7 @@ func TestCreateApplication(t *testing.T) {
 					"PORT": "3000",
 				},
 			},
-			expectedStatus: http.StatusOK, // API returns 200 not 201
+			expectedStatus: http.StatusCreated,
 			description:    "Should create application successfully with valid data",
 		},
 		{
@@ -127,7 +127,7 @@ func TestCreateApplication(t *testing.T) {
 				Branch:      "main",
 				Port:        3000,
 			},
-			expectedStatus: http.StatusOK,
+			expectedStatus: http.StatusCreated,
 			description:    "Empty domains list is accepted by the API",
 		},
 		{
