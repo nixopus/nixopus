@@ -22,7 +22,6 @@ func (c *NotificationController) GetPreferences(f fuego.ContextNoBody) (*types.P
 	preferences, err := c.service.GetPreferences(user.ID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		utils.SendErrorResponse(w, err.Error(), http.StatusInternalServerError)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

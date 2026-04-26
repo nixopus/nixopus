@@ -18,9 +18,8 @@ func (c *GithubConnectorController) DeleteGithubConnector(f fuego.ContextWithBod
 
 	w, r := f.Response(), f.Request()
 
-	if !c.parseAndValidate(w, r, &deleteRequest) {
-		// parseAndValidate already sent the error response, so return nil to prevent duplicate response
-		return nil, nil
+	if err := c.parseAndValidate(w, r, &deleteRequest); err != nil {
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	user := utils.GetUser(w, r)

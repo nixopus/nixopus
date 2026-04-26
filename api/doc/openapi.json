@@ -22,27 +22,37 @@
 				"description": "AddApplicationToFamilyRequest schema",
 				"properties": {
 					"branch": {
+						"description": "Git branch. Defaults to main if not specified",
+						"example": "main",
 						"nullable": true,
 						"type": "string"
 					},
 					"build_pack": {
+						"description": "Build strategy. Defaults to dockerfile if not specified",
+						"example": "dockerfile",
 						"nullable": true,
 						"type": "string"
 					},
 					"build_variables": {
 						"additionalProperties": {
+							"description": "Key-value pairs passed as build arguments to Docker",
 							"nullable": true,
 							"type": "string"
 						},
+						"description": "Key-value pairs passed as build arguments to Docker",
 						"nullable": true,
 						"type": "object"
 					},
 					"dockerfile_path": {
+						"description": "Path to the Dockerfile. Defaults to Dockerfile if not specified",
+						"example": "Dockerfile",
 						"nullable": true,
 						"type": "string"
 					},
 					"domains": {
+						"description": "Custom domains for the application",
 						"items": {
+							"description": "Custom domains for the application",
 							"nullable": true,
 							"type": "string"
 						},
@@ -50,52 +60,81 @@
 						"type": "array"
 					},
 					"environment": {
+						"description": "Deployment environment. Defaults to development if not specified",
+						"example": "development",
 						"nullable": true,
 						"type": "string"
 					},
 					"environment_variables": {
 						"additionalProperties": {
+							"description": "Key-value pairs set as runtime environment variables",
 							"nullable": true,
 							"type": "string"
 						},
+						"description": "Key-value pairs set as runtime environment variables",
 						"nullable": true,
 						"type": "object"
 					},
 					"family_id": {
+						"description": "Family ID to add the application to. Creates new family if not provided",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"name": {
+						"description": "Application name",
+						"example": "my-api",
 						"type": "string"
 					},
 					"path": {
+						"description": "Base path for the application. Defaults to /",
+						"example": "api/",
 						"type": "string"
 					},
 					"port": {
+						"description": "Port the application listens on. Defaults to 8080 if not specified",
+						"example": 8080,
 						"nullable": true,
 						"type": "integer"
 					},
 					"post_run_command": {
+						"description": "Command to run after the application starts",
+						"example": "npm run seed",
 						"nullable": true,
 						"type": "string"
 					},
 					"pre_run_command": {
+						"description": "Command to run before the application starts",
+						"example": "npm run migrate",
 						"nullable": true,
 						"type": "string"
 					},
 					"repository": {
+						"description": "Git repository URL or identifier",
+						"example": "github.com/org/repo",
 						"type": "string"
 					}
 				},
+				"required": [
+					"name",
+					"repository"
+				],
 				"type": "object"
 			},
 			"AddCustomDomainRequest": {
 				"description": "AddCustomDomainRequest schema",
 				"properties": {
 					"name": {
+						"description": "Fully qualified domain name to add",
+						"example": "app.example.com",
+						"maxLength": 255,
+						"minLength": 3,
 						"type": "string"
 					}
 				},
+				"required": [
+					"name"
+				],
 				"type": "object"
 			},
 			"AdminRegisteredResponse": {
@@ -2022,27 +2061,40 @@
 							"description": "Variable value (string, number, boolean, or JSON as string)",
 							"type": "string"
 						},
+						"description": "Tool-specific arguments as key-value pairs",
 						"nullable": true,
 						"type": "object"
 					},
 					"server_id": {
+						"description": "ID of the MCP server to call the tool on",
 						"format": "uuid",
 						"type": "string"
 					},
 					"tool_name": {
+						"description": "Name of the MCP tool to invoke",
+						"example": "search",
 						"type": "string"
 					}
 				},
+				"required": [
+					"server_id",
+					"tool_name"
+				],
 				"type": "object"
 			},
 			"CancelDeploymentRequest": {
 				"description": "CancelDeploymentRequest schema",
 				"properties": {
 					"deployment_id": {
+						"description": "Deployment ID to cancel",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					}
 				},
+				"required": [
+					"deployment_id"
+				],
 				"type": "object"
 			},
 			"CategoriesResponse": {
@@ -2283,48 +2335,72 @@
 				"description": "CreateDeploymentRequest schema",
 				"properties": {
 					"base_path": {
+						"description": "Base path for the application. Defaults to /",
+						"example": "/",
 						"nullable": true,
 						"type": "string"
 					},
 					"branch": {
+						"description": "Git branch to deploy",
+						"example": "main",
 						"type": "string"
 					},
 					"build_pack": {
+						"description": "Build strategy for the application",
+						"example": "dockerfile",
 						"type": "string"
 					},
 					"build_variables": {
 						"additionalProperties": {
+							"description": "Key-value pairs passed as build arguments to Docker",
 							"type": "string"
 						},
+						"description": "Key-value pairs passed as build arguments to Docker",
 						"type": "object"
 					},
 					"compose_domains": {
+						"description": "Domain-to-service mappings for compose deployments",
 						"items": {
+							"description": "Domain-to-service mappings for compose deployments",
 							"nullable": true,
 							"properties": {
 								"domain": {
+									"description": "Domain name for the compose service",
+									"example": "app.example.com",
 									"type": "string"
 								},
 								"port": {
+									"description": "Port override for the compose service",
+									"example": 8080,
 									"nullable": true,
 									"type": "integer"
 								},
 								"service_name": {
+									"description": "Name of the compose service to route to",
+									"example": "web",
 									"nullable": true,
 									"type": "string"
 								}
 							},
+							"required": [
+								"domain"
+							],
 							"type": "object"
 						},
 						"nullable": true,
 						"type": "array"
 					},
 					"dockerfile_path": {
+						"description": "Path to the Dockerfile relative to the repository root",
+						"example": "Dockerfile",
 						"nullable": true,
 						"type": "string"
 					},
 					"domains": {
+						"description": "Custom domains for the application",
 						"items": {
+							"description": "Custom domains for the application",
+							"maxLength": 5,
 							"nullable": true,
 							"type": "string"
 						},
@@ -2332,39 +2408,61 @@
 						"type": "array"
 					},
 					"environment": {
+						"description": "Deployment environment",
+						"example": "production",
 						"type": "string"
 					},
 					"environment_variables": {
 						"additionalProperties": {
+							"description": "Key-value pairs set as runtime environment variables",
 							"type": "string"
 						},
+						"description": "Key-value pairs set as runtime environment variables",
 						"type": "object"
 					},
 					"name": {
+						"description": "Application name",
+						"example": "my-web-app",
 						"type": "string"
 					},
 					"port": {
+						"description": "Port the application listens on",
+						"example": 3000,
+						"maximum": 65535,
+						"minimum": 1,
 						"type": "integer"
 					},
 					"post_run_command": {
+						"description": "Command to run after the application starts",
+						"example": "npm run seed",
 						"type": "string"
 					},
 					"pre_run_command": {
+						"description": "Command to run before the application starts",
+						"example": "npm run migrate",
 						"type": "string"
 					},
 					"primary_server_id": {
+						"description": "Primary server ID for routing",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"repository": {
+						"description": "Git repository URL or identifier",
+						"example": "github.com/org/repo",
 						"type": "string"
 					},
 					"routing_strategy": {
+						"description": "Routing strategy for multi-server deployments",
+						"example": "round-robin",
 						"nullable": true,
 						"type": "string"
 					},
 					"server_ids": {
+						"description": "Server IDs to deploy the application to",
 						"items": {
+							"description": "Server IDs to deploy the application to",
 							"format": "uuid",
 							"type": "string"
 						},
@@ -2372,11 +2470,15 @@
 						"type": "array"
 					},
 					"source": {
+						"description": "Source type of the repository",
+						"example": "github",
 						"nullable": true,
 						"type": "string"
 					},
 					"target_server_ids": {
+						"description": "Specific server IDs to target for this deployment",
 						"items": {
+							"description": "Specific server IDs to target for this deployment",
 							"format": "uuid",
 							"type": "string"
 						},
@@ -2384,6 +2486,14 @@
 						"type": "array"
 					}
 				},
+				"required": [
+					"branch",
+					"build_pack",
+					"environment",
+					"name",
+					"port",
+					"repository"
+				],
 				"type": "object"
 			},
 			"CreateDirectoryRequest": {
@@ -2399,28 +2509,39 @@
 				"description": "CreateGithubConnectorRequest schema",
 				"properties": {
 					"app_id": {
+						"description": "GitHub App ID. Required if providing custom app credentials",
+						"example": "123456",
 						"format": "uuid",
 						"type": "string"
 					},
 					"client_id": {
+						"description": "GitHub App OAuth client ID",
+						"example": "Iv1.abc123def456",
 						"format": "uuid",
 						"type": "string"
 					},
 					"client_secret": {
+						"description": "GitHub App OAuth client secret",
 						"type": "string"
 					},
 					"installation_id": {
+						"description": "GitHub App installation ID",
+						"example": "12345678",
 						"format": "uuid",
 						"nullable": true,
 						"type": "string"
 					},
 					"pem": {
+						"description": "GitHub App private key in PEM format",
 						"type": "string"
 					},
 					"slug": {
+						"description": "GitHub App slug",
+						"example": "my-github-app",
 						"type": "string"
 					},
 					"webhook_secret": {
+						"description": "GitHub App webhook secret",
 						"type": "string"
 					}
 				},
@@ -2430,18 +2551,25 @@
 				"description": "CreateHealthCheckRequest schema",
 				"properties": {
 					"application_id": {
+						"description": "ID of the application to monitor",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"body": {
+						"description": "Request body to send with health check requests",
 						"nullable": true,
 						"type": "string"
 					},
 					"endpoint": {
+						"description": "Health check endpoint path or URL. Defaults to /",
+						"example": "/health",
 						"type": "string"
 					},
 					"expected_status_codes": {
+						"description": "Expected HTTP status codes. Defaults to [200]",
 						"items": {
+							"description": "Expected HTTP status codes. Defaults to [200]",
 							"nullable": true,
 							"type": "integer"
 						},
@@ -2449,33 +2577,57 @@
 						"type": "array"
 					},
 					"failure_threshold": {
+						"description": "Consecutive failures before marking unhealthy (1-10). Defaults to 3",
+						"example": 3,
+						"maximum": 10,
+						"minimum": 1,
 						"nullable": true,
 						"type": "integer"
 					},
 					"headers": {
 						"additionalProperties": {
+							"description": "Custom HTTP headers to include in health check requests",
 							"nullable": true,
 							"type": "string"
 						},
+						"description": "Custom HTTP headers to include in health check requests",
 						"nullable": true,
 						"type": "object"
 					},
 					"interval_seconds": {
+						"description": "Check interval in seconds (30-3600). Defaults to 60",
+						"example": 60,
+						"maximum": 3600,
+						"minimum": 30,
 						"nullable": true,
 						"type": "integer"
 					},
 					"method": {
+						"description": "HTTP method to use. Must be GET, POST, or HEAD. Defaults to GET",
+						"example": "GET",
 						"type": "string"
 					},
 					"retention_days": {
+						"description": "Number of days to retain health check results (1-365). Defaults to 30",
+						"example": 30,
+						"maximum": 365,
+						"minimum": 1,
 						"nullable": true,
 						"type": "integer"
 					},
 					"success_threshold": {
+						"description": "Consecutive successes before marking healthy (1-10). Defaults to 1",
+						"example": 1,
+						"maximum": 10,
+						"minimum": 1,
 						"nullable": true,
 						"type": "integer"
 					},
 					"timeout_seconds": {
+						"description": "Request timeout in seconds (5-120). Defaults to 30",
+						"example": 30,
+						"maximum": 120,
+						"minimum": 5,
 						"nullable": true,
 						"type": "integer"
 					}
@@ -2536,68 +2688,101 @@
 				"description": "CreateProjectRequest schema",
 				"properties": {
 					"base_path": {
+						"description": "Base path for the application. Defaults to / if not specified",
+						"example": "/",
 						"nullable": true,
 						"type": "string"
 					},
 					"branch": {
+						"description": "Git branch to deploy. Defaults to main if not specified",
+						"example": "main",
 						"nullable": true,
 						"type": "string"
 					},
 					"build_pack": {
+						"description": "Build strategy. Defaults to dockerfile if not specified",
+						"example": "dockerfile",
 						"nullable": true,
 						"type": "string"
 					},
 					"build_variables": {
 						"additionalProperties": {
+							"description": "Key-value pairs passed as build arguments to Docker",
 							"nullable": true,
 							"type": "string"
 						},
+						"description": "Key-value pairs passed as build arguments to Docker",
 						"nullable": true,
 						"type": "object"
 					},
 					"compose_domains": {
+						"description": "Domain-to-service mappings for compose deployments",
 						"items": {
+							"description": "Domain-to-service mappings for compose deployments",
 							"nullable": true,
 							"properties": {
 								"domain": {
+									"description": "Domain name for the compose service",
+									"example": "app.example.com",
 									"type": "string"
 								},
 								"port": {
+									"description": "Port override for the compose service",
+									"example": 8080,
 									"nullable": true,
 									"type": "integer"
 								},
 								"service_name": {
+									"description": "Name of the compose service to route to",
+									"example": "web",
 									"nullable": true,
 									"type": "string"
 								}
 							},
+							"required": [
+								"domain"
+							],
 							"type": "object"
 						},
 						"nullable": true,
 						"type": "array"
 					},
 					"compose_services": {
+						"description": "Compose services configuration",
 						"items": {
+							"description": "Compose services configuration",
 							"nullable": true,
 							"properties": {
 								"port": {
+									"description": "Port the service listens on",
+									"example": 8080,
 									"type": "integer"
 								},
 								"service_name": {
+									"description": "Name of the compose service",
+									"example": "web",
 									"type": "string"
 								}
 							},
+							"required": [
+								"port",
+								"service_name"
+							],
 							"type": "object"
 						},
 						"nullable": true,
 						"type": "array"
 					},
 					"dockerfile_path": {
+						"description": "Path to the Dockerfile. Defaults to Dockerfile if not specified",
+						"example": "Dockerfile",
 						"nullable": true,
 						"type": "string"
 					},
 					"domains": {
+						"description": "Custom domains for the project",
 						"items": {
+							"description": "Custom domains for the project",
 							"nullable": true,
 							"type": "string"
 						},
@@ -2605,45 +2790,65 @@
 						"type": "array"
 					},
 					"environment": {
+						"description": "Deployment environment. Defaults to production if not specified",
+						"example": "production",
 						"nullable": true,
 						"type": "string"
 					},
 					"environment_variables": {
 						"additionalProperties": {
+							"description": "Key-value pairs set as runtime environment variables",
 							"nullable": true,
 							"type": "string"
 						},
+						"description": "Key-value pairs set as runtime environment variables",
 						"nullable": true,
 						"type": "object"
 					},
 					"name": {
+						"description": "Project name",
+						"example": "my-web-app",
 						"type": "string"
 					},
 					"port": {
+						"description": "Port the application listens on. Defaults to 3000 if not specified",
+						"example": 3000,
 						"nullable": true,
 						"type": "integer"
 					},
 					"post_run_command": {
+						"description": "Command to run after the application starts",
+						"example": "npm run seed",
 						"nullable": true,
 						"type": "string"
 					},
 					"pre_run_command": {
+						"description": "Command to run before the application starts",
+						"example": "npm run migrate",
 						"nullable": true,
 						"type": "string"
 					},
 					"primary_server_id": {
+						"description": "Primary server ID for routing",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"repository": {
+						"description": "Git repository URL or identifier",
+						"example": "github.com/org/repo",
 						"type": "string"
 					},
 					"routing_strategy": {
+						"description": "Routing strategy for multi-server deployments",
+						"example": "round-robin",
 						"nullable": true,
 						"type": "string"
 					},
 					"server_ids": {
+						"description": "Server IDs to deploy the application to",
 						"items": {
+							"description": "Server IDs to deploy the application to",
 							"format": "uuid",
 							"type": "string"
 						},
@@ -2651,38 +2856,65 @@
 						"type": "array"
 					},
 					"source": {
+						"description": "Source type of the repository",
+						"example": "github",
 						"nullable": true,
 						"type": "string"
 					}
 				},
+				"required": [
+					"name",
+					"repository"
+				],
 				"type": "object"
 			},
 			"CreateSMTPConfigRequest": {
 				"description": "CreateSMTPConfigRequest schema",
 				"properties": {
 					"from_email": {
+						"description": "Sender email address for outgoing emails",
+						"example": "noreply@example.com",
 						"type": "string"
 					},
 					"from_name": {
+						"description": "Display name for outgoing emails",
+						"example": "Nixopus",
 						"type": "string"
 					},
 					"host": {
+						"description": "SMTP server hostname",
+						"example": "smtp.gmail.com",
 						"type": "string"
 					},
 					"organization_id": {
+						"description": "Organization this SMTP config belongs to",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"password": {
+						"description": "SMTP authentication password",
+						"example": "app-password",
 						"type": "string"
 					},
 					"port": {
+						"description": "SMTP server port",
+						"example": 587,
 						"type": "integer"
 					},
 					"username": {
+						"description": "SMTP authentication username",
+						"example": "user@gmail.com",
 						"type": "string"
 					}
 				},
+				"required": [
+					"host",
+					"organization_id",
+					"password",
+					"port",
+					"username"
+				],
 				"type": "object"
 			},
 			"CreateServerRequest": {
@@ -2690,47 +2922,69 @@
 				"properties": {
 					"credentials": {
 						"additionalProperties": {
+							"description": "Provider-specific credential key-value pairs",
 							"type": "string"
 						},
+						"description": "Provider-specific credential key-value pairs",
 						"type": "object"
 					},
 					"custom_url": {
+						"description": "Custom server URL. Required when provider_id is 'custom'. Must use HTTPS",
 						"nullable": true,
 						"type": "string"
 					},
 					"enabled": {
+						"description": "Whether the server is active",
 						"type": "boolean"
 					},
 					"name": {
+						"description": "Display name for this MCP server",
+						"example": "My OpenAI Server",
 						"type": "string"
 					},
 					"provider_id": {
+						"description": "MCP provider identifier (e.g. 'openai', 'anthropic', 'custom')",
+						"example": "openai",
 						"format": "uuid",
 						"type": "string"
 					}
 				},
+				"required": [
+					"name",
+					"provider_id"
+				],
 				"type": "object"
 			},
 			"CreateTemplateDeploymentRequest": {
 				"description": "CreateTemplateDeploymentRequest schema",
 				"properties": {
 					"environment": {
+						"description": "Deployment environment",
+						"example": "production",
 						"nullable": true,
 						"type": "string"
 					},
 					"name": {
+						"description": "Name for the deployed application",
+						"example": "my-wordpress",
 						"type": "string"
 					},
 					"primary_server_id": {
+						"description": "Primary server ID for routing",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"routing_strategy": {
+						"description": "Routing strategy for multi-server deployments",
+						"example": "round-robin",
 						"nullable": true,
 						"type": "string"
 					},
 					"server_ids": {
+						"description": "Server IDs to deploy to",
 						"items": {
+							"description": "Server IDs to deploy to",
 							"format": "uuid",
 							"type": "string"
 						},
@@ -2738,6 +2992,8 @@
 						"type": "array"
 					},
 					"template_id": {
+						"description": "Template ID to deploy from",
+						"example": "wordpress",
 						"format": "uuid",
 						"type": "string"
 					},
@@ -2746,23 +3002,33 @@
 							"description": "Variable value (string, number, boolean, or JSON as string)",
 							"type": "string"
 						},
+						"description": "Template-specific configuration variables",
 						"type": "object"
 					}
 				},
+				"required": [
+					"name",
+					"template_id"
+				],
 				"type": "object"
 			},
 			"CreateWebhookConfigRequest": {
 				"description": "CreateWebhookConfigRequest schema",
 				"properties": {
 					"type": {
+						"description": "Webhook integration type",
+						"example": "slack",
 						"type": "string"
 					},
 					"webhook_url": {
+						"description": "Webhook URL for the integration",
+						"example": "https://hooks.slack.com/services/...",
 						"type": "string"
 					}
 				},
 				"required": [
-					"type"
+					"type",
+					"webhook_url"
 				],
 				"type": "object"
 			},
@@ -2939,10 +3205,15 @@
 				"description": "DeleteDeploymentRequest schema",
 				"properties": {
 					"id": {
+						"description": "Application ID to delete",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					}
 				},
+				"required": [
+					"id"
+				],
 				"type": "object"
 			},
 			"DeleteDirectoryRequest": {
@@ -2958,6 +3229,8 @@
 				"description": "DeleteGithubConnectorRequest schema",
 				"properties": {
 					"id": {
+						"description": "GitHub connector ID to delete",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					}
@@ -2980,10 +3253,15 @@
 				"description": "DeleteSMTPConfigRequest schema",
 				"properties": {
 					"id": {
+						"description": "SMTP configuration ID to delete",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					}
 				},
+				"required": [
+					"id"
+				],
 				"type": "object"
 			},
 			"DeleteServerRequest": {
@@ -3000,6 +3278,8 @@
 				"description": "DeleteWebhookConfigRequest schema",
 				"properties": {
 					"type": {
+						"description": "Webhook integration type to delete",
+						"example": "slack",
 						"type": "string"
 					}
 				},
@@ -3012,10 +3292,15 @@
 				"description": "DeployProjectRequest schema",
 				"properties": {
 					"id": {
+						"description": "Project ID to deploy",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					}
 				},
+				"required": [
+					"id"
+				],
 				"type": "object"
 			},
 			"DeploymentResponse": {
@@ -3550,11 +3835,15 @@
 				"description": "DuplicateProjectRequest schema",
 				"properties": {
 					"branch": {
+						"description": "Git branch override for the duplicate",
+						"example": "develop",
 						"nullable": true,
 						"type": "string"
 					},
 					"domains": {
+						"description": "Custom domains for the duplicated project",
 						"items": {
+							"description": "Custom domains for the duplicated project",
 							"nullable": true,
 							"type": "string"
 						},
@@ -3562,18 +3851,26 @@
 						"type": "array"
 					},
 					"environment": {
+						"description": "Environment for the duplicated project",
+						"example": "staging",
 						"type": "string"
 					},
 					"primary_server_id": {
+						"description": "Primary server ID for routing",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"routing_strategy": {
+						"description": "Routing strategy for multi-server deployments",
+						"example": "round-robin",
 						"nullable": true,
 						"type": "string"
 					},
 					"server_ids": {
+						"description": "Server IDs to deploy the duplicate to",
 						"items": {
+							"description": "Server IDs to deploy the duplicate to",
 							"format": "uuid",
 							"type": "string"
 						},
@@ -3581,10 +3878,16 @@
 						"type": "array"
 					},
 					"source_project_id": {
+						"description": "ID of the project to duplicate",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					}
 				},
+				"required": [
+					"environment",
+					"source_project_id"
+				],
 				"type": "object"
 			},
 			"EnvironmentsInFamilyResponse": {
@@ -7400,16 +7703,24 @@
 								"items": {
 									"properties": {
 										"description": {
+											"description": "Description of the preference type",
+											"example": "Notifies when a deployment succeeds",
 											"type": "string"
 										},
 										"enabled": {
+											"description": "Whether this preference is enabled",
+											"example": true,
 											"type": "boolean"
 										},
 										"id": {
+											"description": "Preference type identifier",
+											"example": "deployment_success",
 											"format": "uuid",
 											"type": "string"
 										},
 										"label": {
+											"description": "Display label for the preference",
+											"example": "Deployment Success",
 											"type": "string"
 										}
 									},
@@ -7426,16 +7737,24 @@
 								"items": {
 									"properties": {
 										"description": {
+											"description": "Description of the preference type",
+											"example": "Notifies when a deployment succeeds",
 											"type": "string"
 										},
 										"enabled": {
+											"description": "Whether this preference is enabled",
+											"example": true,
 											"type": "boolean"
 										},
 										"id": {
+											"description": "Preference type identifier",
+											"example": "deployment_success",
 											"format": "uuid",
 											"type": "string"
 										},
 										"label": {
+											"description": "Display label for the preference",
+											"example": "Deployment Success",
 											"type": "string"
 										}
 									},
@@ -7452,16 +7771,24 @@
 								"items": {
 									"properties": {
 										"description": {
+											"description": "Description of the preference type",
+											"example": "Notifies when a deployment succeeds",
 											"type": "string"
 										},
 										"enabled": {
+											"description": "Whether this preference is enabled",
+											"example": true,
 											"type": "boolean"
 										},
 										"id": {
+											"description": "Preference type identifier",
+											"example": "deployment_success",
 											"format": "uuid",
 											"type": "string"
 										},
 										"label": {
+											"description": "Display label for the preference",
+											"example": "Deployment Success",
 											"type": "string"
 										}
 									},
@@ -7490,20 +7817,32 @@
 				"description": "PreviewComposeRequest schema",
 				"properties": {
 					"base_path": {
+						"description": "Base path within the repository",
+						"example": "/",
 						"nullable": true,
 						"type": "string"
 					},
 					"branch": {
+						"description": "Git branch to preview",
+						"example": "main",
 						"type": "string"
 					},
 					"dockerfile_path": {
+						"description": "Path to the Dockerfile",
+						"example": "Dockerfile",
 						"nullable": true,
 						"type": "string"
 					},
 					"repository": {
+						"description": "Git repository URL or identifier",
+						"example": "github.com/org/repo",
 						"type": "string"
 					}
 				},
+				"required": [
+					"branch",
+					"repository"
+				],
 				"type": "object"
 			},
 			"PreviewComposeResponse": {
@@ -7513,12 +7852,20 @@
 						"items": {
 							"properties": {
 								"port": {
+									"description": "Port the service listens on",
+									"example": 8080,
 									"type": "integer"
 								},
 								"service_name": {
+									"description": "Name of the compose service",
+									"example": "web",
 									"type": "string"
 								}
 							},
+							"required": [
+								"port",
+								"service_name"
+							],
 							"type": "object"
 						},
 						"type": "array"
@@ -8203,17 +8550,23 @@
 				"description": "ReDeployApplicationRequest schema",
 				"properties": {
 					"force": {
+						"description": "Force redeployment even if already deploying",
 						"type": "boolean"
 					},
 					"force_without_cache": {
+						"description": "Force redeployment without using Docker build cache",
 						"type": "boolean"
 					},
 					"id": {
+						"description": "Application ID to redeploy",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"target_server_ids": {
+						"description": "Specific server IDs to target for this redeployment",
 						"items": {
+							"description": "Specific server IDs to target for this redeployment",
 							"format": "uuid",
 							"type": "string"
 						},
@@ -8221,12 +8574,17 @@
 						"type": "array"
 					}
 				},
+				"required": [
+					"id"
+				],
 				"type": "object"
 			},
 			"RecoverRequest": {
 				"description": "RecoverRequest schema",
 				"properties": {
 					"application_id": {
+						"description": "Application ID to recover. If not provided, recovers all applications",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					}
@@ -8317,10 +8675,15 @@
 				"description": "RemoveCustomDomainRequest schema",
 				"properties": {
 					"id": {
+						"description": "Custom domain ID to remove",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					}
 				},
+				"required": [
+					"id"
+				],
 				"type": "object"
 			},
 			"RenameMachineRequest": {
@@ -8367,21 +8730,30 @@
 				"description": "RestartDeploymentRequest schema",
 				"properties": {
 					"id": {
+						"description": "Application ID to restart",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					}
 				},
+				"required": [
+					"id"
+				],
 				"type": "object"
 			},
 			"RollbackDeploymentRequest": {
 				"description": "RollbackDeploymentRequest schema",
 				"properties": {
 					"id": {
+						"description": "Application ID to roll back",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"target_server_ids": {
+						"description": "Specific server IDs to target for the rollback",
 						"items": {
+							"description": "Specific server IDs to target for the rollback",
 							"format": "uuid",
 							"type": "string"
 						},
@@ -8389,6 +8761,9 @@
 						"type": "array"
 					}
 				},
+				"required": [
+					"id"
+				],
 				"type": "object"
 			},
 			"SMTPConfigResponse": {
@@ -8556,24 +8931,34 @@
 				"description": "SendNotificationRequest schema",
 				"properties": {
 					"channel": {
+						"description": "Notification delivery channel",
+						"example": "email",
 						"type": "string"
 					},
 					"message": {
+						"description": "Notification message body",
+						"example": "Deployment completed successfully",
 						"type": "string"
 					},
 					"metadata": {
 						"additionalProperties": {
+							"description": "Additional key-value metadata for the notification",
 							"nullable": true,
 							"type": "string"
 						},
+						"description": "Additional key-value metadata for the notification",
 						"nullable": true,
 						"type": "object"
 					},
 					"subject": {
+						"description": "Email subject line (only for email channel)",
+						"example": "Deployment Update",
 						"nullable": true,
 						"type": "string"
 					},
 					"to": {
+						"description": "Recipient email address (only for email channel)",
+						"example": "user@example.com",
 						"nullable": true,
 						"type": "string"
 					}
@@ -8616,25 +9001,38 @@
 				"description": "SetApplicationServersRequest schema",
 				"properties": {
 					"application_id": {
+						"description": "Application ID to assign servers to",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"primary_server_id": {
+						"description": "Primary server ID for routing",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"routing_strategy": {
+						"description": "Routing strategy for multi-server deployments",
+						"example": "round-robin",
 						"nullable": true,
 						"type": "string"
 					},
 					"server_ids": {
+						"description": "Server IDs to assign to the application",
 						"items": {
+							"description": "Server IDs to assign to the application",
 							"format": "uuid",
-							"type": "string"
+							"type": "string",
+							"x-fuego-required-marker": true
 						},
 						"type": "array"
 					}
 				},
+				"required": [
+					"application_id",
+					"server_ids"
+				],
 				"type": "object"
 			},
 			"SetDefaultMachineResponse": {
@@ -8970,29 +9368,39 @@
 				"properties": {
 					"credentials": {
 						"additionalProperties": {
+							"description": "Credentials to use for the test",
 							"type": "string"
 						},
+						"description": "Credentials to use for the test",
 						"type": "object"
 					},
 					"custom_url": {
+						"description": "Custom URL to test. Required when provider_id is 'custom'",
 						"nullable": true,
 						"type": "string"
 					},
 					"provider_id": {
+						"description": "MCP provider to test connection for",
 						"format": "uuid",
 						"type": "string"
 					}
 				},
+				"required": [
+					"provider_id"
+				],
 				"type": "object"
 			},
 			"ToggleHealthCheckRequest": {
 				"description": "ToggleHealthCheckRequest schema",
 				"properties": {
 					"application_id": {
+						"description": "ID of the application to toggle health check for",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"enabled": {
+						"description": "Whether the health check should be enabled",
 						"type": "boolean"
 					}
 				},
@@ -9005,25 +9413,43 @@
 				"description": "TrackInstallRequest schema",
 				"properties": {
 					"arch": {
+						"description": "CPU architecture. Valid values: amd64, arm64, unknown",
 						"type": "string"
 					},
 					"duration": {
+						"description": "Installation duration in seconds",
+						"example": 120,
+						"maximum": 7200,
+						"minimum": 0,
 						"type": "integer"
 					},
 					"error": {
+						"description": "Error message if installation failed",
+						"maxLength": 200,
 						"nullable": true,
 						"type": "string"
 					},
 					"event_type": {
+						"description": "Type of installation event",
+						"example": "install_success",
 						"type": "string"
 					},
 					"os": {
+						"description": "Operating system identifier. Valid values: ubuntu, debian, centos, fedora, rhel, alpine, arch, opensuse, sles, amzn, ol, rocky, almalinux, raspbian, pop, mint, manjaro, kali, nixos, gentoo, void, slackware, clear-linux-os, unknown",
 						"type": "string"
 					},
 					"version": {
+						"description": "Semantic version string (e.g. 1.2.3 or 1.2.3-beta.1)",
+						"example": "1.0.0",
 						"type": "string"
 					}
 				},
+				"required": [
+					"arch",
+					"event_type",
+					"os",
+					"version"
+				],
 				"type": "object"
 			},
 			"TrackInstallResponse": {
@@ -9106,6 +9532,8 @@
 				"description": "UpdateAutoUpdateRequest schema",
 				"properties": {
 					"auto_update": {
+						"description": "Whether to automatically apply updates",
+						"example": true,
 						"type": "boolean"
 					}
 				},
@@ -9115,9 +9543,14 @@
 				"description": "UpdateAvatarRequest schema",
 				"properties": {
 					"avatarData": {
+						"description": "Base64-encoded image data URI. Must start with data:image/{jpeg,jpg,png,gif};base64,",
+						"example": "data:image/png;base64,iVBORw0KGgo...",
 						"type": "string"
 					}
 				},
+				"required": [
+					"avatarData"
+				],
 				"type": "object"
 			},
 			"UpdateCheckResponse": {
@@ -9205,48 +9638,70 @@
 				"description": "UpdateDeploymentRequest schema",
 				"properties": {
 					"base_path": {
+						"description": "Base path for the application",
+						"example": "/",
 						"nullable": true,
 						"type": "string"
 					},
 					"build_pack": {
+						"description": "Build strategy. Must be valid if provided",
+						"example": "dockerfile",
 						"nullable": true,
 						"type": "string"
 					},
 					"build_variables": {
 						"additionalProperties": {
+							"description": "Key-value pairs passed as build arguments to Docker",
 							"nullable": true,
 							"type": "string"
 						},
+						"description": "Key-value pairs passed as build arguments to Docker",
 						"nullable": true,
 						"type": "object"
 					},
 					"compose_domains": {
+						"description": "Domain-to-service mappings for compose deployments",
 						"items": {
+							"description": "Domain-to-service mappings for compose deployments",
 							"nullable": true,
 							"properties": {
 								"domain": {
+									"description": "Domain name for the compose service",
+									"example": "app.example.com",
 									"type": "string"
 								},
 								"port": {
+									"description": "Port override for the compose service",
+									"example": 8080,
 									"nullable": true,
 									"type": "integer"
 								},
 								"service_name": {
+									"description": "Name of the compose service to route to",
+									"example": "web",
 									"nullable": true,
 									"type": "string"
 								}
 							},
+							"required": [
+								"domain"
+							],
 							"type": "object"
 						},
 						"nullable": true,
 						"type": "array"
 					},
 					"dockerfile_path": {
+						"description": "Path to the Dockerfile relative to the repository root",
+						"example": "Dockerfile",
 						"nullable": true,
 						"type": "string"
 					},
 					"domains": {
+						"description": "Custom domains for the application. Maximum 5 allowed",
 						"items": {
+							"description": "Custom domains for the application. Maximum 5 allowed",
+							"maxLength": 5,
 							"nullable": true,
 							"type": "string"
 						},
@@ -9254,42 +9709,62 @@
 						"type": "array"
 					},
 					"environment": {
+						"description": "Deployment environment. Must be valid if provided",
+						"example": "production",
 						"nullable": true,
 						"type": "string"
 					},
 					"environment_variables": {
 						"additionalProperties": {
+							"description": "Key-value pairs set as runtime environment variables",
 							"nullable": true,
 							"type": "string"
 						},
+						"description": "Key-value pairs set as runtime environment variables",
 						"nullable": true,
 						"type": "object"
 					},
 					"force": {
+						"description": "Force the update even if a deployment is in progress",
 						"nullable": true,
 						"type": "boolean"
 					},
 					"id": {
+						"description": "Application ID to update",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"name": {
+						"description": "Application name. Minimum 3 characters if provided",
+						"example": "my-web-app",
+						"minLength": 3,
 						"nullable": true,
 						"type": "string"
 					},
 					"port": {
+						"description": "Port the application listens on",
+						"example": 3000,
+						"maximum": 65535,
+						"minimum": 1,
 						"nullable": true,
 						"type": "integer"
 					},
 					"post_run_command": {
+						"description": "Command to run after the application starts",
+						"example": "npm run seed",
 						"nullable": true,
 						"type": "string"
 					},
 					"pre_run_command": {
+						"description": "Command to run before the application starts",
+						"example": "npm run migrate",
 						"nullable": true,
 						"type": "string"
 					},
 					"routing_strategy": {
+						"description": "Routing strategy for multi-server deployments",
+						"example": "round-robin",
 						"nullable": true,
 						"type": "string"
 					}
@@ -9315,46 +9790,70 @@
 				"description": "UpdateFontRequest schema",
 				"properties": {
 					"font_family": {
+						"description": "Font family name for the editor",
+						"example": "JetBrains Mono",
 						"type": "string"
 					},
 					"font_size": {
+						"description": "Font size in pixels",
+						"example": 14,
+						"maximum": 32,
+						"minimum": 8,
 						"type": "integer"
 					}
 				},
+				"required": [
+					"font_family",
+					"font_size"
+				],
 				"type": "object"
 			},
 			"UpdateGithubConnectorRequest": {
 				"description": "UpdateGithubConnectorRequest schema",
 				"properties": {
 					"connector_id": {
+						"description": "Connector ID to update. If provided, updates this specific connector",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"nullable": true,
 						"type": "string"
 					},
 					"installation_id": {
+						"description": "GitHub App installation ID",
+						"example": "12345678",
 						"format": "uuid",
 						"type": "string"
 					}
 				},
+				"required": [
+					"installation_id"
+				],
 				"type": "object"
 			},
 			"UpdateHealthCheckRequest": {
 				"description": "UpdateHealthCheckRequest schema",
 				"properties": {
 					"application_id": {
+						"description": "ID of the application to update health check for",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"body": {
+						"description": "Request body to send with health check requests",
 						"nullable": true,
 						"type": "string"
 					},
 					"endpoint": {
+						"description": "Health check endpoint path or URL. Must start with /, http://, or https://",
+						"example": "/health",
 						"nullable": true,
 						"type": "string"
 					},
 					"expected_status_codes": {
+						"description": "Expected HTTP status codes",
 						"items": {
+							"description": "Expected HTTP status codes",
 							"nullable": true,
 							"type": "integer"
 						},
@@ -9362,34 +9861,58 @@
 						"type": "array"
 					},
 					"failure_threshold": {
+						"description": "Consecutive failures before marking unhealthy (1-10)",
+						"example": 3,
+						"maximum": 10,
+						"minimum": 1,
 						"nullable": true,
 						"type": "integer"
 					},
 					"headers": {
 						"additionalProperties": {
+							"description": "Custom HTTP headers to include in health check requests",
 							"nullable": true,
 							"type": "string"
 						},
+						"description": "Custom HTTP headers to include in health check requests",
 						"nullable": true,
 						"type": "object"
 					},
 					"interval_seconds": {
+						"description": "Check interval in seconds (30-3600)",
+						"example": 60,
+						"maximum": 3600,
+						"minimum": 30,
 						"nullable": true,
 						"type": "integer"
 					},
 					"method": {
+						"description": "HTTP method to use. Must be GET, POST, or HEAD",
+						"example": "GET",
 						"nullable": true,
 						"type": "string"
 					},
 					"retention_days": {
+						"description": "Number of days to retain health check results (1-365)",
+						"example": 30,
+						"maximum": 365,
+						"minimum": 1,
 						"nullable": true,
 						"type": "integer"
 					},
 					"success_threshold": {
+						"description": "Consecutive successes before marking healthy (1-10)",
+						"example": 1,
+						"maximum": 10,
+						"minimum": 1,
 						"nullable": true,
 						"type": "integer"
 					},
 					"timeout_seconds": {
+						"description": "Request timeout in seconds (5-120)",
+						"example": 30,
+						"maximum": 120,
+						"minimum": 5,
 						"nullable": true,
 						"type": "integer"
 					}
@@ -9419,21 +9942,32 @@
 				"description": "UpdateLanguageRequest schema",
 				"properties": {
 					"language": {
+						"description": "Preferred language code",
+						"example": "en",
 						"type": "string"
 					}
 				},
+				"required": [
+					"language"
+				],
 				"type": "object"
 			},
 			"UpdatePreferenceRequest": {
 				"description": "UpdatePreferenceRequest schema",
 				"properties": {
 					"category": {
+						"description": "Notification category",
+						"example": "activity",
 						"type": "string"
 					},
 					"enabled": {
+						"description": "Whether this notification preference is enabled",
+						"example": true,
 						"type": "boolean"
 					},
 					"type": {
+						"description": "Preference type identifier",
+						"example": "deployment_success",
 						"type": "string"
 					}
 				},
@@ -9468,38 +10002,58 @@
 				"description": "UpdateSMTPConfigRequest schema",
 				"properties": {
 					"from_email": {
+						"description": "Sender email address for outgoing emails",
+						"example": "noreply@example.com",
 						"nullable": true,
 						"type": "string"
 					},
 					"from_name": {
+						"description": "Display name for outgoing emails",
+						"example": "Nixopus",
 						"nullable": true,
 						"type": "string"
 					},
 					"host": {
+						"description": "SMTP server hostname",
+						"example": "smtp.gmail.com",
 						"nullable": true,
 						"type": "string"
 					},
 					"id": {
+						"description": "SMTP configuration ID to update",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"organization_id": {
+						"description": "Organization this SMTP config belongs to",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					},
 					"password": {
+						"description": "SMTP authentication password",
+						"example": "app-password",
 						"nullable": true,
 						"type": "string"
 					},
 					"port": {
+						"description": "SMTP server port",
+						"example": 587,
 						"nullable": true,
 						"type": "integer"
 					},
 					"username": {
+						"description": "SMTP authentication username",
+						"example": "user@gmail.com",
 						"nullable": true,
 						"type": "string"
 					}
 				},
+				"required": [
+					"id",
+					"organization_id"
+				],
 				"type": "object"
 			},
 			"UpdateServerRequest": {
@@ -9507,43 +10061,65 @@
 				"properties": {
 					"credentials": {
 						"additionalProperties": {
+							"description": "Updated provider credentials",
 							"type": "string"
 						},
+						"description": "Updated provider credentials",
 						"type": "object"
 					},
 					"custom_url": {
+						"description": "Updated custom server URL. Must use HTTPS if provided",
 						"nullable": true,
 						"type": "string"
 					},
 					"enabled": {
+						"description": "Whether the server is active",
 						"type": "boolean"
 					},
 					"id": {
+						"description": "MCP server ID to update",
 						"format": "uuid",
 						"type": "string"
 					},
 					"name": {
+						"description": "Updated display name",
 						"type": "string"
 					}
 				},
+				"required": [
+					"id",
+					"name"
+				],
 				"type": "object"
 			},
 			"UpdateThemeRequest": {
 				"description": "UpdateThemeRequest schema",
 				"properties": {
 					"theme": {
+						"description": "UI theme name",
+						"example": "dark",
 						"type": "string"
 					}
 				},
+				"required": [
+					"theme"
+				],
 				"type": "object"
 			},
 			"UpdateUserNameRequest": {
 				"description": "UpdateUserNameRequest schema",
 				"properties": {
 					"name": {
+						"description": "New username. Must be 3-50 characters with no spaces",
+						"example": "johndoe",
+						"maxLength": 50,
+						"minLength": 3,
 						"type": "string"
 					}
 				},
+				"required": [
+					"name"
+				],
 				"type": "object"
 			},
 			"UpdateUsernameResponse": {
@@ -9570,13 +10146,19 @@
 				"description": "UpdateWebhookConfigRequest schema",
 				"properties": {
 					"is_active": {
+						"description": "Whether the webhook integration is active",
+						"example": true,
 						"nullable": true,
 						"type": "boolean"
 					},
 					"type": {
+						"description": "Webhook integration type",
+						"example": "slack",
 						"type": "string"
 					},
 					"webhook_url": {
+						"description": "Updated webhook URL",
+						"example": "https://hooks.slack.com/services/...",
 						"nullable": true,
 						"type": "string"
 					}
@@ -10075,10 +10657,15 @@
 				"description": "VerifyCustomDomainRequest schema",
 				"properties": {
 					"id": {
+						"description": "Custom domain ID to verify DNS records for",
+						"example": "550e8400-e29b-41d4-a716-446655440000",
 						"format": "uuid",
 						"type": "string"
 					}
 				},
+				"required": [
+					"id"
+				],
 				"type": "object"
 			},
 			"VerifyMachineResponse": {
@@ -10299,8 +10886,7 @@
 				},
 				"summary": "List audit logs",
 				"tags": [
-					"logs",
-					"api/v1/audit"
+					"Audit"
 				]
 			}
 		},
@@ -10405,8 +10991,7 @@
 				},
 				"summary": "Get bootstrap session data",
 				"tags": [
-					"bootstrap",
-					"api/v1/auth"
+					"Auth"
 				]
 			}
 		},
@@ -10505,8 +11090,7 @@
 				},
 				"summary": "Check admin registration",
 				"tags": [
-					"is-admin-registered",
-					"api/v1/auth"
+					"Auth"
 				]
 			}
 		},
@@ -10528,11 +11112,11 @@
 						"*/*": {
 							"example": {
 								"arch": "string",
-								"duration": 1,
+								"duration": 120,
 								"error": "string",
-								"event_type": "string",
+								"event_type": "install_success",
 								"os": "string",
-								"version": "string"
+								"version": "1.0.0"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/TrackInstallRequest"
@@ -10543,7 +11127,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -10564,7 +11148,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -10622,7 +11206,7 @@
 				},
 				"summary": "Track CLI installation event",
 				"tags": [
-					"api/v1/cli/telemetry"
+					"Telemetry"
 				]
 			}
 		},
@@ -10721,7 +11305,7 @@
 				},
 				"summary": "List containers",
 				"tags": [
-					"api/v1/container"
+					"Containers"
 				]
 			}
 		},
@@ -10836,8 +11420,7 @@
 				},
 				"summary": "List images",
 				"tags": [
-					"images",
-					"api/v1/container"
+					"Containers"
 				]
 			}
 		},
@@ -10949,8 +11532,7 @@
 				},
 				"summary": "Prune build cache",
 				"tags": [
-					"prune",
-					"api/v1/container"
+					"Containers"
 				]
 			}
 		},
@@ -11065,8 +11647,7 @@
 				},
 				"summary": "Prune images",
 				"tags": [
-					"prune",
-					"api/v1/container"
+					"Containers"
 				]
 			}
 		},
@@ -11173,8 +11754,7 @@
 				},
 				"summary": "Remove container",
 				"tags": [
-					"{container_id}",
-					"api/v1/container"
+					"Containers"
 				]
 			},
 			"get": {
@@ -11279,8 +11859,7 @@
 				},
 				"summary": "Get container",
 				"tags": [
-					"{container_id}",
-					"api/v1/container"
+					"Containers"
 				]
 			}
 		},
@@ -11407,8 +11986,7 @@
 				},
 				"summary": "Get container logs",
 				"tags": [
-					"{container_id}",
-					"api/v1/container"
+					"Containers"
 				]
 			}
 		},
@@ -11531,8 +12109,7 @@
 				},
 				"summary": "Update container resources",
 				"tags": [
-					"{container_id}",
-					"api/v1/container"
+					"Containers"
 				]
 			}
 		},
@@ -11639,8 +12216,7 @@
 				},
 				"summary": "Restart container",
 				"tags": [
-					"{container_id}",
-					"api/v1/container"
+					"Containers"
 				]
 			}
 		},
@@ -11747,8 +12323,7 @@
 				},
 				"summary": "Start container",
 				"tags": [
-					"{container_id}",
-					"api/v1/container"
+					"Containers"
 				]
 			}
 		},
@@ -11855,8 +12430,7 @@
 				},
 				"summary": "Stop container",
 				"tags": [
-					"{container_id}",
-					"api/v1/container"
+					"Containers"
 				]
 			}
 		},
@@ -11877,7 +12451,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"id": "00000000-0000-0000-0000-000000000000"
+								"id": "550e8400-e29b-41d4-a716-446655440000"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/DeleteDeploymentRequest"
@@ -11967,8 +12541,7 @@
 				},
 				"summary": "Delete application",
 				"tags": [
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			},
 			"get": {
@@ -12075,8 +12648,7 @@
 				},
 				"summary": "Get application",
 				"tags": [
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			},
 			"post": {
@@ -12095,24 +12667,24 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"base_path": "string",
-								"branch": "string",
-								"build_pack": "string",
+								"base_path": "/",
+								"branch": "main",
+								"build_pack": "dockerfile",
 								"build_variables": {},
 								"compose_domains": [],
-								"dockerfile_path": "string",
+								"dockerfile_path": "Dockerfile",
 								"domains": [],
-								"environment": "string",
+								"environment": "production",
 								"environment_variables": {},
-								"name": "string",
-								"port": 1,
-								"post_run_command": "string",
-								"pre_run_command": "string",
-								"primary_server_id": "00000000-0000-0000-0000-000000000000",
-								"repository": "string",
-								"routing_strategy": "string",
+								"name": "my-web-app",
+								"port": 3000,
+								"post_run_command": "npm run seed",
+								"pre_run_command": "npm run migrate",
+								"primary_server_id": "550e8400-e29b-41d4-a716-446655440000",
+								"repository": "github.com/org/repo",
+								"routing_strategy": "round-robin",
 								"server_ids": [],
-								"source": "string",
+								"source": "github",
 								"target_server_ids": []
 							},
 							"schema": {
@@ -12124,7 +12696,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -12147,7 +12719,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -12205,8 +12777,7 @@
 				},
 				"summary": "Deploy application",
 				"tags": [
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			},
 			"put": {
@@ -12225,21 +12796,21 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"base_path": "string",
-								"build_pack": "string",
+								"base_path": "/",
+								"build_pack": "dockerfile",
 								"build_variables": {},
 								"compose_domains": [],
-								"dockerfile_path": "string",
+								"dockerfile_path": "Dockerfile",
 								"domains": [],
-								"environment": "string",
+								"environment": "production",
 								"environment_variables": {},
 								"force": true,
-								"id": "00000000-0000-0000-0000-000000000000",
-								"name": "string",
-								"port": 1,
-								"post_run_command": "string",
-								"pre_run_command": "string",
-								"routing_strategy": "string"
+								"id": "550e8400-e29b-41d4-a716-446655440000",
+								"name": "my-web-app",
+								"port": 3000,
+								"post_run_command": "npm run seed",
+								"pre_run_command": "npm run migrate",
+								"routing_strategy": "round-robin"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/UpdateDeploymentRequest"
@@ -12331,8 +12902,7 @@
 				},
 				"summary": "Update application",
 				"tags": [
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -12353,7 +12923,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"deployment_id": "00000000-0000-0000-0000-000000000000"
+								"deployment_id": "550e8400-e29b-41d4-a716-446655440000"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/CancelDeploymentRequest"
@@ -12443,9 +13013,7 @@
 				},
 				"summary": "Cancel deployment",
 				"tags": [
-					"cancel-deployment",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -12554,9 +13122,7 @@
 				},
 				"summary": "List compose services",
 				"tags": [
-					"compose-services",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -12590,7 +13156,7 @@
 						"description": "Page size",
 						"example": 20,
 						"in": "query",
-						"name": "limit",
+						"name": "page_size",
 						"schema": {
 							"default": 20,
 							"maximum": 100,
@@ -12688,9 +13254,7 @@
 				},
 				"summary": "List application deployments",
 				"tags": [
-					"deployments",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -12797,9 +13361,7 @@
 				},
 				"summary": "Get deployment",
 				"tags": [
-					"deployments",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -12965,9 +13527,7 @@
 				},
 				"summary": "Get deployment logs",
 				"tags": [
-					"deployments",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -13090,9 +13650,7 @@
 				},
 				"summary": "Remove application domain",
 				"tags": [
-					"domains",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			},
 			"post": {
@@ -13134,7 +13692,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -13157,7 +13715,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -13215,9 +13773,7 @@
 				},
 				"summary": "Add application domain",
 				"tags": [
-					"domains",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -13340,9 +13896,7 @@
 				},
 				"summary": "Update application labels",
 				"tags": [
-					"labels",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -13508,9 +14062,7 @@
 				},
 				"summary": "Get application logs",
 				"tags": [
-					"logs",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -13531,10 +14083,10 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"base_path": "string",
-								"branch": "string",
-								"dockerfile_path": "string",
-								"repository": "string"
+								"base_path": "/",
+								"branch": "main",
+								"dockerfile_path": "Dockerfile",
+								"repository": "github.com/org/repo"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/PreviewComposeRequest"
@@ -13622,9 +14174,7 @@
 				},
 				"summary": "Preview compose services",
 				"tags": [
-					"preview-compose",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -13645,25 +14195,25 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"base_path": "string",
-								"branch": "string",
-								"build_pack": "string",
+								"base_path": "/",
+								"branch": "main",
+								"build_pack": "dockerfile",
 								"build_variables": {},
 								"compose_domains": [],
 								"compose_services": [],
-								"dockerfile_path": "string",
+								"dockerfile_path": "Dockerfile",
 								"domains": [],
-								"environment": "string",
+								"environment": "production",
 								"environment_variables": {},
-								"name": "string",
-								"port": 1,
-								"post_run_command": "string",
-								"pre_run_command": "string",
-								"primary_server_id": "00000000-0000-0000-0000-000000000000",
-								"repository": "string",
-								"routing_strategy": "string",
+								"name": "my-web-app",
+								"port": 3000,
+								"post_run_command": "npm run seed",
+								"pre_run_command": "npm run migrate",
+								"primary_server_id": "550e8400-e29b-41d4-a716-446655440000",
+								"repository": "github.com/org/repo",
+								"routing_strategy": "round-robin",
 								"server_ids": [],
-								"source": "string"
+								"source": "github"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/CreateProjectRequest"
@@ -13674,7 +14224,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -13697,7 +14247,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -13755,9 +14305,7 @@
 				},
 				"summary": "Create project",
 				"tags": [
-					"project",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -13778,20 +14326,20 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"branch": "string",
-								"build_pack": "string",
+								"branch": "main",
+								"build_pack": "dockerfile",
 								"build_variables": {},
-								"dockerfile_path": "string",
+								"dockerfile_path": "Dockerfile",
 								"domains": [],
-								"environment": "string",
+								"environment": "development",
 								"environment_variables": {},
-								"family_id": "00000000-0000-0000-0000-000000000000",
-								"name": "string",
-								"path": "string",
-								"port": 1,
-								"post_run_command": "string",
-								"pre_run_command": "string",
-								"repository": "string"
+								"family_id": "550e8400-e29b-41d4-a716-446655440000",
+								"name": "my-api",
+								"path": "api/",
+								"port": 8080,
+								"post_run_command": "npm run seed",
+								"pre_run_command": "npm run migrate",
+								"repository": "github.com/org/repo"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/AddApplicationToFamilyRequest"
@@ -13802,7 +14350,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -13825,7 +14373,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -13883,9 +14431,7 @@
 				},
 				"summary": "Add project to family",
 				"tags": [
-					"project",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -13906,7 +14452,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"id": "00000000-0000-0000-0000-000000000000"
+								"id": "550e8400-e29b-41d4-a716-446655440000"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/DeployProjectRequest"
@@ -13998,9 +14544,7 @@
 				},
 				"summary": "Deploy project",
 				"tags": [
-					"project",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -14021,13 +14565,13 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"branch": "string",
+								"branch": "develop",
 								"domains": [],
-								"environment": "string",
-								"primary_server_id": "00000000-0000-0000-0000-000000000000",
-								"routing_strategy": "string",
+								"environment": "staging",
+								"primary_server_id": "550e8400-e29b-41d4-a716-446655440000",
+								"routing_strategy": "round-robin",
 								"server_ids": [],
-								"source_project_id": "00000000-0000-0000-0000-000000000000"
+								"source_project_id": "550e8400-e29b-41d4-a716-446655440000"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/DuplicateProjectRequest"
@@ -14038,7 +14582,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -14061,7 +14605,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -14119,9 +14663,7 @@
 				},
 				"summary": "Duplicate project",
 				"tags": [
-					"project",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -14230,9 +14772,7 @@
 				},
 				"summary": "List projects in family",
 				"tags": [
-					"project",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -14341,9 +14881,7 @@
 				},
 				"summary": "List family environments",
 				"tags": [
-					"project",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -14364,7 +14902,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"application_id": "00000000-0000-0000-0000-000000000000"
+								"application_id": "550e8400-e29b-41d4-a716-446655440000"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/RecoverRequest"
@@ -14456,9 +14994,7 @@
 				},
 				"summary": "Recover application",
 				"tags": [
-					"recover",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -14481,7 +15017,7 @@
 							"example": {
 								"force": true,
 								"force_without_cache": true,
-								"id": "00000000-0000-0000-0000-000000000000",
+								"id": "550e8400-e29b-41d4-a716-446655440000",
 								"target_server_ids": []
 							},
 							"schema": {
@@ -14574,9 +15110,7 @@
 				},
 				"summary": "Redeploy application",
 				"tags": [
-					"redeploy",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -14597,7 +15131,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"id": "00000000-0000-0000-0000-000000000000"
+								"id": "550e8400-e29b-41d4-a716-446655440000"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/RestartDeploymentRequest"
@@ -14687,9 +15221,7 @@
 				},
 				"summary": "Restart deployment",
 				"tags": [
-					"restart",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -14710,7 +15242,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"id": "00000000-0000-0000-0000-000000000000",
+								"id": "550e8400-e29b-41d4-a716-446655440000",
 								"target_server_ids": []
 							},
 							"schema": {
@@ -14801,9 +15333,7 @@
 				},
 				"summary": "Rollback deployment",
 				"tags": [
-					"rollback",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -14912,9 +15442,7 @@
 				},
 				"summary": "Get application servers",
 				"tags": [
-					"servers",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			},
 			"put": {
@@ -14933,9 +15461,9 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"application_id": "00000000-0000-0000-0000-000000000000",
-								"primary_server_id": "00000000-0000-0000-0000-000000000000",
-								"routing_strategy": "string",
+								"application_id": "550e8400-e29b-41d4-a716-446655440000",
+								"primary_server_id": "550e8400-e29b-41d4-a716-446655440000",
+								"routing_strategy": "round-robin",
 								"server_ids": []
 							},
 							"schema": {
@@ -15028,9 +15556,7 @@
 				},
 				"summary": "Set application servers",
 				"tags": [
-					"servers",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -15051,12 +15577,12 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"environment": "string",
-								"name": "string",
-								"primary_server_id": "00000000-0000-0000-0000-000000000000",
-								"routing_strategy": "string",
+								"environment": "production",
+								"name": "my-wordpress",
+								"primary_server_id": "550e8400-e29b-41d4-a716-446655440000",
+								"routing_strategy": "round-robin",
 								"server_ids": [],
-								"template_id": "00000000-0000-0000-0000-000000000000",
+								"template_id": "wordpress",
 								"variables": {}
 							},
 							"schema": {
@@ -15068,7 +15594,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -15091,7 +15617,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -15149,9 +15675,7 @@
 				},
 				"summary": "Deploy application from template",
 				"tags": [
-					"template",
-					"api/v1/deploy",
-					"application"
+					"Deploy"
 				]
 			}
 		},
@@ -15295,8 +15819,7 @@
 				},
 				"summary": "List applications",
 				"tags": [
-					"applications",
-					"api/v1/deploy"
+					"Deploy"
 				]
 			}
 		},
@@ -15405,8 +15928,7 @@
 				},
 				"summary": "List deployment artifacts for an application",
 				"tags": [
-					"api/v1/deploy",
-					"artifacts"
+					"Deploy"
 				]
 			}
 		},
@@ -15511,9 +16033,7 @@
 				},
 				"summary": "Delete deployment artifact",
 				"tags": [
-					"{deployment_id}",
-					"api/v1/deploy",
-					"artifacts"
+					"Deploy"
 				]
 			}
 		},
@@ -15620,9 +16140,7 @@
 				},
 				"summary": "Get artifact download URL",
 				"tags": [
-					"{deployment_id}",
-					"api/v1/deploy",
-					"artifacts"
+					"Deploy"
 				]
 			}
 		},
@@ -15729,7 +16247,7 @@
 				},
 				"summary": "List domains",
 				"tags": [
-					"api/v1/domain"
+					"Domains"
 				]
 			}
 		},
@@ -15750,7 +16268,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"id": "00000000-0000-0000-0000-000000000000"
+								"id": "550e8400-e29b-41d4-a716-446655440000"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/RemoveCustomDomainRequest"
@@ -15840,8 +16358,7 @@
 				},
 				"summary": "Remove custom domain",
 				"tags": [
-					"custom",
-					"api/v1/domain"
+					"Domains"
 				]
 			},
 			"post": {
@@ -15860,7 +16377,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"name": "string"
+								"name": "app.example.com"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/AddCustomDomainRequest"
@@ -15871,7 +16388,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -15898,7 +16415,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -15956,8 +16473,7 @@
 				},
 				"summary": "Add custom domain",
 				"tags": [
-					"custom",
-					"api/v1/domain"
+					"Domains"
 				]
 			}
 		},
@@ -16068,8 +16584,7 @@
 				},
 				"summary": "Check custom domain DNS",
 				"tags": [
-					"dns-check",
-					"api/v1/domain"
+					"Domains"
 				]
 			}
 		},
@@ -16168,8 +16683,7 @@
 				},
 				"summary": "Generate random subdomain",
 				"tags": [
-					"generate",
-					"api/v1/domain"
+					"Domains"
 				]
 			}
 		},
@@ -16190,7 +16704,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"id": "00000000-0000-0000-0000-000000000000"
+								"id": "550e8400-e29b-41d4-a716-446655440000"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/VerifyCustomDomainRequest"
@@ -16282,8 +16796,7 @@
 				},
 				"summary": "Verify custom domain",
 				"tags": [
-					"verify",
-					"api/v1/domain"
+					"Domains"
 				]
 			}
 		},
@@ -16447,7 +16960,7 @@
 				},
 				"summary": "List extensions",
 				"tags": [
-					"api/v1/extensions"
+					"Extensions"
 				]
 			}
 		},
@@ -16554,8 +17067,7 @@
 				},
 				"summary": "Get extension by extension ID",
 				"tags": [
-					"by-extension-id",
-					"api/v1/extensions"
+					"Extensions"
 				]
 			}
 		},
@@ -16654,8 +17166,7 @@
 				},
 				"summary": "List extension categories",
 				"tags": [
-					"categories",
-					"api/v1/extensions"
+					"Extensions"
 				]
 			}
 		},
@@ -16762,8 +17273,7 @@
 				},
 				"summary": "Get extension by ID",
 				"tags": [
-					"{id}",
-					"api/v1/extensions"
+					"Extensions"
 				]
 			}
 		},
@@ -16862,7 +17372,7 @@
 				},
 				"summary": "List feature flags",
 				"tags": [
-					"api/v1/feature-flags"
+					"Feature Flags"
 				]
 			},
 			"put": {
@@ -16972,7 +17482,7 @@
 				},
 				"summary": "Update feature flag",
 				"tags": [
-					"api/v1/feature-flags"
+					"Feature Flags"
 				]
 			}
 		},
@@ -17080,8 +17590,7 @@
 				},
 				"summary": "Check if feature is enabled",
 				"tags": [
-					"check",
-					"api/v1/feature-flags"
+					"Feature Flags"
 				]
 			}
 		},
@@ -17189,7 +17698,7 @@
 				},
 				"summary": "List files",
 				"tags": [
-					"api/v1/file-manager"
+					"File Manager"
 				]
 			}
 		},
@@ -17301,8 +17810,7 @@
 				},
 				"summary": "Copy directory",
 				"tags": [
-					"copy-directory",
-					"api/v1/file-manager"
+					"File Manager"
 				]
 			}
 		},
@@ -17413,8 +17921,7 @@
 				},
 				"summary": "Create directory",
 				"tags": [
-					"create-directory",
-					"api/v1/file-manager"
+					"File Manager"
 				]
 			}
 		},
@@ -17525,8 +18032,7 @@
 				},
 				"summary": "Delete directory",
 				"tags": [
-					"delete-directory",
-					"api/v1/file-manager"
+					"File Manager"
 				]
 			}
 		},
@@ -17638,8 +18144,7 @@
 				},
 				"summary": "Move directory",
 				"tags": [
-					"move-directory",
-					"api/v1/file-manager"
+					"File Manager"
 				]
 			}
 		},
@@ -17736,8 +18241,7 @@
 				},
 				"summary": "Upload file",
 				"tags": [
-					"upload",
-					"api/v1/file-manager"
+					"File Manager"
 				]
 			}
 		},
@@ -17758,7 +18262,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"id": "00000000-0000-0000-0000-000000000000"
+								"id": "550e8400-e29b-41d4-a716-446655440000"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/DeleteGithubConnectorRequest"
@@ -17848,7 +18352,7 @@
 				},
 				"summary": "Delete GitHub connector",
 				"tags": [
-					"api/v1/github-connector"
+					"GitHub Connector"
 				]
 			},
 			"post": {
@@ -17867,12 +18371,12 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"app_id": "00000000-0000-0000-0000-000000000000",
-								"client_id": "00000000-0000-0000-0000-000000000000",
+								"app_id": "123456",
+								"client_id": "Iv1.abc123def456",
 								"client_secret": "string",
-								"installation_id": "00000000-0000-0000-0000-000000000000",
+								"installation_id": "12345678",
 								"pem": "string",
-								"slug": "string",
+								"slug": "my-github-app",
 								"webhook_secret": "string"
 							},
 							"schema": {
@@ -17884,7 +18388,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -17905,7 +18409,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -17963,7 +18467,7 @@
 				},
 				"summary": "Create GitHub connector",
 				"tags": [
-					"api/v1/github-connector"
+					"GitHub Connector"
 				]
 			},
 			"put": {
@@ -17982,8 +18486,8 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"connector_id": "00000000-0000-0000-0000-000000000000",
-								"installation_id": "00000000-0000-0000-0000-000000000000"
+								"connector_id": "550e8400-e29b-41d4-a716-446655440000",
+								"installation_id": "12345678"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/UpdateGithubConnectorRequest"
@@ -18073,7 +18577,7 @@
 				},
 				"summary": "Update GitHub connector",
 				"tags": [
-					"api/v1/github-connector"
+					"GitHub Connector"
 				]
 			}
 		},
@@ -18172,8 +18676,7 @@
 				},
 				"summary": "List GitHub connectors",
 				"tags": [
-					"all",
-					"api/v1/github-connector"
+					"GitHub Connector"
 				]
 			}
 		},
@@ -18272,8 +18775,7 @@
 				},
 				"summary": "List GitHub repositories",
 				"tags": [
-					"repositories",
-					"api/v1/github-connector"
+					"GitHub Connector"
 				]
 			}
 		},
@@ -18386,8 +18888,7 @@
 				},
 				"summary": "List repository branches",
 				"tags": [
-					"repository",
-					"api/v1/github-connector"
+					"GitHub Connector"
 				]
 			}
 		},
@@ -18484,7 +18985,7 @@
 				},
 				"summary": "Health check",
 				"tags": [
-					"api/v1/health"
+					"Health"
 				]
 			}
 		},
@@ -18593,7 +19094,7 @@
 				},
 				"summary": "Delete health check",
 				"tags": [
-					"api/v1/healthcheck"
+					"Health Checks"
 				]
 			},
 			"get": {
@@ -18698,7 +19199,7 @@
 				},
 				"summary": "Get health checks",
 				"tags": [
-					"api/v1/healthcheck"
+					"Health Checks"
 				]
 			},
 			"post": {
@@ -18717,17 +19218,17 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"application_id": "00000000-0000-0000-0000-000000000000",
+								"application_id": "550e8400-e29b-41d4-a716-446655440000",
 								"body": "string",
-								"endpoint": "string",
+								"endpoint": "/health",
 								"expected_status_codes": [],
-								"failure_threshold": 1,
+								"failure_threshold": 3,
 								"headers": {},
-								"interval_seconds": 1,
-								"method": "string",
-								"retention_days": 1,
+								"interval_seconds": 60,
+								"method": "GET",
+								"retention_days": 30,
 								"success_threshold": 1,
-								"timeout_seconds": 1
+								"timeout_seconds": 30
 							},
 							"schema": {
 								"$ref": "#/components/schemas/CreateHealthCheckRequest"
@@ -18738,7 +19239,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -18759,7 +19260,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -18817,7 +19318,7 @@
 				},
 				"summary": "Create health check",
 				"tags": [
-					"api/v1/healthcheck"
+					"Health Checks"
 				]
 			},
 			"put": {
@@ -18836,17 +19337,17 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"application_id": "00000000-0000-0000-0000-000000000000",
+								"application_id": "550e8400-e29b-41d4-a716-446655440000",
 								"body": "string",
-								"endpoint": "string",
+								"endpoint": "/health",
 								"expected_status_codes": [],
-								"failure_threshold": 1,
+								"failure_threshold": 3,
 								"headers": {},
-								"interval_seconds": 1,
-								"method": "string",
-								"retention_days": 1,
+								"interval_seconds": 60,
+								"method": "GET",
+								"retention_days": 30,
 								"success_threshold": 1,
-								"timeout_seconds": 1
+								"timeout_seconds": 30
 							},
 							"schema": {
 								"$ref": "#/components/schemas/UpdateHealthCheckRequest"
@@ -18936,7 +19437,7 @@
 				},
 				"summary": "Update health check",
 				"tags": [
-					"api/v1/healthcheck"
+					"Health Checks"
 				]
 			}
 		},
@@ -19077,8 +19578,7 @@
 				},
 				"summary": "List health check results",
 				"tags": [
-					"results",
-					"api/v1/healthcheck"
+					"Health Checks"
 				]
 			}
 		},
@@ -19205,8 +19705,7 @@
 				},
 				"summary": "Get health check stats",
 				"tags": [
-					"stats",
-					"api/v1/healthcheck"
+					"Health Checks"
 				]
 			}
 		},
@@ -19227,7 +19726,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"application_id": "00000000-0000-0000-0000-000000000000",
+								"application_id": "550e8400-e29b-41d4-a716-446655440000",
 								"enabled": true
 							},
 							"schema": {
@@ -19318,8 +19817,7 @@
 				},
 				"summary": "Toggle health check",
 				"tags": [
-					"toggle",
-					"api/v1/healthcheck"
+					"Health Checks"
 				]
 			}
 		},
@@ -19489,7 +19987,7 @@
 				},
 				"summary": "List machines",
 				"tags": [
-					"api/v1/machines"
+					"Machines"
 				]
 			},
 			"post": {
@@ -19522,7 +20020,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -19551,7 +20049,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -19609,7 +20107,7 @@
 				},
 				"summary": "Register a BYOS machine",
 				"tags": [
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -19708,8 +20206,7 @@
 				},
 				"summary": "Trigger machine backup",
 				"tags": [
-					"backup",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -19808,8 +20305,7 @@
 				},
 				"summary": "Get backup schedule",
 				"tags": [
-					"backup",
-					"api/v1/machines"
+					"Machines"
 				]
 			},
 			"put": {
@@ -19925,8 +20421,7 @@
 				},
 				"summary": "Update backup schedule",
 				"tags": [
-					"backup",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -20087,8 +20582,7 @@
 				},
 				"summary": "List machine backups",
 				"tags": [
-					"backups",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -20185,8 +20679,7 @@
 				},
 				"summary": "Get machine billing status",
 				"tags": [
-					"billing",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -20313,8 +20806,7 @@
 				},
 				"summary": "Get machine events",
 				"tags": [
-					"events",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -20427,8 +20919,7 @@
 				},
 				"summary": "Execute a command on the host machine",
 				"tags": [
-					"exec",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -20555,8 +21046,7 @@
 				},
 				"summary": "Get machine metrics",
 				"tags": [
-					"metrics",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -20671,8 +21161,7 @@
 				},
 				"summary": "Get machine metrics summary",
 				"tags": [
-					"metrics",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -20769,8 +21258,7 @@
 				},
 				"summary": "Pause machine",
 				"tags": [
-					"pause",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -20891,8 +21379,7 @@
 				},
 				"summary": "Select a machine plan",
 				"tags": [
-					"plan",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -20989,8 +21476,7 @@
 				},
 				"summary": "List available machine plans",
 				"tags": [
-					"plans",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -21087,8 +21573,7 @@
 				},
 				"summary": "Restart machine",
 				"tags": [
-					"restart",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -21185,8 +21670,7 @@
 				},
 				"summary": "Resume machine",
 				"tags": [
-					"resume",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -21287,8 +21771,7 @@
 				},
 				"summary": "Get SSH connection status",
 				"tags": [
-					"ssh",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -21387,8 +21870,7 @@
 				},
 				"summary": "Get machine system stats",
 				"tags": [
-					"stats",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -21487,8 +21969,7 @@
 				},
 				"summary": "Get machine lifecycle status",
 				"tags": [
-					"status",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -21603,8 +22084,7 @@
 				},
 				"summary": "Provision trail resources",
 				"tags": [
-					"provision",
-					"api/v1/machines/trial"
+					"Machines"
 				]
 			}
 		},
@@ -21713,8 +22193,7 @@
 				},
 				"summary": "Get trail session status",
 				"tags": [
-					"status",
-					"api/v1/machines/trial"
+					"Machines"
 				]
 			}
 		},
@@ -21817,8 +22296,7 @@
 				},
 				"summary": "Remove a machine",
 				"tags": [
-					"{id}",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -21937,8 +22415,7 @@
 				},
 				"summary": "Rename a machine",
 				"tags": [
-					"{id}",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -22045,8 +22522,7 @@
 				},
 				"summary": "Set machine as org default",
 				"tags": [
-					"{id}",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -22151,8 +22627,7 @@
 				},
 				"summary": "SSH connection status",
 				"tags": [
-					"{id}",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -22257,8 +22732,7 @@
 				},
 				"summary": "Verify SSH connection",
 				"tags": [
-					"{id}",
-					"api/v1/machines"
+					"Machines"
 				]
 			}
 		},
@@ -22357,8 +22831,7 @@
 				},
 				"summary": "List MCP provider catalog",
 				"tags": [
-					"api/v1/mcp",
-					"catalog"
+					"MCP"
 				]
 			}
 		},
@@ -22455,9 +22928,7 @@
 				},
 				"summary": "Get provider icon",
 				"tags": [
-					"{provider_id}",
-					"api/v1/mcp",
-					"catalog"
+					"MCP"
 				]
 			}
 		},
@@ -22556,9 +23027,7 @@
 				},
 				"summary": "Agent: list enabled servers with credentials",
 				"tags": [
-					"servers",
-					"api/v1/mcp",
-					"internal"
+					"MCP"
 				]
 			}
 		},
@@ -22657,9 +23126,7 @@
 				},
 				"summary": "Agent: discover tools from all enabled MCP servers",
 				"tags": [
-					"tools",
-					"api/v1/mcp",
-					"internal"
+					"MCP"
 				]
 			}
 		},
@@ -22682,7 +23149,7 @@
 							"example": {
 								"arguments": {},
 								"server_id": "00000000-0000-0000-0000-000000000000",
-								"tool_name": "string"
+								"tool_name": "search"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/CallToolRequest"
@@ -22774,9 +23241,7 @@
 				},
 				"summary": "Agent: invoke a tool on an MCP server",
 				"tags": [
-					"tools",
-					"api/v1/mcp",
-					"internal"
+					"MCP"
 				]
 			}
 		},
@@ -22889,8 +23354,7 @@
 				},
 				"summary": "Delete MCP server",
 				"tags": [
-					"api/v1/mcp",
-					"servers"
+					"MCP"
 				]
 			},
 			"get": {
@@ -22987,8 +23451,7 @@
 				},
 				"summary": "List org MCP servers",
 				"tags": [
-					"api/v1/mcp",
-					"servers"
+					"MCP"
 				]
 			},
 			"post": {
@@ -23010,8 +23473,8 @@
 								"credentials": {},
 								"custom_url": "string",
 								"enabled": true,
-								"name": "string",
-								"provider_id": "00000000-0000-0000-0000-000000000000"
+								"name": "My OpenAI Server",
+								"provider_id": "openai"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/CreateServerRequest"
@@ -23022,7 +23485,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -23045,7 +23508,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -23103,8 +23566,7 @@
 				},
 				"summary": "Add MCP server",
 				"tags": [
-					"api/v1/mcp",
-					"servers"
+					"MCP"
 				]
 			}
 		},
@@ -23219,9 +23681,7 @@
 				},
 				"summary": "Test MCP server connection",
 				"tags": [
-					"test",
-					"api/v1/mcp",
-					"servers"
+					"MCP"
 				]
 			}
 		},
@@ -23346,9 +23806,7 @@
 				},
 				"summary": "Update MCP server",
 				"tags": [
-					"{id}",
-					"api/v1/mcp",
-					"servers"
+					"MCP"
 				]
 			}
 		},
@@ -23447,11 +23905,10 @@
 				},
 				"summary": "Get notification preferences",
 				"tags": [
-					"api/v1/notification",
-					"preferences"
+					"Notifications"
 				]
 			},
-			"post": {
+			"patch": {
 				"description": "Update notification preferences.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
 				"operationId": "updateNotificationPreferences",
 				"parameters": [
@@ -23467,9 +23924,9 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"category": "string",
+								"category": "activity",
 								"enabled": true,
-								"type": "string"
+								"type": "deployment_success"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/UpdatePreferenceRequest"
@@ -23559,8 +24016,7 @@
 				},
 				"summary": "Update notification preferences",
 				"tags": [
-					"api/v1/notification",
-					"preferences"
+					"Notifications"
 				]
 			}
 		},
@@ -23581,11 +24037,11 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"channel": "string",
-								"message": "string",
+								"channel": "email",
+								"message": "Deployment completed successfully",
 								"metadata": {},
-								"subject": "string",
-								"to": "string"
+								"subject": "Deployment Update",
+								"to": "user@example.com"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/SendNotificationRequest"
@@ -23677,8 +24133,7 @@
 				},
 				"summary": "Send notification",
 				"tags": [
-					"send",
-					"api/v1/notification"
+					"Notifications"
 				]
 			}
 		},
@@ -23699,7 +24154,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"id": "00000000-0000-0000-0000-000000000000"
+								"id": "550e8400-e29b-41d4-a716-446655440000"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/DeleteSMTPConfigRequest"
@@ -23789,8 +24244,7 @@
 				},
 				"summary": "Delete SMTP config",
 				"tags": [
-					"api/v1/notification",
-					"smtp"
+					"Notifications"
 				]
 			},
 			"get": {
@@ -23897,8 +24351,7 @@
 				},
 				"summary": "Get SMTP config",
 				"tags": [
-					"api/v1/notification",
-					"smtp"
+					"Notifications"
 				]
 			},
 			"post": {
@@ -23917,13 +24370,13 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"from_email": "user@example.com",
-								"from_name": "string",
-								"host": "string",
-								"organization_id": "00000000-0000-0000-0000-000000000000",
-								"password": "string",
-								"port": 1,
-								"username": "string"
+								"from_email": "noreply@example.com",
+								"from_name": "Nixopus",
+								"host": "smtp.gmail.com",
+								"organization_id": "550e8400-e29b-41d4-a716-446655440000",
+								"password": "app-password",
+								"port": 587,
+								"username": "user@gmail.com"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/CreateSMTPConfigRequest"
@@ -23934,7 +24387,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -23955,7 +24408,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -24013,8 +24466,7 @@
 				},
 				"summary": "Create SMTP config",
 				"tags": [
-					"api/v1/notification",
-					"smtp"
+					"Notifications"
 				]
 			},
 			"put": {
@@ -24033,14 +24485,14 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"from_email": "user@example.com",
-								"from_name": "string",
-								"host": "string",
-								"id": "00000000-0000-0000-0000-000000000000",
-								"organization_id": "00000000-0000-0000-0000-000000000000",
-								"password": "string",
-								"port": 1,
-								"username": "string"
+								"from_email": "noreply@example.com",
+								"from_name": "Nixopus",
+								"host": "smtp.gmail.com",
+								"id": "550e8400-e29b-41d4-a716-446655440000",
+								"organization_id": "550e8400-e29b-41d4-a716-446655440000",
+								"password": "app-password",
+								"port": 587,
+								"username": "user@gmail.com"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/UpdateSMTPConfigRequest"
@@ -24130,8 +24582,7 @@
 				},
 				"summary": "Update SMTP config",
 				"tags": [
-					"api/v1/notification",
-					"smtp"
+					"Notifications"
 				]
 			}
 		},
@@ -24152,7 +24603,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"type": "string"
+								"type": "slack"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/DeleteWebhookConfigRequest"
@@ -24242,8 +24693,7 @@
 				},
 				"summary": "Delete webhook config",
 				"tags": [
-					"api/v1/notification",
-					"webhook"
+					"Notifications"
 				]
 			},
 			"post": {
@@ -24262,8 +24712,8 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"type": "string",
-								"webhook_url": "string"
+								"type": "slack",
+								"webhook_url": "https://hooks.slack.com/services/..."
 							},
 							"schema": {
 								"$ref": "#/components/schemas/CreateWebhookConfigRequest"
@@ -24274,7 +24724,7 @@
 					"required": true
 				},
 				"responses": {
-					"200": {
+					"201": {
 						"content": {
 							"application/json": {
 								"example": {
@@ -24297,7 +24747,7 @@
 								}
 							}
 						},
-						"description": "OK"
+						"description": "Created"
 					},
 					"400": {
 						"content": {
@@ -24355,8 +24805,7 @@
 				},
 				"summary": "Create webhook config",
 				"tags": [
-					"api/v1/notification",
-					"webhook"
+					"Notifications"
 				]
 			},
 			"put": {
@@ -24376,8 +24825,8 @@
 						"*/*": {
 							"example": {
 								"is_active": true,
-								"type": "string",
-								"webhook_url": "string"
+								"type": "slack",
+								"webhook_url": "https://hooks.slack.com/services/..."
 							},
 							"schema": {
 								"$ref": "#/components/schemas/UpdateWebhookConfigRequest"
@@ -24469,8 +24918,7 @@
 				},
 				"summary": "Update webhook config",
 				"tags": [
-					"api/v1/notification",
-					"webhook"
+					"Notifications"
 				]
 			}
 		},
@@ -24577,9 +25025,7 @@
 				},
 				"summary": "Get webhook config",
 				"tags": [
-					"{type}",
-					"api/v1/notification",
-					"webhook"
+					"Notifications"
 				]
 			}
 		},
@@ -24690,7 +25136,7 @@
 				},
 				"summary": "Perform update",
 				"tags": [
-					"api/v1/update"
+					"Update"
 				]
 			}
 		},
@@ -24793,8 +25239,7 @@
 				},
 				"summary": "Check for updates",
 				"tags": [
-					"check",
-					"api/v1/update"
+					"Update"
 				]
 			}
 		},
@@ -24893,7 +25338,7 @@
 				},
 				"summary": "Get current user profile",
 				"tags": [
-					"api/v1/user"
+					"User"
 				]
 			}
 		},
@@ -24914,7 +25359,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"avatarData": "string"
+								"avatarData": "data:image/png;base64,iVBORw0KGgo..."
 							},
 							"schema": {
 								"$ref": "#/components/schemas/UpdateAvatarRequest"
@@ -25004,8 +25449,7 @@
 				},
 				"summary": "Update user avatar",
 				"tags": [
-					"avatar",
-					"api/v1/user"
+					"User"
 				]
 			}
 		},
@@ -25026,7 +25470,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"name": "string"
+								"name": "johndoe"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/UpdateUserNameRequest"
@@ -25118,8 +25562,7 @@
 				},
 				"summary": "Update user name",
 				"tags": [
-					"name",
-					"api/v1/user"
+					"User"
 				]
 			}
 		},
@@ -25218,8 +25661,7 @@
 				},
 				"summary": "Check onboarding status",
 				"tags": [
-					"onboarded",
-					"api/v1/user"
+					"User"
 				]
 			},
 			"post": {
@@ -25312,8 +25754,7 @@
 				},
 				"summary": "Mark onboarding complete",
 				"tags": [
-					"onboarded",
-					"api/v1/user"
+					"User"
 				]
 			}
 		},
@@ -25412,8 +25853,7 @@
 				},
 				"summary": "Get user preferences",
 				"tags": [
-					"preferences",
-					"api/v1/user"
+					"User"
 				]
 			},
 			"put": {
@@ -25535,8 +25975,7 @@
 				},
 				"summary": "Update user preferences",
 				"tags": [
-					"preferences",
-					"api/v1/user"
+					"User"
 				]
 			}
 		},
@@ -25635,8 +26074,7 @@
 				},
 				"summary": "Get user settings",
 				"tags": [
-					"settings",
-					"api/v1/user"
+					"User"
 				]
 			}
 		},
@@ -25749,8 +26187,7 @@
 				},
 				"summary": "Update auto-update settings",
 				"tags": [
-					"settings",
-					"api/v1/user"
+					"User"
 				]
 			}
 		},
@@ -25771,8 +26208,8 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"font_family": "string",
-								"font_size": 1
+								"font_family": "JetBrains Mono",
+								"font_size": 14
 							},
 							"schema": {
 								"$ref": "#/components/schemas/UpdateFontRequest"
@@ -25864,8 +26301,7 @@
 				},
 				"summary": "Update font settings",
 				"tags": [
-					"settings",
-					"api/v1/user"
+					"User"
 				]
 			}
 		},
@@ -25886,7 +26322,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"language": "string"
+								"language": "en"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/UpdateLanguageRequest"
@@ -25978,8 +26414,7 @@
 				},
 				"summary": "Update language settings",
 				"tags": [
-					"settings",
-					"api/v1/user"
+					"User"
 				]
 			}
 		},
@@ -26000,7 +26435,7 @@
 					"content": {
 						"*/*": {
 							"example": {
-								"theme": "string"
+								"theme": "dark"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/UpdateThemeRequest"
@@ -26092,8 +26527,7 @@
 				},
 				"summary": "Update theme settings",
 				"tags": [
-					"settings",
-					"api/v1/user"
+					"User"
 				]
 			}
 		},
@@ -26190,7 +26624,7 @@
 				},
 				"summary": "Handle GitHub webhook",
 				"tags": [
-					"api/v1/webhook"
+					"Webhooks"
 				]
 			}
 		}
@@ -26203,268 +26637,58 @@
 	],
 	"tags": [
 		{
-			"name": "all"
+			"name": "Audit"
 		},
 		{
-			"name": "api/v1/audit"
+			"name": "Auth"
 		},
 		{
-			"name": "api/v1/auth"
+			"name": "Containers"
 		},
 		{
-			"name": "api/v1/cli/telemetry"
+			"name": "Deploy"
 		},
 		{
-			"name": "api/v1/container"
+			"name": "Domains"
 		},
 		{
-			"name": "api/v1/deploy"
+			"name": "Extensions"
 		},
 		{
-			"name": "api/v1/domain"
+			"name": "Feature Flags"
 		},
 		{
-			"name": "api/v1/extensions"
+			"name": "File Manager"
 		},
 		{
-			"name": "api/v1/feature-flags"
+			"name": "GitHub Connector"
 		},
 		{
-			"name": "api/v1/file-manager"
+			"name": "Health"
 		},
 		{
-			"name": "api/v1/github-connector"
+			"name": "Health Checks"
 		},
 		{
-			"name": "api/v1/health"
+			"name": "MCP"
 		},
 		{
-			"name": "api/v1/healthcheck"
+			"name": "Machines"
 		},
 		{
-			"name": "api/v1/machines"
+			"name": "Notifications"
 		},
 		{
-			"name": "api/v1/machines/trial"
+			"name": "Telemetry"
 		},
 		{
-			"name": "api/v1/mcp"
+			"name": "Update"
 		},
 		{
-			"name": "api/v1/notification"
+			"name": "User"
 		},
 		{
-			"name": "api/v1/update"
-		},
-		{
-			"name": "api/v1/user"
-		},
-		{
-			"name": "api/v1/webhook"
-		},
-		{
-			"name": "application"
-		},
-		{
-			"name": "applications"
-		},
-		{
-			"name": "artifacts"
-		},
-		{
-			"name": "avatar"
-		},
-		{
-			"name": "backup"
-		},
-		{
-			"name": "backups"
-		},
-		{
-			"name": "billing"
-		},
-		{
-			"name": "bootstrap"
-		},
-		{
-			"name": "by-extension-id"
-		},
-		{
-			"name": "cancel-deployment"
-		},
-		{
-			"name": "catalog"
-		},
-		{
-			"name": "categories"
-		},
-		{
-			"name": "check"
-		},
-		{
-			"name": "compose-services"
-		},
-		{
-			"name": "copy-directory"
-		},
-		{
-			"name": "create-directory"
-		},
-		{
-			"name": "custom"
-		},
-		{
-			"name": "delete-directory"
-		},
-		{
-			"name": "deployments"
-		},
-		{
-			"name": "dns-check"
-		},
-		{
-			"name": "domains"
-		},
-		{
-			"name": "events"
-		},
-		{
-			"name": "exec"
-		},
-		{
-			"name": "generate"
-		},
-		{
-			"name": "images"
-		},
-		{
-			"name": "internal"
-		},
-		{
-			"name": "is-admin-registered"
-		},
-		{
-			"name": "labels"
-		},
-		{
-			"name": "logs"
-		},
-		{
-			"name": "metrics"
-		},
-		{
-			"name": "move-directory"
-		},
-		{
-			"name": "name"
-		},
-		{
-			"name": "onboarded"
-		},
-		{
-			"name": "pause"
-		},
-		{
-			"name": "plan"
-		},
-		{
-			"name": "plans"
-		},
-		{
-			"name": "preferences"
-		},
-		{
-			"name": "preview-compose"
-		},
-		{
-			"name": "project"
-		},
-		{
-			"name": "provision"
-		},
-		{
-			"name": "prune"
-		},
-		{
-			"name": "recover"
-		},
-		{
-			"name": "redeploy"
-		},
-		{
-			"name": "repositories"
-		},
-		{
-			"name": "repository"
-		},
-		{
-			"name": "restart"
-		},
-		{
-			"name": "results"
-		},
-		{
-			"name": "resume"
-		},
-		{
-			"name": "rollback"
-		},
-		{
-			"name": "send"
-		},
-		{
-			"name": "servers"
-		},
-		{
-			"name": "settings"
-		},
-		{
-			"name": "smtp"
-		},
-		{
-			"name": "ssh"
-		},
-		{
-			"name": "stats"
-		},
-		{
-			"name": "status"
-		},
-		{
-			"name": "template"
-		},
-		{
-			"name": "test"
-		},
-		{
-			"name": "toggle"
-		},
-		{
-			"name": "tools"
-		},
-		{
-			"name": "upload"
-		},
-		{
-			"name": "verify"
-		},
-		{
-			"name": "webhook"
-		},
-		{
-			"name": "{container_id}"
-		},
-		{
-			"name": "{deployment_id}"
-		},
-		{
-			"name": "{id}"
-		},
-		{
-			"name": "{provider_id}"
-		},
-		{
-			"name": "{type}"
+			"name": "Webhooks"
 		}
 	]
 }

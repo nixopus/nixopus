@@ -20,8 +20,8 @@ func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.Context
 
 	w, r := f.Response(), f.Request()
 
-	if !c.parseAndValidate(w, r, &UpdateConnectorRequest) {
-		return nil, fuego.BadRequestError{Detail: "invalid request"}
+	if err := c.parseAndValidate(w, r, &UpdateConnectorRequest); err != nil {
+		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	user := utils.GetUser(w, r)

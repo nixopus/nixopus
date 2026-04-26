@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/go-fuego/fuego"
+	"github.com/go-fuego/fuego/option"
 	deploy "github.com/nixopus/nixopus/api/internal/features/deploy/controller"
 )
 
@@ -17,10 +18,10 @@ func (router *Router) RegisterDeployRoutes(deployGroup *fuego.Server, deployCont
 		fuego.OptionQuery("sort_by", "Sort field"),
 		fuego.OptionQuery("sort_direction", "Sort direction"),
 	)
-	deployApplicationGroup := fuego.Group(deployGroup, "/application")
+	deployApplicationGroup := fuego.Group(deployGroup, "/application", option.Tags("Deploy"))
 	router.RegisterDeployApplicationRoutes(deployApplicationGroup, deployController)
 
-	artifactGroup := fuego.Group(deployGroup, "/artifacts")
+	artifactGroup := fuego.Group(deployGroup, "/artifacts", option.Tags("Deploy"))
 	router.RegisterArtifactRoutes(artifactGroup, deployController)
 }
 
@@ -31,18 +32,21 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 		"",
 		deployController.HandleDeploy,
 		fuego.OptionSummary("Deploy application"),
+		fuego.OptionDefaultStatusCode(201),
 	)
 	fuego.Post(
 		applicationGroup,
 		"/template",
 		deployController.HandleTemplateDeploy,
 		fuego.OptionSummary("Deploy application from template"),
+		fuego.OptionDefaultStatusCode(201),
 	)
 	fuego.Post(
 		applicationGroup,
 		"/project",
 		deployController.HandleCreateProject,
 		fuego.OptionSummary("Create project"),
+		fuego.OptionDefaultStatusCode(201),
 	)
 	fuego.Post(
 		applicationGroup,
@@ -55,12 +59,14 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 		"/project/duplicate",
 		deployController.HandleDuplicateProject,
 		fuego.OptionSummary("Duplicate project"),
+		fuego.OptionDefaultStatusCode(201),
 	)
 	fuego.Post(
 		applicationGroup,
 		"/project/add-to-family",
 		deployController.HandleAddApplicationToFamily,
 		fuego.OptionSummary("Add project to family"),
+		fuego.OptionDefaultStatusCode(201),
 	)
 	fuego.Get(
 		applicationGroup,
@@ -156,7 +162,7 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 		fuego.OptionSummary("List application deployments"),
 		fuego.OptionQuery("id", "Application ID", fuego.ParamRequired()),
 		fuego.OptionQueryInt("page", "Page number"),
-		fuego.OptionQueryInt("limit", "Page size"),
+		fuego.OptionQueryInt("page_size", "Page size"),
 	)
 	fuego.Put(
 		applicationGroup,
@@ -170,6 +176,7 @@ func (router *Router) RegisterDeployApplicationRoutes(applicationGroup *fuego.Se
 		"/domains",
 		deployController.AddApplicationDomain,
 		fuego.OptionSummary("Add application domain"),
+		fuego.OptionDefaultStatusCode(201),
 		fuego.OptionQuery("id", "Application ID", fuego.ParamRequired()),
 	)
 	fuego.Delete(

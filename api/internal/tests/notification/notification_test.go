@@ -138,7 +138,7 @@ func TestCreateSMTPConfig_ValidData(t *testing.T) {
 	}
 
 	Test(t,
-		Description("POST /notification/smtp with all required fields returns 200"),
+		Description("POST /notification/smtp with all required fields returns 201"),
 		Post(tests.GetNotificationSMTPURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
@@ -151,7 +151,7 @@ func TestCreateSMTPConfig_ValidData(t *testing.T) {
 			"from_email":      "test@example.com",
 			"organization_id": orgID.String(),
 		}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 		Expect().Body().JSON().JQ(".status").Equal("success"),
 	)
 }
@@ -184,7 +184,7 @@ func TestCreateSMTPConfig_DuplicateReturnsError(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(payload),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	Test(t,
@@ -238,7 +238,7 @@ func TestUpdateSMTPConfig_NonExistentID(t *testing.T) {
 		Send().Body().JSON(map[string]interface{}{
 			"id": uuid.New().String(),
 		}),
-		Expect().Status().OneOf(int64(http.StatusNotFound), int64(http.StatusInternalServerError)),
+		Expect().Status().OneOf(int64(http.StatusBadRequest), int64(http.StatusNotFound), int64(http.StatusInternalServerError)),
 	)
 }
 
@@ -267,7 +267,7 @@ func TestUpdateSMTPConfig_ValidFlow(t *testing.T) {
 			"password":        "password123",
 			"organization_id": orgID.String(),
 		}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	// Fetch to get ID
@@ -368,7 +368,7 @@ func TestDeleteSMTPConfig_ValidFlow(t *testing.T) {
 			"password":        "password123",
 			"organization_id": orgID.String(),
 		}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	var smtpID string
@@ -425,8 +425,8 @@ func TestGetNotificationPreferences_ValidAuth(t *testing.T) {
 
 func TestUpdateNotificationPreferences_NoAuth(t *testing.T) {
 	Test(t,
-		Description("POST /notification/preferences without auth returns 401"),
-		Post(tests.GetNotificationPreferencesURL()),
+		Description("PATCH /notification/preferences without auth returns 401"),
+		Method(http.MethodPatch, tests.GetNotificationPreferencesURL()),
 		Send().Body().JSON(map[string]interface{}{"category": "activity", "type": "deploy", "enabled": true}),
 		Expect().Status().Equal(http.StatusUnauthorized),
 	)
@@ -440,8 +440,8 @@ func TestUpdateNotificationPreferences_MissingCategory(t *testing.T) {
 	}
 
 	Test(t,
-		Description("POST /notification/preferences without category returns 400"),
-		Post(tests.GetNotificationPreferencesURL()),
+		Description("PATCH /notification/preferences without category returns 400"),
+		Method(http.MethodPatch, tests.GetNotificationPreferencesURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"type": "deploy", "enabled": true}),
@@ -457,8 +457,8 @@ func TestUpdateNotificationPreferences_InvalidCategory(t *testing.T) {
 	}
 
 	Test(t,
-		Description("POST /notification/preferences with invalid category returns 400"),
-		Post(tests.GetNotificationPreferencesURL()),
+		Description("PATCH /notification/preferences with invalid category returns 400"),
+		Method(http.MethodPatch, tests.GetNotificationPreferencesURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"category": "invalid_category", "type": "deploy", "enabled": true}),
@@ -474,8 +474,8 @@ func TestUpdateNotificationPreferences_MissingType(t *testing.T) {
 	}
 
 	Test(t,
-		Description("POST /notification/preferences without type returns 400"),
-		Post(tests.GetNotificationPreferencesURL()),
+		Description("PATCH /notification/preferences without type returns 400"),
+		Method(http.MethodPatch, tests.GetNotificationPreferencesURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"category": "activity", "enabled": true}),
@@ -491,8 +491,8 @@ func TestUpdateNotificationPreferences_Activity(t *testing.T) {
 	}
 
 	Test(t,
-		Description("POST /notification/preferences activity category returns 200"),
-		Post(tests.GetNotificationPreferencesURL()),
+		Description("PATCH /notification/preferences activity category returns 200"),
+		Method(http.MethodPatch, tests.GetNotificationPreferencesURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"category": "activity", "type": "deploy", "enabled": true}),
@@ -508,8 +508,8 @@ func TestUpdateNotificationPreferences_Security(t *testing.T) {
 	}
 
 	Test(t,
-		Description("POST /notification/preferences security category returns 200"),
-		Post(tests.GetNotificationPreferencesURL()),
+		Description("PATCH /notification/preferences security category returns 200"),
+		Method(http.MethodPatch, tests.GetNotificationPreferencesURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"category": "security", "type": "login", "enabled": false}),
@@ -525,8 +525,8 @@ func TestUpdateNotificationPreferences_Update(t *testing.T) {
 	}
 
 	Test(t,
-		Description("POST /notification/preferences update category returns 200"),
-		Post(tests.GetNotificationPreferencesURL()),
+		Description("PATCH /notification/preferences update category returns 200"),
+		Method(http.MethodPatch, tests.GetNotificationPreferencesURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"category": "update", "type": "release", "enabled": true}),
@@ -587,7 +587,7 @@ func TestCreateWebhookConfig_Slack(t *testing.T) {
 	}
 
 	Test(t,
-		Description("POST /notification/webhook with slack type returns 200"),
+		Description("POST /notification/webhook with slack type returns 201"),
 		Post(tests.GetNotificationWebhookBaseURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
@@ -595,7 +595,7 @@ func TestCreateWebhookConfig_Slack(t *testing.T) {
 			"type":        "slack",
 			"webhook_url": "https://hooks.slack.com/services/TEST/TEST/TEST",
 		}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 		Expect().Body().JSON().JQ(".status").Equal("success"),
 	)
 }
@@ -608,7 +608,7 @@ func TestCreateWebhookConfig_Discord(t *testing.T) {
 	}
 
 	Test(t,
-		Description("POST /notification/webhook with discord type returns 200"),
+		Description("POST /notification/webhook with discord type returns 201"),
 		Post(tests.GetNotificationWebhookBaseURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
@@ -616,7 +616,7 @@ func TestCreateWebhookConfig_Discord(t *testing.T) {
 			"type":        "discord",
 			"webhook_url": "https://discord.com/api/webhooks/TEST/TEST",
 		}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 		Expect().Body().JSON().JQ(".status").Equal("success"),
 	)
 }
@@ -722,7 +722,7 @@ func TestUpdateWebhookConfig_ValidFlow(t *testing.T) {
 			"type":        "slack",
 			"webhook_url": "https://hooks.slack.com/services/OLD/OLD/OLD",
 		}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	newURL := "https://hooks.slack.com/services/NEW/NEW/NEW"
@@ -801,7 +801,7 @@ func TestDeleteWebhookConfig_ValidFlow(t *testing.T) {
 			"type":        "discord",
 			"webhook_url": "https://discord.com/api/webhooks/DELETE/ME",
 		}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	Test(t,

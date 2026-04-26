@@ -14,7 +14,10 @@ func (c *DeployController) GetApplicationDeployments(f fuego.ContextNoBody) (*ty
 	r := f.Request()
 	id := r.URL.Query().Get("id")
 	page := r.URL.Query().Get("page")
-	pageSize := r.URL.Query().Get("limit")
+	pageSize := r.URL.Query().Get("page_size")
+	if pageSize == "" {
+		pageSize = r.URL.Query().Get("limit")
+	}
 
 	if id == "" {
 		c.logger.Log(logger.Error, "application ID is required", "")

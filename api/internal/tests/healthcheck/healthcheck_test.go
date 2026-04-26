@@ -115,14 +115,14 @@ func TestCreateHealthcheck_ValidMinimal(t *testing.T) {
 	}
 
 	Test(t,
-		Description("POST /healthcheck with application_id returns 200"),
+		Description("POST /healthcheck with application_id returns 201"),
 		Post(tests.GetHealthCheckURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{
 			"application_id": appID,
 		}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 		Expect().Body().JSON().JQ(".status").Equal("success"),
 		Expect().Body().JSON().JQ(".data.id").NotEqual(nil),
 	)
@@ -141,7 +141,7 @@ func TestCreateHealthcheck_WithFullConfig(t *testing.T) {
 	}
 
 	Test(t,
-		Description("POST /healthcheck with full config returns 200"),
+		Description("POST /healthcheck with full config returns 201"),
 		Post(tests.GetHealthCheckURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
@@ -154,7 +154,7 @@ func TestCreateHealthcheck_WithFullConfig(t *testing.T) {
 			"expected_status_codes": []int{200},
 			"failure_threshold":     3,
 		}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 		Expect().Body().JSON().JQ(".status").Equal("success"),
 	)
 }
@@ -177,7 +177,7 @@ func TestCreateHealthcheck_DuplicateApplicationID(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	Test(t,
@@ -253,7 +253,7 @@ func TestUpdateHealthcheck_ValidFlow(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	Test(t,
@@ -331,7 +331,7 @@ func TestDeleteHealthcheck_ValidFlow(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	Test(t,
@@ -410,7 +410,7 @@ func TestToggleHealthcheck_ValidFlow(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	Test(t,
@@ -484,7 +484,7 @@ func TestGetHealthcheckResults_ValidAuth(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	Test(t,
@@ -515,7 +515,7 @@ func TestGetHealthcheckResults_WithPagination(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	Test(t,
@@ -587,7 +587,7 @@ func TestGetHealthcheckStats_ValidFlow(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 	)
 
 	Test(t,

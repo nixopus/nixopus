@@ -6,6 +6,9 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-fuego/fuego"
 )
 
 // specMarshalJSON is the JSON encoder for PostProcessSpec; override in tests to force errors.
@@ -79,6 +82,7 @@ func PostProcessSpec(specPath string) error {
 			addRequestExamples(op, schemas)
 			standardizeErrorResponses(op)
 			addSuccessExamples(op, method, schemas)
+			cleanTags(op)
 		}
 	}
 
@@ -89,6 +93,60 @@ func PostProcessSpec(specPath string) error {
 		return err
 	}
 	return os.WriteFile(specPath, encoded, 0o644)
+}
+
+var allowedTags = map[string]bool{
+	"Audit": true, "Auth": true, "Containers": true, "Deploy": true,
+	"Domains": true, "Extensions": true, "Feature Flags": true,
+	"File Manager": true, "GitHub Connector": true, "Health": true,
+	"Health Checks": true, "MCP": true, "Machines": true,
+	"Notifications": true, "Telemetry": true, "Trial": true,
+	"Update": true, "User": true, "Webhooks": true,
+}
+
+// CleanSpecTags strips auto-generated tags from the in-memory OpenAPI spec
+// so only explicitly allowed tags remain in the live Swagger UI.
+func CleanSpecTags(oa *fuego.OpenAPI) {
+	desc := oa.Description()
+	if desc == nil || desc.Paths == nil {
+		return
+	}
+	for _, pathItem := range desc.Paths.Map() {
+		for _, op := range []*openapi3.Operation{
+			pathItem.Get, pathItem.Post, pathItem.Put, pathItem.Patch,
+			pathItem.Delete, pathItem.Head, pathItem.Options, pathItem.Trace,
+		} {
+			if op == nil {
+				continue
+			}
+			var kept []string
+			for _, t := range op.Tags {
+				if allowedTags[t] {
+					kept = append(kept, t)
+				}
+			}
+			op.Tags = kept
+		}
+	}
+}
+
+func cleanTags(op map[string]any) {
+	rawTags, _ := op["tags"].([]any)
+	if len(rawTags) == 0 {
+		return
+	}
+	var kept []any
+	for _, t := range rawTags {
+		s, _ := t.(string)
+		if allowedTags[s] {
+			kept = append(kept, t)
+		}
+	}
+	if len(kept) == 0 {
+		delete(op, "tags")
+	} else {
+		op["tags"] = kept
+	}
 }
 
 func normalizeOperationID(op map[string]any, method, routePath string, seen map[string]int) {

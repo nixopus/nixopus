@@ -7,7 +7,7 @@ import (
 
 // RegisterGithubConnectorRoutes registers GitHub connector routes
 func (router *Router) RegisterGithubConnectorRoutes(githubGroup *fuego.Server, githubConnectorController *githubConnector.GithubConnectorController) {
-	fuego.Post(githubGroup, "", githubConnectorController.CreateGithubConnector, fuego.OptionSummary("Create GitHub connector"))
+	fuego.Post(githubGroup, "", githubConnectorController.CreateGithubConnector, fuego.OptionSummary("Create GitHub connector"), fuego.OptionDefaultStatusCode(201))
 	fuego.Put(githubGroup, "", githubConnectorController.UpdateGithubConnectorRequest, fuego.OptionSummary("Update GitHub connector"))
 	fuego.Delete(githubGroup, "", githubConnectorController.DeleteGithubConnector, fuego.OptionSummary("Delete GitHub connector"))
 	fuego.Get(githubGroup, "/all", githubConnectorController.GetGithubConnectors, fuego.OptionSummary("List GitHub connectors"))

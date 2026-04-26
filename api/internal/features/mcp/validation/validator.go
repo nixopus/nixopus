@@ -59,25 +59,25 @@ func isPrivate(ip net.IP) bool {
 }
 
 type CreateServerRequest struct {
-	ProviderID  string            `json:"provider_id"`
-	Name        string            `json:"name"`
-	Credentials map[string]string `json:"credentials"`
-	CustomURL   string            `json:"custom_url,omitempty"`
-	Enabled     bool              `json:"enabled"`
+	ProviderID  string            `json:"provider_id" validate:"required" description:"MCP provider identifier (e.g. 'openai', 'anthropic', 'custom')" example:"openai"`
+	Name        string            `json:"name" validate:"required" description:"Display name for this MCP server" example:"My OpenAI Server"`
+	Credentials map[string]string `json:"credentials" description:"Provider-specific credential key-value pairs"`
+	CustomURL   string            `json:"custom_url,omitempty" description:"Custom server URL. Required when provider_id is 'custom'. Must use HTTPS"`
+	Enabled     bool              `json:"enabled" description:"Whether the server is active"`
 }
 
 type UpdateServerRequest struct {
-	ID          string            `json:"id"`
-	Name        string            `json:"name"`
-	Credentials map[string]string `json:"credentials"`
-	CustomURL   string            `json:"custom_url,omitempty"`
-	Enabled     bool              `json:"enabled"`
+	ID          string            `json:"id" validate:"required" description:"MCP server ID to update"`
+	Name        string            `json:"name" validate:"required" description:"Updated display name"`
+	Credentials map[string]string `json:"credentials" description:"Updated provider credentials"`
+	CustomURL   string            `json:"custom_url,omitempty" description:"Updated custom server URL. Must use HTTPS if provided"`
+	Enabled     bool              `json:"enabled" description:"Whether the server is active"`
 }
 
 type TestServerRequest struct {
-	ProviderID  string            `json:"provider_id"`
-	Credentials map[string]string `json:"credentials"`
-	CustomURL   string            `json:"custom_url,omitempty"`
+	ProviderID  string            `json:"provider_id" validate:"required" description:"MCP provider to test connection for"`
+	Credentials map[string]string `json:"credentials" description:"Credentials to use for the test"`
+	CustomURL   string            `json:"custom_url,omitempty" description:"Custom URL to test. Required when provider_id is 'custom'"`
 }
 
 func ValidateCreateRequest(req *CreateServerRequest) error {
@@ -122,9 +122,9 @@ func ValidateUpdateRequest(req *UpdateServerRequest) error {
 }
 
 type CallToolRequest struct {
-	ServerID  string         `json:"server_id"`
-	ToolName  string         `json:"tool_name"`
-	Arguments map[string]any `json:"arguments,omitempty"`
+	ServerID  string         `json:"server_id" validate:"required" description:"ID of the MCP server to call the tool on"`
+	ToolName  string         `json:"tool_name" validate:"required" description:"Name of the MCP tool to invoke" example:"search"`
+	Arguments map[string]any `json:"arguments,omitempty" description:"Tool-specific arguments as key-value pairs"`
 }
 
 func ValidateCallToolRequest(req *CallToolRequest) error {

@@ -36,7 +36,7 @@ func createMachineHelper(t *testing.T, auth *testutils.TestAuthResponse, name, h
 			Port: port,
 			User: user,
 		}),
-		Expect().Status().Equal(http.StatusOK),
+		Expect().Status().Equal(http.StatusCreated),
 		Expect().Custom(func(hit Hit) error {
 			return json.Unmarshal(hit.Response().Body().MustBytes(), &created)
 		}),

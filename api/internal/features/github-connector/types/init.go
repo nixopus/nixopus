@@ -7,18 +7,18 @@ import (
 )
 
 type CreateGithubConnectorRequest struct {
-	AppID          string `json:"app_id"`
-	Slug           string `json:"slug"`
-	Pem            string `json:"pem"`
-	ClientID       string `json:"client_id"`
-	ClientSecret   string `json:"client_secret"`
-	WebhookSecret  string `json:"webhook_secret"`
-	InstallationID string `json:"installation_id,omitempty"`
+	AppID          string `json:"app_id" description:"GitHub App ID. Required if providing custom app credentials" example:"123456"`
+	Slug           string `json:"slug" description:"GitHub App slug" example:"my-github-app"`
+	Pem            string `json:"pem" description:"GitHub App private key in PEM format"`
+	ClientID       string `json:"client_id" description:"GitHub App OAuth client ID" example:"Iv1.abc123def456"`
+	ClientSecret   string `json:"client_secret" description:"GitHub App OAuth client secret"`
+	WebhookSecret  string `json:"webhook_secret" description:"GitHub App webhook secret"`
+	InstallationID string `json:"installation_id,omitempty" description:"GitHub App installation ID" example:"12345678"`
 }
 
 type UpdateGithubConnectorRequest struct {
-	InstallationID string `json:"installation_id"`
-	ConnectorID    string `json:"connector_id,omitempty"` // Optional: if provided, update this specific connector
+	InstallationID string `json:"installation_id" validate:"required" description:"GitHub App installation ID" example:"12345678"`
+	ConnectorID    string `json:"connector_id,omitempty" description:"Connector ID to update. If provided, updates this specific connector" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
 // MessageResponse is a generic response with just status and message

@@ -10,8 +10,8 @@ import (
 )
 
 type UpdateFontRequest struct {
-	FontFamily string `json:"font_family"`
-	FontSize   int    `json:"font_size"`
+	FontFamily string `json:"font_family" validate:"required" description:"Font family name for the editor" example:"JetBrains Mono"`
+	FontSize   int    `json:"font_size" validate:"required,min=8,max=32" description:"Font size in pixels" example:"14"`
 }
 
 func (c *UserController) UpdateFont(s fuego.ContextWithBody[UpdateFontRequest]) (*types.UserSettingsResponse, error) {
@@ -50,7 +50,7 @@ func (c *UserController) UpdateFont(s fuego.ContextWithBody[UpdateFontRequest]) 
 }
 
 type UpdateThemeRequest struct {
-	Theme string `json:"theme"`
+	Theme string `json:"theme" validate:"required" description:"UI theme name" example:"dark"`
 }
 
 func (c *UserController) UpdateTheme(s fuego.ContextWithBody[UpdateThemeRequest]) (*types.UserSettingsResponse, error) {
@@ -89,7 +89,7 @@ func (c *UserController) UpdateTheme(s fuego.ContextWithBody[UpdateThemeRequest]
 }
 
 type UpdateLanguageRequest struct {
-	Language string `json:"language"`
+	Language string `json:"language" validate:"required" description:"Preferred language code" example:"en"`
 }
 
 func (c *UserController) UpdateLanguage(s fuego.ContextWithBody[UpdateLanguageRequest]) (*types.UserSettingsResponse, error) {
@@ -128,7 +128,7 @@ func (c *UserController) UpdateLanguage(s fuego.ContextWithBody[UpdateLanguageRe
 }
 
 type UpdateAutoUpdateRequest struct {
-	AutoUpdate bool `json:"auto_update"`
+	AutoUpdate bool `json:"auto_update" description:"Whether to automatically apply updates" example:"true"`
 }
 
 func (c *UserController) UpdateAutoUpdate(s fuego.ContextWithBody[UpdateAutoUpdateRequest]) (*types.UserSettingsResponse, error) {

@@ -22,9 +22,10 @@ func (u *UserController) UpdateAvatar(s fuego.ContextWithBody[types.UpdateAvatar
 
 	w, r := s.Response(), s.Request()
 
-	if !u.parseAndValidate(w, r, &req) {
+	if err := u.parseAndValidate(w, r, &req); err != nil {
 		return nil, fuego.BadRequestError{
-			Detail: "validation failed",
+			Detail: err.Error(),
+			Err:    err,
 		}
 	}
 

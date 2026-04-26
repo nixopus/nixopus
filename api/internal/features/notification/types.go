@@ -10,13 +10,13 @@ import (
 )
 
 type CreateSMTPConfigRequest struct {
-	Host           string    `json:"host"`
-	Port           int       `json:"port"`
-	Username       string    `json:"username"`
-	Password       string    `json:"password"`
-	FromName       string    `json:"from_name"`
-	FromEmail      string    `json:"from_email"`
-	OrganizationID uuid.UUID `json:"organization_id"`
+	Host           string    `json:"host" validate:"required" description:"SMTP server hostname" example:"smtp.gmail.com"`
+	Port           int       `json:"port" validate:"required,gt=0" description:"SMTP server port" example:"587"`
+	Username       string    `json:"username" validate:"required" description:"SMTP authentication username" example:"user@gmail.com"`
+	Password       string    `json:"password" validate:"required" description:"SMTP authentication password" example:"app-password"`
+	FromName       string    `json:"from_name" description:"Display name for outgoing emails" example:"Nixopus"`
+	FromEmail      string    `json:"from_email" description:"Sender email address for outgoing emails" example:"noreply@example.com"`
+	OrganizationID uuid.UUID `json:"organization_id" validate:"required" description:"Organization this SMTP config belongs to" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
 func (r CreateSMTPConfigRequest) String() string {
@@ -25,22 +25,22 @@ func (r CreateSMTPConfigRequest) String() string {
 }
 
 type UpdateSMTPConfigRequest struct {
-	ID             uuid.UUID `json:"id"`
-	Host           *string   `json:"host,omitempty"`
-	Port           *int      `json:"port,omitempty"`
-	Username       *string   `json:"username,omitempty"`
-	Password       *string   `json:"password,omitempty"`
-	FromName       *string   `json:"from_name,omitempty"`
-	FromEmail      *string   `json:"from_email,omitempty"`
-	OrganizationID uuid.UUID `json:"organization_id"`
+	ID             uuid.UUID `json:"id" validate:"required" description:"SMTP configuration ID to update" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Host           *string   `json:"host,omitempty" description:"SMTP server hostname" example:"smtp.gmail.com"`
+	Port           *int      `json:"port,omitempty" description:"SMTP server port" example:"587"`
+	Username       *string   `json:"username,omitempty" description:"SMTP authentication username" example:"user@gmail.com"`
+	Password       *string   `json:"password,omitempty" description:"SMTP authentication password" example:"app-password"`
+	FromName       *string   `json:"from_name,omitempty" description:"Display name for outgoing emails" example:"Nixopus"`
+	FromEmail      *string   `json:"from_email,omitempty" description:"Sender email address for outgoing emails" example:"noreply@example.com"`
+	OrganizationID uuid.UUID `json:"organization_id" validate:"required" description:"Organization this SMTP config belongs to" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
 type DeleteSMTPConfigRequest struct {
-	ID uuid.UUID `json:"id"`
+	ID uuid.UUID `json:"id" validate:"required" description:"SMTP configuration ID to delete" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
 type GetSMTPConfigRequest struct {
-	ID uuid.UUID `json:"id"`
+	ID uuid.UUID `json:"id" validate:"required" description:"SMTP configuration ID to retrieve" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
 func NewSMTPConfig(c *CreateSMTPConfigRequest, userID uuid.UUID) *shared_types.SMTPConfigs {
@@ -71,22 +71,30 @@ const (
 	UpdateCategory   Category = "update"
 )
 
+func (Category) OpenAPISchemaType() []string { return []string{"string"} }
+func (Category) OpenAPISchemaEnum() []any {
+	return []any{string(ActivityCategory), string(SecurityCategory), string(UpdateCategory)}
+}
+func (Category) Description() string {
+	return "Notification category: activity, security, or update."
+}
+
 type PreferenceType struct {
-	ID          string `json:"id" validate:"required"`
-	Label       string `json:"label" validate:"required"`
-	Description string `json:"description" validate:"required"`
-	Enabled     bool   `json:"enabled"`
+	ID          string `json:"id" validate:"required" description:"Preference type identifier" example:"deployment_success"`
+	Label       string `json:"label" validate:"required" description:"Display label for the preference" example:"Deployment Success"`
+	Description string `json:"description" validate:"required" description:"Description of the preference type" example:"Notifies when a deployment succeeds"`
+	Enabled     bool   `json:"enabled" description:"Whether this preference is enabled" example:"true"`
 }
 
 type CategoryPreferences struct {
-	Category    Category         `json:"category" validate:"required"`
-	Preferences []PreferenceType `json:"preferences" validate:"required"`
+	Category    Category         `json:"category" validate:"required" description:"Notification category" example:"activity"`
+	Preferences []PreferenceType `json:"preferences" validate:"required" description:"List of preference types in this category"`
 }
 
 type UpdatePreferenceRequest struct {
-	Category string `json:"category" validate:"required,oneof=activity security update"`
-	Type     string `json:"type" validate:"required"`
-	Enabled  bool   `json:"enabled"`
+	Category string `json:"category" validate:"required,oneof=activity security update" description:"Notification category" example:"activity"`
+	Type     string `json:"type" validate:"required" description:"Preference type identifier" example:"deployment_success"`
+	Enabled  bool   `json:"enabled" description:"Whether this notification preference is enabled" example:"true"`
 }
 
 type GetPreferencesResponse struct {
@@ -104,30 +112,30 @@ type PreferenceItem struct {
 }
 
 type CreateWebhookConfigRequest struct {
-	Type       string `json:"type" validate:"required,oneof=slack discord"`
-	WebhookURL string `json:"webhook_url"`
+	Type       string `json:"type" validate:"required,oneof=slack discord" description:"Webhook integration type" example:"slack"`
+	WebhookURL string `json:"webhook_url" validate:"required" description:"Webhook URL for the integration" example:"https://hooks.slack.com/services/..."`
 }
 
 type UpdateWebhookConfigRequest struct {
-	Type       string  `json:"type" validate:"required,oneof=slack discord"`
-	WebhookURL *string `json:"webhook_url,omitempty"`
-	IsActive   *bool   `json:"is_active,omitempty"`
+	Type       string  `json:"type" validate:"required,oneof=slack discord" description:"Webhook integration type" example:"slack"`
+	WebhookURL *string `json:"webhook_url,omitempty" description:"Updated webhook URL" example:"https://hooks.slack.com/services/..."`
+	IsActive   *bool   `json:"is_active,omitempty" description:"Whether the webhook integration is active" example:"true"`
 }
 
 type DeleteWebhookConfigRequest struct {
-	Type string `json:"type" validate:"required,oneof=slack discord"`
+	Type string `json:"type" validate:"required,oneof=slack discord" description:"Webhook integration type to delete" example:"slack"`
 }
 
 type GetWebhookConfigRequest struct {
-	Type string `json:"type" validate:"required,oneof=slack discord"`
+	Type string `json:"type" validate:"required,oneof=slack discord" description:"Webhook integration type to retrieve" example:"slack"`
 }
 
 type SendNotificationRequest struct {
-	Channel  string            `json:"channel" validate:"required,oneof=slack discord email"`
-	Message  string            `json:"message" validate:"required"`
-	Subject  string            `json:"subject,omitempty"`
-	To       string            `json:"to,omitempty"`
-	Metadata map[string]string `json:"metadata,omitempty"`
+	Channel  string            `json:"channel" validate:"required,oneof=slack discord email" description:"Notification delivery channel" example:"email"`
+	Message  string            `json:"message" validate:"required" description:"Notification message body" example:"Deployment completed successfully"`
+	Subject  string            `json:"subject,omitempty" description:"Email subject line (only for email channel)" example:"Deployment Update"`
+	To       string            `json:"to,omitempty" description:"Recipient email address (only for email channel)" example:"user@example.com"`
+	Metadata map[string]string `json:"metadata,omitempty" description:"Additional key-value metadata for the notification"`
 }
 
 type SendNotificationResponse struct {

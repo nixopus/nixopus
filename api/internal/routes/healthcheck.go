@@ -9,7 +9,7 @@ func (router *Router) RegisterHealthCheckRoutes(
 	group *fuego.Server,
 	controller *healthcheckController.HealthCheckController,
 ) {
-	fuego.Post(group, "", controller.CreateHealthCheck, fuego.OptionSummary("Create health check"))
+	fuego.Post(group, "", controller.CreateHealthCheck, fuego.OptionSummary("Create health check"), fuego.OptionDefaultStatusCode(201))
 	fuego.Get(
 		group,
 		"",

@@ -25,6 +25,7 @@ func (router *Router) RegisterDomainRoutes(domainGroup *fuego.Server, domainCont
 		"/custom",
 		domainController.HandleAddCustomDomain,
 		fuego.OptionSummary("Add custom domain"),
+		fuego.OptionDefaultStatusCode(201),
 	)
 	fuego.Delete(
 		domainGroup,

@@ -37,7 +37,8 @@ func TestSendJSONResponse(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, rr.Code)
 		var got map[string]any
 		require.NoError(t, json.NewDecoder(rr.Body).Decode(&got))
-		assert.Equal(t, "error", got["status"])
+		assert.Equal(t, "internal_error", got["code"])
+		assert.Equal(t, "failed to encode response data", got["message"])
 	})
 
 	t.Run("encode to writer fails", func(t *testing.T) {
@@ -62,8 +63,8 @@ func TestSendErrorResponse(t *testing.T) {
 	assert.Equal(t, http.StatusBadRequest, rr.Code)
 	var got map[string]any
 	require.NoError(t, json.NewDecoder(rr.Body).Decode(&got))
-	assert.Equal(t, "error", got["status"])
-	assert.Equal(t, "bad", got["error"])
+	assert.Equal(t, "invalid_request", got["code"])
+	assert.Equal(t, "bad", got["message"])
 }
 
 func TestSendErrorResponse_encodeFails(t *testing.T) {
