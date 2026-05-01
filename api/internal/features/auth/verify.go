@@ -13,6 +13,16 @@ import (
 	"github.com/nixopus/nixopus/api/internal/config"
 )
 
+var (
+	authJSONMarshal = json.Marshal
+	authReadAll     = io.ReadAll
+
+	// forwardCookiesList returns cookies to forward when the raw Cookie header is empty.
+	// Overridable in tests: net/http never exposes cookies without a Cookie header, but
+	// callers may still want the AddCookie path when using custom request shims.
+	forwardCookiesList = func(r *http.Request) []*http.Cookie { return r.Cookies() }
+)
+
 // HTTPClient is a shared HTTP client for Better Auth API calls.
 // Uses connection pooling and timeouts to reduce latency from repeated connection setup.
 var HTTPClient = &http.Client{
@@ -72,7 +82,7 @@ func forwardCookies(originalReq *http.Request, targetReq *http.Request) {
 		return
 	}
 
-	cookies := originalReq.Cookies()
+	cookies := forwardCookiesList(originalReq)
 	if len(cookies) > 0 {
 		for _, cookie := range cookies {
 			targetReq.AddCookie(cookie)
@@ -204,7 +214,7 @@ func VerifySession(r *http.Request) (*SessionResponse, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := authReadAll(resp.Body)
 	if err != nil {
 		log.Printf("ERROR VerifySession: Failed to read response body: %v", err)
 		return nil, fmt.Errorf("failed to read response: %w", err)
@@ -223,7 +233,7 @@ func SendOTP(email string) error {
 		"type":  "sign-in",
 	}
 
-	jsonData, err := json.Marshal(payload)
+	jsonData, err := authJSONMarshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: %w", err)
 	}
