@@ -12,16 +12,15 @@ import (
 
 // Config represents the configuration for a database connection.
 type Config struct {
-	Host           string
-	Port           string
-	Username       string
-	Password       string
-	DBName         string
-	SSLMode        string
-	MaxOpenConn    int
-	Debug          bool
-	MaxIdleConn    int
-	MigrationsPath string
+	Host        string
+	Port        string
+	Username    string
+	Password    string
+	DBName      string
+	SSLMode     string
+	MaxOpenConn int
+	Debug       bool
+	MaxIdleConn int
 }
 
 // getConnString generates a PostgreSQL connection string from the given configuration.
