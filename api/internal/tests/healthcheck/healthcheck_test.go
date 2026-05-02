@@ -599,3 +599,723 @@ func TestGetHealthcheckStats_ValidFlow(t *testing.T) {
 		Expect().Body().JSON().JQ(".status").Equal("success"),
 	)
 }
+
+// ---------------------------------------------------------------------------
+// Create — validation errors
+// ---------------------------------------------------------------------------
+
+func TestCreateHealthcheck_InvalidEndpoint(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("POST /healthcheck with endpoint lacking leading slash returns 400"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id": appID,
+			"endpoint":       "no-leading-slash",
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestCreateHealthcheck_InvalidMethod(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("POST /healthcheck with unsupported HTTP method returns 400"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id": appID,
+			"method":         "DELETE",
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestCreateHealthcheck_InvalidTimeout(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("POST /healthcheck with timeout below minimum returns 400"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id":  appID,
+			"timeout_seconds": 2,
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestCreateHealthcheck_InvalidInterval(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("POST /healthcheck with interval below minimum returns 400"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id":   appID,
+			"interval_seconds": 5,
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestCreateHealthcheck_InvalidFailureThreshold(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("POST /healthcheck with failure_threshold above maximum returns 400"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id":    appID,
+			"failure_threshold": 99,
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestCreateHealthcheck_InvalidRetentionDays(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("POST /healthcheck with retention_days above maximum returns 400"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id": appID,
+			"retention_days": 999,
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+// ---------------------------------------------------------------------------
+// Create — missing org header
+// ---------------------------------------------------------------------------
+
+func TestCreateHealthcheck_MissingOrgHeader(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("POST /healthcheck without X-Organization-ID header returns 400"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Body().JSON(map[string]interface{}{"application_id": uuid.New().String()}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+// ---------------------------------------------------------------------------
+// Update — validation errors
+// ---------------------------------------------------------------------------
+
+func TestUpdateHealthcheck_InvalidEndpoint(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("Create healthcheck for invalid-endpoint update test"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
+		Expect().Status().Equal(http.StatusCreated),
+	)
+
+	Test(t,
+		Description("PUT /healthcheck with invalid endpoint returns 400"),
+		Put(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id": appID,
+			"endpoint":       "no-leading-slash",
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestUpdateHealthcheck_InvalidMethod(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("Create healthcheck for invalid-method update test"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
+		Expect().Status().Equal(http.StatusCreated),
+	)
+
+	Test(t,
+		Description("PUT /healthcheck with unsupported method returns 400"),
+		Put(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id": appID,
+			"method":         "PATCH",
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestUpdateHealthcheck_InvalidTimeout(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("Create healthcheck for invalid-timeout update test"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
+		Expect().Status().Equal(http.StatusCreated),
+	)
+
+	Test(t,
+		Description("PUT /healthcheck with timeout above maximum returns 400"),
+		Put(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id":  appID,
+			"timeout_seconds": 999,
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestUpdateHealthcheck_MissingOrgHeader(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("PUT /healthcheck without X-Organization-ID header returns 400"),
+		Put(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Body().JSON(map[string]interface{}{"application_id": uuid.New().String()}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+// ---------------------------------------------------------------------------
+// Delete — missing org header
+// ---------------------------------------------------------------------------
+
+func TestDeleteHealthcheck_MissingOrgHeader(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("DELETE /healthcheck without X-Organization-ID header returns 400"),
+		Delete(tests.GetHealthCheckURL()+"?application_id="+uuid.New().String()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+// ---------------------------------------------------------------------------
+// Toggle — additional cases
+// ---------------------------------------------------------------------------
+
+func TestToggleHealthcheck_MissingOrgHeader(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("PATCH /healthcheck/toggle without X-Organization-ID header returns 400"),
+		Method("PATCH", tests.GetHealthCheckToggleURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id": uuid.New().String(),
+			"enabled":        true,
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestToggleHealthcheck_InvalidApplicationID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("PATCH /healthcheck/toggle with non-UUID application_id returns 400"),
+		Method("PATCH", tests.GetHealthCheckToggleURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id": "not-a-uuid",
+			"enabled":        true,
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+// ---------------------------------------------------------------------------
+// Results — time range and limit parameters
+// ---------------------------------------------------------------------------
+
+func TestGetHealthcheckResults_MissingOrgHeader(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("GET /healthcheck/results without X-Organization-ID header returns 400"),
+		Get(tests.GetHealthCheckResultsURL()+"?application_id="+uuid.New().String()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestGetHealthcheckResults_WithTimeRange(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("Create healthcheck for time-range results test"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
+		Expect().Status().Equal(http.StatusCreated),
+	)
+
+	url := tests.GetHealthCheckResultsURL() +
+		"?application_id=" + appID +
+		"&start_time=2024-01-01T00:00:00Z" +
+		"&end_time=2024-12-31T23:59:59Z"
+
+	Test(t,
+		Description("GET /healthcheck/results with start_time and end_time filters returns 200"),
+		Get(url),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".status").Equal("success"),
+	)
+}
+
+func TestGetHealthcheckResults_WithInvalidLimitString(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("Create healthcheck for invalid-limit results test"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
+		Expect().Status().Equal(http.StatusCreated),
+	)
+
+	Test(t,
+		Description("GET /healthcheck/results with non-numeric limit falls back to default and returns 200"),
+		Get(tests.GetHealthCheckResultsURL()+"?application_id="+appID+"&limit=abc"),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+	)
+}
+
+// ---------------------------------------------------------------------------
+// Stats — period parameter variants
+// ---------------------------------------------------------------------------
+
+func TestGetHealthcheckStats_MissingOrgHeader(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("GET /healthcheck/stats without X-Organization-ID header returns 400"),
+		Get(tests.GetHealthCheckStatsURL()+"?application_id="+uuid.New().String()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestGetHealthcheckStats_Period1h(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("Create healthcheck for 1h-stats test"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
+		Expect().Status().Equal(http.StatusCreated),
+	)
+
+	Test(t,
+		Description("GET /healthcheck/stats?period=1h returns 200 with period in response"),
+		Get(tests.GetHealthCheckStatsURL()+"?application_id="+appID+"&period=1h"),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".status").Equal("success"),
+		Expect().Body().JSON().JQ(".data.period").Equal("1h"),
+	)
+}
+
+func TestGetHealthcheckStats_Period7d(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("Create healthcheck for 7d-stats test"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
+		Expect().Status().Equal(http.StatusCreated),
+	)
+
+	Test(t,
+		Description("GET /healthcheck/stats?period=7d returns 200 with period in response"),
+		Get(tests.GetHealthCheckStatsURL()+"?application_id="+appID+"&period=7d"),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".data.period").Equal("7d"),
+	)
+}
+
+func TestGetHealthcheckStats_Period30d(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("Create healthcheck for 30d-stats test"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
+		Expect().Status().Equal(http.StatusCreated),
+	)
+
+	Test(t,
+		Description("GET /healthcheck/stats?period=30d returns 200 with period in response"),
+		Get(tests.GetHealthCheckStatsURL()+"?application_id="+appID+"&period=30d"),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".data.period").Equal("30d"),
+	)
+}
+
+func TestGetHealthcheckStats_DefaultPeriod(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	Test(t,
+		Description("Create healthcheck for default-period stats test"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"application_id": appID}),
+		Expect().Status().Equal(http.StatusCreated),
+	)
+
+	Test(t,
+		Description("GET /healthcheck/stats without period defaults to 24h"),
+		Get(tests.GetHealthCheckStatsURL()+"?application_id="+appID),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".data.period").Equal("24h"),
+	)
+}
+
+// ---------------------------------------------------------------------------
+// Full CRUD lifecycle
+// ---------------------------------------------------------------------------
+
+func TestHealthcheck_FullCRUDLifecycle(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	appID, err := setup.SeedApplication(auth.User.ID.String(), auth.OrganizationID)
+	if err != nil {
+		t.Fatalf("failed to seed application: %v", err)
+	}
+
+	cookies := auth.GetAuthCookiesHeader()
+	orgHeader := auth.OrganizationID
+
+	// Step 1: Create
+	Test(t,
+		Description("CRUD step 1 — create healthcheck"),
+		Post(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(cookies),
+		Send().Headers("X-Organization-ID").Add(orgHeader),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id":   appID,
+			"endpoint":         "/health",
+			"method":           "GET",
+			"timeout_seconds":  10,
+			"interval_seconds": 60,
+		}),
+		Expect().Status().Equal(http.StatusCreated),
+		Expect().Body().JSON().JQ(".status").Equal("success"),
+		Expect().Body().JSON().JQ(".data.endpoint").Equal("/health"),
+	)
+
+	// Step 2: Get
+	Test(t,
+		Description("CRUD step 2 — get healthcheck returns created config"),
+		Get(tests.GetHealthCheckURL()+"?application_id="+appID),
+		Send().Headers("Cookie").Add(cookies),
+		Send().Headers("X-Organization-ID").Add(orgHeader),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".status").Equal("success"),
+		Expect().Body().JSON().JQ(".data.endpoint").Equal("/health"),
+	)
+
+	// Step 3: Update
+	Test(t,
+		Description("CRUD step 3 — update healthcheck endpoint and interval"),
+		Put(tests.GetHealthCheckURL()),
+		Send().Headers("Cookie").Add(cookies),
+		Send().Headers("X-Organization-ID").Add(orgHeader),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id":   appID,
+			"endpoint":         "/healthz",
+			"interval_seconds": 120,
+		}),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".status").Equal("success"),
+		Expect().Body().JSON().JQ(".data.endpoint").Equal("/healthz"),
+	)
+
+	// Step 4: Toggle off
+	Test(t,
+		Description("CRUD step 4 — toggle healthcheck off"),
+		Method("PATCH", tests.GetHealthCheckToggleURL()),
+		Send().Headers("Cookie").Add(cookies),
+		Send().Headers("X-Organization-ID").Add(orgHeader),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id": appID,
+			"enabled":        false,
+		}),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".data.enabled").Equal(false),
+	)
+
+	// Step 5: Toggle back on
+	Test(t,
+		Description("CRUD step 5 — toggle healthcheck on"),
+		Method("PATCH", tests.GetHealthCheckToggleURL()),
+		Send().Headers("Cookie").Add(cookies),
+		Send().Headers("X-Organization-ID").Add(orgHeader),
+		Send().Body().JSON(map[string]interface{}{
+			"application_id": appID,
+			"enabled":        true,
+		}),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".data.enabled").Equal(true),
+	)
+
+	// Step 6: Get results (empty)
+	Test(t,
+		Description("CRUD step 6 — get results returns empty list"),
+		Get(tests.GetHealthCheckResultsURL()+"?application_id="+appID),
+		Send().Headers("Cookie").Add(cookies),
+		Send().Headers("X-Organization-ID").Add(orgHeader),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".status").Equal("success"),
+	)
+
+	// Step 7: Get stats
+	Test(t,
+		Description("CRUD step 7 — get stats returns data shape"),
+		Get(tests.GetHealthCheckStatsURL()+"?application_id="+appID+"&period=24h"),
+		Send().Headers("Cookie").Add(cookies),
+		Send().Headers("X-Organization-ID").Add(orgHeader),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".data.application_id").Equal(appID),
+	)
+
+	// Step 8: Delete
+	Test(t,
+		Description("CRUD step 8 — delete healthcheck"),
+		Delete(tests.GetHealthCheckURL()+"?application_id="+appID),
+		Send().Headers("Cookie").Add(cookies),
+		Send().Headers("X-Organization-ID").Add(orgHeader),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".status").Equal("success"),
+	)
+
+	// Step 9: Confirm gone
+	Test(t,
+		Description("CRUD step 9 — get after delete returns success with null data"),
+		Get(tests.GetHealthCheckURL()+"?application_id="+appID),
+		Send().Headers("Cookie").Add(cookies),
+		Send().Headers("X-Organization-ID").Add(orgHeader),
+		Expect().Status().Equal(http.StatusOK),
+		Expect().Body().JSON().JQ(".data").Equal(nil),
+	)
+}
