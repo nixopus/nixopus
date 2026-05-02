@@ -29,7 +29,7 @@ type DeployController struct {
 	logger          logger.Logger
 	notifier        shared_types.Notifier
 	taskService     *tasks.TaskService
-	githubService   *github_service.GithubConnectorService
+	githubService   github_service.GitConnectorProvider
 	extensionLoader shared_storage.ExtensionTemplateLoader
 }
 

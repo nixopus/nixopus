@@ -425,3 +425,20 @@ func GetAuditURL() string {
 func GetAuthBootstrapURL() string {
 	return baseURL + "/auth/bootstrap"
 }
+
+// GitHub connector
+func GetGithubConnectorURL() string {
+	return baseURL + "/api/v1/github-connector"
+}
+
+func GetGithubConnectorsURL() string {
+	return baseURL + "/api/v1/github-connector/all"
+}
+
+func GetGithubRepositoriesURL() string {
+	return baseURL + "/api/v1/github-connector/repositories"
+}
+
+func GetGithubRepositoryBranchesURL() string {
+	return baseURL + "/api/v1/github-connector/repository/branches"
+}

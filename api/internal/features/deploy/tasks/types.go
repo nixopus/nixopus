@@ -26,7 +26,7 @@ type OnLiveDevLogFunc func(applicationID uuid.UUID, logLine string)
 type TaskService struct {
 	Storage           storage.DeployRepository
 	Logger            logger.Logger
-	Github_service    *github_service.GithubConnectorService
+	Github_service    github_service.GitConnectorProvider
 	Store             *shared_storage.Store
 	Notifier          shared_types.Notifier
 	OnLiveDevDeployed OnLiveDevDeployedFunc
@@ -34,7 +34,7 @@ type TaskService struct {
 	cancellations     sync.Map
 }
 
-func NewTaskService(storage storage.DeployRepository, logger logger.Logger, githubService *github_service.GithubConnectorService, store *shared_storage.Store, notifier shared_types.Notifier) *TaskService {
+func NewTaskService(storage storage.DeployRepository, logger logger.Logger, githubService github_service.GitConnectorProvider, store *shared_storage.Store, notifier shared_types.Notifier) *TaskService {
 	return &TaskService{
 		Storage:           storage,
 		Logger:            logger,

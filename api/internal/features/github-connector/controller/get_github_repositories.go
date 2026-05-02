@@ -42,7 +42,7 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 		sortDirection = "asc" // Default to asc if invalid
 	}
 
-	repositories, totalCount, err := c.service.GetGithubRepositoriesPaginated(user.ID.String(), page, pageSize, connectorID, search, sortBy, sortDirection)
+	repositories, totalCount, err := c.service.GetRepositoriesPaginated(user.ID.String(), page, pageSize, connectorID, search, sortBy, sortDirection)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 

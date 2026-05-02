@@ -21,6 +21,10 @@ type UpdateGithubConnectorRequest struct {
 	ConnectorID    string `json:"connector_id,omitempty" description:"Connector ID to update. If provided, updates this specific connector" example:"550e8400-e29b-41d4-a716-446655440000"`
 }
 
+type DeleteGithubConnectorRequest struct {
+	ID string `json:"id" validate:"required" description:"GitHub connector ID to delete" example:"550e8400-e29b-41d4-a716-446655440000"`
+}
+
 // MessageResponse is a generic response with just status and message
 type MessageResponse struct {
 	Status  string `json:"status"`
