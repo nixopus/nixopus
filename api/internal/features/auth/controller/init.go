@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 
+	"github.com/nixopus/nixopus/api/internal/cache"
 	auth_service "github.com/nixopus/nixopus/api/internal/features/auth/service"
 	"github.com/nixopus/nixopus/api/internal/features/auth/validation"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
@@ -17,7 +18,7 @@ type AuthController struct {
 	ctx       context.Context
 	logger    logger.Logger
 	notifier  shared_types.Notifier
-	cache     *auth_service.AuthCache
+	cache     *cache.Cache
 }
 
 func NewAuthController(

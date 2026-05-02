@@ -12,6 +12,7 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
 
+	"github.com/nixopus/nixopus/api/internal/cache"
 	"github.com/nixopus/nixopus/api/internal/config"
 	sessions "github.com/nixopus/nixopus/api/internal/features/auth"
 	ctl "github.com/nixopus/nixopus/api/internal/features/auth/controller"
@@ -277,9 +278,9 @@ func TestAuthController_IsAdminRegistered_cacheWarmTrueFastPath(t *testing.T) {
 	mr := miniredis.RunT(t)
 	url := "redis://" + mr.Addr()
 
-	cache, err := authsvc.NewAuthCache(url)
+	redisCache, err := cache.NewCache(url)
 	require.NoError(t, err)
-	require.NoError(t, cache.SetAdminRegistered(setup.Ctx, true))
+	require.NoError(t, redisCache.SetAdminRegistered(setup.Ctx, true))
 
 	c := ctrlFromSetup(t, setup, url)
 	resp, err := c.IsAdminRegistered(mockFuegoCtx(httptest.NewRequest(http.MethodGet, "/", nil)))
