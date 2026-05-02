@@ -51,6 +51,17 @@ test-all:
 test-routes:
 	@go test -p 1 ./internal/tests/routes/... -v -count=1
 
+# Merged coverage for auth: unit tests under internal/features/auth plus integration-style
+# tests under internal/tests/auth. -coverpkg scopes instrumentation to feature code so lines
+# exercised from internal/tests/auth (e.g. controller, storage) appear in the auth report.
+# Requires the same DB/redis as testutils.
+cover-auth:
+	@go test -count=1 -cover -coverprofile=coverage-auth.out \
+		-coverpkg=./internal/features/auth/... \
+		./internal/features/auth/... ./internal/tests/auth
+	@echo "Wrote coverage-auth.out"
+	@go tool cover -func=coverage-auth.out | tail -15
+
 format:
 	@echo "Formatting Go files..."
 	@go fmt ./...
@@ -60,7 +71,7 @@ format:
 		echo "goimports not found. Install with: go install golang.org/x/tools/cmd/goimports@latest"; \
 	fi
 
-.PHONY: fixtures-load fixtures-recreate fixtures-clean fixtures-help format cli-build cli-build-dev cli-run cli-install
+.PHONY: fixtures-load fixtures-recreate fixtures-clean fixtures-help format cli-build cli-build-dev cli-run cli-install cover-auth
 
 fixtures-help:
 	@echo "Nixopus API Fixtures Commands:"
