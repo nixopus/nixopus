@@ -27,12 +27,12 @@ func TestFeatureFlags(t *testing.T) {
 			types.FeatureDomain,
 			types.FeatureTerminal,
 			types.FeatureNotifications,
-			types.FeatureFileManager,
 			types.FeatureSelfHosted,
 			types.FeatureAudit,
 			types.FeatureGithubConnector,
 			types.FeatureMonitoring,
 			types.FeatureContainer,
+			types.FeatureMCP,
 		}
 
 		for _, feature := range defaultFeatures {

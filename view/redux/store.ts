@@ -21,7 +21,6 @@ import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorAp
 import githubConnector from './features/github-connector/githubConnectorSlice';
 import { deployApi } from './services/deploy/applicationsApi';
 import { healthcheckApi } from './services/deploy/healthcheckApi';
-import { fileManagersApi } from './services/file-manager/fileManagersApi';
 import { auditApi } from './services/audit';
 import { FeatureFlagsApi } from './services/feature-flags/featureFlagsApi';
 import { containerApi } from './services/container/containerApi';
@@ -73,9 +72,8 @@ const coreReducers = {
   [healthcheckApi.reducerPath]: healthcheckApi.reducer,
   user: userSlice,
   orgs: orgSlice,
-  fileManagersApi: fileManagersApi.reducer,
-  [auditApi.reducerPath]: auditApi.reducer,
   [FeatureFlagsApi.reducerPath]: FeatureFlagsApi.reducer,
+  [auditApi.reducerPath]: auditApi.reducer,
   [containerApi.reducerPath]: containerApi.reducer,
   [imagesApi.reducerPath]: imagesApi.reducer,
   [extensionsApi.reducerPath]: extensionsApi.reducer,
@@ -119,7 +117,6 @@ export const store = configureStore({
       GithubConnectorApi.middleware,
       deployApi.middleware,
       healthcheckApi.middleware,
-      fileManagersApi.middleware,
       auditApi.middleware,
       FeatureFlagsApi.middleware,
       containerApi.middleware,

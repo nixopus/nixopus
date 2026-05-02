@@ -79,9 +79,6 @@ vi.mock('@/redux/services/connector/githubConnectorApi', () => ({
 vi.mock('@/redux/services/deploy/applicationsApi', () => ({
   deployApi: { util: { resetApiState: vi.fn(() => ({ type: 'reset' })) } }
 }));
-vi.mock('@/redux/services/file-manager/fileManagersApi', () => ({
-  fileManagersApi: { util: { resetApiState: vi.fn(() => ({ type: 'reset' })) } }
-}));
 vi.mock('@/redux/services/audit', () => ({
   auditApi: { util: { resetApiState: vi.fn(() => ({ type: 'reset' })) } }
 }));

@@ -12,7 +12,6 @@ import { notificationApi } from '@/redux/services/settings/notificationApi';
 import { domainsApi } from '@/redux/services/settings/domainsApi';
 import { GithubConnectorApi } from '@/redux/services/connector/githubConnectorApi';
 import { deployApi } from '@/redux/services/deploy/applicationsApi';
-import { fileManagersApi } from '@/redux/services/file-manager/fileManagersApi';
 import { auditApi } from '@/redux/services/audit';
 import { FeatureFlagsApi } from '@/redux/services/feature-flags/featureFlagsApi';
 import { apiKeysApi } from '@/redux/services/api-keys/apiKeysApi';
@@ -216,7 +215,6 @@ export function useAppSidebar() {
       domainsApi,
       GithubConnectorApi,
       deployApi,
-      fileManagersApi,
       auditApi,
       FeatureFlagsApi,
       apiKeysApi,
