@@ -30,7 +30,7 @@ func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.Context
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
-	err = c.service.UpdateGithubConnectorRequest(UpdateConnectorRequest.InstallationID, user.ID.String(), UpdateConnectorRequest.ConnectorID)
+	err = c.service.UpdateConnectorInstallation(UpdateConnectorRequest.InstallationID, user.ID.String(), UpdateConnectorRequest.ConnectorID)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

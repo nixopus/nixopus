@@ -179,6 +179,17 @@ func sftpPoolSSHManager(ctx context.Context) (*ssh.SSHManager, error) {
 	return mm, nil
 }
 
+// WithTestSFTPPool returns ctx with organization ID, a non-global SFTP pool, and optional SSH manager
+// for WithSFTPClientFromPool. Intended for tests outside this package.
+func WithTestSFTPPool(ctx context.Context, orgID string, pool *SFTPPool, sshMgr *ssh.SSHManager) context.Context {
+	ctx = context.WithValue(ctx, types.OrganizationIDKey, orgID)
+	ctx = context.WithValue(ctx, sftpPoolContextKey, pool)
+	if sshMgr != nil {
+		ctx = context.WithValue(ctx, sshManagerContextKey, sshMgr)
+	}
+	return ctx
+}
+
 func sftpPoolCacheKey(ctx context.Context, orgID string) string {
 	if serverIDStr, ok := ctx.Value(types.ServerIDKey).(string); ok && serverIDStr != "" {
 		return orgID + ":" + serverIDStr

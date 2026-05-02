@@ -32,7 +32,7 @@ func (c *GithubConnectorController) GetGithubRepositoryBranches(f fuego.ContextW
 		return nil, fuego.BadRequestError{Detail: "repository_name is required", Err: fmt.Errorf("repository_name is required")}
 	}
 
-	branches, err := c.service.GetGithubRepositoryBranches(user.ID.String(), body.RepositoryName)
+	branches, err := c.service.GetRepositoryBranches(user.ID.String(), body.RepositoryName)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
 		return nil, fuego.HTTPError{

@@ -1,23 +1,18 @@
-package service
+package git
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
-	"time"
 
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/ssh"
 	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
-// GitClient defines the interface for git operations
-type GitClient interface {
+// Git is the interface for remote git operations executed over SSH on the tenant server.
+type Git interface {
 	Clone(repoURL, destinationPath string) error
 	Pull(repoURL, destinationPath string) error
-	GetLatestCommitHash(repoURL string, accessToken string) (string, error)
 	SetHeadToCommitHash(repoURL, destinationPath, commitHash string) error
 	SwitchBranch(destinationPath, branch string) error
 	HasUncommittedChanges(destinationPath string) (bool, error)
@@ -27,28 +22,31 @@ type GitClient interface {
 	RemoveRepository(repoPath string) error
 }
 
-// DefaultGitClient is the default implementation of GitClient.
-// Uses SSHManager for connection pooling — all git commands share a single
-// TCP connection via multiplexed sessions.
-type DefaultGitClient struct {
+// sshGit uses SSHManager for pooled connections — git commands share one TCP connection.
+type sshGit struct {
 	logger  logger.Logger
 	manager *ssh.SSHManager
+	// runCmd substitutes manager.RunCommand in tests when non-nil.
+	runCmd func(string) (string, error)
 }
 
-// NewDefaultGitClient creates a new DefaultGitClient backed by an SSHManager.
-func NewDefaultGitClient(logger logger.Logger, manager *ssh.SSHManager) *DefaultGitClient {
-	return &DefaultGitClient{
+// NewGit creates a Git implementation backed by the org SSHManager.
+func NewGit(logger logger.Logger, manager *ssh.SSHManager) Git {
+	return &sshGit{
 		logger:  logger,
 		manager: manager,
 	}
 }
 
-func (g *DefaultGitClient) run(cmd string) (string, error) {
+func (g *sshGit) run(cmd string) (string, error) {
+	if g.runCmd != nil {
+		return g.runCmd(cmd)
+	}
 	return g.manager.RunCommand(cmd)
 }
 
-// Clone clones a git repository to the specified path
-func (g *DefaultGitClient) Clone(repoURL, destinationPath string) error {
+// Clone clones a git repository to the specified path.
+func (g *sshGit) Clone(repoURL, destinationPath string) error {
 	if err := utils.ValidateShellArg(repoURL, "repoURL"); err != nil {
 		return fmt.Errorf("git clone: %w", err)
 	}
@@ -60,13 +58,12 @@ func (g *DefaultGitClient) Clone(repoURL, destinationPath string) error {
 	if err != nil {
 		return fmt.Errorf("git clone failed: %s, output: %s", err.Error(), output)
 	}
-
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully cloned repository to %s", destinationPath), "")
 	return nil
 }
 
-// Pull updates a git repository from remote
-func (g *DefaultGitClient) Pull(repoURL, destinationPath string) error {
+// Pull updates a git repository from remote.
+func (g *sshGit) Pull(repoURL, destinationPath string) error {
 	if err := utils.ValidateShellArg(repoURL, "repoURL"); err != nil {
 		return fmt.Errorf("git pull: %w", err)
 	}
@@ -78,59 +75,12 @@ func (g *DefaultGitClient) Pull(repoURL, destinationPath string) error {
 	if err != nil {
 		return fmt.Errorf("git pull failed: %s, output: %s", err.Error(), output)
 	}
-
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully pulled latest changes for repository at %s", destinationPath), "")
 	return nil
 }
 
-// GetLatestCommitHash retrieves the latest commit hash from the repository
-func (g *DefaultGitClient) GetLatestCommitHash(repoURL string, accessToken string) (string, error) {
-	parsedURL := strings.TrimSuffix(repoURL, ".git")
-	urlParts := strings.Split(parsedURL, "/")
-	if len(urlParts) < 2 {
-		return "", fmt.Errorf("invalid repository URL format: %s", repoURL)
-	}
-
-	owner := urlParts[len(urlParts)-2]
-	repo := urlParts[len(urlParts)-1]
-
-	apiURL := fmt.Sprintf("https://api.github.com/repos/%s/%s/commits/HEAD", owner, repo)
-
-	req, err := http.NewRequest("GET", apiURL, nil)
-	if err != nil {
-		return "", fmt.Errorf("failed to create request: %s", err.Error())
-	}
-
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", accessToken))
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("failed to send request: %s", err.Error())
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("GitHub API request failed with status %d: %s", resp.StatusCode, string(body))
-	}
-
-	var response struct {
-		SHA string `json:"sha"`
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
-		return "", fmt.Errorf("failed to decode response: %s", err.Error())
-	}
-
-	g.logger.Log(logger.Info, fmt.Sprintf("Latest commit hash: %s", response.SHA), "")
-
-	return response.SHA, nil
-}
-
-// SetHeadToCommitHash sets the HEAD of the repository to a specific commit hash
-func (g *DefaultGitClient) SetHeadToCommitHash(repoURL, destinationPath, commitHash string) error {
+// SetHeadToCommitHash sets HEAD to a specific commit hash.
+func (g *sshGit) SetHeadToCommitHash(repoURL, destinationPath, commitHash string) error {
 	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
 		return fmt.Errorf("git checkout: %w", err)
 	}
@@ -142,13 +92,12 @@ func (g *DefaultGitClient) SetHeadToCommitHash(repoURL, destinationPath, commitH
 	if err != nil {
 		return fmt.Errorf("git checkout failed: %s, output: %s", err.Error(), output)
 	}
-
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully checked out commit %s at %s", commitHash, destinationPath), "")
 	return nil
 }
 
-// SwitchBranch switches to the specified branch in the repository
-func (g *DefaultGitClient) SwitchBranch(destinationPath, branch string) error {
+// SwitchBranch switches to the specified branch.
+func (g *sshGit) SwitchBranch(destinationPath, branch string) error {
 	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
 		return fmt.Errorf("git switch branch: %w", err)
 	}
@@ -160,12 +109,11 @@ func (g *DefaultGitClient) SwitchBranch(destinationPath, branch string) error {
 	if err != nil {
 		return fmt.Errorf("git checkout branch failed: %s, output: %s", err.Error(), output)
 	}
-
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully switched to branch %s at %s", branch, destinationPath), "")
 	return nil
 }
 
-func (g *DefaultGitClient) HasUncommittedChanges(destinationPath string) (bool, error) {
+func (g *sshGit) HasUncommittedChanges(destinationPath string) (bool, error) {
 	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
 		return false, fmt.Errorf("git status: %w", err)
 	}
@@ -174,11 +122,10 @@ func (g *DefaultGitClient) HasUncommittedChanges(destinationPath string) (bool, 
 	if err != nil {
 		return false, fmt.Errorf("git status failed: %s, output: %s", err.Error(), output)
 	}
-
 	return strings.TrimSpace(output) != "", nil
 }
 
-func (g *DefaultGitClient) Stash(destinationPath string) (string, error) {
+func (g *sshGit) Stash(destinationPath string) (string, error) {
 	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
 		return "", fmt.Errorf("git stash: %w", err)
 	}
@@ -199,12 +146,11 @@ func (g *DefaultGitClient) Stash(destinationPath string) (string, error) {
 	if stashID == "" {
 		return "", fmt.Errorf("no stash created")
 	}
-
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully stashed changes at %s with ID %s", destinationPath, stashID), "")
 	return stashID, nil
 }
 
-func (g *DefaultGitClient) ApplyStash(destinationPath, stashID string) error {
+func (g *sshGit) ApplyStash(destinationPath, stashID string) error {
 	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
 		return fmt.Errorf("git stash apply: %w", err)
 	}
@@ -216,12 +162,11 @@ func (g *DefaultGitClient) ApplyStash(destinationPath, stashID string) error {
 	if err != nil {
 		return fmt.Errorf("git stash apply failed: %s, output: %s", err.Error(), output)
 	}
-
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully applied stash %s at %s", stashID, destinationPath), "")
 	return nil
 }
 
-func (g *DefaultGitClient) ResetHard(destinationPath string) error {
+func (g *sshGit) ResetHard(destinationPath string) error {
 	if err := utils.ValidatePath(destinationPath, "destinationPath"); err != nil {
 		return fmt.Errorf("git reset: %w", err)
 	}
@@ -230,12 +175,11 @@ func (g *DefaultGitClient) ResetHard(destinationPath string) error {
 	if err != nil {
 		return fmt.Errorf("git reset --hard failed: %s, output: %s", err.Error(), output)
 	}
-
 	g.logger.Log(logger.Info, fmt.Sprintf("Successfully reset repository at %s", destinationPath), "")
 	return nil
 }
 
-func (g *DefaultGitClient) RemoveRepository(repoPath string) error {
+func (g *sshGit) RemoveRepository(repoPath string) error {
 	if err := utils.ValidatePath(repoPath, "repoPath"); err != nil {
 		return fmt.Errorf("remove repository: %w", err)
 	}
@@ -244,6 +188,5 @@ func (g *DefaultGitClient) RemoveRepository(repoPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to remove repository directory: %s, output: %s", err.Error(), output)
 	}
-
 	return nil
 }

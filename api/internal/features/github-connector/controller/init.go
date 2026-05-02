@@ -16,7 +16,7 @@ import (
 type GithubConnectorController struct {
 	store     *shared_storage.Store
 	validator *validation.Validator
-	service   *service.GithubConnectorService
+	service   service.GitConnectorProvider
 	ctx       context.Context
 	logger    logger.Logger
 	notifier  shared_types.Notifier

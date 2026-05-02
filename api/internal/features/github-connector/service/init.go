@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/service/git"
+	gh "github.com/nixopus/nixopus/api/internal/features/github-connector/service/github"
 	"github.com/nixopus/nixopus/api/internal/features/github-connector/storage"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/ssh"
@@ -11,33 +13,35 @@ import (
 )
 
 type GithubConnectorService struct {
-	store   *shared_storage.Store
-	ctx     context.Context
-	logger  logger.Logger
-	storage storage.GithubConnectorRepository
+	*gh.API
+	store *shared_storage.Store
+	ctx   context.Context
+
+	gitClientProvider func(context.Context) (git.Git, error)
+	clonePathProvider func(context.Context, string, string, string) (string, bool, error)
 }
 
-// getSSHManager gets the SSH manager from context (organization-specific)
+func NewGithubConnectorService(store *shared_storage.Store, ctx context.Context, l logger.Logger, githubConnectorRepository storage.GithubConnectorRepository) *GithubConnectorService {
+	return &GithubConnectorService{
+		API:   gh.NewAPI(githubConnectorRepository, l),
+		store: store,
+		ctx:   ctx,
+	}
+}
+
 func (s *GithubConnectorService) getSSHManager(ctx context.Context) (*ssh.SSHManager, error) {
 	return ssh.GetSSHManagerFromContext(ctx)
 }
 
-// getGitClient creates a GitClient backed by the org's pooled SSHManager.
-func (s *GithubConnectorService) getGitClient(ctx context.Context) (GitClient, error) {
+func (s *GithubConnectorService) getGitClient(ctx context.Context) (git.Git, error) {
+	if s.gitClientProvider != nil {
+		return s.gitClientProvider(ctx)
+	}
 	sshManager, err := s.getSSHManager(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get SSH manager: %w", err)
 	}
-	return NewDefaultGitClient(s.logger, sshManager), nil
-}
-
-func NewGithubConnectorService(store *shared_storage.Store, ctx context.Context, l logger.Logger, GithubConnectorRepository storage.GithubConnectorRepository) *GithubConnectorService {
-	return &GithubConnectorService{
-		store:   store,
-		ctx:     ctx,
-		logger:  l,
-		storage: GithubConnectorRepository,
-	}
+	return git.NewGit(s.Logger, sshManager), nil
 }
 
 func (s *GithubConnectorService) RemoveRepository(ctx context.Context, repoPath string) error {
@@ -46,4 +50,15 @@ func (s *GithubConnectorService) RemoveRepository(ctx context.Context, repoPath 
 		return err
 	}
 	return gitClient.RemoveRepository(repoPath)
+}
+
+func (s *GithubConnectorService) CreateAuthenticatedRepoURL(repoURL, accessToken string) (string, error) {
+	return gh.CreateAuthenticatedRepoURL(repoURL, accessToken)
+}
+
+func (s *GithubConnectorService) GetClonePath(ctx context.Context, userID, environment, applicationID string) (string, bool, error) {
+	if s.clonePathProvider != nil {
+		return s.clonePathProvider(ctx, userID, environment, applicationID)
+	}
+	return git.ResolveClonePath(ctx, userID, environment, applicationID)
 }
