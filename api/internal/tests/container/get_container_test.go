@@ -28,7 +28,7 @@ func TestGetContainer(t *testing.T) {
 		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Expect().Status().Equal(http.StatusOK),
-		Store().Response().Body().JSON().JQ(".data.containers[0].id").In(&containerID),
+		Store().Response().Body().JSON().JQ(tests.JQFirstContainerIDFromList()).In(&containerID),
 	)
 
 	testCases := []struct {
@@ -139,7 +139,7 @@ func TestGetContainerDetailedValidation(t *testing.T) {
 		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Expect().Status().Equal(http.StatusOK),
-		Store().Response().Body().JSON().JQ(`.data.containers[] | select(.name == "nixopus-test-db-container") | .id`).In(&containerID),
+		Store().Response().Body().JSON().JQ(tests.JQContainerIDNamed("nixopus-test-db-container")).In(&containerID),
 	)
 
 	if containerID == "" {

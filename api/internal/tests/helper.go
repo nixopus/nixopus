@@ -1,5 +1,7 @@
 package tests
 
+import "fmt"
+
 var baseURL = "http://localhost:8080/api/v1"
 
 func GetHealthURL() string {
@@ -76,6 +78,19 @@ func GetContainerURL(containerID string) string {
 
 func GetContainerLogsURL(containerID string) string {
 	return baseURL + "/container/" + containerID + "/logs"
+}
+
+// JQFirstContainerIDFromList resolves a container id from ListContainers grouped JSON (.groups / .ungrouped).
+func JQFirstContainerIDFromList() string {
+	return `(.data.ungrouped[0].id // .data.groups[0].containers[0].id)`
+}
+
+// JQContainerIDNamed builds jq that finds a container id by exact name among ungrouped and grouped containers.
+func JQContainerIDNamed(containerName string) string {
+	return fmt.Sprintf(
+		`[.data.ungrouped[]?, (.data.groups // [])[].containers[]?] | map(select(.name == %q)) | .[0].id`,
+		containerName,
+	)
 }
 
 func GetDomainURL() string {
