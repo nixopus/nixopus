@@ -116,16 +116,6 @@ export enum SOCKET_ACTIONS {
   SUBSCRIBE = 'subscribe'
 }
 
-export enum FILEMANAGERURLS {
-  LIST_FILES_AT_PATH = 'v1/file-manager',
-  CREATE_DIRECTORY = 'v1/file-manager/create-directory',
-  DELETE_DIRECTORY = 'v1/file-manager/delete-directory',
-  MOVE_FOLDER_FILES_RECURSIVELY_OR_RENAME = 'v1/file-manager/move-directory',
-  COPY_FOLDER_FILES_RECURSIVELY = 'v1/file-manager/copy-directory',
-  CALCULATE_DIRECTORY_SIZE = 'v1/file-manager/directories/size',
-  UPLOAD_FILE = 'v1/file-manager/upload'
-}
-
 export enum AUDITURLS {
   GET_RECENT_AUDIT_LOGS = 'v1/audit/logs'
 }

@@ -168,15 +168,6 @@ func TestUpdateFeatureFlag(t *testing.T) {
 			description:    "should update domain feature flag successfully",
 		},
 		{
-			name:           "update file_manager feature flag",
-			featureName:    "file_manager",
-			isEnabled:      true,
-			cookies:        cookies,
-			organizationID: orgID,
-			expectedStatus: http.StatusOK,
-			description:    "should update file_manager feature flag successfully",
-		},
-		{
 			name:           "update notifications feature flag",
 			featureName:    "notifications",
 			isEnabled:      false,

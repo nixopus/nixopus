@@ -27,7 +27,6 @@ export const resourceTypeOptions: { value: string; label: string }[] = [
   { value: 'application', label: 'Applications' },
   { value: 'deployment', label: 'Deployments' },
   { value: 'domain', label: 'Domains' },
-  { value: 'file_manager', label: 'Files' },
   { value: 'container', label: 'Containers' },
   { value: 'role', label: 'Roles' },
   { value: 'permission', label: 'Permissions' },

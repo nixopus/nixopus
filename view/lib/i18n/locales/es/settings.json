@@ -57,10 +57,6 @@
           "title": "Terminal",
           "description": "Acceso a la característica de terminal"
         },
-        "file_manager": {
-          "title": "Gestor de Archivos",
-          "description": "Acceso a la característica de gestor de archivos"
-        },
         "self_hosted": {
           "title": "Self Hosted",
           "description": "Acceso a la característica de self hosted"

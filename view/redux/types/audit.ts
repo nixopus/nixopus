@@ -15,7 +15,6 @@ export type AuditResourceType =
   | 'smtp_config'
   | 'notification'
   | 'feature_flag'
-  | 'file_manager'
   | 'container'
   | 'audit'
   | 'terminal'
