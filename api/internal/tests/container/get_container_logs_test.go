@@ -30,7 +30,7 @@ func TestGetContainerLogs(t *testing.T) {
 		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Expect().Status().Equal(http.StatusOK),
-		Store().Response().Body().JSON().JQ(".data.containers[0].id").In(&containerID),
+		Store().Response().Body().JSON().JQ(tests.JQFirstContainerIDFromList()).In(&containerID),
 	)
 
 	testCases := []struct {
@@ -148,7 +148,7 @@ func TestGetContainerLogsWithFilters(t *testing.T) {
 		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Expect().Status().Equal(http.StatusOK),
-		Store().Response().Body().JSON().JQ(".data.containers[0].id").In(&containerID),
+		Store().Response().Body().JSON().JQ(tests.JQFirstContainerIDFromList()).In(&containerID),
 	)
 
 	t.Run("Fetch logs with tail parameter", func(t *testing.T) {
@@ -354,7 +354,7 @@ func TestGetContainerLogsPermissions(t *testing.T) {
 		Send().Headers("Cookie").Add(cookies),
 		Send().Headers("X-Organization-Id").Add(orgID),
 		Expect().Status().Equal(http.StatusOK),
-		Store().Response().Body().JSON().JQ(".data.containers[0].id").In(&containerID),
+		Store().Response().Body().JSON().JQ(tests.JQFirstContainerIDFromList()).In(&containerID),
 	)
 
 	t.Run("Access logs with organization member permissions", func(t *testing.T) {

@@ -38,17 +38,10 @@ func GetContainerLogs(
 	l logger.Logger,
 	opts ContainerLogsOptions,
 ) (string, error) {
-	// Get organization settings
-	orgSettings := getOrganizationSettings(store, ctx, opts.OrganizationID)
-
-	// Use default tail lines from settings if not provided
 	tail := opts.Tail
 	if tail == 0 {
-		if orgSettings.ContainerLogTailLines != nil {
-			tail = *orgSettings.ContainerLogTailLines
-		} else {
-			tail = 100 // Fallback default
-		}
+		orgSettings := getOrganizationSettings(store, ctx, opts.OrganizationID)
+		tail = tailLinesFromOrgLogTailSetting(orgSettings.ContainerLogTailLines)
 	}
 
 	// Get container logs
@@ -85,6 +78,9 @@ func getOrganizationSettings(store *shared_storage.Store, ctx context.Context, o
 	if err != nil || orgID == uuid.Nil {
 		return shared_types.DefaultOrganizationSettingsData()
 	}
+	if store == nil || store.DB == nil {
+		return shared_types.DefaultOrganizationSettingsData()
+	}
 
 	settings, err := utils.GetOrganizationSettings(ctx, store.DB, orgID)
 	if err != nil {
@@ -92,6 +88,14 @@ func getOrganizationSettings(store *shared_storage.Store, ctx context.Context, o
 	}
 
 	return settings
+}
+
+// tailLinesFromOrgLogTailSetting returns configured tail or 100 when unset.
+func tailLinesFromOrgLogTailSetting(ptr *int) int {
+	if ptr != nil {
+		return *ptr
+	}
+	return 100
 }
 
 // decodeDockerLogs decodes Docker's log format (8-byte header + payload)
