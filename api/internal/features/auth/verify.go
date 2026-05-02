@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -14,8 +13,7 @@ import (
 )
 
 var (
-	authJSONMarshal = json.Marshal
-	authReadAll     = io.ReadAll
+	authReadAll = io.ReadAll
 
 	// forwardCookiesList returns cookies to forward when the raw Cookie header is empty.
 	// Overridable in tests: net/http never exposes cookies without a Cookie header, but
@@ -221,39 +219,4 @@ func VerifySession(r *http.Request) (*SessionResponse, error) {
 	}
 
 	return parseSessionResponse(body, resp.StatusCode, url, req, r)
-}
-
-// SendOTP sends an OTP to the user's email via Better Auth for passwordless authentication.
-func SendOTP(email string) error {
-	betterAuthAPI := getBetterAuthAPI()
-	url := betterAuthAPI + "/email-otp/send-verification-otp"
-
-	payload := map[string]interface{}{
-		"email": email,
-		"type":  "sign-in",
-	}
-
-	jsonData, err := authJSONMarshal(payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := HTTPClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send OTP: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("failed to send OTP: status %d, body: %s", resp.StatusCode, string(body))
-	}
-
-	return nil
 }
