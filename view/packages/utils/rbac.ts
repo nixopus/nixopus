@@ -7,6 +7,8 @@ export type Resource =
   | 'user'
   | 'role'
   | 'permission'
+  | 'deploy'
+  | 'dashboard'
   | 'settings'
   | 'audit'
   | 'notification'
