@@ -14,16 +14,21 @@ import (
 )
 
 type AuditService struct {
-	storage *audit_storage.AuditStorage
+	storage audit_storage.AuditRepository
 	ctx     context.Context
 	logger  logger.Logger
 }
 
-func NewAuditService(db *bun.DB, ctx context.Context, logger logger.Logger) *AuditService {
+func NewAuditService(db *bun.DB, ctx context.Context, l logger.Logger) *AuditService {
+	return NewAuditServiceWithRepository(audit_storage.NewAuditStorage(db, ctx), ctx, l)
+}
+
+// NewAuditServiceWithRepository constructs a service with a custom repository (e.g. tests).
+func NewAuditServiceWithRepository(repo audit_storage.AuditRepository, ctx context.Context, l logger.Logger) *AuditService {
 	return &AuditService{
-		storage: audit_storage.NewAuditStorage(db, ctx),
+		storage: repo,
 		ctx:     ctx,
-		logger:  logger,
+		logger:  l,
 	}
 }
 

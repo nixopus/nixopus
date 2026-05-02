@@ -26,8 +26,13 @@ type AuditController struct {
 }
 
 func NewAuditController(db *bun.DB, ctx context.Context, l logger.Logger) *AuditController {
+	return NewAuditControllerWithService(service.NewAuditService(db, ctx, l), ctx, l)
+}
+
+// NewAuditControllerWithService wires a pre-built audit service (e.g. unit tests).
+func NewAuditControllerWithService(svc *service.AuditService, ctx context.Context, l logger.Logger) *AuditController {
 	return &AuditController{
-		service: service.NewAuditService(db, ctx, l),
+		service: svc,
 		ctx:     ctx,
 		logger:  l,
 	}

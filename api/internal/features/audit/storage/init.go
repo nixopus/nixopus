@@ -7,6 +7,12 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// AuditRepository defines persistence operations for audit records.
+type AuditRepository interface {
+	CreateAuditLog(log *types.AuditLog) error
+	GetAuditLogs(filters map[string]interface{}, page, pageSize int) ([]*types.AuditLog, int, error)
+}
+
 type AuditStorage struct {
 	DB  *bun.DB
 	Ctx context.Context
@@ -29,7 +35,7 @@ func (s *AuditStorage) GetAuditLogs(filters map[string]interface{}, page, pageSi
 	query := s.DB.NewSelect().Model(&logs).
 		Relation("User").
 		Relation("Organization").
-		Order("created_at DESC")
+		OrderExpr("al.created_at DESC")
 
 	for key, value := range filters {
 		query.Where("? = ?", bun.Ident(key), value)
