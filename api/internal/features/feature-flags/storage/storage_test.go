@@ -1,11 +1,10 @@
-package tests
+package storage
 
 import (
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nixopus/nixopus/api/internal/features/feature-flags/storage"
 	"github.com/nixopus/nixopus/api/internal/testutils"
 	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/stretchr/testify/assert"
@@ -14,7 +13,7 @@ import (
 func TestFeatureFlagStorage(t *testing.T) {
 	t.Run("should create and get feature flag", func(t *testing.T) {
 		setup := testutils.NewTestSetup()
-		featureStorage := &storage.FeatureFlagStorage{DB: setup.DB, Ctx: setup.Ctx}
+		featureStorage := &FeatureFlagStorage{DB: setup.DB, Ctx: setup.Ctx}
 
 		_, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
@@ -40,7 +39,7 @@ func TestFeatureFlagStorage(t *testing.T) {
 
 	t.Run("should update existing feature flag", func(t *testing.T) {
 		setup := testutils.NewTestSetup()
-		featureStorage := &storage.FeatureFlagStorage{DB: setup.DB, Ctx: setup.Ctx}
+		featureStorage := &FeatureFlagStorage{DB: setup.DB, Ctx: setup.Ctx}
 
 		_, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
@@ -67,7 +66,7 @@ func TestFeatureFlagStorage(t *testing.T) {
 
 	t.Run("should create new feature flag on update if not exists", func(t *testing.T) {
 		setup := testutils.NewTestSetup()
-		featureStorage := &storage.FeatureFlagStorage{DB: setup.DB, Ctx: setup.Ctx}
+		featureStorage := &FeatureFlagStorage{DB: setup.DB, Ctx: setup.Ctx}
 
 		_, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
@@ -84,7 +83,7 @@ func TestFeatureFlagStorage(t *testing.T) {
 
 	t.Run("should handle transaction operations", func(t *testing.T) {
 		setup := testutils.NewTestSetup()
-		featureStorage := &storage.FeatureFlagStorage{DB: setup.DB, Ctx: setup.Ctx}
+		featureStorage := &FeatureFlagStorage{DB: setup.DB, Ctx: setup.Ctx}
 
 		_, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
@@ -119,7 +118,7 @@ func TestFeatureFlagStorage(t *testing.T) {
 
 	t.Run("should rollback transaction on error", func(t *testing.T) {
 		setup := testutils.NewTestSetup()
-		featureStorage := &storage.FeatureFlagStorage{DB: setup.DB, Ctx: setup.Ctx}
+		featureStorage := &FeatureFlagStorage{DB: setup.DB, Ctx: setup.Ctx}
 
 		_, org, err := setup.CreateTestUserAndOrg()
 		assert.NoError(t, err)
