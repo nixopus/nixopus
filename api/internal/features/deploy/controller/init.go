@@ -11,7 +11,6 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/deploy/storage"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/tasks"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/validation"
-	extension_loader "github.com/nixopus/nixopus/api/internal/features/extension/loader"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 	"github.com/nixopus/nixopus/api/internal/utils"
@@ -31,7 +30,7 @@ type DeployController struct {
 	notifier        shared_types.Notifier
 	taskService     *tasks.TaskService
 	githubService   *github_service.GithubConnectorService
-	extensionLoader *extension_loader.ExtensionLoader
+	extensionLoader shared_storage.ExtensionTemplateLoader
 }
 
 func NewDeployController(
@@ -39,7 +38,7 @@ func NewDeployController(
 	ctx context.Context,
 	l logger.Logger,
 	notifier shared_types.Notifier,
-	extensionLoader *extension_loader.ExtensionLoader,
+	extensionLoader shared_storage.ExtensionTemplateLoader,
 ) (*DeployController, error) {
 	deployStorage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
 	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})

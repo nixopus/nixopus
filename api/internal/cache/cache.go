@@ -33,6 +33,12 @@ const (
 	AdminRegisteredTrueTTL = 24 * time.Hour
 	// AdminRegisteredFalseTTL: before first signup, re-check soon so signup is detected quickly.
 	AdminRegisteredFalseTTL = 30 * time.Second
+
+	ExtensionByIDCacheKeyPrefix    = "ext:id:"
+	ExtensionByExtIDCacheKeyPrefix = "ext:eid:"
+	ExtensionCategoriesCacheKey    = "ext:categories"
+	ExtensionCacheTTL              = 15 * time.Minute
+	ExtensionCategoriesCacheTTL    = 1 * time.Hour
 )
 
 type Cache struct {
@@ -301,4 +307,96 @@ func (c *Cache) SetAdminRegistered(ctx context.Context, registered bool) error {
 // InvalidateAdminRegistered removes the cached admin registration status.
 func (c *Cache) InvalidateAdminRegistered(ctx context.Context) error {
 	return c.client.Del(ctx, AdminRegisteredCacheKey).Err()
+}
+
+// --- Extensions ---
+
+func (c *Cache) GetExtension(ctx context.Context, id string) (*types.Extension, error) {
+	data, err := c.client.Get(ctx, ExtensionByIDCacheKeyPrefix+id).Bytes()
+	if err == redis.Nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var ext types.Extension
+	if err := json.Unmarshal(data, &ext); err != nil {
+		_ = c.client.Del(ctx, ExtensionByIDCacheKeyPrefix+id).Err()
+		return nil, err
+	}
+	return &ext, nil
+}
+
+func (c *Cache) GetExtensionByExtID(ctx context.Context, extensionID string) (*types.Extension, error) {
+	data, err := c.client.Get(ctx, ExtensionByExtIDCacheKeyPrefix+extensionID).Bytes()
+	if err == redis.Nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var ext types.Extension
+	if err := json.Unmarshal(data, &ext); err != nil {
+		_ = c.client.Del(ctx, ExtensionByExtIDCacheKeyPrefix+extensionID).Err()
+		return nil, err
+	}
+	return &ext, nil
+}
+
+func (c *Cache) GetExtensionCategories(ctx context.Context) ([]types.ExtensionCategory, error) {
+	data, err := c.client.Get(ctx, ExtensionCategoriesCacheKey).Bytes()
+	if err == redis.Nil {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	var cats []types.ExtensionCategory
+	if err := json.Unmarshal(data, &cats); err != nil {
+		_ = c.client.Del(ctx, ExtensionCategoriesCacheKey).Err()
+		return nil, err
+	}
+	return cats, nil
+}
+
+func (c *Cache) SetExtension(ctx context.Context, ext *types.Extension) error {
+	data, err := jsonMarshal(ext)
+	if err != nil {
+		return err
+	}
+	pipe := c.client.Pipeline()
+	pipe.Set(ctx, ExtensionByIDCacheKeyPrefix+ext.ID.String(), data, ExtensionCacheTTL)
+	pipe.Set(ctx, ExtensionByExtIDCacheKeyPrefix+ext.ExtensionID, data, ExtensionCacheTTL)
+	_, err = pipe.Exec(ctx)
+	return err
+}
+
+func (c *Cache) SetExtensionCategories(ctx context.Context, cats []types.ExtensionCategory) error {
+	data, err := jsonMarshal(cats)
+	if err != nil {
+		return err
+	}
+	return c.client.Set(ctx, ExtensionCategoriesCacheKey, data, ExtensionCategoriesCacheTTL).Err()
+}
+
+// InvalidateExtension removes both ID-based and ExtensionID-based cache entries.
+// Both keys must be cleared because the same entity is reachable via two lookup paths.
+func (c *Cache) InvalidateExtension(ctx context.Context, id string, extensionID string) error {
+	keys := make([]string, 0, 2)
+	if id != "" {
+		keys = append(keys, ExtensionByIDCacheKeyPrefix+id)
+	}
+	if extensionID != "" {
+		keys = append(keys, ExtensionByExtIDCacheKeyPrefix+extensionID)
+	}
+	if len(keys) == 0 {
+		return nil
+	}
+	return c.client.Del(ctx, keys...).Err()
+}
+
+// InvalidateExtensionCategories removes the cached categories list.
+// Must be called whenever an extension is created, deleted, or changes category.
+func (c *Cache) InvalidateExtensionCategories(ctx context.Context) error {
+	return c.client.Del(ctx, ExtensionCategoriesCacheKey).Err()
 }
