@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	extservice "github.com/nixopus/nixopus/api/internal/features/extension/service"
 	"github.com/nixopus/nixopus/api/internal/secrets"
 	"github.com/nixopus/nixopus/api/internal/storage"
 	"github.com/nixopus/nixopus/api/internal/types"
@@ -115,6 +116,7 @@ func Init() *storage.Store {
 	}
 
 	storageInstance := storage.NewStore(store)
+	storageInstance.ExtensionLoader = extservice.NewTemplateLoader(storageInstance.DB)
 
 	err = initStoreInit(storageInstance, context.Background())
 

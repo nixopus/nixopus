@@ -1,4 +1,4 @@
-package parser
+package service
 
 import (
 	"crypto/sha256"
@@ -9,21 +9,24 @@ import (
 	"path/filepath"
 	"sync"
 
+	exttypes "github.com/nixopus/nixopus/api/internal/features/extension/types"
 	"github.com/nixopus/nixopus/api/internal/types"
 	"gopkg.in/yaml.v3"
 )
 
-func NewParser() *Parser {
-	return &Parser{}
+type extensionYAMLParser struct{}
+
+func newExtensionYAMLParser() *extensionYAMLParser {
+	return &extensionYAMLParser{}
 }
 
-func (p *Parser) ParseExtensionFile(filePath string) (*types.Extension, []types.ExtensionVariable, error) {
+func (p *extensionYAMLParser) parseExtensionFile(filePath string) (*types.Extension, []types.ExtensionVariable, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read file %s: %w", filePath, err)
 	}
 
-	var extYAML ExtensionYAML
+	var extYAML exttypes.ExtensionYAML
 	if err := yaml.Unmarshal(data, &extYAML); err != nil {
 		return nil, nil, fmt.Errorf("failed to parse YAML: %w", err)
 	}
@@ -38,20 +41,7 @@ func (p *Parser) ParseExtensionFile(filePath string) (*types.Extension, []types.
 	return extension, variables, nil
 }
 
-func (p *Parser) ParseExtensionContent(content string) (*types.Extension, []types.ExtensionVariable, error) {
-	var extYAML ExtensionYAML
-	if err := yaml.Unmarshal([]byte(content), &extYAML); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse YAML: %w", err)
-	}
-	if err := p.validateExtension(&extYAML); err != nil {
-		return nil, nil, fmt.Errorf("validation failed: %w", err)
-	}
-	extension := p.convertToExtension(&extYAML, content)
-	variables := p.convertToVariables(&extYAML, extension.ExtensionID)
-	return extension, variables, nil
-}
-
-func (p *Parser) convertToExtension(extYAML *ExtensionYAML, yamlContent string) *types.Extension {
+func (p *extensionYAMLParser) convertToExtension(extYAML *exttypes.ExtensionYAML, yamlContent string) *types.Extension {
 	parsedContent, err := json.Marshal(extYAML)
 	if err != nil {
 		parsedContent = []byte("{}")
@@ -76,7 +66,7 @@ func (p *Parser) convertToExtension(extYAML *ExtensionYAML, yamlContent string) 
 	}
 }
 
-func (p *Parser) convertToVariables(extYAML *ExtensionYAML, extensionID string) []types.ExtensionVariable {
+func (p *extensionYAMLParser) convertToVariables(extYAML *exttypes.ExtensionYAML, extensionID string) []types.ExtensionVariable {
 	var variables []types.ExtensionVariable
 
 	for varName, variable := range extYAML.Variables {
@@ -98,7 +88,7 @@ func (p *Parser) convertToVariables(extYAML *ExtensionYAML, extensionID string) 
 	return variables
 }
 
-func (p *Parser) LoadExtensionsFromDirectory(dirPath string) ([]*types.Extension, [][]types.ExtensionVariable, error) {
+func (p *extensionYAMLParser) loadExtensionsFromDirectory(dirPath string) ([]*types.Extension, [][]types.ExtensionVariable, error) {
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read directory: %w", err)
@@ -134,7 +124,7 @@ func (p *Parser) LoadExtensionsFromDirectory(dirPath string) ([]*types.Extension
 		wg.Add(1)
 		go func(idx int, filePath string) {
 			defer wg.Done()
-			ext, vars, err := p.ParseExtensionFile(filePath)
+			ext, vars, err := p.parseExtensionFile(filePath)
 			mu.Lock()
 			results[idx] = result{extension: ext, variables: vars, err: err, index: idx}
 			mu.Unlock()

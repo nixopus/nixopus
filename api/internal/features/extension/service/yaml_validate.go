@@ -1,11 +1,13 @@
-package parser
+package service
 
 import (
 	"fmt"
 	"strings"
+
+	exttypes "github.com/nixopus/nixopus/api/internal/features/extension/types"
 )
 
-func (p *Parser) validateExtension(ext *ExtensionYAML) error {
+func (p *extensionYAMLParser) validateExtension(ext *exttypes.ExtensionYAML) error {
 	if ext.Metadata.ID == "" {
 		return fmt.Errorf("metadata.id is required")
 	}
@@ -56,7 +58,7 @@ func (p *Parser) validateExtension(ext *ExtensionYAML) error {
 	return nil
 }
 
-func (p *Parser) isValidCategory(category string) bool {
+func (p *extensionYAMLParser) isValidCategory(category string) bool {
 	validCategories := []string{
 		"Security", "Containers", "Database", "Web Server",
 		"Maintenance", "Monitoring", "Storage", "Network",
@@ -71,7 +73,7 @@ func (p *Parser) isValidCategory(category string) bool {
 	return false
 }
 
-func (p *Parser) isValidExtensionID(id string) bool {
+func (p *extensionYAMLParser) isValidExtensionID(id string) bool {
 	if len(id) < 3 || len(id) > 50 {
 		return false
 	}
@@ -83,7 +85,7 @@ func (p *Parser) isValidExtensionID(id string) bool {
 	return !strings.HasPrefix(id, "-") && !strings.HasSuffix(id, "-")
 }
 
-func (p *Parser) isValidVersion(version string) bool {
+func (p *extensionYAMLParser) isValidVersion(version string) bool {
 	parts := strings.Split(version, ".")
 	if len(parts) != 3 {
 		return false
@@ -101,7 +103,7 @@ func (p *Parser) isValidVersion(version string) bool {
 	return true
 }
 
-func (p *Parser) isValidVariableName(name string) bool {
+func (p *extensionYAMLParser) isValidVariableName(name string) bool {
 	if len(name) == 0 || len(name) > 100 {
 		return false
 	}
@@ -117,7 +119,7 @@ func (p *Parser) isValidVariableName(name string) bool {
 	return true
 }
 
-func (p *Parser) isValidVariableType(varType string) bool {
+func (p *extensionYAMLParser) isValidVariableType(varType string) bool {
 	validTypes := []string{"string", "integer", "boolean", "array"}
 	for _, valid := range validTypes {
 		if varType == valid {
