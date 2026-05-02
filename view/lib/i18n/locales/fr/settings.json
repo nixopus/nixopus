@@ -57,10 +57,6 @@
           "title": "Terminal",
           "description": "Accès à la caractéristique de terminal"
         },
-        "file_manager": {
-          "title": "Gestionnaire de Fichiers",
-          "description": "Accès à la caractéristique de gestionnaire de fichiers"
-        },
         "container": {
           "title": "Conteneur",
           "description": "Accès à la caractéristique de conteneur"

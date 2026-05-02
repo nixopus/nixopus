@@ -183,8 +183,6 @@ func (s *AuditService) generateMessage(actor string, action types.AuditAction, r
 		return s.generateNotificationMessage(actor, action)
 	case types.AuditResourceFeatureFlag:
 		return s.generateFeatureFlagMessage(actor, action, newValues)
-	case types.AuditResourceFileManager:
-		return s.generateFileManagerMessage(actor, action, newValues)
 	case types.AuditResourceContainer:
 		return s.generateContainerMessage(actor, action)
 	case types.AuditResourceAudit:
@@ -269,31 +267,6 @@ func (s *AuditService) generateDeploymentMessage(actor string, action types.Audi
 		return fmt.Sprintf("%s cancelled a deployment", actor)
 	default:
 		return fmt.Sprintf("%s %s a deployment", actor, action)
-	}
-}
-
-func (s *AuditService) generateFileManagerMessage(actor string, action types.AuditAction, newValues map[string]any) string {
-	switch action {
-	case types.AuditActionCreate:
-		if fileName, ok := newValues["name"].(string); ok && fileName != "" {
-			return fmt.Sprintf("%s created file '%s'", actor, fileName)
-		}
-		if path, ok := newValues["path"].(string); ok && path != "" {
-			return fmt.Sprintf("%s created a file at %s", actor, path)
-		}
-		return fmt.Sprintf("%s created a file", actor)
-	case types.AuditActionUpdate:
-		if fileName, ok := newValues["name"].(string); ok && fileName != "" {
-			return fmt.Sprintf("%s updated file '%s'", actor, fileName)
-		}
-		return fmt.Sprintf("%s updated a file", actor)
-	case types.AuditActionDelete:
-		if fileName, ok := newValues["name"].(string); ok && fileName != "" {
-			return fmt.Sprintf("%s deleted file '%s'", actor, fileName)
-		}
-		return fmt.Sprintf("%s deleted a file", actor)
-	default:
-		return fmt.Sprintf("%s %s a file", actor, action)
 	}
 }
 

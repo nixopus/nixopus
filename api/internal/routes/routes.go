@@ -24,7 +24,6 @@ import (
 	feature_flags_controller "github.com/nixopus/nixopus/api/internal/features/feature-flags/controller"
 	feature_flags_service "github.com/nixopus/nixopus/api/internal/features/feature-flags/service"
 	feature_flags_storage "github.com/nixopus/nixopus/api/internal/features/feature-flags/storage"
-	file_manager "github.com/nixopus/nixopus/api/internal/features/file-manager/controller"
 	githubConnector "github.com/nixopus/nixopus/api/internal/features/github-connector/controller"
 	healthcheck "github.com/nixopus/nixopus/api/internal/features/healthcheck/controller"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
@@ -298,17 +297,6 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		ResourceName: "notification",
 	})
 	router.RegisterNotificationRoutes(notificationGroup, notifController)
-
-	fileManagerController := file_manager.NewFileManagerController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
-	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager", option.Tags("File Manager"))
-	fuego.Use(fileManagerGroup, middleware.ServerIDMiddleware)
-	router.applyMiddleware(fileManagerGroup, MiddlewareConfig{
-		RBAC:         true,
-		FeatureFlag:  "file_manager",
-		Audit:        true,
-		ResourceName: "file-manager",
-	})
-	router.RegisterFileManagerRoutes(fileManagerGroup, fileManagerController)
 
 	deployGroup := fuego.Group(server, apiV1.Path+"/deploy", option.Tags("Deploy"))
 	router.applyMiddleware(deployGroup, MiddlewareConfig{
