@@ -37,8 +37,6 @@ func resetInitHooks(t *testing.T) {
 		initLogFatal = log.Fatal
 		initNewSecretManager = secrets.NewSecretManager
 		initAfterViperHook = nil
-		executableFn = os.Executable
-		filepathAbsFn = filepath.Abs
 		GlobalStore = nil
 		AppConfig = types.Config{}
 		viper.Reset()
@@ -59,7 +57,6 @@ func minimalInitEnv(t *testing.T) {
 	t.Setenv("PORT", "9000")
 	_ = os.Unsetenv("DATABASE_URL")
 	_ = os.Unsetenv("NIXOPUS_CONFIG_PATH")
-	_ = os.Unsetenv("MIGRATIONS_PATH")
 }
 
 func TestDefaultInitStoreInit_nilStorePanics(t *testing.T) {
@@ -67,43 +64,6 @@ func TestDefaultInitStoreInit_nilStorePanics(t *testing.T) {
 		require.NotNil(t, recover(), "expected panic from Init on nil store")
 	}()
 	_ = defaultInitStoreInit(nil, context.Background())
-}
-
-func TestGetMigrationsPath(t *testing.T) {
-	resetInitHooks(t)
-	tmp := t.TempDir()
-	want := filepath.Join(tmp, "custom")
-	t.Setenv("MIGRATIONS_PATH", want)
-	assert.Equal(t, want, getMigrationsPath())
-
-	_ = os.Unsetenv("MIGRATIONS_PATH")
-	exe := filepath.Join(tmp, "fakebin")
-	require.NoError(t, os.WriteFile(exe, []byte{}, 0o700))
-	migDir := filepath.Join(tmp, "migrations")
-	require.NoError(t, os.MkdirAll(migDir, 0o700))
-	executableFn = func() (string, error) { return exe, nil }
-	got, err := filepath.Abs(filepath.Join(filepath.Dir(exe), "migrations"))
-	require.NoError(t, err)
-	assert.Equal(t, got, getMigrationsPath())
-
-	tmpNoMig := t.TempDir()
-	exeNoMig := filepath.Join(tmpNoMig, "nobin")
-	require.NoError(t, os.WriteFile(exeNoMig, []byte{}, 0o700))
-	executableFn = func() (string, error) { return exeNoMig, nil }
-	_ = os.Unsetenv("MIGRATIONS_PATH")
-	assert.Equal(t, "./migrations", getMigrationsPath())
-
-	executableFn = func() (string, error) { return "", errors.New("no exe") }
-	assert.Equal(t, "./migrations", getMigrationsPath())
-
-	tmpAbs := t.TempDir()
-	exe3 := filepath.Join(tmpAbs, "bin3")
-	require.NoError(t, os.MkdirAll(filepath.Join(tmpAbs, "migrations"), 0o700))
-	require.NoError(t, os.WriteFile(exe3, []byte{}, 0o700))
-	executableFn = func() (string, error) { return exe3, nil }
-	filepathAbsFn = func(path string) (string, error) { return "", errors.New("abs fail") }
-	_ = os.Unsetenv("MIGRATIONS_PATH")
-	assert.Equal(t, "./migrations", getMigrationsPath())
 }
 
 func TestGetDeployDomain_and_BuildDeployDomainURL(t *testing.T) {
