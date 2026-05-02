@@ -409,3 +409,60 @@ func TestSetSession_redisError(t *testing.T) {
 	mr.Close()
 	require.Error(t, c.SetSession(context.Background(), "k", []byte("x")))
 }
+
+func TestAdminRegistered_missHitSetInvalidate(t *testing.T) {
+	c, mr := testCache(t)
+	ctx := context.Background()
+
+	v, hit, err := c.GetAdminRegistered(ctx)
+	require.NoError(t, err)
+	require.False(t, hit)
+	require.False(t, v)
+
+	require.NoError(t, c.SetAdminRegistered(ctx, false))
+	got, hit, err := c.GetAdminRegistered(ctx)
+	require.NoError(t, err)
+	require.True(t, hit)
+	require.False(t, got)
+
+	ttlFalse := mr.TTL(AdminRegisteredCacheKey)
+	require.Positive(t, ttlFalse)
+
+	require.NoError(t, c.InvalidateAdminRegistered(ctx))
+	require.NoError(t, c.SetAdminRegistered(ctx, true))
+	got, hit, err = c.GetAdminRegistered(ctx)
+	require.NoError(t, err)
+	require.True(t, hit)
+	require.True(t, got)
+
+	ttlTrue := mr.TTL(AdminRegisteredCacheKey)
+	require.Greater(t, ttlTrue, time.Minute)
+}
+
+func TestGetAdminRegistered_redisError(t *testing.T) {
+	c, mr := testCache(t)
+	ctx := context.Background()
+	require.NoError(t, c.SetAdminRegistered(ctx, true))
+	mr.Close()
+
+	_, _, err := c.GetAdminRegistered(ctx)
+	require.Error(t, err)
+}
+
+func TestSetAdminRegistered_redisError(t *testing.T) {
+	c, mr := testCache(t)
+	ctx := context.Background()
+	mr.Close()
+
+	err := c.SetAdminRegistered(ctx, true)
+	require.Error(t, err)
+}
+
+func TestInvalidateAdminRegistered_redisError(t *testing.T) {
+	c, mr := testCache(t)
+	ctx := context.Background()
+	mr.Close()
+
+	err := c.InvalidateAdminRegistered(ctx)
+	require.Error(t, err)
+}

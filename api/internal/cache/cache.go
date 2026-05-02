@@ -27,6 +27,12 @@ const (
 	RBACCacheTTL                = 5 * time.Minute
 	SessionCacheKeyPrefix       = "session:"
 	SessionCacheTTL             = 5 * time.Minute
+
+	AdminRegisteredCacheKey = "auth:admin_registered"
+	// AdminRegisteredTrueTTL: once an admin exists the value is permanent; cache aggressively.
+	AdminRegisteredTrueTTL = 24 * time.Hour
+	// AdminRegisteredFalseTTL: before first signup, re-check soon so signup is detected quickly.
+	AdminRegisteredFalseTTL = 30 * time.Second
 )
 
 type Cache struct {
@@ -265,4 +271,34 @@ func (c *Cache) GetSession(ctx context.Context, cacheKey string) ([]byte, error)
 func (c *Cache) SetSession(ctx context.Context, cacheKey string, data []byte) error {
 	key := SessionCacheKeyPrefix + cacheKey
 	return c.client.Set(ctx, key, data, SessionCacheTTL).Err()
+}
+
+// GetAdminRegistered returns the cached value and whether a cache hit occurred.
+func (c *Cache) GetAdminRegistered(ctx context.Context) (registered bool, hit bool, err error) {
+	val, err := c.client.Get(ctx, AdminRegisteredCacheKey).Result()
+	if err == redis.Nil {
+		return false, false, nil
+	}
+	if err != nil {
+		return false, false, err
+	}
+	return val == "true", true, nil
+}
+
+// SetAdminRegistered caches the result with a TTL that depends on the value.
+// true  -> long TTL (state effectively permanent once an admin exists)
+// false -> short TTL (re-check soon so first signup is detected quickly)
+func (c *Cache) SetAdminRegistered(ctx context.Context, registered bool) error {
+	val := "false"
+	ttl := AdminRegisteredFalseTTL
+	if registered {
+		val = "true"
+		ttl = AdminRegisteredTrueTTL
+	}
+	return c.client.Set(ctx, AdminRegisteredCacheKey, val, ttl).Err()
+}
+
+// InvalidateAdminRegistered removes the cached admin registration status.
+func (c *Cache) InvalidateAdminRegistered(ctx context.Context) error {
+	return c.client.Del(ctx, AdminRegisteredCacheKey).Err()
 }
