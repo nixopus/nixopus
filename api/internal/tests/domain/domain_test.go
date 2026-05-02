@@ -85,6 +85,41 @@ func TestGetDomains_CrossOrgDenied(t *testing.T) {
 	)
 }
 
+func TestAddCustomDomain_NoOrgID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("POST /domain/custom without org ID returns 400"),
+		Post(tests.GetDomainCustomURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Body().JSON(map[string]interface{}{"name": "app.example.com"}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestAddCustomDomain_InvalidDomainName_NoDot(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	// "nodotdomain" passes Fuego's min=3,max=255 validation but fails service-level
+	// dot check → mapCustomDomainError → isInvalidDomainError → 400.
+	Test(t,
+		Description("POST /domain/custom with no-dot name returns 400"),
+		Post(tests.GetDomainCustomURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"name": "nodotdomain"}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
 // --- Generate random subdomain ---
 
 func TestGenerateRandomSubdomain_NoAuth(t *testing.T) {
@@ -109,6 +144,21 @@ func TestGenerateRandomSubdomain_ValidAuth(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Expect().Status().OneOf(int64(http.StatusOK), int64(http.StatusNotFound)),
+	)
+}
+
+func TestGenerateRandomSubdomain_NoOrgID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("GET /domain/generate without org ID returns 400"),
+		Get(tests.GetDomainGenerateURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Expect().Status().Equal(http.StatusBadRequest),
 	)
 }
 
@@ -238,6 +288,39 @@ func TestRemoveCustomDomain_NoAuth(t *testing.T) {
 	)
 }
 
+func TestRemoveCustomDomain_NoOrgID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("DELETE /domain/custom without org ID returns 400"),
+		Delete(tests.GetDomainCustomURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Body().JSON(map[string]interface{}{"id": uuid.New().String()}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestRemoveCustomDomain_InvalidUUID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("DELETE /domain/custom with malformed UUID returns 400"),
+		Delete(tests.GetDomainCustomURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"id": "not-a-uuid"}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
 func TestRemoveCustomDomain_MissingID(t *testing.T) {
 	setup := testutils.NewTestSetup()
 	auth, err := setup.GetAuthResponse()
@@ -318,6 +401,39 @@ func TestVerifyCustomDomain_NoAuth(t *testing.T) {
 	)
 }
 
+func TestVerifyCustomDomain_NoOrgID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("POST /domain/verify without org ID returns 400"),
+		Post(tests.GetDomainVerifyURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Body().JSON(map[string]interface{}{"id": uuid.New().String()}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestVerifyCustomDomain_InvalidUUID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("POST /domain/verify with malformed UUID returns 400"),
+		Post(tests.GetDomainVerifyURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{"id": "not-a-uuid"}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
 func TestVerifyCustomDomain_MissingID(t *testing.T) {
 	setup := testutils.NewTestSetup()
 	auth, err := setup.GetAuthResponse()
@@ -376,14 +492,20 @@ func TestVerifyCustomDomain_ValidFlow(t *testing.T) {
 		t.Skip("domain creation requires provisioned machine — skipping verify test")
 	}
 
-	// DNS won't actually resolve in CI, so verification will fail at DNS check — not a 5xx bug
+	// In CI DNS won't resolve: service returns ErrDNSNotVerified → 412 PreconditionFailed.
+	// 200 if somehow DNS is configured; 400/500 for other infra errors.
 	Test(t,
-		Description("POST /domain/verify attempts DNS verification — DNS failure is expected in CI"),
+		Description("POST /domain/verify attempts DNS verification — DNS failure expected in CI → 412"),
 		Post(tests.GetDomainVerifyURL()),
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"id": domainID}),
-		Expect().Status().OneOf(int64(http.StatusOK), int64(http.StatusBadRequest), int64(http.StatusInternalServerError)),
+		Expect().Status().OneOf(
+			int64(http.StatusOK),
+			int64(http.StatusBadRequest),
+			int64(http.StatusPreconditionFailed),
+			int64(http.StatusInternalServerError),
+		),
 	)
 }
 
@@ -394,6 +516,37 @@ func TestCheckDNSStatus_NoAuth(t *testing.T) {
 		Description("GET /domain/dns-check without auth returns 401"),
 		Get(tests.GetDomainDNSCheckURL(uuid.New().String())),
 		Expect().Status().Equal(http.StatusUnauthorized),
+	)
+}
+
+func TestCheckDNSStatus_NoOrgID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("GET /domain/dns-check without org ID returns 400"),
+		Get(tests.GetDomainDNSCheckURL(uuid.New().String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestCheckDNSStatus_InvalidUUID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("GET /domain/dns-check with malformed UUID returns 400"),
+		Get(tests.GetDomainURL()+"/dns-check?id=not-a-uuid"),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusBadRequest),
 	)
 }
 

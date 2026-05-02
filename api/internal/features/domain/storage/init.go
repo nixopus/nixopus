@@ -22,6 +22,10 @@ type DomainStorageInterface interface {
 	UpdateCustomDomainStatus(id uuid.UUID, status string) error
 	UpdateCustomDomainVerification(id uuid.UUID, status string, dnsProvider *string) error
 	DeleteCustomDomain(id uuid.UUID) error
+
+	GetDefaultSSHKeyByOrg(orgID uuid.UUID) (*shared_types.SSHKey, error)
+	GetProvisionDetailsBySSHKeyAndOrg(sshKeyID, orgID uuid.UUID) (*shared_types.UserProvisionDetails, error)
+	GetProvisionDetailsBySubdomain(subdomain string) (*shared_types.UserProvisionDetails, error)
 }
 
 func (s *DomainStorage) getDB() bun.IDB {

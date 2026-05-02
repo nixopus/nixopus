@@ -10,6 +10,10 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/domain/types"
 )
 
+// randReadFn is the source of randomness for GenerateVerificationToken.
+// Tests can override it to exercise the error-fallback branch.
+var randReadFn = rand.Read
+
 var nsProviderMap = map[string]string{
 	"cloudflare.com":        "cloudflare",
 	"ns.cloudflare.com":     "cloudflare",
@@ -48,6 +52,7 @@ var nsProviderMap = map[string]string{
 	"bunny.net":             "bunnycdn",
 }
 
+// extractRootDomain returns the eTLD+1 portion of a domain (e.g. "sub.example.com" → "example.com").
 func extractRootDomain(domain string) string {
 	domain = strings.TrimSuffix(strings.TrimSpace(domain), ".")
 	parts := strings.Split(domain, ".")
@@ -57,6 +62,8 @@ func extractRootDomain(domain string) string {
 	return strings.Join(parts[len(parts)-2:], ".")
 }
 
+// matchNSToProvider returns the provider name for the first NS record that matches
+// a known pattern, or "" if none match.
 func matchNSToProvider(nsRecords []*net.NS) string {
 	for _, ns := range nsRecords {
 		host := strings.ToLower(strings.TrimSuffix(ns.Host, "."))
@@ -69,24 +76,26 @@ func matchNSToProvider(nsRecords []*net.NS) string {
 	return ""
 }
 
-func DetectDNSProvider(domain string) (string, error) {
+// detectDNSProvider determines the DNS provider for a domain using the supplied
+// NetLookup. Falls back to "other" when no provider can be identified.
+func detectDNSProvider(resolver NetLookup, domain string) (string, error) {
 	rootDomain := extractRootDomain(domain)
 
-	if nsRecords, err := net.LookupNS(rootDomain); err == nil && len(nsRecords) > 0 {
+	if nsRecords, err := resolver.LookupNS(rootDomain); err == nil && len(nsRecords) > 0 {
 		if provider := matchNSToProvider(nsRecords); provider != "" {
 			return provider, nil
 		}
 	}
 
 	if domain != rootDomain {
-		if nsRecords, err := net.LookupNS(domain); err == nil && len(nsRecords) > 0 {
+		if nsRecords, err := resolver.LookupNS(domain); err == nil && len(nsRecords) > 0 {
 			if provider := matchNSToProvider(nsRecords); provider != "" {
 				return provider, nil
 			}
 		}
 	}
 
-	if soaRecords, err := net.LookupNS(rootDomain); err == nil {
+	if soaRecords, err := resolver.LookupNS(rootDomain); err == nil {
 		for _, ns := range soaRecords {
 			host := strings.ToLower(strings.TrimSuffix(ns.Host, "."))
 			for pattern, provider := range nsProviderMap {
@@ -100,6 +109,12 @@ func DetectDNSProvider(domain string) (string, error) {
 	return "other", nil
 }
 
+// DetectDNSProvider is the exported entry point backed by defaultResolver.
+func DetectDNSProvider(domain string) (string, error) {
+	return detectDNSProvider(defaultResolver, domain)
+}
+
+// GenerateDNSInstructions returns CNAME + TXT setup instructions for a managed domain.
 func GenerateDNSInstructions(domain, targetSubdomain, provider string) []types.DNSInstruction {
 	providerDescriptions := map[string]string{
 		"cloudflare":         "Go to your Cloudflare dashboard > DNS > Records > Add Record",
@@ -130,7 +145,7 @@ func GenerateDNSInstructions(domain, targetSubdomain, provider string) []types.D
 
 	cnameValue := fmt.Sprintf("%s.nixopus.ai", targetSubdomain)
 
-	instructions := []types.DNSInstruction{
+	return []types.DNSInstruction{
 		{
 			RecordType:  "CNAME",
 			Name:        domain,
@@ -144,21 +159,19 @@ func GenerateDNSInstructions(domain, targetSubdomain, provider string) []types.D
 			Description: fmt.Sprintf("%s. Add a TXT record for domain verification", description),
 		},
 	}
-
-	return instructions
 }
 
+// GenerateVerificationToken produces a 32-character hex verification token.
 func GenerateVerificationToken() string {
 	bytes := make([]byte, 16)
-	_, err := rand.Read(bytes)
+	_, err := randReadFn(bytes)
 	if err != nil {
 		return hex.EncodeToString(make([]byte, 16))
 	}
 	return hex.EncodeToString(bytes)
 }
 
-// GenerateDNSInstructionsBYOS returns DNS instructions for a self-hosted (BYOS)
-// machine. The user must add an A record pointing their domain to machineIP.
+// GenerateDNSInstructionsBYOS returns an A-record instruction for a self-hosted machine.
 func GenerateDNSInstructionsBYOS(domain, machineIP, provider string) []types.DNSInstruction {
 	providerDescriptions := map[string]string{
 		"cloudflare":   "Go to your Cloudflare dashboard > DNS > Records > Add Record",
