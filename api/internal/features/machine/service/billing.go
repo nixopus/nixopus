@@ -12,11 +12,34 @@ import (
 	"github.com/nixopus/nixopus/api/internal/queue"
 )
 
+// BillingRepository is the minimal storage interface required by BillingService.
+// It is satisfied by *storage.BillingStorage in production and by a mock in tests.
+type BillingRepository interface {
+	ListActivePlans() ([]types.MachinePlan, error)
+	GetPlanByTier(tier string) (*types.MachinePlan, error)
+	GetPlanByID(planID uuid.UUID) (*types.MachinePlan, error)
+	GetBillingByOrgID(orgID uuid.UUID) (*types.OrgMachineBilling, error)
+	GetWalletBalance(orgID uuid.UUID) (int, error)
+	DebitWallet(orgID uuid.UUID, amountCents int, reason string, referenceID string) (bool, error)
+	UpsertBilling(orgID uuid.UUID, planID uuid.UUID, periodStart, periodEnd time.Time) error
+	HasActiveSSHKey(orgID uuid.UUID) (bool, error)
+	HasTrialWithoutActiveBilling(orgID uuid.UUID) (bool, error)
+	IsServerUserOwned(orgID uuid.UUID, serverID uuid.UUID) (bool, error)
+	GetProvisionInfo(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (*storage.ProvisionInfo, error)
+	ReactivateSSHKey(ctx context.Context, sshKeyID uuid.UUID) error
+}
+
 type BillingService struct {
-	storage *storage.BillingStorage
+	storage BillingRepository
 }
 
 func NewBillingService(s *storage.BillingStorage) *BillingService {
+	return &BillingService{storage: s}
+}
+
+// NewBillingServiceWith creates a BillingService with an injectable BillingRepository,
+// intended for use in tests.
+func NewBillingServiceWith(s BillingRepository) *BillingService {
 	return &BillingService{storage: s}
 }
 

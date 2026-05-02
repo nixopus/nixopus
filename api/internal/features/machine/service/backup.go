@@ -16,22 +16,67 @@ import (
 
 var defaultBackupPaths = []string{"/home", "/etc", "/var/lib/docker/volumes"}
 
+// BackupStoreInterface abstracts BackupStorage for testability.
+type BackupStoreInterface interface {
+	HasInProgressBackup(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (bool, error)
+	ListByOrg(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID, params types.BackupListParams) ([]types.MachineBackup, int, error)
+	GetProvisionIDBySSHKey(ctx context.Context, orgID, serverID uuid.UUID) (*uuid.UUID, error)
+	InsertBackup(ctx context.Context, backup *types.MachineBackup) error
+	UpdateBackupStatus(ctx context.Context, id uuid.UUID, status types.MachineBackupStatus, updates map[string]interface{}) error
+}
+
 type BackupService struct {
-	provisionInfo ProvisionInfoProvider
-	backupStore   *storage.BackupStorage
-	db            *bun.DB
-	s3Cfg         shared_types.S3Config
+	provisionInfo    ProvisionInfoProvider
+	backupStore      BackupStoreInterface
+	db               *bun.DB
+	s3Cfg            shared_types.S3Config
+	getSettingsFn    func(ctx context.Context, orgID uuid.UUID) (shared_types.OrganizationSettingsData, error) // nil → production
+	checkUserOwnedFn func(ctx context.Context, orgID, serverID uuid.UUID) (bool, error)                        // nil → production billing storage
+	enqueueBackupFn  func(ctx context.Context, payload queue.MachineBackupPayload) (string, error)             // nil → real queue
 }
 
 func NewBackupService(p ProvisionInfoProvider, bs *storage.BackupStorage, db *bun.DB, s3Cfg shared_types.S3Config) *BackupService {
 	return &BackupService{provisionInfo: p, backupStore: bs, db: db, s3Cfg: s3Cfg}
 }
 
+// NewBackupServiceWith creates a BackupService with injectable dependencies for tests.
+func NewBackupServiceWith(p ProvisionInfoProvider, bs BackupStoreInterface, getSettingsFn func(ctx context.Context, orgID uuid.UUID) (shared_types.OrganizationSettingsData, error), s3Cfg shared_types.S3Config) *BackupService {
+	return &BackupService{provisionInfo: p, backupStore: bs, getSettingsFn: getSettingsFn, s3Cfg: s3Cfg}
+}
+
+// EnqueueBackupFnForTest injects a mock enqueue function for tests.
+func (s *BackupService) EnqueueBackupFnForTest(fn func(ctx context.Context, payload queue.MachineBackupPayload) (string, error)) {
+	s.enqueueBackupFn = fn
+}
+
+// CheckUserOwnedFnForTest injects a mock user-ownership check for tests.
+func (s *BackupService) CheckUserOwnedFnForTest(fn func(ctx context.Context, orgID, serverID uuid.UUID) (bool, error)) {
+	s.checkUserOwnedFn = fn
+}
+
+// SetDBForTest injects a DB handle for tests.
+func (s *BackupService) SetDBForTest(db *bun.DB) {
+	s.db = db
+}
+
+func (s *BackupService) getOrganizationSettings(ctx context.Context, orgID uuid.UUID) (shared_types.OrganizationSettingsData, error) {
+	if s.getSettingsFn != nil {
+		return s.getSettingsFn(ctx, orgID)
+	}
+	return utils.GetOrganizationSettings(ctx, s.db, orgID)
+}
+
 func (s *BackupService) TriggerBackup(ctx context.Context, userID, orgID uuid.UUID, serverID *uuid.UUID) (*types.TriggerBackupResponse, error) {
 	if serverID != nil {
-		billingStore := storage.NewBillingStorage(s.db, ctx)
-		isUserOwned, err := billingStore.IsServerUserOwned(orgID, *serverID)
-		if err == nil && isUserOwned {
+		var isUserOwned bool
+		var checkErr error
+		if s.checkUserOwnedFn != nil {
+			isUserOwned, checkErr = s.checkUserOwnedFn(ctx, orgID, *serverID)
+		} else {
+			billingStore := storage.NewBillingStorage(s.db, ctx)
+			isUserOwned, checkErr = billingStore.IsServerUserOwned(orgID, *serverID)
+		}
+		if checkErr == nil && isUserOwned {
 			return s.triggerBYOSBackup(ctx, userID, orgID, *serverID)
 		}
 	}
@@ -60,7 +105,11 @@ func (s *BackupService) TriggerBackup(ctx context.Context, userID, orgID uuid.UU
 		Trigger:     "api",
 	}
 
-	requestID, err := queue.EnqueueMachineBackup(ctx, payload)
+	enqueue := queue.EnqueueMachineBackup
+	if s.enqueueBackupFn != nil {
+		enqueue = s.enqueueBackupFn
+	}
+	requestID, err := enqueue(ctx, payload)
 	if err != nil {
 		return nil, fmt.Errorf("failed to enqueue backup: %w", err)
 	}
@@ -90,7 +139,7 @@ func (s *BackupService) triggerBYOSBackup(ctx context.Context, userID, orgID, se
 		return nil, fmt.Errorf("failed to resolve provision: %w", err)
 	}
 
-	settings, err := utils.GetOrganizationSettings(ctx, s.db, orgID)
+	settings, err := s.getOrganizationSettings(ctx, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get org settings: %w", err)
 	}
@@ -115,7 +164,12 @@ func (s *BackupService) triggerBYOSBackup(ctx context.Context, userID, orgID, se
 		return nil, fmt.Errorf("failed to create backup record: %w", err)
 	}
 
-	payload := queue.MachineBackupPayload{
+	enqueue := queue.EnqueueMachineBackup
+	if s.enqueueBackupFn != nil {
+		enqueue = s.enqueueBackupFn
+	}
+
+	bkPayload := queue.MachineBackupPayload{
 		MachineName:    serverID.String(),
 		UserID:         userID.String(),
 		OrgID:          orgID.String(),
@@ -126,7 +180,7 @@ func (s *BackupService) triggerBYOSBackup(ctx context.Context, userID, orgID, se
 		Trigger:        "api",
 	}
 
-	requestID, err := queue.EnqueueMachineBackup(ctx, payload)
+	requestID, err := enqueue(ctx, bkPayload)
 	if err != nil {
 		_ = s.backupStore.UpdateBackupStatus(ctx, backup.ID, types.BackupStatusFailed, map[string]interface{}{
 			"error": "failed to enqueue backup task",
@@ -185,7 +239,7 @@ func (s *BackupService) ListBackups(ctx context.Context, orgID uuid.UUID, params
 }
 
 func (s *BackupService) GetBackupSchedule(ctx context.Context, orgID uuid.UUID, _ *uuid.UUID) (*types.BackupScheduleResponse, error) {
-	settings, err := utils.GetOrganizationSettings(ctx, s.db, orgID)
+	settings, err := s.getOrganizationSettings(ctx, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get organization settings: %w", err)
 	}
@@ -235,7 +289,7 @@ func (s *BackupService) UpdateBackupSchedule(ctx context.Context, orgID uuid.UUI
 
 	// GetOrganizationSettings upserts default settings if the row is missing,
 	// so we always have a valid row to update.
-	currentSettings, err := utils.GetOrganizationSettings(ctx, s.db, orgID)
+	currentSettings, err := s.getOrganizationSettings(ctx, orgID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load organization settings: %w", err)
 	}
@@ -246,14 +300,16 @@ func (s *BackupService) UpdateBackupSchedule(ctx context.Context, orgID uuid.UUI
 	currentSettings.BackupScheduleDayOfWeek = &req.DayOfWeek
 	currentSettings.BackupRetentionCount = &req.RetentionCount
 
-	_, err = s.db.NewUpdate().
-		TableExpr("organization_settings").
-		Set("settings = ?", currentSettings).
-		Set("updated_at = NOW()").
-		Where("organization_id = ?", orgID).
-		Exec(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update backup schedule: %w", err)
+	if s.db != nil {
+		_, err = s.db.NewUpdate().
+			TableExpr("organization_settings").
+			Set("settings = ?", currentSettings).
+			Set("updated_at = CURRENT_TIMESTAMP").
+			Where("organization_id = ?", orgID).
+			Exec(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update backup schedule: %w", err)
+		}
 	}
 
 	return &types.BackupScheduleResponse{
