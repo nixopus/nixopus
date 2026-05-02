@@ -24,10 +24,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type stubNotifier struct{}
-
-func (stubNotifier) Emit(types.NotificationEvent) error { return nil }
-
 func sessionPayload(uid, activeOrg string) []byte {
 	session := map[string]any{"id": "sid", "userId": uid, "expiresAt": "", "token": "t"}
 	if activeOrg != "" {
@@ -55,8 +51,8 @@ func ctrlFromSetup(t *testing.T, setup *testutils.TestSetup, redisURL string) *c
 	t.Helper()
 	log := logger.NewLogger()
 	st := authstor.UserStorage{DB: setup.DB, Ctx: setup.Ctx}
-	svc := authsvc.NewAuthService(&st, log, setup.Ctx, redisURL)
-	return ctl.NewAuthController(setup.Ctx, log, stubNotifier{}, *svc, setup.Store)
+	svc := authsvc.NewAuthService(&st, st.DB, log, setup.Ctx, redisURL)
+	return ctl.NewAuthController(setup.Ctx, log, svc)
 }
 
 func mockFuegoCtx(r *http.Request) fuego.ContextNoBody {

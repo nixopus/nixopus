@@ -247,7 +247,7 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 	trailInternalGroup := fuego.Group(server, apiV1.Path+"/trail", option.Tags("Trial"))
 	router.RegisterTrailInternalRoutes(trailInternalGroup, trailInternalController)
 
-	authController := router.createAuthController(dispatcher)
+	authController := router.createAuthController()
 	authGroup := fuego.Group(server, apiV1.Path+"/auth", option.Tags("Auth"))
 	router.RegisterAuthRoutes(authGroup, authController)
 
@@ -263,7 +263,7 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 
 // registerProtectedRoutes registers routes that require authentication
 func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Version, dispatcher *notification.Dispatcher, deployController *deploy.DeployController) {
-	authController := router.createAuthController(dispatcher)
+	authController := router.createAuthController()
 	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth", option.Tags("Auth"))
 	router.applyMiddleware(authProtectedGroup, MiddlewareConfig{RBAC: false, Audit: false, ResourceName: "auth"})
 	router.RegisterAuthProtectedRoutes(authProtectedGroup, authController)
@@ -410,10 +410,10 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterMCPRoutes(mcpGroup, mcpCtrl)
 }
 
-func (router *Router) createAuthController(dispatcher *notification.Dispatcher) *auth.AuthController {
+func (router *Router) createAuthController() *auth.AuthController {
 	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	authService := auth_service.NewAuthService(userStorage, router.logger, router.app.Ctx, config.AppConfig.Redis.URL)
-	return auth.NewAuthController(router.app.Ctx, router.logger, dispatcher, *authService, router.app.Store)
+	authService := auth_service.NewAuthService(userStorage, userStorage.DB, router.logger, router.app.Ctx, config.AppConfig.Redis.URL)
+	return auth.NewAuthController(router.app.Ctx, router.logger, authService)
 }
 
 func (router *Router) createFeatureFlagController() *feature_flags_controller.FeatureFlagController {
