@@ -1,4 +1,4 @@
-package tests
+package service_test
 
 import (
 	"context"
@@ -178,4 +178,109 @@ func TestLifecycleService_EmptyContainerName(t *testing.T) {
 	_, err := svc.GetStatus(context.Background(), uuid.New(), nil)
 	require.Error(t, err)
 	assert.ErrorIs(t, err, types.ErrMachineNotProvisioned)
+}
+
+func TestLifecycleService_ResolveInstance_StorageError(t *testing.T) {
+	svc := service.NewLifecycleService(
+		&mockProvisionInfoProvider{info: nil, err: fmt.Errorf("db unavailable")},
+		mockRPC(nil, nil),
+	)
+
+	_, err := svc.GetStatus(context.Background(), uuid.New(), nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to resolve machine")
+}
+
+func TestLifecycleService_ExecuteAction_NonTimeoutRPCError(t *testing.T) {
+	svc := service.NewLifecycleService(
+		&mockProvisionInfoProvider{
+			info: &storage.ProvisionInfo{ContainerName: "trail-xyz", ServerID: "srv-2"},
+		},
+		mockRPC(nil, fmt.Errorf("connection refused")),
+	)
+
+	_, err := svc.Restart(context.Background(), uuid.New(), nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "restart failed")
+}
+
+func TestLifecycleService_GetStatus_JSONParseError(t *testing.T) {
+	svc := service.NewLifecycleService(
+		&mockProvisionInfoProvider{
+			info: &storage.ProvisionInfo{ContainerName: "trail-xyz", ServerID: "srv-1"},
+		},
+		mockRPC(&queue.MachineLifecycleResult{
+			Success: true,
+			Action:  "status",
+			Data:    []byte("not-valid-json{{"),
+		}, nil),
+	)
+
+	_, err := svc.GetStatus(context.Background(), uuid.New(), nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to parse machine status")
+}
+
+func TestLifecycleService_MapResultError_NotRunning(t *testing.T) {
+	svc := service.NewLifecycleService(
+		&mockProvisionInfoProvider{
+			info: &storage.ProvisionInfo{ContainerName: "trail-xyz", ServerID: "srv-2"},
+		},
+		mockRPC(&queue.MachineLifecycleResult{
+			Success: false,
+			Error:   "container is not running",
+		}, nil),
+	)
+
+	_, err := svc.Restart(context.Background(), uuid.New(), nil)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, types.ErrMachineNotRunning)
+}
+
+func TestLifecycleService_MapResultError_AlreadyPaused(t *testing.T) {
+	svc := service.NewLifecycleService(
+		&mockProvisionInfoProvider{
+			info: &storage.ProvisionInfo{ContainerName: "trail-xyz", ServerID: "srv-2"},
+		},
+		mockRPC(&queue.MachineLifecycleResult{
+			Success: false,
+			Error:   "container already paused",
+		}, nil),
+	)
+
+	_, err := svc.Pause(context.Background(), uuid.New(), nil)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, types.ErrMachineAlreadyPaused)
+}
+
+func TestLifecycleService_MapResultError_NotPaused(t *testing.T) {
+	svc := service.NewLifecycleService(
+		&mockProvisionInfoProvider{
+			info: &storage.ProvisionInfo{ContainerName: "trail-xyz", ServerID: "srv-2"},
+		},
+		mockRPC(&queue.MachineLifecycleResult{
+			Success: false,
+			Error:   "container not paused",
+		}, nil),
+	)
+
+	_, err := svc.Resume(context.Background(), uuid.New(), nil)
+	require.Error(t, err)
+	assert.ErrorIs(t, err, types.ErrMachineNotPaused)
+}
+
+func TestLifecycleService_MapResultError_DefaultError(t *testing.T) {
+	svc := service.NewLifecycleService(
+		&mockProvisionInfoProvider{
+			info: &storage.ProvisionInfo{ContainerName: "trail-xyz", ServerID: "srv-2"},
+		},
+		mockRPC(&queue.MachineLifecycleResult{
+			Success: false,
+			Error:   "some unexpected internal error",
+		}, nil),
+	)
+
+	_, err := svc.Restart(context.Background(), uuid.New(), nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "machine operation failed")
 }

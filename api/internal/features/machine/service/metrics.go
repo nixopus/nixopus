@@ -14,17 +14,33 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// TimescaleQuerier abstracts TimescaleStore methods for testability.
+type TimescaleQuerier interface {
+	GetMetrics(ctx context.Context, machineName string, orgID uuid.UUID, from, to time.Time, limit int) ([]machine_types.MachineMetricRow, error)
+	GetEvents(ctx context.Context, machineName string, orgID uuid.UUID, from, to time.Time, limit int) ([]machine_types.MachineEventRow, error)
+	GetSummary(ctx context.Context, machineName string, orgID uuid.UUID, from, to time.Time) (*machine_types.MachineSummary, error)
+}
+
 // MetricsService queries TimescaleDB for machine observability data, scoped to org.
 type MetricsService struct {
-	ts *storage.TimescaleStore
-	db *bun.DB
+	ts             TimescaleQuerier
+	db             *bun.DB
+	nameResolverFn func(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (string, error) // nil → production
 }
 
 func NewMetricsService(ts *storage.TimescaleStore, db *bun.DB) *MetricsService {
 	return &MetricsService{ts: ts, db: db}
 }
 
+// NewMetricsServiceWith creates a MetricsService with injectable dependencies for tests.
+func NewMetricsServiceWith(ts TimescaleQuerier, nameResolverFn func(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (string, error)) *MetricsService {
+	return &MetricsService{ts: ts, nameResolverFn: nameResolverFn}
+}
+
 func (s *MetricsService) resolveMachineName(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (string, error) {
+	if s.nameResolverFn != nil {
+		return s.nameResolverFn(ctx, orgID, serverID)
+	}
 	var row api_types.UserProvisionDetails
 	q := s.db.NewSelect().
 		Model(&row).

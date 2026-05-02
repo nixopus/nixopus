@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 
@@ -19,13 +20,17 @@ import (
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
+var randomReader io.Reader = rand.Reader
+
 // TrailService handles business logic for trial machine provisioning.
 type TrailService struct {
-	storage machine_storage.TrailRepository
-	store   *shared_storage.Store
-	ctx     context.Context
-	logger  logger.Logger
-	config  *shared_types.TrailConfig
+	storage            machine_storage.TrailRepository
+	store              *shared_storage.Store
+	ctx                context.Context
+	logger             logger.Logger
+	config             *shared_types.TrailConfig
+	enqueueProvisionFn func(ctx context.Context, payload machine_types.ProvisionPayload) error // nil → real queue
+	enqueueResourceFn  func(ctx context.Context, payload queue.ResourceUpdatePayload) error    // nil → real queue
 }
 
 // NewTrailService creates a new TrailService instance.
@@ -101,6 +106,9 @@ func (s *TrailService) GenerateContainerName(displayName string) string {
 }
 
 func (s *TrailService) EnqueueProvisionTask(ctx context.Context, payload machine_types.ProvisionPayload) error {
+	if s.enqueueProvisionFn != nil {
+		return s.enqueueProvisionFn(ctx, payload)
+	}
 	return queue.EnqueueProvisionTask(ctx, payload)
 }
 
@@ -348,7 +356,11 @@ func (s *TrailService) UpgradeResources(userID, orgID string, vcpu, memoryMB int
 		payload.ServerID = provision.ServerID.String()
 	}
 
-	if err := queue.EnqueueResourceUpdateTask(s.ctx, payload); err != nil {
+	enqueue := queue.EnqueueResourceUpdateTask
+	if s.enqueueResourceFn != nil {
+		enqueue = s.enqueueResourceFn
+	}
+	if err := enqueue(s.ctx, payload); err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("Failed to enqueue resource update: %v", err), userID)
 		return machine_types.ErrFailedToEnqueueTask
 	}
@@ -366,7 +378,7 @@ func getStringValue(s *string) string {
 
 func generateRandomSubdomain() (string, error) {
 	bytes := make([]byte, 4)
-	if _, err := rand.Read(bytes); err != nil {
+	if _, err := io.ReadFull(randomReader, bytes); err != nil {
 		return "", err
 	}
 	return hex.EncodeToString(bytes), nil
@@ -374,7 +386,7 @@ func generateRandomSubdomain() (string, error) {
 
 func generateRandomString(length int) (string, error) {
 	bytes := make([]byte, length)
-	if _, err := rand.Read(bytes); err != nil {
+	if _, err := io.ReadFull(randomReader, bytes); err != nil {
 		return "", err
 	}
 	return hex.EncodeToString(bytes)[:length], nil

@@ -374,6 +374,19 @@ func GetMachineMetricsSummaryURL() string {
 	return baseURL + "/machines/metrics/summary"
 }
 
+// Trial machine
+func GetMachineTrialProvisionURL() string {
+	return baseURL + "/machines/trial/provision"
+}
+
+func GetMachineTrialStatusURL(sessionID string) string {
+	return baseURL + "/machines/trial/status/" + sessionID
+}
+
+func GetTrailUpgradeResourcesURL() string {
+	return baseURL + "/trail/upgrade-resources"
+}
+
 // Container ops
 func GetContainerStartURL(containerID string) string {
 	return baseURL + "/container/" + containerID + "/start"
