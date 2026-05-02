@@ -1,4 +1,4 @@
-package tests
+package audit
 
 import (
 	"testing"
@@ -17,8 +17,8 @@ func TestAuditStorage(t *testing.T) {
 
 	user := &types.User{
 		ID:        uuid.New(),
+		Name:      "testuser",
 		Email:     "test@example.com",
-		Username:  "testuser",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -28,6 +28,7 @@ func TestAuditStorage(t *testing.T) {
 	org := &types.Organization{
 		ID:        uuid.New(),
 		Name:      "Test Org",
+		Slug:      "test-org-" + uuid.New().String(),
 		CreatedAt: time.Now(),
 	}
 	_, err = setup.DB.NewInsert().Model(org).Exec(setup.Ctx)

@@ -24,7 +24,6 @@ type FeatureName string
 
 const (
 	FeatureTerminal         FeatureName = "terminal"
-	FeatureFileManager      FeatureName = "file_manager"
 	FeatureMonitoring       FeatureName = "monitoring"
 	FeatureProxyConfig      FeatureName = "proxy_config"
 	FeatureGithubConnector  FeatureName = "github_connector"

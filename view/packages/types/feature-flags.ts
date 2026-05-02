@@ -19,7 +19,6 @@ export type FeatureName = (typeof FeatureNames)[keyof typeof FeatureNames];
 
 export enum FeatureNames {
   FeatureTerminal = 'terminal',
-  FeatureFileManager = 'file_manager',
   FeatureMonitoring = 'monitoring',
   FeatureProxyConfig = 'proxy_config',
   FeatureGithubConnector = 'github_connector',
@@ -34,7 +33,6 @@ export const featureGroups: Record<string, FeatureName[]> = {
   infrastructure: [
     FeatureNames.FeatureDomain,
     FeatureNames.FeatureTerminal,
-    FeatureNames.FeatureFileManager,
     FeatureNames.FeatureProxyConfig
   ],
   development: [

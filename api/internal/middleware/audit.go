@@ -168,8 +168,6 @@ func mapResourceType(resourceType string) types.AuditResourceType {
 		return types.AuditResourceNotification
 	case "feature_flags", "feature-flags", "feature_flag":
 		return types.AuditResourceFeatureFlag
-	case "file-manager", "file_manager":
-		return types.AuditResourceFileManager
 	case "container":
 		return types.AuditResourceContainer
 	case "audit":
