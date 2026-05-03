@@ -221,16 +221,16 @@ func (d *Dispatcher) buildPlainTextBody(event shared_types.NotificationEvent) st
 }
 
 func (d *Dispatcher) resolveUserEmail(userID string) (string, error) {
-	var user shared_types.User
+	var email string
 	err := d.db.NewSelect().
-		Model(&user).
 		Column("email").
+		TableExpr("user").
 		Where("id = ?", userID).
-		Scan(d.ctx)
+		Scan(d.ctx, &email)
 	if err != nil {
 		return "", fmt.Errorf("user not found: %w", err)
 	}
-	return user.Email, nil
+	return email, nil
 }
 
 func (d *Dispatcher) isAgentEnabledForOrg(orgIDStr string) bool {

@@ -23,6 +23,26 @@ const (
 	TASK_SEND_NOTIFICATION = "task_send_notification"
 )
 
+// sendNotificationTaskHandler returns the taskq handler that dispatches payloads
+// to the registered channels.
+func sendNotificationTaskHandler(channels map[string]channel.Channel, l logger.Logger) func(ctx context.Context, payload channel.DeliveryPayload) error {
+	return func(ctx context.Context, payload channel.DeliveryPayload) error {
+		ch, ok := channels[payload.Channel]
+		if !ok {
+			l.Log(logger.Error, fmt.Sprintf("unknown notification channel: %s", payload.Channel), "")
+			return fmt.Errorf("unknown notification channel: %s", payload.Channel)
+		}
+
+		if err := ch.Send(ctx, payload.Message); err != nil {
+			l.Log(logger.Error, fmt.Sprintf("notification delivery failed on %s: %s", payload.Channel, err.Error()), "")
+			return err
+		}
+
+		l.Log(logger.Info, fmt.Sprintf("notification delivered via %s to %s", payload.Channel, payload.Message.To), "")
+		return nil
+	}
+}
+
 // SetupNotificationQueue registers the notification delivery queue and task
 // with the shared Redis taskq factory. It follows the same pattern as the
 // deploy task queues but with higher retry limits since notifications are
@@ -43,21 +63,7 @@ func SetupNotificationQueue(channels map[string]channel.Channel, l logger.Logger
 		TaskSendNotification = taskq.RegisterTask(&taskq.TaskOptions{
 			Name:       TASK_SEND_NOTIFICATION,
 			RetryLimit: 3,
-			Handler: func(ctx context.Context, payload channel.DeliveryPayload) error {
-				ch, ok := channels[payload.Channel]
-				if !ok {
-					l.Log(logger.Error, fmt.Sprintf("unknown notification channel: %s", payload.Channel), "")
-					return fmt.Errorf("unknown notification channel: %s", payload.Channel)
-				}
-
-				if err := ch.Send(ctx, payload.Message); err != nil {
-					l.Log(logger.Error, fmt.Sprintf("notification delivery failed on %s: %s", payload.Channel, err.Error()), "")
-					return err
-				}
-
-				l.Log(logger.Info, fmt.Sprintf("notification delivered via %s to %s", payload.Channel, payload.Message.To), "")
-				return nil
-			},
+			Handler:    sendNotificationTaskHandler(channels, l),
 		})
 	})
 }
