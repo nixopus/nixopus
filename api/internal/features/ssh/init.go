@@ -30,6 +30,10 @@ const (
 	keepaliveReqTimeout = 10 * time.Second
 )
 
+// sshIdleCleanupTickerInterval controls how often pooled connections are scanned for idle eviction.
+// Tests shorten this via TestMain so cleanup paths run without waiting a full minute.
+var sshIdleCleanupTickerInterval = 1 * time.Minute
+
 // SSH represents a single SSH connection configuration
 type SSH struct {
 	PrivateKey          string `json:"private_key"`
@@ -105,6 +109,12 @@ func fireInvalidateHooks(orgID uuid.UUID) {
 	for _, fn := range hooks {
 		fn(orgID)
 	}
+}
+
+func resetInvalidateHooksForTest() {
+	onInvalidateHooksMu.Lock()
+	onInvalidateHooks = nil
+	onInvalidateHooksMu.Unlock()
 }
 
 // GetSSHManagerForOrganization returns an SSHManager for the org's default server.
@@ -432,7 +442,9 @@ func IsNoDefaultServerError(err error) bool {
 	if err == nil {
 		return false
 	}
-	return strings.Contains(err.Error(), "no default server configured")
+	msg := err.Error()
+	return strings.Contains(msg, "no default server configured") ||
+		strings.Contains(msg, "no server configured for organization")
 }
 
 // IsClosedConnectionError checks if the error indicates a closed or stale network connection.
@@ -694,7 +706,7 @@ func (m *SSHManager) ConnectWithID(id string) (*goph.Client, error) {
 // cleanupIdleConnections periodically closes idle connections.
 // Stops when the manager's done channel is closed.
 func (m *SSHManager) cleanupIdleConnections() {
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(sshIdleCleanupTickerInterval)
 	defer ticker.Stop()
 
 	for {
