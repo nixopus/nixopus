@@ -71,7 +71,7 @@ func (v *Validator) validateCreateSMTPConfigRequest(req notification.CreateSMTPC
 	if req.Password == "" {
 		return notification.ErrMissingPassword
 	}
-	if req.OrganizationID.String() == "" {
+	if req.OrganizationID == uuid.Nil {
 		return notification.ErrMissingOrganization
 	}
 	return nil
