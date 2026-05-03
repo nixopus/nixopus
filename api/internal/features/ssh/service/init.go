@@ -20,12 +20,16 @@ type SSHKeyService struct {
 }
 
 func NewSSHKeyService(store *shared_storage.Store, ctx context.Context, l logger.Logger) *SSHKeyService {
-	sshStorage := &storage.SSHKeyStorage{DB: store.DB, Ctx: ctx}
+	return NewSSHKeyServiceForTest(store, ctx, l, &storage.SSHKeyStorage{DB: store.DB, Ctx: ctx})
+}
+
+// NewSSHKeyServiceForTest constructs the service with an injectable repository (primarily for tests).
+func NewSSHKeyServiceForTest(store *shared_storage.Store, ctx context.Context, l logger.Logger, repo storage.SSHKeyRepository) *SSHKeyService {
 	return &SSHKeyService{
 		store:   store,
 		ctx:     ctx,
 		logger:  l,
-		storage: sshStorage,
+		storage: repo,
 	}
 }
 
