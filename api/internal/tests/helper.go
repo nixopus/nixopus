@@ -434,6 +434,11 @@ func GetAuditURL() string {
 	return baseURL + "/audit"
 }
 
+// Telemetry
+func GetTelemetryURL() string {
+	return baseURL + "/cli/telemetry"
+}
+
 // Auth bootstrap
 func GetAuthBootstrapURL() string {
 	return baseURL + "/auth/bootstrap"
