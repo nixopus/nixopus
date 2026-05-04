@@ -17,7 +17,7 @@ type DomainsService struct {
 
 // NewDomainsService creates a service wired to the real DNS and queue backends.
 func NewDomainsService(ctx context.Context, l logger.Logger, repo storage.DomainStorageInterface) *DomainsService {
-	return NewDomainsServiceWith(ctx, l, repo, NewRealDNSResolver(), &RealQueueClient{})
+	return NewDomainsServiceWith(ctx, l, repo, NewRealDNSResolver(&l), &RealQueueClient{})
 }
 
 // NewDomainsServiceWith creates a service with explicit DNS and queue implementations.

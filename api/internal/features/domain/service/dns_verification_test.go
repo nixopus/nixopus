@@ -11,7 +11,7 @@ import (
 
 func TestVerifyDNSConfiguration_CNAMEMatch(t *testing.T) {
 	mock := &mockNetLookup{cname: "myorg.nixopus.ai."}
-	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg")
+	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -22,7 +22,7 @@ func TestVerifyDNSConfiguration_CNAMEMatch(t *testing.T) {
 
 func TestVerifyDNSConfiguration_CNAMECaseInsensitive(t *testing.T) {
 	mock := &mockNetLookup{cname: "MYORG.NIXOPUS.AI."}
-	ok, _ := verifyDNSConfiguration(mock, "app.example.com", "myorg")
+	ok, _ := verifyDNSConfiguration(mock, "app.example.com", "myorg", nil)
 	if !ok {
 		t.Error("CNAME match should be case-insensitive")
 	}
@@ -38,7 +38,7 @@ func TestVerifyDNSConfiguration_HostIPMatch(t *testing.T) {
 			"myorg.nixopus.ai": {"1.2.3.4"},
 		},
 	}
-	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg")
+	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -55,7 +55,7 @@ func TestVerifyDNSConfiguration_HostIPNoMatch(t *testing.T) {
 			"myorg.nixopus.ai": {"5.6.7.8"},
 		},
 	}
-	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg")
+	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -70,7 +70,7 @@ func TestVerifyDNSConfiguration_TXTMatch(t *testing.T) {
 		hostErr:    errors.New("no host"),
 		txtRecords: []string{"nixopus-domain-verify=app.example.com"},
 	}
-	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg")
+	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestVerifyDNSConfiguration_TXTMatchCaseInsensitive(t *testing.T) {
 		hostErr:    errors.New("no host"),
 		txtRecords: []string{"  NIXOPUS-DOMAIN-VERIFY=app.example.com  "},
 	}
-	ok, _ := verifyDNSConfiguration(mock, "app.example.com", "myorg")
+	ok, _ := verifyDNSConfiguration(mock, "app.example.com", "myorg", nil)
 	if !ok {
 		t.Error("TXT match should be case-insensitive and trim spaces")
 	}
@@ -97,7 +97,7 @@ func TestVerifyDNSConfiguration_NothingMatches(t *testing.T) {
 		hostErr:  errors.New("no host"),
 		txtErr:   errors.New("no txt"),
 	}
-	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg")
+	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -118,7 +118,7 @@ func TestVerifyDNSConfiguration_TargetHostLookupFails(t *testing.T) {
 		},
 		txtErr: errors.New("no txt"),
 	}
-	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg")
+	ok, err := verifyDNSConfiguration(mock, "app.example.com", "myorg", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -133,7 +133,7 @@ func TestVerifyDNSConfiguration_TargetHostLookupFails(t *testing.T) {
 
 func TestCheckDNSPropagation_CNAMEVerified(t *testing.T) {
 	mock := &mockNetLookup{cname: "myorg.nixopus.ai."}
-	status, err := checkDNSPropagation(mock, "app.example.com")
+	status, err := checkDNSPropagation(mock, "app.example.com", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -149,7 +149,7 @@ func TestCheckDNSPropagation_CNAMESelfPointing(t *testing.T) {
 		hosts:  []string{"1.2.3.4"},
 		txtErr: errors.New("no txt"),
 	}
-	status, _ := checkDNSPropagation(mock, "app.example.com")
+	status, _ := checkDNSPropagation(mock, "app.example.com", nil)
 	if status != "propagating" {
 		t.Errorf("self-pointing CNAME should be propagating, got %s", status)
 	}
@@ -161,7 +161,7 @@ func TestCheckDNSPropagation_TXTVerified(t *testing.T) {
 		txtRecords: []string{"nixopus-domain-verify=app.example.com"},
 		hosts:      []string{"1.2.3.4"},
 	}
-	status, err := checkDNSPropagation(mock, "app.example.com")
+	status, err := checkDNSPropagation(mock, "app.example.com", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -176,7 +176,7 @@ func TestCheckDNSPropagation_NotConfigured(t *testing.T) {
 		txtErr:   errors.New("no txt"),
 		hostErr:  errors.New("no host"),
 	}
-	status, err := checkDNSPropagation(mock, "app.example.com")
+	status, err := checkDNSPropagation(mock, "app.example.com", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -192,7 +192,7 @@ func TestCheckDNSPropagation_Propagating(t *testing.T) {
 		txtErr:   errors.New("no txt"),
 		hosts:    []string{"1.2.3.4"},
 	}
-	status, err := checkDNSPropagation(mock, "app.example.com")
+	status, err := checkDNSPropagation(mock, "app.example.com", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -207,7 +207,7 @@ func TestCheckDNSPropagation_CNAMEDoesNotContainNixopus(t *testing.T) {
 		txtErr:  errors.New("no txt"),
 		hostErr: errors.New("no host"),
 	}
-	status, _ := checkDNSPropagation(mock, "app.example.com")
+	status, _ := checkDNSPropagation(mock, "app.example.com", nil)
 	if status != "not_configured" {
 		t.Errorf("CNAME without nixopus.ai should not be verified, got %s", status)
 	}
@@ -219,7 +219,7 @@ func TestCheckDNSPropagation_CNAMEDoesNotContainNixopus(t *testing.T) {
 
 func TestVerifyARecord_EmptyMachineIP(t *testing.T) {
 	mock := &mockNetLookup{}
-	ok, err := verifyARecordMatchesMachineIP(mock, "app.example.com", "")
+	ok, err := verifyARecordMatchesMachineIP(mock, "app.example.com", "", nil)
 	if err == nil {
 		t.Fatal("expected error for empty machineIP")
 	}
@@ -230,7 +230,7 @@ func TestVerifyARecord_EmptyMachineIP(t *testing.T) {
 
 func TestVerifyARecord_LookupFails(t *testing.T) {
 	mock := &mockNetLookup{hostErr: errors.New("nxdomain")}
-	ok, err := verifyARecordMatchesMachineIP(mock, "app.example.com", "1.2.3.4")
+	ok, err := verifyARecordMatchesMachineIP(mock, "app.example.com", "1.2.3.4", nil)
 	if err != nil {
 		t.Fatalf("lookup failure should not produce an error, got %v", err)
 	}
@@ -241,7 +241,7 @@ func TestVerifyARecord_LookupFails(t *testing.T) {
 
 func TestVerifyARecord_Match(t *testing.T) {
 	mock := &mockNetLookup{hosts: []string{"1.2.3.4", "5.6.7.8"}}
-	ok, err := verifyARecordMatchesMachineIP(mock, "app.example.com", "5.6.7.8")
+	ok, err := verifyARecordMatchesMachineIP(mock, "app.example.com", "5.6.7.8", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -252,7 +252,7 @@ func TestVerifyARecord_Match(t *testing.T) {
 
 func TestVerifyARecord_NoMatch(t *testing.T) {
 	mock := &mockNetLookup{hosts: []string{"1.2.3.4"}}
-	ok, err := verifyARecordMatchesMachineIP(mock, "app.example.com", "9.9.9.9")
+	ok, err := verifyARecordMatchesMachineIP(mock, "app.example.com", "9.9.9.9", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -267,7 +267,7 @@ func TestVerifyARecord_NoMatch(t *testing.T) {
 
 func TestCheckDNSPropagationBYOS_LookupFails(t *testing.T) {
 	mock := &mockNetLookup{hostErr: errors.New("nxdomain")}
-	status, err := checkDNSPropagationBYOS(mock, "app.example.com", "1.2.3.4")
+	status, err := checkDNSPropagationBYOS(mock, "app.example.com", "1.2.3.4", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -278,7 +278,7 @@ func TestCheckDNSPropagationBYOS_LookupFails(t *testing.T) {
 
 func TestCheckDNSPropagationBYOS_Match(t *testing.T) {
 	mock := &mockNetLookup{hosts: []string{"1.2.3.4"}}
-	status, err := checkDNSPropagationBYOS(mock, "app.example.com", "1.2.3.4")
+	status, err := checkDNSPropagationBYOS(mock, "app.example.com", "1.2.3.4", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -289,7 +289,7 @@ func TestCheckDNSPropagationBYOS_Match(t *testing.T) {
 
 func TestCheckDNSPropagationBYOS_NoMatch(t *testing.T) {
 	mock := &mockNetLookup{hosts: []string{"5.5.5.5"}}
-	status, err := checkDNSPropagationBYOS(mock, "app.example.com", "1.2.3.4")
+	status, err := checkDNSPropagationBYOS(mock, "app.example.com", "1.2.3.4", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
