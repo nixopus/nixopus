@@ -49,7 +49,7 @@ func (c *DeployController) GetApplications(f fuego.ContextNoBody) (*types.ListAp
 		}
 	}
 
-	logData := deployRequestData(w, r, user)
+	logData := deployRequestData(r, user)
 
 	applications, totalCount, err := c.service.GetApplications(page, pageSize, sortBy, sortDirection, organizationID, serverID)
 	if err != nil {

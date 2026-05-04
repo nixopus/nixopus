@@ -87,7 +87,7 @@ func NewRouter(app *storage.App) *Router {
 func (router *Router) applyMiddleware(group *fuego.Server, cfg MiddlewareConfig) {
 	if cfg.RBAC {
 		fuego.Use(group, func(next http.Handler) http.Handler {
-			return middleware.RBACMiddleware(next, router.app, cfg.ResourceName)
+			return middleware.RBACMiddleware(next, router.app, cfg.ResourceName, router.logger)
 		})
 	}
 	if cfg.FeatureFlag != "" {
@@ -116,7 +116,7 @@ func (router *Router) createServer(port string) *fuego.Server {
 		),
 		fuego.WithoutAutoGroupTags(),
 		fuego.WithGlobalMiddlewares(
-			middleware.RecoveryMiddleware,
+			middleware.RecoveryMiddleware(router.logger),
 			middleware.RequestIDMiddleware,
 			middleware.CorsMiddleware,
 			middleware.LoggingMiddleware,
@@ -149,7 +149,7 @@ func (router *Router) setupAuthentication(server *fuego.Server) {
 				next.ServeHTTP(w, r)
 				return
 			}
-			middleware.AuthMiddleware(next, router.app, router.cache).ServeHTTP(w, r)
+			middleware.AuthMiddleware(next, router.app, router.cache, router.logger).ServeHTTP(w, r)
 		})
 	})
 }
