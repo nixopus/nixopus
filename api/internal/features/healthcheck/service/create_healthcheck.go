@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,7 +11,7 @@ import (
 )
 
 func (s *HealthCheckService) CreateHealthCheck(userID uuid.UUID, organizationID uuid.UUID, req *types.CreateHealthCheckRequest) (*shared_types.HealthCheck, error) {
-	s.logger.Log(logger.Info, "creating health check", "application_id: "+req.ApplicationID)
+	s.logger.Log(logger.Info, "healthcheck service: CreateHealthCheck", fmt.Sprintf("application_id=%s org_id=%s", req.ApplicationID, organizationID))
 
 	applicationID, err := uuid.Parse(req.ApplicationID)
 	if err != nil {
@@ -85,7 +86,7 @@ func (s *HealthCheckService) CreateHealthCheck(userID uuid.UUID, organizationID 
 	}
 
 	if err := s.storage.CreateHealthCheck(healthCheck); err != nil {
-		s.logger.Log(logger.Error, "failed to create health check", err.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("healthcheck service: CreateHealthCheck: %v", err), fmt.Sprintf("application_id=%s org_id=%s", req.ApplicationID, organizationID))
 		return nil, err
 	}
 

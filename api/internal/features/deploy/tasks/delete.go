@@ -37,19 +37,19 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 
 	dockerService, err := s.getDockerService(ctx)
 	if err != nil {
-		s.Logger.Log(logger.Error, "Failed to get docker service", err.Error())
+		s.Logger.Log(logger.Error, "deploy tasks: Failed to get docker service", err.Error())
 	} else {
 		services, err := dockerService.GetClusterServices()
 		if err != nil {
-			s.Logger.Log(logger.Error, "Failed to get services", err.Error())
+			s.Logger.Log(logger.Error, "deploy tasks: Failed to get services", err.Error())
 		} else {
 			for _, service := range services {
 				if service.Spec.Annotations.Name == application.Name {
-					s.Logger.Log(logger.Info, "Deleting service", service.ID)
+					s.Logger.Log(logger.Info, "deploy tasks: Deleting service", service.ID)
 					if err := dockerService.DeleteService(service.ID); err != nil {
-						s.Logger.Log(logger.Error, "Failed to delete service", err.Error())
+						s.Logger.Log(logger.Error, "deploy tasks: Failed to delete service", err.Error())
 					} else {
-						s.Logger.Log(logger.Info, "Service deleted successfully", service.ID)
+						s.Logger.Log(logger.Info, "deploy tasks: Service deleted successfully", service.ID)
 					}
 					break
 				}
@@ -58,13 +58,13 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 
 		deployments, err := s.Storage.GetApplicationDeployments(application.ID)
 		if err != nil {
-			s.Logger.Log(logger.Error, "Failed to get application deployments", err.Error())
+			s.Logger.Log(logger.Error, "deploy tasks: Failed to get application deployments", err.Error())
 		} else {
 			for _, dep := range deployments {
 				if dep.ContainerImage != "" {
-					s.Logger.Log(logger.Info, "Removing image", dep.ContainerImage)
+					s.Logger.Log(logger.Info, "deploy tasks: Removing image", dep.ContainerImage)
 					if err := dockerService.RemoveImage(dep.ContainerImage, image.RemoveOptions{Force: true}); err != nil {
-						s.Logger.Log(logger.Error, "Failed to remove image", err.Error())
+						s.Logger.Log(logger.Error, "deploy tasks: Failed to remove image", err.Error())
 					}
 				}
 			}
@@ -72,13 +72,13 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 			if s3store.IsConfigured(config.AppConfig.S3) {
 				store, err := s3store.NewImageStore(config.AppConfig.S3)
 				if err != nil {
-					s.Logger.Log(logger.Error, "Failed to create S3 store for cleanup", err.Error())
+					s.Logger.Log(logger.Error, "deploy tasks: Failed to create S3 store for cleanup", err.Error())
 				} else {
 					for _, dep := range deployments {
 						if dep.ImageS3Key != "" {
-							s.Logger.Log(logger.Info, "Removing S3 image", dep.ImageS3Key)
+							s.Logger.Log(logger.Info, "deploy tasks: Removing S3 image", dep.ImageS3Key)
 							if err := store.DeleteImage(ctx, dep.ImageS3Key); err != nil {
-								s.Logger.Log(logger.Error, "Failed to remove S3 image", err.Error())
+								s.Logger.Log(logger.Error, "deploy tasks: Failed to remove S3 image", err.Error())
 							}
 						}
 					}
@@ -92,13 +92,13 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 	// Get repository path using the same method as cloning (on tenant's SSH server)
 	repoPath, _, err := s.Github_service.GetClonePath(orgCtx, userID.String(), string(application.Environment), application.ID.String())
 	if err != nil {
-		s.Logger.Log(logger.Error, fmt.Sprintf("Failed to get repository path: %s", err.Error()), "")
+		s.Logger.Log(logger.Error, fmt.Sprintf("deploy tasks: Failed to get repository path: %s", err.Error()), "")
 	} else {
-		s.Logger.Log(logger.Info, "Cleaning up repository directory", repoPath)
+		s.Logger.Log(logger.Info, "deploy tasks: Cleaning up repository directory", repoPath)
 		err = s.Github_service.RemoveRepository(orgCtx, repoPath)
 	}
 	if err != nil {
-		s.Logger.Log(logger.Error, "Failed to remove repository", err.Error())
+		s.Logger.Log(logger.Error, "deploy tasks: Failed to remove repository", err.Error())
 	}
 
 	if len(application.Domains) > 0 {
@@ -109,9 +109,9 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 			}
 		}
 		if err := caddy.RemoveDomainsWithRetry(orgCtx, nil, &s.Logger, domainNames); err != nil {
-			s.Logger.Log(logger.Warning, "failed to remove domains from proxy, enqueueing for retry", err.Error())
+			s.Logger.Log(logger.Warning, "deploy tasks: failed to remove domains from proxy, enqueueing for retry", err.Error())
 			if enqErr := caddy.EnqueuePendingRemoval(organizationID, domainNames...); enqErr != nil {
-				s.Logger.Log(logger.Error, "failed to enqueue pending removal", enqErr.Error())
+				s.Logger.Log(logger.Error, "deploy tasks: failed to enqueue pending removal", enqErr.Error())
 			}
 		}
 	}
@@ -119,9 +119,9 @@ func (s *TaskService) DeleteDeployment(ctx context.Context, deployment *types.De
 	// Handle family cleanup: if this project belongs to a family,
 	// check if only one member remains and clear its family_id
 	if application.FamilyID != nil {
-		s.Logger.Log(logger.Info, "Checking family cleanup", application.FamilyID.String())
+		s.Logger.Log(logger.Info, "deploy tasks: Checking family cleanup", application.FamilyID.String())
 		if err := s.Storage.ClearFamilyIDIfSingleMember(*application.FamilyID); err != nil {
-			s.Logger.Log(logger.Error, "Failed to cleanup family", err.Error())
+			s.Logger.Log(logger.Error, "deploy tasks: Failed to cleanup family", err.Error())
 		}
 	}
 

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -14,14 +15,18 @@ func (c *NotificationController) GetPreferences(f fuego.ContextNoBody) (*types.P
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logNotificationDebug("GetPreferences", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := fmt.Sprintf("user_id=%s", user.ID)
+	c.logger.Log(logger.Info, "notification: GetPreferences", ctxStr)
+
 	preferences, err := c.service.GetPreferences(user.ID)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("notification: GetPreferences: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -15,6 +16,7 @@ func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.Context
 	UpdateConnectorRequest, err := f.Body()
 
 	if err != nil {
+		c.logger.Log(logger.Debug, fmt.Sprintf("github connector: UpdateGithubConnector body: %v", err), "")
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
@@ -30,9 +32,12 @@ func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.Context
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
+	ctxStr := fmt.Sprintf("user_id=%s connector_id=%s", user.ID, UpdateConnectorRequest.ConnectorID)
+	c.logger.Log(logger.Info, "github connector: UpdateGithubConnector", ctxStr)
+
 	err = c.service.UpdateConnectorInstallation(UpdateConnectorRequest.InstallationID, user.ID.String(), UpdateConnectorRequest.ConnectorID)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("github connector: UpdateGithubConnector: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -40,6 +45,7 @@ func (c *GithubConnectorController) UpdateGithubConnectorRequest(f fuego.Context
 		}
 	}
 
+	c.logger.Log(logger.Info, "github connector: UpdateGithubConnector ok", ctxStr)
 	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Github Connector Request Updated",

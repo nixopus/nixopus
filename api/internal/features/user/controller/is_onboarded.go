@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -14,16 +15,18 @@ func (u *UserController) GetIsOnboarded(s fuego.ContextNoBody) (*types.IsOnboard
 
 	user := utils.GetUser(w, r)
 	if user == nil {
+		u.logUserDebug("GetIsOnboarded", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
-	u.logger.Log(logger.Info, "checking onboarding status", user.ID.String())
+	ctxStr := userRequestData(r, user)
+	u.logger.Log(logger.Info, "user: GetIsOnboarded", ctxStr)
 
 	isOnboarded, err := u.service.IsOnboarded(user.ID.String())
 	if err != nil {
-		u.logger.Log(logger.Error, err.Error(), user.ID.String())
+		u.logger.Log(logger.Error, fmt.Sprintf("user: GetIsOnboarded: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

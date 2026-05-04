@@ -4,18 +4,21 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/machine/types"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 
 type ListStorage struct {
-	DB  *bun.DB
-	Ctx context.Context
-	tx  *bun.Tx
+	DB     *bun.DB
+	Ctx    context.Context
+	tx     *bun.Tx
+	Logger *logger.Logger // optional; nil disables storage logs
 }
 
 func NewListStorage(db *bun.DB, ctx context.Context) *ListStorage {
@@ -36,6 +39,9 @@ type ListRepository interface {
 }
 
 func (s *ListStorage) ListMachinesByOrganizationID(orgID uuid.UUID, params types.MachineListParams) ([]types.MachineResponse, int, error) {
+	ctxStr := fmt.Sprintf("org_id=%s", orgID)
+	storageLog(s.Logger, logger.Debug, "storage: ListMachinesByOrganizationID", ctxStr)
+
 	query := s.getDB().NewSelect().
 		TableExpr("ssh_keys AS sk").
 		Where("sk.organization_id = ?", orgID).
@@ -88,6 +94,7 @@ func (s *ListStorage) ListMachinesByOrganizationID(orgID uuid.UUID, params types
 
 	totalCount, err := countQuery.Count(s.Ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: ListMachinesByOrganizationID: %v", err), ctxStr)
 		return nil, 0, err
 	}
 
@@ -116,6 +123,7 @@ func (s *ListStorage) ListMachinesByOrganizationID(orgID uuid.UUID, params types
 
 	var sshKeys []shared_types.SSHKey
 	if err = query.Scan(s.Ctx, &sshKeys); err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: ListMachinesByOrganizationID scan ssh_keys: %v", err), ctxStr)
 		return nil, 0, err
 	}
 
@@ -134,6 +142,7 @@ func (s *ListStorage) ListMachinesByOrganizationID(orgID uuid.UUID, params types
 		Where("ssh_key_id IN (?)", bun.In(sshKeyIDs)).
 		Where("organization_id = ?", orgID).
 		Scan(s.Ctx); err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: ListMachinesByOrganizationID provision details: %v", err), ctxStr)
 		return nil, 0, err
 	}
 
@@ -161,6 +170,7 @@ func (s *ListStorage) ListMachinesByOrganizationID(orgID uuid.UUID, params types
 		Where("organization_id = ?", orgID).
 		GroupExpr("ssh_key_id").
 		Scan(s.Ctx, &aggregates); err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: ListMachinesByOrganizationID aggregates: %v", err), ctxStr)
 		return nil, 0, err
 	}
 
@@ -187,6 +197,9 @@ func (s *ListStorage) ListMachinesByOrganizationID(orgID uuid.UUID, params types
 }
 
 func (s *ListStorage) GetMachineByIDAndOrgID(machineID uuid.UUID, orgID uuid.UUID) (*shared_types.SSHKey, error) {
+	ctxStr := fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID)
+	storageLog(s.Logger, logger.Debug, "storage: GetMachineByIDAndOrgID", ctxStr)
+
 	var key shared_types.SSHKey
 	err := s.getDB().NewSelect().
 		Model(&key).
@@ -195,14 +208,23 @@ func (s *ListStorage) GetMachineByIDAndOrgID(machineID uuid.UUID, orgID uuid.UUI
 		Where("deleted_at IS NULL").
 		Scan(s.Ctx)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetMachineByIDAndOrgID not found", ctxStr)
+		} else {
+			storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetMachineByIDAndOrgID: %v", err), ctxStr)
+		}
 		return nil, err
 	}
 	return &key, nil
 }
 
 func (s *ListStorage) SetDefaultMachine(orgID uuid.UUID, machineID uuid.UUID) (*uuid.UUID, error) {
+	ctxStr := fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID)
+	storageLog(s.Logger, logger.Debug, "storage: SetDefaultMachine", ctxStr)
+
 	tx, err := s.DB.BeginTx(s.Ctx, nil)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: SetDefaultMachine begin tx: %v", err), ctxStr)
 		return nil, err
 	}
 	defer tx.Rollback()
@@ -217,6 +239,7 @@ func (s *ListStorage) SetDefaultMachine(orgID uuid.UUID, machineID uuid.UUID) (*
 		Where("deleted_at IS NULL").
 		Scan(s.Ctx)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: SetDefaultMachine read old default: %v", err), ctxStr)
 		return nil, err
 	}
 	if err == nil {
@@ -233,9 +256,11 @@ func (s *ListStorage) SetDefaultMachine(orgID uuid.UUID, machineID uuid.UUID) (*
 		Where("deleted_at IS NULL").
 		Scan(s.Ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Debug, "storage: SetDefaultMachine target not found", ctxStr)
 		return nil, types.ErrMachineNotFound
 	}
 	if !target.IsActive {
+		storageLog(s.Logger, logger.Debug, "storage: SetDefaultMachine target inactive", ctxStr)
 		return nil, types.ErrMachineInactive
 	}
 
@@ -247,6 +272,7 @@ func (s *ListStorage) SetDefaultMachine(orgID uuid.UUID, machineID uuid.UUID) (*
 		Where("is_default = ?", true).
 		Exec(s.Ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: SetDefaultMachine clear old default: %v", err), ctxStr)
 		return nil, err
 	}
 
@@ -257,6 +283,7 @@ func (s *ListStorage) SetDefaultMachine(orgID uuid.UUID, machineID uuid.UUID) (*
 		Where("id = ?", machineID).
 		Exec(s.Ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: SetDefaultMachine set default: %v", err), ctxStr)
 		return nil, err
 	}
 

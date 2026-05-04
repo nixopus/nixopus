@@ -13,13 +13,15 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 
 	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	sshstorage "github.com/nixopus/nixopus/api/internal/features/ssh/storage"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type DeployStorage struct {
-	DB  *bun.DB
-	Ctx context.Context
+	DB     *bun.DB
+	Ctx    context.Context
+	Logger *logger.Logger // optional; nil disables storage debug/error hooks
 }
 
 type DeployRepository interface {
@@ -79,14 +81,20 @@ type DeployRepository interface {
 func (s *DeployStorage) RunInTransaction(fn func(tx bun.Tx) error) error {
 	tx, err := s.DB.BeginTx(s.Ctx, nil)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("deploy storage: RunInTransaction begin: %v", err), "")
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
 	if err := fn(tx); err != nil {
+		storageLog(s.Logger, logger.Debug, fmt.Sprintf("deploy storage: RunInTransaction fn: %v", err), "")
 		return err
 	}
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("deploy storage: RunInTransaction commit: %v", err), "")
+		return err
+	}
+	return nil
 }
 
 func (s *DeployStorage) AddApplicationLogsBatch(logs []shared_types.ApplicationLogs) error {

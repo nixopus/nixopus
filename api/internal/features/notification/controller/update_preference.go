@@ -3,6 +3,7 @@ package controller
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -45,14 +46,18 @@ func (c *NotificationController) UpdatePreference(f fuego.ContextWithBody[notifi
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logNotificationDebug("UpdatePreference", "authentication required", notificationRequestLogData(r, nil))
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := fmt.Sprintf("user_id=%s category=%s type=%s", user.ID, prefRequest.Category, prefRequest.Type)
+	c.logger.Log(logger.Info, "notification: UpdatePreference", ctxStr)
+
 	err = c.service.UpdatePreference(prefRequest, user.ID)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("notification: UpdatePreference: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

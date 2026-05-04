@@ -31,33 +31,33 @@ func (c *DeployController) PreviewComposeServices(f fuego.ContextWithBody[types.
 	}
 
 	filePath := composeFilePath(data.BasePath, data.DockerfilePath)
-	c.logger.Log(logger.Info, "preview-compose: resolved file path", fmt.Sprintf("repo=%s branch=%s basePath=%q dockerfilePath=%q -> filePath=%q", data.Repository, data.Branch, data.BasePath, data.DockerfilePath, filePath))
+	c.logger.Log(logger.Info, "deploy: preview-compose: resolved file path", fmt.Sprintf("repo=%s branch=%s basePath=%q dockerfilePath=%q -> filePath=%q", data.Repository, data.Branch, data.BasePath, data.DockerfilePath, filePath))
 
 	content, err := c.githubService.GetRepositoryFileContent(
 		user.ID.String(), data.Repository, data.Branch, filePath,
 	)
 	if err != nil {
-		c.logger.Log(logger.Warning, "preview-compose: failed to fetch from GitHub", err.Error())
+		c.logger.Log(logger.Warning, "deploy: preview-compose: failed to fetch from GitHub", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
 			Status: http.StatusUnprocessableEntity,
 		}
 	}
-	c.logger.Log(logger.Info, "preview-compose: fetched file", fmt.Sprintf("content length=%d bytes, first 200 chars: %s", len(content), truncate(string(content), 200)))
+	c.logger.Log(logger.Info, "deploy: preview-compose: fetched file", fmt.Sprintf("content length=%d bytes, first 200 chars: %s", len(content), truncate(string(content), 200)))
 
 	parsed, err := tasks.ParseComposeYAML(content)
 	if err != nil {
-		c.logger.Log(logger.Warning, "preview-compose: YAML parse error", err.Error())
+		c.logger.Log(logger.Warning, "deploy: preview-compose: YAML parse error", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
 			Status: http.StatusUnprocessableEntity,
 		}
 	}
-	c.logger.Log(logger.Info, "preview-compose: parsed services", fmt.Sprintf("count=%d", len(parsed)))
+	c.logger.Log(logger.Info, "deploy: preview-compose: parsed services", fmt.Sprintf("count=%d", len(parsed)))
 	for _, p := range parsed {
-		c.logger.Log(logger.Info, "preview-compose: service detail", fmt.Sprintf("name=%s ports=%v", p.ServiceName, p.Ports))
+		c.logger.Log(logger.Info, "deploy: preview-compose: service detail", fmt.Sprintf("name=%s ports=%v", p.ServiceName, p.Ports))
 	}
 
 	var services []types.PreviewComposeService
@@ -72,7 +72,7 @@ func (c *DeployController) PreviewComposeServices(f fuego.ContextWithBody[types.
 		})
 	}
 
-	c.logger.Log(logger.Info, "preview-compose: returning services", fmt.Sprintf("count=%d", len(services)))
+	c.logger.Log(logger.Info, "deploy: preview-compose: returning services", fmt.Sprintf("count=%d", len(services)))
 	return &types.PreviewComposeResponse{Services: services}, nil
 }
 

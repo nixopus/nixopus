@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/docker/docker/api/types"
 	container_types "github.com/nixopus/nixopus/api/internal/features/container/types"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
@@ -22,7 +24,7 @@ func PruneBuildCache(
 		All: opts.All,
 	})
 	if err != nil {
-		l.Log(logger.Error, err.Error(), "")
+		l.Log(logger.Error, fmt.Sprintf("container service: PruneBuildCache: %v", err), "")
 		return container_types.MessageResponse{}, err
 	}
 

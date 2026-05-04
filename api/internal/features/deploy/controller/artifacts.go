@@ -29,7 +29,7 @@ func (c *DeployController) ListArtifacts(f fuego.ContextNoBody) (*types.Artifact
 
 	artifacts, err := c.service.ListArtifacts(appID, orgID)
 	if err != nil {
-		c.logger.Log(logger.Error, "Failed to list artifacts: "+err.Error(), "")
+		c.logger.Log(logger.Error, "deploy: Failed to list artifacts: "+err.Error(), "")
 		if errors.Is(err, types.ErrPermissionDenied) {
 			return nil, fuego.ForbiddenError{Detail: "permission denied"}
 		}
@@ -64,7 +64,7 @@ func (c *DeployController) GetArtifactDownloadURL(f fuego.ContextNoBody) (*types
 
 	url, err := c.service.GetArtifactDownloadURL(f.Context(), deploymentID, orgID)
 	if err != nil {
-		c.logger.Log(logger.Error, "Failed to get artifact download URL: "+err.Error(), "")
+		c.logger.Log(logger.Error, "deploy: Failed to get artifact download URL: "+err.Error(), "")
 		if errors.Is(err, types.ErrPermissionDenied) {
 			return nil, fuego.ForbiddenError{Detail: "permission denied"}
 		}
@@ -109,7 +109,7 @@ func (c *DeployController) DeleteArtifact(f fuego.ContextNoBody) (*types.Artifac
 	}
 
 	if err := c.service.DeleteArtifact(f.Context(), deploymentID, orgID); err != nil {
-		c.logger.Log(logger.Error, "Failed to delete artifact: "+err.Error(), "")
+		c.logger.Log(logger.Error, "deploy: Failed to delete artifact: "+err.Error(), "")
 		if errors.Is(err, types.ErrPermissionDenied) {
 			return nil, fuego.ForbiddenError{Detail: "permission denied"}
 		}

@@ -29,12 +29,13 @@ func (s *NotificationService) UpdatePreference(preferences notification.UpdatePr
 		return fmt.Errorf("userID cannot be empty")
 	}
 
-	s.logger.Log(logger.Info, fmt.Sprintf("Updating preference: Category=%s, Type=%s, Enabled=%v",
-		preferences.Category, preferences.Type, preferences.Enabled), "")
+	data := fmt.Sprintf("user_id=%s category=%s type=%s enabled=%v",
+		userID, preferences.Category, preferences.Type, preferences.Enabled)
+	s.logger.Log(logger.Info, "notification service: UpdatePreference", data)
 
 	err := s.storage.UpdatePreference(s.Ctx, preferences, userID)
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("Failed to update preference: %v", err), "")
+		s.logger.Log(logger.Error, fmt.Sprintf("notification service: UpdatePreference: %v", err), data)
 		return fmt.Errorf("failed to update preference: %w", err)
 	}
 

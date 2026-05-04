@@ -12,28 +12,28 @@ import (
 )
 
 func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReDeployApplicationRequest]) (*types.ApplicationResponse, error) {
-	c.logger.Log(logger.Info, "starting application redeployment process", "")
+	c.logger.Log(logger.Info, "deploy: starting application redeployment process", "")
 
 	data, err := f.Body()
 	if err != nil {
 		if err == io.EOF {
-			c.logger.Log(logger.Error, "empty request body received", "id is required for redeployment")
+			c.logger.Log(logger.Error, "deploy: empty request body received", "id is required for redeployment")
 			return nil, fuego.BadRequestError{
 				Detail: types.ErrMissingID.Error(),
 				Err:    types.ErrMissingID,
 			}
 		}
-		c.logger.Log(logger.Error, "failed to read request body", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to read request body", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
 		}
 	}
 
-	c.logger.Log(logger.Info, "request body parsed successfully", "id: "+data.ID.String())
+	c.logger.Log(logger.Info, "deploy: request body parsed successfully", "id: "+data.ID.String())
 
 	if err := c.validator.ValidateRequest(&data); err != nil {
-		c.logger.Log(logger.Error, "request validation failed", "id: "+data.ID.String()+", error: "+err.Error())
+		c.logger.Log(logger.Error, "deploy: request validation failed", "id: "+data.ID.String()+", error: "+err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -42,7 +42,7 @@ func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReD
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		c.logger.Log(logger.Error, "user authentication failed", "id: "+data.ID.String())
+		c.logger.Log(logger.Error, "deploy: user authentication failed", "id: "+data.ID.String())
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
@@ -50,17 +50,17 @@ func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReD
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		c.logger.Log(logger.Error, "organization not found", "id: "+data.ID.String())
+		c.logger.Log(logger.Error, "deploy: organization not found", "id: "+data.ID.String())
 		return nil, fuego.UnauthorizedError{
 			Detail: "organization not found",
 		}
 	}
 
-	c.logger.Log(logger.Info, "attempting to redeploy application", "id: "+data.ID.String()+", user_id: "+user.ID.String())
+	c.logger.Log(logger.Info, "deploy: attempting to redeploy application", "id: "+data.ID.String()+", user_id: "+user.ID.String())
 
 	application, err := c.taskService.ReDeployApplication(&data, user.ID, organizationID)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to redeploy application", "id: "+data.ID.String()+", error: "+err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to redeploy application", "id: "+data.ID.String()+", error: "+err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -68,7 +68,7 @@ func (c *DeployController) ReDeployApplication(f fuego.ContextWithBody[types.ReD
 		}
 	}
 
-	c.logger.Log(logger.Info, "application redeployed successfully", "id: "+data.ID.String())
+	c.logger.Log(logger.Info, "deploy: application redeployed successfully", "id: "+data.ID.String())
 	return &types.ApplicationResponse{
 		Status:  "success",
 		Message: "Application redeployed successfully",

@@ -9,13 +9,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/machine/types"
 	"github.com/uptrace/bun"
 )
 
 type BackupStorage struct {
-	DB  *bun.DB
-	Ctx context.Context
+	DB     *bun.DB
+	Ctx    context.Context
+	Logger *logger.Logger // optional; nil disables storage logs
 }
 
 func NewBackupStorage(db *bun.DB, ctx context.Context) *BackupStorage {
@@ -23,6 +25,12 @@ func NewBackupStorage(db *bun.DB, ctx context.Context) *BackupStorage {
 }
 
 func (s *BackupStorage) ListByOrg(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID, params types.BackupListParams) ([]types.MachineBackup, int, error) {
+	ctxStr := fmt.Sprintf("org_id=%s", orgID)
+	if serverID != nil {
+		ctxStr = fmt.Sprintf("%s server_id=%s", ctxStr, *serverID)
+	}
+	storageLog(s.Logger, logger.Debug, "storage: ListByOrg backups", ctxStr)
+
 	query := s.DB.NewSelect().
 		Model((*types.MachineBackup)(nil)).
 		Where("mb.organization_id = ?", orgID)
@@ -59,6 +67,7 @@ func (s *BackupStorage) ListByOrg(ctx context.Context, orgID uuid.UUID, serverID
 
 	totalCount, err := countQuery.Count(ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: ListByOrg count: %v", err), ctxStr)
 		return nil, 0, fmt.Errorf("failed to count backups: %w", err)
 	}
 
@@ -85,12 +94,19 @@ func (s *BackupStorage) ListByOrg(ctx context.Context, orgID uuid.UUID, serverID
 	var backups []types.MachineBackup
 	err = query.Scan(ctx, &backups)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: ListByOrg scan: %v", err), ctxStr)
 		return nil, 0, fmt.Errorf("failed to list backups: %w", err)
 	}
 	return backups, totalCount, nil
 }
 
 func (s *BackupStorage) HasInProgressBackup(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (bool, error) {
+	ctxStr := fmt.Sprintf("org_id=%s", orgID)
+	if serverID != nil {
+		ctxStr = fmt.Sprintf("%s server_id=%s", ctxStr, *serverID)
+	}
+	storageLog(s.Logger, logger.Debug, "storage: HasInProgressBackup", ctxStr)
+
 	q := s.DB.NewSelect().
 		Model((*types.MachineBackup)(nil)).
 		Where("mb.organization_id = ?", orgID).
@@ -106,12 +122,16 @@ func (s *BackupStorage) HasInProgressBackup(ctx context.Context, orgID uuid.UUID
 
 	exists, err := q.Exists(ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: HasInProgressBackup: %v", err), ctxStr)
 		return false, fmt.Errorf("failed to check in-progress backups: %w", err)
 	}
 	return exists, nil
 }
 
 func (s *BackupStorage) GetLatestCompletedBackup(ctx context.Context, orgID uuid.UUID) (*types.MachineBackup, error) {
+	ctxStr := fmt.Sprintf("org_id=%s", orgID)
+	storageLog(s.Logger, logger.Debug, "storage: GetLatestCompletedBackup", ctxStr)
+
 	var backup types.MachineBackup
 	err := s.DB.NewSelect().
 		Model(&backup).
@@ -122,14 +142,19 @@ func (s *BackupStorage) GetLatestCompletedBackup(ctx context.Context, orgID uuid
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetLatestCompletedBackup not found", ctxStr)
 			return nil, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetLatestCompletedBackup: %v", err), ctxStr)
 		return nil, fmt.Errorf("failed to get latest completed backup: %w", err)
 	}
 	return &backup, nil
 }
 
 func (s *BackupStorage) GetByID(ctx context.Context, id uuid.UUID, orgID uuid.UUID) (*types.MachineBackup, error) {
+	ctxStr := fmt.Sprintf("org_id=%s backup_id=%s", orgID, id)
+	storageLog(s.Logger, logger.Debug, "storage: GetBackupByID", ctxStr)
+
 	var backup types.MachineBackup
 	err := s.DB.NewSelect().
 		Model(&backup).
@@ -137,24 +162,36 @@ func (s *BackupStorage) GetByID(ctx context.Context, id uuid.UUID, orgID uuid.UU
 		Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetBackupByID not found", ctxStr)
 			return nil, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetBackupByID: %v", err), ctxStr)
 		return nil, fmt.Errorf("failed to get backup: %w", err)
 	}
 	return &backup, nil
 }
 
 func (s *BackupStorage) InsertBackup(ctx context.Context, backup *types.MachineBackup) error {
+	ctxStr := fmt.Sprintf("org_id=%s", backup.OrganizationID)
+	if backup.ID != (uuid.UUID{}) {
+		ctxStr = fmt.Sprintf("%s backup_id=%s", ctxStr, backup.ID)
+	}
+	storageLog(s.Logger, logger.Debug, "storage: InsertBackup", ctxStr)
+
 	_, err := s.DB.NewInsert().
 		Model(backup).
 		Exec(ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: InsertBackup: %v", err), ctxStr)
 		return fmt.Errorf("failed to insert backup: %w", err)
 	}
 	return nil
 }
 
 func (s *BackupStorage) UpdateBackupStatus(ctx context.Context, id uuid.UUID, status types.MachineBackupStatus, updates map[string]interface{}) error {
+	ctxStr := fmt.Sprintf("backup_id=%s status=%s", id, status)
+	storageLog(s.Logger, logger.Debug, "storage: UpdateBackupStatus", ctxStr)
+
 	q := s.DB.NewUpdate().
 		TableExpr("machine_backups").
 		Where("id = ?", id).
@@ -167,6 +204,7 @@ func (s *BackupStorage) UpdateBackupStatus(ctx context.Context, id uuid.UUID, st
 
 	_, err := q.Exec(ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: UpdateBackupStatus: %v", err), ctxStr)
 		return fmt.Errorf("failed to update backup status: %w", err)
 	}
 	return nil
@@ -175,6 +213,9 @@ func (s *BackupStorage) UpdateBackupStatus(ctx context.Context, id uuid.UUID, st
 // GetProvisionIDBySSHKey returns the user_provision_details.id for a BYOS machine,
 // matched by ssh_key_id. Returns nil (no error) if no row is found.
 func (s *BackupStorage) GetProvisionIDBySSHKey(ctx context.Context, orgID, sshKeyID uuid.UUID) (*uuid.UUID, error) {
+	ctxStr := fmt.Sprintf("org_id=%s ssh_key_id=%s", orgID, sshKeyID)
+	storageLog(s.Logger, logger.Debug, "storage: GetProvisionIDBySSHKey", ctxStr)
+
 	var row struct {
 		ID uuid.UUID `bun:"id"`
 	}
@@ -188,8 +229,10 @@ func (s *BackupStorage) GetProvisionIDBySSHKey(ctx context.Context, orgID, sshKe
 		Scan(ctx, &row)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetProvisionIDBySSHKey not found", ctxStr)
 			return nil, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetProvisionIDBySSHKey: %v", err), ctxStr)
 		return nil, fmt.Errorf("failed to get provision ID: %w", err)
 	}
 	return &row.ID, nil

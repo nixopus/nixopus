@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -16,17 +17,20 @@ func (c *HealthCheckController) GetHealthCheckStats(f fuego.ContextNoBody) (*typ
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logger.Log(logger.Debug, "healthcheck: GetHealthCheckStats: authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
 	if orgID == (uuid.UUID{}) {
+		c.logger.Log(logger.Debug, "healthcheck: GetHealthCheckStats: organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	q := r.URL.Query()
 	applicationID := q.Get("application_id")
 	if applicationID == "" {
+		c.logger.Log(logger.Debug, "healthcheck: GetHealthCheckStats: application_id required", fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.BadRequestError{Detail: types.ErrInvalidApplicationID.Error(), Err: types.ErrInvalidApplicationID}
 	}
 
@@ -35,9 +39,12 @@ func (c *HealthCheckController) GetHealthCheckStats(f fuego.ContextNoBody) (*typ
 		period = "24h"
 	}
 
+	ctxStr := fmt.Sprintf("org_id=%s user_id=%s application_id=%s period=%s", orgID, user.ID, applicationID, period)
+	c.logger.Log(logger.Info, "healthcheck: GetHealthCheckStats", ctxStr)
+
 	stats, err := c.service.GetHealthCheckStats(applicationID, orgID, period)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("healthcheck: GetHealthCheckStats: %v", err), ctxStr)
 		statusCode, mappedErr := mapHealthCheckError(err)
 		if statusCode == http.StatusNotFound {
 			return nil, fuego.HTTPError{
@@ -50,6 +57,7 @@ func (c *HealthCheckController) GetHealthCheckStats(f fuego.ContextNoBody) (*typ
 		return nil, fuego.HTTPError{Detail: mappedErr.Error(), Status: statusCode}
 	}
 
+	c.logger.Log(logger.Info, "healthcheck: GetHealthCheckStats ok", ctxStr)
 	data := mapStatsResponse(stats)
 
 	return &types.HealthCheckStatsResponse{

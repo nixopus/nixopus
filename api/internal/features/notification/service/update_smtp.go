@@ -16,15 +16,16 @@ func (s *NotificationService) UpdateSmtp(config notification.UpdateSMTPConfigReq
 		return fmt.Errorf("storage layer not initialized")
 	}
 
+	data := fmt.Sprintf("smtp_config_id=%s", config.ID)
 	hostInfo := "(unchanged)"
 	if config.Host != nil {
 		hostInfo = *config.Host
 	}
-	s.logger.Log(logger.Info, fmt.Sprintf("Updating SMTP configuration: Host=%s", hostInfo), "")
+	s.logger.Log(logger.Info, fmt.Sprintf("notification service: UpdateSmtp host=%s", hostInfo), data)
 
 	err := s.storage.UpdateSmtp(&config)
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("Failed to update SMTP configuration: %v", err), "")
+		s.logger.Log(logger.Error, fmt.Sprintf("notification service: UpdateSmtp: %v", err), data)
 		return fmt.Errorf("failed to update SMTP configuration: %w", err)
 	}
 

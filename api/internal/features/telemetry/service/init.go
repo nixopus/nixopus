@@ -47,7 +47,9 @@ func (s *TelemetryService) TrackInstall(req *types.TrackInstallRequest, clientIP
 	}
 
 	if err := s.storage.CreateInstallEvent(event); err != nil {
-		s.logger.Log(logger.Error, "failed to store install event", err.Error())
+		data := fmt.Sprintf("event_type=%s os=%s arch=%s version=%s duration=%d error_len=%d event_id=%s",
+			req.EventType, req.OS, req.Arch, req.Version, req.Duration, len(req.Error), event.ID)
+		s.logger.Log(logger.Error, fmt.Sprintf("telemetry service: TrackInstall: %v", err), data)
 		return err
 	}
 

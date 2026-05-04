@@ -2,6 +2,8 @@ package controller
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -19,33 +21,46 @@ func (c *MCPController) CallTool(f fuego.ContextWithBody[validation.CallToolRequ
 
 	user := utils.GetUser(w, r)
 	if user == nil {
+		c.logMCPDebug("CallTool", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
+	}
+
+	orgID := utils.GetOrganizationID(r)
+	if orgID == uuid.Nil {
+		c.logMCPDebug("CallTool", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	body, err := f.Body()
 	if err != nil {
+		c.logMCPDebug("CallTool", "invalid body", fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	if err := validation.ValidateCallToolRequest(&body); err != nil {
+		c.logger.Log(logger.Debug, fmt.Sprintf("mcp: CallTool validation: %v", err), fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	serverID, err := uuid.Parse(body.ServerID)
 	if err != nil {
+		c.logMCPDebug("CallTool", "invalid server_id", fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.BadRequestError{Detail: "invalid server_id format"}
 	}
 
-	orgID := utils.GetOrganizationID(r)
-
 	srv, err := c.service.GetServerByID(serverID, orgID)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
-		return nil, fuego.NotFoundError{Detail: "server not found", Err: err}
+		if errors.Is(err, service.ErrServerNotFound) {
+			c.logMCPDebug("CallTool", "server not found", fmt.Sprintf("org_id=%s user_id=%s server_id=%s", orgID, user.ID, serverID))
+			return nil, fuego.NotFoundError{Detail: err.Error(), Err: err}
+		}
+		c.logger.Log(logger.Error, fmt.Sprintf("mcp: CallTool GetServer: %v", err), fmt.Sprintf("org_id=%s user_id=%s server_id=%s", orgID, user.ID, serverID))
+		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 
 	provider := mcp.GetProvider(srv.ProviderID)
 	if provider == nil {
+		c.logger.Log(logger.Error, "mcp: CallTool unknown provider", fmt.Sprintf("org_id=%s server_id=%s provider_id=%s", orgID, serverID, srv.ProviderID))
 		return nil, fuego.HTTPError{Detail: "unknown provider", Status: http.StatusInternalServerError}
 	}
 
@@ -62,7 +77,7 @@ func (c *MCPController) CallTool(f fuego.ContextWithBody[validation.CallToolRequ
 		Arguments: body.Arguments,
 	})
 	if err != nil {
-		c.logger.Log(logger.Warning, "tool call failed: "+err.Error(), body.ToolName)
+		c.logger.Log(logger.Warning, fmt.Sprintf("mcp: CallTool execution failed: %v", err), fmt.Sprintf("org_id=%s user_id=%s server_id=%s tool_name=%s", orgID, user.ID, serverID, body.ToolName))
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusBadGateway}
 	}
 

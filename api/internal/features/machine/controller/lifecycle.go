@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -30,23 +31,26 @@ func (c *MachineController) GetMachineStatus(f fuego.ContextNoBody) (*types.Mach
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logMachineDebug("GetMachineStatus", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
+		c.logMachineDebug("GetMachineStatus", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	serverID := parseServerID(r)
 	if serverID == nil {
+		c.logMachineDebug("GetMachineStatus", "server_id required", fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.BadRequestError{Detail: "server_id is required"}
 	}
 
 	ctx := context.WithValue(r.Context(), sharedtypes.ServerIDKey, serverID.String())
 	response, err := c.service.GetMachineStatus(ctx, orgID)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), orgID.String())
+		c.logger.Log(logger.Error, fmt.Sprintf("machine: GetMachineStatus: %v", err), fmt.Sprintf("org_id=%s user_id=%s server_id=%s", orgID, user.ID, serverID))
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 	return response, nil
@@ -57,16 +61,19 @@ func (c *MachineController) RestartMachine(f fuego.ContextNoBody) (*types.Machin
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logMachineDebug("RestartMachine", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
+		c.logMachineDebug("RestartMachine", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	serverID := parseServerID(r)
 	if serverID == nil {
+		c.logMachineDebug("RestartMachine", "server_id required", fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.BadRequestError{Detail: "server_id is required"}
 	}
 
@@ -75,7 +82,7 @@ func (c *MachineController) RestartMachine(f fuego.ContextNoBody) (*types.Machin
 		ctx := context.WithValue(r.Context(), sharedtypes.ServerIDKey, serverID.String())
 		response, err := c.service.RestartMachine(ctx, orgID)
 		if err != nil {
-			c.logger.Log(logger.Error, err.Error(), orgID.String())
+			c.logger.Log(logger.Error, fmt.Sprintf("machine: RestartMachine (user-owned): %v", err), fmt.Sprintf("org_id=%s user_id=%s server_id=%s", orgID, user.ID, serverID))
 			return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 		}
 		return response, nil
@@ -83,7 +90,7 @@ func (c *MachineController) RestartMachine(f fuego.ContextNoBody) (*types.Machin
 
 	response, err := c.lifecycleService.Restart(r.Context(), orgID, serverID)
 	if err != nil {
-		return nil, mapLifecycleError(c.logger, err, orgID, "restart")
+		return nil, mapLifecycleError(c.logger, err, orgID, user.ID, serverID, "restart")
 	}
 
 	return response, nil
@@ -94,16 +101,19 @@ func (c *MachineController) PauseMachine(f fuego.ContextNoBody) (*types.MachineA
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logMachineDebug("PauseMachine", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
+		c.logMachineDebug("PauseMachine", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	serverID := parseServerID(r)
 	if serverID == nil {
+		c.logMachineDebug("PauseMachine", "server_id required", fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.BadRequestError{Detail: "server_id is required"}
 	}
 
@@ -111,7 +121,7 @@ func (c *MachineController) PauseMachine(f fuego.ContextNoBody) (*types.MachineA
 	if userOwned {
 		response, err := c.service.PauseMachine(r.Context(), orgID, *serverID)
 		if err != nil {
-			c.logger.Log(logger.Error, err.Error(), orgID.String())
+			c.logger.Log(logger.Error, fmt.Sprintf("machine: PauseMachine (user-owned): %v", err), fmt.Sprintf("org_id=%s user_id=%s server_id=%s", orgID, user.ID, serverID))
 			return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 		}
 		return response, nil
@@ -119,7 +129,7 @@ func (c *MachineController) PauseMachine(f fuego.ContextNoBody) (*types.MachineA
 
 	response, err := c.lifecycleService.Pause(r.Context(), orgID, serverID)
 	if err != nil {
-		return nil, mapLifecycleError(c.logger, err, orgID, "pause")
+		return nil, mapLifecycleError(c.logger, err, orgID, user.ID, serverID, "pause")
 	}
 
 	return response, nil
@@ -130,16 +140,19 @@ func (c *MachineController) ResumeMachine(f fuego.ContextNoBody) (*types.Machine
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logMachineDebug("ResumeMachine", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
+		c.logMachineDebug("ResumeMachine", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	serverID := parseServerID(r)
 	if serverID == nil {
+		c.logMachineDebug("ResumeMachine", "server_id required", fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.BadRequestError{Detail: "server_id is required"}
 	}
 
@@ -147,7 +160,7 @@ func (c *MachineController) ResumeMachine(f fuego.ContextNoBody) (*types.Machine
 	if userOwned {
 		response, err := c.service.ResumeMachine(r.Context(), orgID, *serverID)
 		if err != nil {
-			c.logger.Log(logger.Error, err.Error(), orgID.String())
+			c.logger.Log(logger.Error, fmt.Sprintf("machine: ResumeMachine (user-owned): %v", err), fmt.Sprintf("org_id=%s user_id=%s server_id=%s", orgID, user.ID, serverID))
 			return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 		}
 		return response, nil
@@ -155,14 +168,18 @@ func (c *MachineController) ResumeMachine(f fuego.ContextNoBody) (*types.Machine
 
 	response, err := c.lifecycleService.Resume(r.Context(), orgID, serverID)
 	if err != nil {
-		return nil, mapLifecycleError(c.logger, err, orgID, "resume")
+		return nil, mapLifecycleError(c.logger, err, orgID, user.ID, serverID, "resume")
 	}
 
 	return response, nil
 }
 
-func mapLifecycleError(l logger.Logger, err error, orgID uuid.UUID, action string) error {
-	l.Log(logger.Error, err.Error(), orgID.String())
+func mapLifecycleError(l logger.Logger, err error, orgID uuid.UUID, userID uuid.UUID, serverID *uuid.UUID, action string) error {
+	data := fmt.Sprintf("org_id=%s user_id=%s", orgID, userID)
+	if serverID != nil {
+		data = fmt.Sprintf("%s server_id=%s", data, *serverID)
+	}
+	l.Log(logger.Error, fmt.Sprintf("machine: lifecycle %s: %v", action, err), data)
 
 	switch {
 	case errors.Is(err, types.ErrMachineNotProvisioned):

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/notification"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
@@ -25,8 +26,9 @@ func commitNotificationBunTx(tx bun.Tx) error {
 }
 
 type NotificationStorage struct {
-	DB  *bun.DB
-	Ctx context.Context
+	DB     *bun.DB
+	Ctx    context.Context
+	Logger *logger.Logger // optional; nil disables storage logs
 }
 
 type NotificationRepository interface {
@@ -48,13 +50,20 @@ type NotificationRepository interface {
 // It takes a shared_types.SMTPConfigs as a parameter and inserts it into the database.
 // It returns an error if the database operation fails.
 func (s NotificationStorage) AddSmtp(config *shared_types.SMTPConfigs) error {
+	ctxStr := fmt.Sprintf("org_id=%s user_id=%s config_id=%s", config.OrganizationID, config.UserID, config.ID)
+	storageLog(s.Logger, logger.Debug, "notification storage: AddSmtp", ctxStr)
 	_, err := s.DB.NewInsert().Model(config).Exec(s.Ctx)
+	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: AddSmtp: %v", err), ctxStr)
+	}
 	return err
 }
 
 // UpdateSmtp updates an existing SMTP configuration in the database.
 // Only non-nil fields are updated (partial update).
 func (s NotificationStorage) UpdateSmtp(config *notification.UpdateSMTPConfigRequest) error {
+	ctxStr := fmt.Sprintf("smtp_config_id=%s", config.ID)
+	storageLog(s.Logger, logger.Debug, "notification storage: UpdateSmtp", ctxStr)
 	q := s.DB.NewUpdate().TableExpr("smtp_configs").Where("id = ?", config.ID)
 
 	if config.Host != nil {
@@ -77,6 +86,9 @@ func (s NotificationStorage) UpdateSmtp(config *notification.UpdateSMTPConfigReq
 	}
 
 	_, err := q.Exec(s.Ctx)
+	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: UpdateSmtp: %v", err), ctxStr)
+	}
 	return err
 }
 
@@ -85,14 +97,21 @@ func (s NotificationStorage) UpdateSmtp(config *notification.UpdateSMTPConfigReq
 // It takes an ID as a parameter, deletes the corresponding SMTP configuration
 // from the database, and returns an error if the database operation fails.
 func (s NotificationStorage) DeleteSmtp(ID string) error {
+	ctxStr := fmt.Sprintf("smtp_config_id=%s", ID)
+	storageLog(s.Logger, logger.Debug, "notification storage: DeleteSmtp", ctxStr)
 	exists, err := s.DB.NewSelect().Model((*shared_types.SMTPConfigs)(nil)).Where("id = ?", ID).Exists(s.Ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: DeleteSmtp exists check: %v", err), ctxStr)
 		return err
 	}
 	if !exists {
+		storageLog(s.Logger, logger.Debug, "notification storage: DeleteSmtp: not found", ctxStr)
 		return fmt.Errorf("smtp config not found")
 	}
 	_, err = s.DB.NewDelete().Model((*shared_types.SMTPConfigs)(nil)).Where("id = ?", ID).Exec(s.Ctx)
+	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: DeleteSmtp: %v", err), ctxStr)
+	}
 	return err
 }
 
@@ -102,12 +121,15 @@ func (s NotificationStorage) DeleteSmtp(ID string) error {
 // SMTP configuration, and returns it. It returns an error if the database
 // operation fails.
 func (s NotificationStorage) GetSmtp(ID string) (*shared_types.SMTPConfigs, error) {
+	ctxStr := fmt.Sprintf("query_user_id=%s", ID)
+	storageLog(s.Logger, logger.Debug, "notification storage: GetSmtp", ctxStr)
 	config := &shared_types.SMTPConfigs{}
 	err := s.DB.NewSelect().Model(config).Where("user_id = ?", ID).Scan(s.Ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: GetSmtp: %v", err), ctxStr)
 		return nil, err
 	}
 	return config, nil
@@ -119,9 +141,12 @@ func (s NotificationStorage) GetSmtp(ID string) (*shared_types.SMTPConfigs, erro
 // corresponding SMTP configurations, and returns them. It returns an error
 // if the database operation fails.
 func (s NotificationStorage) GetOrganizationsSmtp(organizationID string) ([]shared_types.SMTPConfigs, error) {
+	ctxStr := fmt.Sprintf("org_id=%s", organizationID)
+	storageLog(s.Logger, logger.Debug, "notification storage: GetOrganizationsSmtp", ctxStr)
 	configs := []shared_types.SMTPConfigs{}
 	err := s.DB.NewSelect().Model(&configs).Where("organization_id = ?", organizationID).Scan(s.Ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: GetOrganizationsSmtp: %v", err), ctxStr)
 		return nil, err
 	}
 	return configs, nil
@@ -136,6 +161,8 @@ func (s NotificationStorage) GetOrganizationsSmtp(organizationID string) ([]shar
 //
 // The function will log an info message with the details of the preference update.
 func (s *NotificationStorage) UpdatePreference(ctx context.Context, req notification.UpdatePreferenceRequest, userID uuid.UUID) error {
+	ctxStr := fmt.Sprintf("user_id=%s category=%s type=%s", userID, req.Category, req.Type)
+	storageLog(s.Logger, logger.Debug, "notification storage: UpdatePreference", ctxStr)
 	var preferenceID uuid.UUID
 	err := s.DB.NewSelect().
 		Model((*shared_types.NotificationPreferences)(nil)).
@@ -148,6 +175,7 @@ func (s *NotificationStorage) UpdatePreference(ctx context.Context, req notifica
 		if errors.Is(err, sql.ErrNoRows) {
 			return s.initUserPreferences(ctx, userID, req)
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: UpdatePreference fetch prefs: %v", err), ctxStr)
 		return fmt.Errorf("failed to fetch user preferences: %w", err)
 	}
 
@@ -161,6 +189,7 @@ func (s *NotificationStorage) UpdatePreference(ctx context.Context, req notifica
 		Exec(ctx)
 
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: UpdatePreference update item: %v", err), ctxStr)
 		return fmt.Errorf("failed to update preference: %w", err)
 	}
 
@@ -176,6 +205,8 @@ func (s *NotificationStorage) UpdatePreference(ctx context.Context, req notifica
 // It returns a GetPreferencesResponse containing the user's preferences or an
 // error if any database operation fails.
 func (s *NotificationStorage) GetPreferences(ctx context.Context, userID uuid.UUID) (*notification.GetPreferencesResponse, error) {
+	ctxStr := fmt.Sprintf("user_id=%s", userID)
+	storageLog(s.Logger, logger.Debug, "notification storage: GetPreferences", ctxStr)
 	var preferenceID uuid.UUID
 	err := s.DB.NewSelect().
 		Model((*shared_types.NotificationPreferences)(nil)).
@@ -187,6 +218,7 @@ func (s *NotificationStorage) GetPreferences(ctx context.Context, userID uuid.UU
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			if err := s.initDefaultPreferences(ctx, userID); err != nil {
+				storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: GetPreferences init defaults: %v", err), ctxStr)
 				return nil, fmt.Errorf("failed to initialize preferences: %w", err)
 			}
 
@@ -198,9 +230,11 @@ func (s *NotificationStorage) GetPreferences(ctx context.Context, userID uuid.UU
 				Scan(ctx, &preferenceID)
 
 			if err != nil {
+				storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: GetPreferences refetch after init: %v", err), ctxStr)
 				return nil, fmt.Errorf("failed to fetch newly created preferences: %w", err)
 			}
 		} else {
+			storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: GetPreferences fetch prefs: %v", err), ctxStr)
 			return nil, fmt.Errorf("failed to fetch user preferences: %w", err)
 		}
 	}
@@ -212,6 +246,7 @@ func (s *NotificationStorage) GetPreferences(ctx context.Context, userID uuid.UU
 		Scan(ctx, &items)
 
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: GetPreferences fetch items: %v", err), ctxStr)
 		return nil, fmt.Errorf("failed to fetch preference items: %w", err)
 	}
 
@@ -233,8 +268,10 @@ func (s *NotificationStorage) GetPreferences(ctx context.Context, userID uuid.UU
 // is returned. Otherwise, the transaction is committed, and nil is returned
 // to indicate success.
 func (s *NotificationStorage) initUserPreferences(ctx context.Context, userID uuid.UUID, update notification.UpdatePreferenceRequest) error {
+	ctxStr := fmt.Sprintf("user_id=%s", userID)
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: initUserPreferences begin tx: %v", err), ctxStr)
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
 	defer tx.Rollback()
@@ -250,6 +287,7 @@ func (s *NotificationStorage) initUserPreferences(ctx context.Context, userID uu
 
 	_, err = tx.NewInsert().Model(preferences).Exec(ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: initUserPreferences insert prefs: %v", err), ctxStr)
 		return fmt.Errorf("failed to insert preferences: %w", err)
 	}
 
@@ -263,10 +301,12 @@ func (s *NotificationStorage) initUserPreferences(ctx context.Context, userID uu
 
 	_, err = tx.NewInsert().Model(&items).Exec(ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: initUserPreferences insert items: %v", err), ctxStr)
 		return fmt.Errorf("failed to insert preference items: %w", err)
 	}
 
 	if err = commitNotificationBunTx(tx); err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: initUserPreferences commit: %v", err), ctxStr)
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
@@ -279,8 +319,10 @@ func (s *NotificationStorage) initUserPreferences(ctx context.Context, userID uu
 //
 // The function will log an info message with the details of the preference initialization.
 func (s *NotificationStorage) initDefaultPreferences(ctx context.Context, userID uuid.UUID) error {
+	ctxStr := fmt.Sprintf("user_id=%s", userID)
 	tx, err := s.DB.BeginTx(ctx, nil)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: initDefaultPreferences begin tx: %v", err), ctxStr)
 		return fmt.Errorf("failed to start transaction: %w", err)
 	}
 	defer tx.Rollback()
@@ -296,6 +338,7 @@ func (s *NotificationStorage) initDefaultPreferences(ctx context.Context, userID
 
 	_, err = tx.NewInsert().Model(preferences).Exec(ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: initDefaultPreferences insert prefs: %v", err), ctxStr)
 		return fmt.Errorf("failed to insert preferences: %w", err)
 	}
 
@@ -303,10 +346,12 @@ func (s *NotificationStorage) initDefaultPreferences(ctx context.Context, userID
 
 	_, err = tx.NewInsert().Model(&items).Exec(ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: initDefaultPreferences insert items: %v", err), ctxStr)
 		return fmt.Errorf("failed to insert preference items: %w", err)
 	}
 
 	if err = commitNotificationBunTx(tx); err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: initDefaultPreferences commit: %v", err), ctxStr)
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
@@ -459,8 +504,11 @@ func MapToResponse(items []shared_types.PreferenceItem) notification.GetPreferen
 
 // CreateWebhookConfig creates a new webhook configuration in the database.
 func (s NotificationStorage) CreateWebhookConfig(ctx context.Context, config *shared_types.WebhookConfig) error {
+	ctxStr := fmt.Sprintf("org_id=%s type=%s webhook_id=%s", config.OrganizationID, config.Type, config.ID)
+	storageLog(s.Logger, logger.Debug, "notification storage: CreateWebhookConfig", ctxStr)
 	_, err := s.DB.NewInsert().Model(config).Exec(ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: CreateWebhookConfig: %v", err), ctxStr)
 		return fmt.Errorf("failed to create webhook config: %w", err)
 	}
 	return nil
@@ -468,8 +516,11 @@ func (s NotificationStorage) CreateWebhookConfig(ctx context.Context, config *sh
 
 // UpdateWebhookConfig updates an existing webhook configuration in the database.
 func (s NotificationStorage) UpdateWebhookConfig(ctx context.Context, config *shared_types.WebhookConfig) error {
+	ctxStr := fmt.Sprintf("org_id=%s type=%s webhook_id=%s", config.OrganizationID, config.Type, config.ID)
+	storageLog(s.Logger, logger.Debug, "notification storage: UpdateWebhookConfig", ctxStr)
 	_, err := s.DB.NewUpdate().Model(config).WherePK().Exec(ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: UpdateWebhookConfig: %v", err), ctxStr)
 		return fmt.Errorf("failed to update webhook config: %w", err)
 	}
 	return nil
@@ -477,10 +528,13 @@ func (s NotificationStorage) UpdateWebhookConfig(ctx context.Context, config *sh
 
 // DeleteWebhookConfig deletes a webhook configuration from the database.
 func (s NotificationStorage) DeleteWebhookConfig(ctx context.Context, webhookType string, organizationID uuid.UUID) error {
+	ctxStr := fmt.Sprintf("org_id=%s type=%s", organizationID, webhookType)
+	storageLog(s.Logger, logger.Debug, "notification storage: DeleteWebhookConfig", ctxStr)
 	_, err := s.DB.NewDelete().Model((*shared_types.WebhookConfig)(nil)).
 		Where("type = ? AND organization_id = ?", webhookType, organizationID).
 		Exec(ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: DeleteWebhookConfig: %v", err), ctxStr)
 		return fmt.Errorf("failed to delete webhook config: %w", err)
 	}
 	return nil
@@ -488,6 +542,8 @@ func (s NotificationStorage) DeleteWebhookConfig(ctx context.Context, webhookTyp
 
 // GetWebhookConfig retrieves a webhook configuration from the database.
 func (s NotificationStorage) GetWebhookConfig(ctx context.Context, webhookType string, organizationID uuid.UUID) (*shared_types.WebhookConfig, error) {
+	ctxStr := fmt.Sprintf("org_id=%s type=%s", organizationID, webhookType)
+	storageLog(s.Logger, logger.Debug, "notification storage: GetWebhookConfig", ctxStr)
 	config := &shared_types.WebhookConfig{}
 	err := s.DB.NewSelect().Model(config).
 		Where("type = ? AND organization_id = ?", webhookType, organizationID).
@@ -496,6 +552,7 @@ func (s NotificationStorage) GetWebhookConfig(ctx context.Context, webhookType s
 		if err == sql.ErrNoRows {
 			return nil, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("notification storage: GetWebhookConfig: %v", err), ctxStr)
 		return nil, fmt.Errorf("webhook config not found: %w", err)
 	}
 	return config, nil

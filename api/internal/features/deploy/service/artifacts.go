@@ -21,13 +21,13 @@ func (s *DeployService) ListArtifacts(applicationID uuid.UUID, organizationID uu
 		if errors.Is(err, sql.ErrNoRows) || strings.Contains(err.Error(), "not found") {
 			return nil, types.ErrPermissionDenied
 		}
-		s.logger.Log(logger.Error, "failed to get application for artifact listing", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to get application for artifact listing", err.Error())
 		return nil, err
 	}
 
 	deployments, err := s.storage.GetApplicationDeployments(applicationID)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to list deployments", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to list deployments", err.Error())
 		return nil, fmt.Errorf("failed to list deployments: %w", err)
 	}
 
@@ -54,7 +54,7 @@ func (s *DeployService) GetArtifactDownloadURL(ctx context.Context, deploymentID
 		if errors.Is(err, sql.ErrNoRows) {
 			return "", fmt.Errorf("deployment not found")
 		}
-		s.logger.Log(logger.Error, "failed to get deployment for download", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to get deployment for download", err.Error())
 		return "", err
 	}
 
@@ -63,7 +63,7 @@ func (s *DeployService) GetArtifactDownloadURL(ctx context.Context, deploymentID
 		if errors.Is(err, sql.ErrNoRows) || strings.Contains(err.Error(), "not found") {
 			return "", types.ErrPermissionDenied
 		}
-		s.logger.Log(logger.Error, "failed to verify app ownership for download", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to verify app ownership for download", err.Error())
 		return "", err
 	}
 
@@ -77,13 +77,13 @@ func (s *DeployService) GetArtifactDownloadURL(ctx context.Context, deploymentID
 
 	store, err := s3store.NewImageStore(config.AppConfig.S3)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to create S3 client", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to create S3 client", err.Error())
 		return "", fmt.Errorf("failed to create S3 client: %w", err)
 	}
 
 	exists, err := store.ObjectExists(ctx, deployment.ImageS3Key)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to check artifact existence", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to check artifact existence", err.Error())
 		return "", fmt.Errorf("failed to check artifact existence: %w", err)
 	}
 	if !exists {
@@ -92,7 +92,7 @@ func (s *DeployService) GetArtifactDownloadURL(ctx context.Context, deploymentID
 
 	url, err := store.PresignedDownloadURL(ctx, deployment.ImageS3Key, 15*time.Minute)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to generate download URL", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to generate download URL", err.Error())
 		return "", fmt.Errorf("failed to generate download URL: %w", err)
 	}
 	return url, nil
@@ -104,7 +104,7 @@ func (s *DeployService) DeleteArtifact(ctx context.Context, deploymentID string,
 		if errors.Is(err, sql.ErrNoRows) {
 			return fmt.Errorf("deployment not found")
 		}
-		s.logger.Log(logger.Error, "failed to get deployment for delete", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to get deployment for delete", err.Error())
 		return err
 	}
 
@@ -113,7 +113,7 @@ func (s *DeployService) DeleteArtifact(ctx context.Context, deploymentID string,
 		if errors.Is(err, sql.ErrNoRows) || strings.Contains(err.Error(), "not found") {
 			return types.ErrPermissionDenied
 		}
-		s.logger.Log(logger.Error, "failed to verify app ownership for delete", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to verify app ownership for delete", err.Error())
 		return err
 	}
 
@@ -127,17 +127,17 @@ func (s *DeployService) DeleteArtifact(ctx context.Context, deploymentID string,
 
 	store, err := s3store.NewImageStore(config.AppConfig.S3)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to create S3 client", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to create S3 client", err.Error())
 		return fmt.Errorf("failed to create S3 client: %w", err)
 	}
 
 	if err := store.DeleteImage(ctx, deployment.ImageS3Key); err != nil {
-		s.logger.Log(logger.Error, "failed to delete artifact from S3", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to delete artifact from S3", err.Error())
 		return fmt.Errorf("failed to delete artifact from S3: %w", err)
 	}
 
 	if err := s.storage.ClearDeploymentArtifactFields(deployment.ID); err != nil {
-		s.logger.Log(logger.Error, "failed to clear artifact metadata", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to clear artifact metadata", err.Error())
 		return fmt.Errorf("failed to clear artifact metadata: %w", err)
 	}
 	return nil

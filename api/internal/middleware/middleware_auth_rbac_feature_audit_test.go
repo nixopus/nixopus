@@ -187,7 +187,7 @@ func Test_resolveAndVerifyOrganization_DB_fallback(t *testing.T) {
 	insertUser(t, db, ctx, uid, "m@x")
 	insertMember(t, db, ctx, uid, oid)
 
-	got, err := resolveAndVerifyOrganization(ctx, httptest.NewRequest(http.MethodGet, "/", nil), nil, app, uid.String(), sessionResp(uid.String(), ""))
+	got, err := resolveAndVerifyOrganization(ctx, httptest.NewRequest(http.MethodGet, "/", nil), nil, app, uid.String(), sessionResp(uid.String(), ""), logger.NewLogger())
 	require.NoError(t, err)
 	require.Equal(t, oid.String(), got)
 }
@@ -197,7 +197,7 @@ func Test_resolveAndVerifyOrganization_errors(t *testing.T) {
 	ctx := app.Ctx
 	t.Setenv("AUTH_SERVICE_URL", "http://127.0.0.1:9")
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
-	_, err := resolveAndVerifyOrganization(ctx, httptest.NewRequest(http.MethodGet, "/", nil), nil, app, uuid.New().String(), sessionResp(uuid.New().String(), "00000000-0000-0000-0000-000000000001"))
+	_, err := resolveAndVerifyOrganization(ctx, httptest.NewRequest(http.MethodGet, "/", nil), nil, app, uuid.New().String(), sessionResp(uuid.New().String(), "00000000-0000-0000-0000-000000000001"), logger.NewLogger())
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "does not belong")
 }
@@ -209,7 +209,7 @@ func Test_verifyOrganizationMembership_cacheAndAPI(t *testing.T) {
 	oid := uuid.New().String()
 
 	require.NoError(t, c.SetOrgMembership(ctx, uid, oid, true))
-	ok, err := verifyOrganizationMembership(ctx, httptest.NewRequest(http.MethodGet, "/", nil), c, uid, oid)
+	ok, err := verifyOrganizationMembership(ctx, httptest.NewRequest(http.MethodGet, "/", nil), c, uid, oid, logger.NewLogger())
 	require.NoError(t, err)
 	require.True(t, ok)
 
@@ -221,7 +221,7 @@ func Test_verifyOrganizationMembership_cacheAndAPI(t *testing.T) {
 	}
 	t.Cleanup(func() { betterauth.HTTPClient = orig })
 
-	ok, err = verifyOrganizationMembership(ctx, httptest.NewRequest(http.MethodGet, "/", nil), c, uid, "00000000-0000-0000-0000-000000000002")
+	ok, err = verifyOrganizationMembership(ctx, httptest.NewRequest(http.MethodGet, "/", nil), c, uid, "00000000-0000-0000-0000-000000000002", logger.NewLogger())
 	require.Error(t, err)
 	require.False(t, ok)
 }
@@ -246,7 +246,7 @@ func Test_AuthMiddleware_branches(t *testing.T) {
 		verifySessionFn = func(*http.Request) (*betterauth.SessionResponse, error) {
 			return nil, errors.New("nope")
 		}
-		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c)
+		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, authReq(t, "/api/v1/machines"))
 		require.Equal(t, http.StatusUnauthorized, rec.Code)
@@ -256,7 +256,7 @@ func Test_AuthMiddleware_branches(t *testing.T) {
 		verifySessionFn = func(*http.Request) (*betterauth.SessionResponse, error) {
 			return sessionResp("not-a-uuid", oid.String()), nil
 		}
-		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c)
+		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, authReq(t, "/api/v1/machines"))
 		require.Equal(t, http.StatusUnauthorized, rec.Code)
@@ -266,7 +266,7 @@ func Test_AuthMiddleware_branches(t *testing.T) {
 		verifySessionFn = func(*http.Request) (*betterauth.SessionResponse, error) {
 			return sessionResp(uuid.New().String(), oid.String()), nil
 		}
-		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c)
+		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, authReq(t, "/api/v1/machines"))
 		require.Equal(t, http.StatusUnauthorized, rec.Code)
@@ -281,7 +281,7 @@ func Test_AuthMiddleware_branches(t *testing.T) {
 		h := AuthMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 			v, _ := r.Context().Value(types.OrganizationIDKey).(string)
 			saw = v == oid.String()
-		}), app, c)
+		}), app, c, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, authReq(t, "/api/v1/machines"))
 		require.True(t, saw, "body=%s code=%d", rec.Body.String(), rec.Code)
@@ -294,7 +294,7 @@ func Test_AuthMiddleware_branches(t *testing.T) {
 		var org any
 		h := AuthMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 			org = r.Context().Value(types.OrganizationIDKey)
-		}), app, c)
+		}), app, c, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		h.ServeHTTP(rec, authReq(t, "/api/v1/auth/login"))
 		require.Nil(t, org)
@@ -350,7 +350,7 @@ func Test_tryM2MJWTAuth(t *testing.T) {
 		var gotOrg any
 		h := AuthMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 			gotOrg = r.Context().Value(types.OrganizationIDKey)
-		}), app, nil)
+		}), app, nil, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/x", nil)
 		req.Header.Set("Authorization", "Bearer "+tok)
@@ -361,7 +361,7 @@ func Test_tryM2MJWTAuth(t *testing.T) {
 	})
 
 	t.Run("missing X-User-Id", func(t *testing.T) {
-		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, nil)
+		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, nil, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/x", nil)
 		req.Header.Set("Authorization", "Bearer "+tok)
@@ -371,7 +371,7 @@ func Test_tryM2MJWTAuth(t *testing.T) {
 	})
 
 	t.Run("invalid X-User-Id", func(t *testing.T) {
-		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, nil)
+		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, nil, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/x", nil)
 		req.Header.Set("Authorization", "Bearer "+tok)
@@ -392,7 +392,7 @@ func Test_tryM2MJWTAuth(t *testing.T) {
 		var ok bool
 		h := AuthMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 			ok = r.Context().Value(types.OrganizationIDKey) == oid.String()
-		}), app, rc)
+		}), app, rc, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/machines", nil)
 		req.Header.Set("Authorization", "Bearer opaque-not-jwt")
@@ -416,7 +416,7 @@ func Test_RBACMiddleware(t *testing.T) {
 	}))
 
 	t.Run("missing org header uses context", func(t *testing.T) {
-		h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "machine")
+		h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "machine", logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/api/v1/machines", nil)
 		ctx := context.WithValue(context.Background(), types.UserContextKey, u)
@@ -426,7 +426,7 @@ func Test_RBACMiddleware(t *testing.T) {
 	})
 
 	t.Run("missing user", func(t *testing.T) {
-		h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "machine")
+		h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "machine", logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		req.Header.Set("X-Organization-Id", oid.String())
@@ -435,7 +435,7 @@ func Test_RBACMiddleware(t *testing.T) {
 	})
 
 	t.Run("invalid user type", func(t *testing.T) {
-		h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "machine")
+		h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "machine", logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		req.Header.Set("X-Organization-Id", oid.String())
@@ -449,7 +449,7 @@ func Test_RBACMiddleware(t *testing.T) {
 			Roles:       []string{"viewer"},
 			Permissions: []string{"user:read"},
 		}))
-		h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "machine")
+		h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "machine", logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/", nil)
 		req.Header.Set("X-Organization-Id", oid.String())
@@ -459,7 +459,7 @@ func Test_RBACMiddleware(t *testing.T) {
 	})
 
 	t.Run("missing org in header and context", func(t *testing.T) {
-		h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "machine")
+		h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "machine", logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/", nil)
 		ctx := context.WithValue(context.Background(), types.UserContextKey, u)
@@ -507,7 +507,7 @@ func Test_validateCachedPermissions_and_validateAndCachePermissions(t *testing.T
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	ok := validateAndCachePermissions(ctx, ctxUser, oid, "user:read", app)
+	ok := validateAndCachePermissions(ctx, ctxUser, oid, "user:read", app, logger.NewLogger())
 	require.True(t, ok)
 
 	cacheRBACPermissionsFromMember(uid, oid, &BetterAuthMember{UserID: uid, Role: []interface{}{"viewer"}})
@@ -516,24 +516,24 @@ func Test_validateCachedPermissions_and_validateAndCachePermissions(t *testing.T
 func Test_extractOrganizationID(t *testing.T) {
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	require.Empty(t, extractOrganizationID(rec, req))
+	require.Empty(t, extractOrganizationID(rec, req, logger.NewLogger()))
 	require.Equal(t, http.StatusBadRequest, rec.Code)
 
 	rec2 := httptest.NewRecorder()
 	req2 := httptest.NewRequest(http.MethodGet, "/", nil)
 	req2.Header.Set("X-Organization-Id", "not-uuid")
-	require.Empty(t, extractOrganizationID(rec2, req2))
+	require.Empty(t, extractOrganizationID(rec2, req2, logger.NewLogger()))
 
 	oid := uuid.New().String()
 	rec3 := httptest.NewRecorder()
 	req3 := httptest.NewRequest(http.MethodGet, "/", nil)
 	req3.Header.Set("X-Organization-Id", oid)
-	require.Equal(t, oid, extractOrganizationID(rec3, req3))
+	require.Equal(t, oid, extractOrganizationID(rec3, req3, logger.NewLogger()))
 
 	rec4 := httptest.NewRecorder()
 	req4 := httptest.NewRequest(http.MethodGet, "/", nil)
 	cctx := context.WithValue(context.Background(), types.OrganizationIDKey, oid)
-	require.Equal(t, oid, extractOrganizationID(rec4, req4.WithContext(cctx)))
+	require.Equal(t, oid, extractOrganizationID(rec4, req4.WithContext(cctx), logger.NewLogger()))
 }
 
 func Test_FeatureFlagMiddleware(t *testing.T) {

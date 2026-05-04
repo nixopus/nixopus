@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -10,10 +11,9 @@ import (
 )
 
 func (u *UserController) UpdateAvatar(s fuego.ContextWithBody[types.UpdateAvatarRequest]) (*types.MessageResponse, error) {
-	u.logger.Log(logger.Info, "updating user avatar", "")
-
 	req, err := s.Body()
 	if err != nil {
+		u.logUserDebug("UpdateAvatar", fmt.Sprintf("parse body: %v", err), "")
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -31,14 +31,18 @@ func (u *UserController) UpdateAvatar(s fuego.ContextWithBody[types.UpdateAvatar
 
 	user := utils.GetUser(w, r)
 	if user == nil {
+		u.logUserDebug("UpdateAvatar", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := fmt.Sprintf("%s avatar_payload_len=%d", userRequestData(r, user), len(req.AvatarData))
+	u.logger.Log(logger.Info, "user: UpdateAvatar", ctxStr)
+
 	err = u.service.UpdateAvatar(s.Request().Context(), user.ID.String(), &req)
 	if err != nil {
-		u.logger.Log(logger.Error, err.Error(), "")
+		u.logger.Log(logger.Error, fmt.Sprintf("user: UpdateAvatar: %v", err), userRequestData(r, user))
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

@@ -23,11 +23,11 @@ func NewHealthCheckController(
 	ctx context.Context,
 	l logger.Logger,
 ) *HealthCheckController {
-	healthCheckStorage := storage.HealthCheckStorage{DB: store.DB, Ctx: ctx}
+	healthCheckStorage := storage.HealthCheckStorage{DB: store.DB, Ctx: ctx, Logger: &l}
 	healthCheckService := service.NewHealthCheckService(store, ctx, l, &healthCheckStorage)
 	return &HealthCheckController{
 		store:     store,
-		validator: validation.NewValidator(&healthCheckStorage),
+		validator: validation.NewValidatorWithLogger(&healthCheckStorage, &l),
 		service:   healthCheckService,
 		ctx:       ctx,
 		logger:    l,

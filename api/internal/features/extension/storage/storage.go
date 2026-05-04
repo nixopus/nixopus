@@ -4,14 +4,24 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 
 type ExtensionStorage struct {
-	DB  *bun.DB
-	Ctx context.Context
+	DB     *bun.DB
+	Ctx    context.Context
+	Logger *logger.Logger // optional; nil disables storage logs
+}
+
+func (s *ExtensionStorage) storageLog(sev logger.Severity, msg, data string) {
+	if s.Logger == nil {
+		return
+	}
+	s.Logger.Log(sev, msg, data)
 }
 
 type ExtensionStorageInterface interface {
@@ -26,8 +36,11 @@ type ExtensionStorageInterface interface {
 }
 
 func (s *ExtensionStorage) CreateExtension(extension *types.Extension) error {
+	ctxStr := fmt.Sprintf("extension_id=%s", extension.ExtensionID)
+	s.storageLog(logger.Debug, "storage: CreateExtension", ctxStr)
 	_, err := s.DB.NewInsert().Model(extension).Exec(s.Ctx)
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: CreateExtension: %v", err), ctxStr)
 		return err
 	}
 	return nil
@@ -37,14 +50,18 @@ func (s *ExtensionStorage) CreateExtensionVariables(vars []types.ExtensionVariab
 	if len(vars) == 0 {
 		return nil
 	}
+	s.storageLog(logger.Debug, "storage: CreateExtensionVariables", fmt.Sprintf("count=%d", len(vars)))
 	_, err := s.DB.NewInsert().Model(&vars).Exec(s.Ctx)
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: CreateExtensionVariables: %v", err), "")
 		return err
 	}
 	return nil
 }
 
 func (s *ExtensionStorage) GetExtension(id string) (*types.Extension, error) {
+	ctxStr := fmt.Sprintf("id=%s", id)
+	s.storageLog(logger.Debug, "storage: GetExtension", ctxStr)
 	var extension types.Extension
 	err := s.DB.NewSelect().
 		Model(&extension).
@@ -53,14 +70,19 @@ func (s *ExtensionStorage) GetExtension(id string) (*types.Extension, error) {
 		Scan(s.Ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			s.storageLog(logger.Debug, "storage: GetExtension not found", ctxStr)
 			return nil, errors.New("extension not found")
 		}
+		s.storageLog(logger.Error, fmt.Sprintf("storage: GetExtension: %v", err), ctxStr)
 		return nil, err
 	}
+	s.storageLog(logger.Debug, "storage: GetExtension ok", ctxStr)
 	return &extension, nil
 }
 
 func (s *ExtensionStorage) GetExtensionByID(extensionID string) (*types.Extension, error) {
+	ctxStr := fmt.Sprintf("extension_id=%s", extensionID)
+	s.storageLog(logger.Debug, "storage: GetExtensionByID", ctxStr)
 	var extension types.Extension
 	err := s.DB.NewSelect().
 		Model(&extension).
@@ -69,31 +91,40 @@ func (s *ExtensionStorage) GetExtensionByID(extensionID string) (*types.Extensio
 		Scan(s.Ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			s.storageLog(logger.Debug, "storage: GetExtensionByID not found", ctxStr)
 			return nil, errors.New("extension not found")
 		}
+		s.storageLog(logger.Error, fmt.Sprintf("storage: GetExtensionByID: %v", err), ctxStr)
 		return nil, err
 	}
+	s.storageLog(logger.Debug, "storage: GetExtensionByID ok", ctxStr)
 	return &extension, nil
 }
 
 func (s *ExtensionStorage) UpdateExtension(extension *types.Extension) error {
+	ctxStr := fmt.Sprintf("id=%s extension_id=%s", extension.ID, extension.ExtensionID)
+	s.storageLog(logger.Debug, "storage: UpdateExtension", ctxStr)
 	_, err := s.DB.NewUpdate().
 		Model(extension).
 		Where("id = ?", extension.ID).
 		Exec(s.Ctx)
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: UpdateExtension: %v", err), ctxStr)
 		return err
 	}
 	return nil
 }
 
 func (s *ExtensionStorage) DeleteExtension(id string) error {
+	ctxStr := fmt.Sprintf("id=%s", id)
+	s.storageLog(logger.Debug, "storage: DeleteExtension", ctxStr)
 	_, err := s.DB.NewUpdate().
 		Model((*types.Extension)(nil)).
 		Set("deleted_at = NOW()").
 		Where("id = ?", id).
 		Exec(s.Ctx)
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: DeleteExtension: %v", err), ctxStr)
 		return err
 	}
 	return nil
@@ -114,6 +145,18 @@ func (s *ExtensionStorage) ListExtensions(params types.ExtensionListParams) (*ty
 	if params.SortDir == "" {
 		params.SortDir = types.SortDirectionAsc
 	}
+
+	ctxStr := fmt.Sprintf("page=%d page_size=%d sort_by=%s sort_dir=%s", params.Page, params.PageSize, params.SortBy, params.SortDir)
+	if params.Category != nil {
+		ctxStr += fmt.Sprintf(" category=%s", *params.Category)
+	}
+	if params.Type != nil {
+		ctxStr += fmt.Sprintf(" type=%s", *params.Type)
+	}
+	if params.Search != "" {
+		ctxStr += fmt.Sprintf(" search=%q", params.Search)
+	}
+	s.storageLog(logger.Debug, "storage: ListExtensions", ctxStr)
 
 	query := s.DB.NewSelect().
 		Model(&extensions).
@@ -170,6 +213,7 @@ func (s *ExtensionStorage) ListExtensions(params types.ExtensionListParams) (*ty
 
 	total, err := countQuery.Count(s.Ctx)
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: ListExtensions count: %v", err), ctxStr)
 		return nil, err
 	}
 
@@ -178,6 +222,7 @@ func (s *ExtensionStorage) ListExtensions(params types.ExtensionListParams) (*ty
 
 	err = query.Scan(s.Ctx)
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: ListExtensions scan: %v", err), ctxStr)
 		return nil, err
 	}
 
@@ -187,6 +232,7 @@ func (s *ExtensionStorage) ListExtensions(params types.ExtensionListParams) (*ty
 		extensions = make([]types.Extension, 0)
 	}
 
+	s.storageLog(logger.Debug, "storage: ListExtensions ok", fmt.Sprintf("%s total=%d rows=%d", ctxStr, total, len(extensions)))
 	return &types.ExtensionListResponse{
 		Extensions: extensions,
 		Total:      total,
@@ -197,6 +243,7 @@ func (s *ExtensionStorage) ListExtensions(params types.ExtensionListParams) (*ty
 }
 
 func (s *ExtensionStorage) ListCategories() ([]types.ExtensionCategory, error) {
+	s.storageLog(logger.Debug, "storage: ListCategories", "")
 	var categories []types.ExtensionCategory
 	err := s.DB.NewSelect().
 		TableExpr("extensions").
@@ -204,7 +251,9 @@ func (s *ExtensionStorage) ListCategories() ([]types.ExtensionCategory, error) {
 		Where("deleted_at IS NULL").
 		Scan(s.Ctx, &categories)
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: ListCategories: %v", err), "")
 		return nil, err
 	}
+	s.storageLog(logger.Debug, "storage: ListCategories ok", fmt.Sprintf("count=%d", len(categories)))
 	return categories, nil
 }

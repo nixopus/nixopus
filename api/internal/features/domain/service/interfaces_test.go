@@ -27,7 +27,7 @@ func TestNewDomainsService_NonNil(t *testing.T) {
 // ---------------------------------------------------------------------------
 
 func TestNewRealDNSResolver_NonNil(t *testing.T) {
-	r := NewRealDNSResolver()
+	r := NewRealDNSResolver(nil)
 	if r == nil {
 		t.Fatal("expected non-nil RealDNSResolver")
 	}

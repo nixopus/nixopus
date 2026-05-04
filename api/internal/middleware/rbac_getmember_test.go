@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	betterauth "github.com/nixopus/nixopus/api/internal/features/auth"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,7 +26,7 @@ func Test_getBetterAuthOrganizationMember_newRequestError(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", "http://example.invalid")
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "o")
+	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "o", logger.NewLogger())
 	require.ErrorContains(t, err, "failed to create request")
 }
 
@@ -43,7 +44,7 @@ func Test_getBetterAuthOrganizationMember_httpDoError(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001")
+	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001", logger.NewLogger())
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "failed to fetch organization members")
 }
@@ -57,7 +58,7 @@ func Test_getBetterAuthOrganizationMember_nonOK(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001")
+	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001", logger.NewLogger())
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "Better Auth API returned status 403")
 }
@@ -76,7 +77,7 @@ func Test_getBetterAuthOrganizationMember_readBodyError(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001")
+	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001", logger.NewLogger())
 	require.ErrorContains(t, err, "failed to read response")
 }
 
@@ -93,7 +94,7 @@ func Test_getBetterAuthOrganizationMember_directArray(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	m, err := getBetterAuthOrganizationMember(context.Background(), nil, uid, oid)
+	m, err := getBetterAuthOrganizationMember(context.Background(), nil, uid, oid, logger.NewLogger())
 	require.NoError(t, err)
 	require.NotNil(t, m)
 	require.Equal(t, uid, m.UserID)
@@ -113,7 +114,7 @@ func Test_getBetterAuthOrganizationMember_dataWrapper(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	m, err := getBetterAuthOrganizationMember(context.Background(), nil, uid, oid)
+	m, err := getBetterAuthOrganizationMember(context.Background(), nil, uid, oid, logger.NewLogger())
 	require.NoError(t, err)
 	rs, ok := m.Role.(string)
 	require.True(t, ok)
@@ -134,7 +135,7 @@ func Test_getBetterAuthOrganizationMember_membersWrapper(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	m, err := getBetterAuthOrganizationMember(context.Background(), nil, uid, oid)
+	m, err := getBetterAuthOrganizationMember(context.Background(), nil, uid, oid, logger.NewLogger())
 	require.NoError(t, err)
 	require.NotNil(t, m)
 }
@@ -150,7 +151,7 @@ func Test_getBetterAuthOrganizationMember_dataUnmarshalError(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001")
+	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001", logger.NewLogger())
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "failed to parse data array")
 }
@@ -166,7 +167,7 @@ func Test_getBetterAuthOrganizationMember_membersUnmarshalError(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001")
+	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001", logger.NewLogger())
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "failed to parse members array")
 }
@@ -184,7 +185,7 @@ func Test_getBetterAuthOrganizationMember_singleMemberObject(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	m, err := getBetterAuthOrganizationMember(context.Background(), nil, uid, oid)
+	m, err := getBetterAuthOrganizationMember(context.Background(), nil, uid, oid, logger.NewLogger())
 	require.NoError(t, err)
 	require.NotNil(t, m)
 }
@@ -200,7 +201,7 @@ func Test_getBetterAuthOrganizationMember_singleMemberUnmarshalNoUserID(t *testi
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001")
+	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001", logger.NewLogger())
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "response does not contain array or single member")
 }
@@ -216,7 +217,7 @@ func Test_getBetterAuthOrganizationMember_parseBodyNeitherArrayNorObject(t *test
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001")
+	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "u", "00000000-0000-0000-0000-000000000001", logger.NewLogger())
 	require.Error(t, err)
 	require.True(t, strings.Contains(err.Error(), "failed to parse response") || strings.Contains(err.Error(), "failed to parse"))
 }
@@ -232,7 +233,7 @@ func Test_getBetterAuthOrganizationMember_userNotInList(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "me", "o")
+	_, err := getBetterAuthOrganizationMember(context.Background(), nil, "me", "o", logger.NewLogger())
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "is not a member")
 }
@@ -258,7 +259,7 @@ func Test_getBetterAuthOrganizationMember_forwardsHeaders(t *testing.T) {
 	origReq.Header.Set("x-api-key", "k")
 	origReq.AddCookie(&http.Cookie{Name: "a", Value: "b"})
 
-	m, err := getBetterAuthOrganizationMember(context.Background(), origReq, uid, oid)
+	m, err := getBetterAuthOrganizationMember(context.Background(), origReq, uid, oid, logger.NewLogger())
 	require.NoError(t, err)
 	require.NotNil(t, m)
 	require.True(t, sawAuth)

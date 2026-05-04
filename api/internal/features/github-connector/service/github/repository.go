@@ -17,26 +17,29 @@ import (
 
 // GetRepositoryByID fetches repository metadata from GitHub by numeric repo ID.
 func (a *API) GetRepositoryByID(userID string, repoID uint64) (*shared_types.GithubRepository, error) {
+	ctxStr := fmt.Sprintf("user_id=%s repo_id=%d", userID, repoID)
 	connectors, err := a.Storage.GetAllConnectors(userID)
 	if err != nil {
-		a.Logger.Log(logger.Error, err.Error(), "")
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryByID list connectors: %v", err), ctxStr)
 		return nil, err
 	}
 	if len(connectors) == 0 {
-		a.Logger.Log(logger.Error, "No connectors found for user", userID)
+		a.Logger.Log(logger.Error, "github connector service: GetRepositoryByID no connectors", ctxStr)
 		return nil, fmt.Errorf("no connectors found for user")
 	}
 	jwt := GenerateJwt(&connectors[0])
 	if jwt == "" {
+		a.Logger.Log(logger.Error, "github connector service: GetRepositoryByID JWT generation failed", ctxStr)
 		return nil, fmt.Errorf("failed to generate app JWT")
 	}
 	accessToken, err := InstallationToken(jwt, connectors[0].InstallationID)
 	if err != nil {
-		a.Logger.Log(logger.Error, fmt.Sprintf("Failed to get installation token: %s", err.Error()), "")
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryByID installation token: %v", err), ctxStr)
 		return nil, err
 	}
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repositories/%d", APIBaseURL, repoID), nil)
 	if err != nil {
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryByID new request: %v", err), ctxStr)
 		return nil, err
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", accessToken))
@@ -44,15 +47,18 @@ func (a *API) GetRepositoryByID(userID string, repoID uint64) (*shared_types.Git
 	req.Header.Set("User-Agent", "nixopus")
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryByID request: %v", err), ctxStr)
 		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryByID GitHub API: %s - %s", resp.Status, string(bodyBytes)), ctxStr)
 		return nil, fmt.Errorf("GitHub API error: %s - %s", resp.Status, string(bodyBytes))
 	}
 	var repo shared_types.GithubRepository
 	if err := json.NewDecoder(resp.Body).Decode(&repo); err != nil {
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryByID decode: %v", err), ctxStr)
 		return nil, err
 	}
 	return &repo, nil
@@ -60,27 +66,31 @@ func (a *API) GetRepositoryByID(userID string, repoID uint64) (*shared_types.Git
 
 // GetRepositoryBranches lists branches for a repo (owner/repo name or numeric ID).
 func (a *API) GetRepositoryBranches(userID, repositoryName string) ([]shared_types.GithubRepositoryBranch, error) {
+	ctxStr := fmt.Sprintf("user_id=%s repository=%s", userID, repositoryName)
 	connectors, err := a.Storage.GetAllConnectors(userID)
 	if err != nil {
-		a.Logger.Log(logger.Error, err.Error(), "")
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryBranches list connectors: %v", err), ctxStr)
 		return nil, err
 	}
 	if len(connectors) == 0 {
+		a.Logger.Log(logger.Debug, "github connector service: GetRepositoryBranches no connectors", ctxStr)
 		return []shared_types.GithubRepositoryBranch{}, nil
 	}
 	jwt := GenerateJwt(&connectors[0])
 	if jwt == "" {
+		a.Logger.Log(logger.Error, "github connector service: GetRepositoryBranches JWT generation failed", ctxStr)
 		return nil, fmt.Errorf("failed to generate app JWT")
 	}
 	accessToken, err := InstallationToken(jwt, connectors[0].InstallationID)
 	if err != nil {
-		a.Logger.Log(logger.Error, fmt.Sprintf("Failed to get installation token: %s", err.Error()), "")
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryBranches installation token: %v", err), ctxStr)
 		return nil, err
 	}
 	var repoFullName string
 	if repoID, err := strconv.ParseUint(repositoryName, 10, 64); err == nil {
 		repo, err := a.GetRepositoryByID(userID, repoID)
 		if err != nil {
+			a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryBranches resolve repo id: %v", err), ctxStr)
 			return nil, fmt.Errorf("failed to get repository details: %s", err.Error())
 		}
 		repoFullName = repo.FullName
@@ -89,6 +99,7 @@ func (a *API) GetRepositoryBranches(userID, repositoryName string) ([]shared_typ
 	}
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/repos/%s/branches", APIBaseURL, repoFullName), nil)
 	if err != nil {
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryBranches new request: %v", err), ctxStr)
 		return nil, err
 	}
 	req.Header.Set("Authorization", fmt.Sprintf("token %s", accessToken))
@@ -96,15 +107,18 @@ func (a *API) GetRepositoryBranches(userID, repositoryName string) ([]shared_typ
 	req.Header.Set("User-Agent", "nixopus")
 	resp, err := (&http.Client{}).Do(req)
 	if err != nil {
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryBranches request: %v", err), ctxStr)
 		return nil, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryBranches GitHub API: %s - %s", resp.Status, string(bodyBytes)), ctxStr)
 		return nil, fmt.Errorf("GitHub API error: %s - %s", resp.Status, string(bodyBytes))
 	}
 	var branches []shared_types.GithubRepositoryBranch
 	if err := json.NewDecoder(resp.Body).Decode(&branches); err != nil {
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryBranches decode: %v", err), ctxStr)
 		return nil, err
 	}
 	return branches, nil
@@ -119,10 +133,11 @@ type contentResponse struct {
 func (a *API) GetRepositoryFileContent(userID, repository, branch, filePath string) ([]byte, error) {
 	connectors, err := a.Storage.GetAllConnectors(userID)
 	if err != nil {
-		a.Logger.Log(logger.Error, err.Error(), "")
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: GetRepositoryFileContent list connectors: %v", err), fmt.Sprintf("user_id=%s", userID))
 		return nil, err
 	}
 	if len(connectors) == 0 {
+		a.Logger.Log(logger.Error, "github connector service: GetRepositoryFileContent no connectors", fmt.Sprintf("user_id=%s", userID))
 		return nil, fmt.Errorf("no GitHub connectors found for user")
 	}
 	jwt := GenerateJwt(&connectors[0])
@@ -206,6 +221,6 @@ func LatestCommitHash(log logger.Logger, repoURL string, accessToken string) (st
 	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
 		return "", fmt.Errorf("failed to decode response: %s", err.Error())
 	}
-	log.Log(logger.Info, fmt.Sprintf("Latest commit hash: %s", response.SHA), "")
+	log.Log(logger.Info, fmt.Sprintf("github connector service: LatestCommitHash %s", response.SHA), "")
 	return response.SHA, nil
 }

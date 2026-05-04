@@ -120,7 +120,7 @@ func (t *SSHTunnel) handleConnections(lgr logger.Logger) {
 			if errors.Is(err, net.ErrClosed) || isConnectionLevelError(err) {
 				return
 			}
-			lgr.Log(logger.Error, "SSH tunnel listener error", err.Error())
+			lgr.Log(logger.Error, "deploy docker: SSH tunnel listener error", err.Error())
 			return
 		}
 
@@ -137,26 +137,26 @@ func (t *SSHTunnel) forwardConnection(localConn net.Conn, lgr logger.Logger) {
 
 	conn, err := t.getConn()
 	if err != nil {
-		lgr.Log(logger.Error, "Failed to establish SSH connection", err.Error())
+		lgr.Log(logger.Error, "deploy docker: failed to establish SSH connection", err.Error())
 		return
 	}
 
 	remoteConn, err := conn.Dial("unix", remoteDockerSocket)
 	if err != nil {
 		if !isConnectionLevelError(err) {
-			lgr.Log(logger.Error, "Failed to connect to remote Docker socket", err.Error())
+			lgr.Log(logger.Error, "deploy docker: failed to connect to remote Docker socket", err.Error())
 			return
 		}
 		// Connection-level error: reset and retry once.
 		t.resetConn()
 		conn, err = t.getConn()
 		if err != nil {
-			lgr.Log(logger.Error, "Failed to re-establish SSH connection", err.Error())
+			lgr.Log(logger.Error, "deploy docker: failed to re-establish SSH connection", err.Error())
 			return
 		}
 		remoteConn, err = conn.Dial("unix", remoteDockerSocket)
 		if err != nil {
-			lgr.Log(logger.Error, "Failed to connect to remote Docker socket", err.Error())
+			lgr.Log(logger.Error, "deploy docker: failed to connect to remote Docker socket", err.Error())
 			return
 		}
 	}

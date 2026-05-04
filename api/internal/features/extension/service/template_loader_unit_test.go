@@ -118,7 +118,7 @@ func TestNewTemplateLoader(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = sqldb.Close() })
 	db := bun.NewDB(sqldb, sqlitedialect.New())
-	l := NewTemplateLoader(db)
+	l := NewTemplateLoader(db, nil)
 	require.NotNil(t, l)
 }
 

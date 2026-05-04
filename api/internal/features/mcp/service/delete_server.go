@@ -1,12 +1,14 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 func (s *MCPService) DeleteServer(id string, orgID uuid.UUID) error {
-	s.logger.Log(logger.Info, "Deleting MCP server", id)
+	s.logger.Log(logger.Info, "mcp service: DeleteServer", fmt.Sprintf("org_id=%s server_id=%s", orgID, id))
 
 	serverID, err := uuid.Parse(id)
 	if err != nil {

@@ -31,7 +31,7 @@ func WithRetry(op func() error, maxRetries int, lgr logger.Logger, onFailure fun
 				backoff = DefaultMaxDelay
 			}
 
-			lgr.Log(logger.Warning, fmt.Sprintf("caddy operation failed (attempt %d/%d), retrying in %s", i+1, maxRetries, backoff), err.Error())
+			lgr.Log(logger.Warning, fmt.Sprintf("deploy caddy: caddy operation failed (attempt %d/%d), retrying in %s", i+1, maxRetries, backoff), err.Error())
 
 			if onFailure != nil {
 				onFailure()

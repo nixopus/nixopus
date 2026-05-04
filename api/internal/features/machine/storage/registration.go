@@ -2,16 +2,21 @@ package storage
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	api_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 
 type RegistrationStorage struct {
-	db  *bun.DB
-	ctx context.Context
+	db     *bun.DB
+	ctx    context.Context
+	Logger *logger.Logger // optional; nil disables storage logs
 }
 
 func NewRegistrationStorage(db *bun.DB, ctx context.Context) *RegistrationStorage {
@@ -41,7 +46,12 @@ func (s *RegistrationStorage) HostPortExists(orgID uuid.UUID, host string, port 
 }
 
 func (s *RegistrationStorage) InsertSSHKey(key *api_types.SSHKey) error {
+	ctxStr := fmt.Sprintf("org_id=%s ssh_key_id=%s", key.OrganizationID, key.ID)
+	storageLog(s.Logger, logger.Debug, "storage: InsertSSHKey", ctxStr)
 	_, err := s.db.NewInsert().Model(key).Exec(s.ctx)
+	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: InsertSSHKey: %v", err), ctxStr)
+	}
 	return err
 }
 
@@ -83,6 +93,9 @@ func (s *RegistrationStorage) InsertProvisionDetailsTx(tx bun.Tx, userID, orgID,
 }
 
 func (s *RegistrationStorage) GetSSHKeyByID(id, orgID uuid.UUID) (*api_types.SSHKey, error) {
+	ctxStr := fmt.Sprintf("org_id=%s machine_id=%s", orgID, id)
+	storageLog(s.Logger, logger.Debug, "storage: GetSSHKeyByID", ctxStr)
+
 	var key api_types.SSHKey
 	err := s.db.NewSelect().
 		Model(&key).
@@ -91,6 +104,11 @@ func (s *RegistrationStorage) GetSSHKeyByID(id, orgID uuid.UUID) (*api_types.SSH
 		Where("deleted_at IS NULL").
 		Scan(s.ctx)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetSSHKeyByID not found", ctxStr)
+		} else {
+			storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetSSHKeyByID: %v", err), ctxStr)
+		}
 		return nil, err
 	}
 	return &key, nil
@@ -120,6 +138,8 @@ func (s *RegistrationStorage) HasActiveAppServers(sshKeyID uuid.UUID) (bool, err
 }
 
 func (s *RegistrationStorage) SoftDeleteSSHKey(id uuid.UUID) error {
+	ctxStr := fmt.Sprintf("ssh_key_id=%s", id)
+	storageLog(s.Logger, logger.Debug, "storage: SoftDeleteSSHKey", ctxStr)
 	_, err := s.db.NewUpdate().
 		Model((*api_types.SSHKey)(nil)).
 		Set("deleted_at = ?", time.Now()).
@@ -127,6 +147,9 @@ func (s *RegistrationStorage) SoftDeleteSSHKey(id uuid.UUID) error {
 		Where("id = ?", id).
 		Where("deleted_at IS NULL").
 		Exec(s.ctx)
+	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: SoftDeleteSSHKey: %v", err), ctxStr)
+	}
 	return err
 }
 
@@ -201,6 +224,9 @@ func (s *RegistrationStorage) GetProvisionDetailsBySSHKeyID(sshKeyID uuid.UUID) 
 }
 
 func (s *RegistrationStorage) GetMachineIsActive(serverID uuid.UUID) (bool, error) {
+	ctxStr := fmt.Sprintf("server_id=%s", serverID)
+	storageLog(s.Logger, logger.Debug, "storage: GetMachineIsActive", ctxStr)
+
 	var key api_types.SSHKey
 	err := s.db.NewSelect().
 		Model(&key).
@@ -210,12 +236,19 @@ func (s *RegistrationStorage) GetMachineIsActive(serverID uuid.UUID) (bool, erro
 		Limit(1).
 		Scan(s.ctx)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetMachineIsActive not found", ctxStr)
+		} else {
+			storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetMachineIsActive: %v", err), ctxStr)
+		}
 		return false, err
 	}
 	return key.IsActive, nil
 }
 
 func (s *RegistrationStorage) SetMachineActive(serverID uuid.UUID, active bool) error {
+	ctxStr := fmt.Sprintf("server_id=%s active=%t", serverID, active)
+	storageLog(s.Logger, logger.Debug, "storage: SetMachineActive", ctxStr)
 	_, err := s.db.NewUpdate().
 		Model((*api_types.SSHKey)(nil)).
 		Set("is_active = ?", active).
@@ -223,10 +256,15 @@ func (s *RegistrationStorage) SetMachineActive(serverID uuid.UUID, active bool) 
 		Where("id = ?", serverID).
 		Where("deleted_at IS NULL").
 		Exec(s.ctx)
+	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: SetMachineActive: %v", err), ctxStr)
+	}
 	return err
 }
 
 func (s *RegistrationStorage) UpdateMachineName(id uuid.UUID, name string) error {
+	ctxStr := fmt.Sprintf("machine_id=%s", id)
+	storageLog(s.Logger, logger.Debug, "storage: UpdateMachineName", ctxStr)
 	_, err := s.db.NewUpdate().
 		Model((*api_types.SSHKey)(nil)).
 		Set("name = ?", name).
@@ -234,6 +272,9 @@ func (s *RegistrationStorage) UpdateMachineName(id uuid.UUID, name string) error
 		Where("id = ?", id).
 		Where("deleted_at IS NULL").
 		Exec(s.ctx)
+	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: UpdateMachineName: %v", err), ctxStr)
+	}
 	return err
 }
 

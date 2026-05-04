@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -36,9 +37,10 @@ func NewTrailController(
 	c *cache.Cache,
 ) *TrailController {
 	trailStorage := machine_storage.NewTrailStorage(store.DB, ctx)
+	trailStorage.Logger = &l
 
 	return &TrailController{
-		validator: validation.NewValidator(),
+		validator: validation.NewValidatorWithLogger(&l),
 		service:   machine_service.NewTrailService(store, ctx, l, trailStorage),
 		ctx:       ctx,
 		logger:    l,
@@ -75,31 +77,35 @@ func (c *TrailController) ProvisionTrail(f fuego.ContextWithBody[machine_types.P
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logTrialDebug("ProvisionTrail", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := r.Header.Get("X-Organization-Id")
 	if orgID == "" {
+		c.logTrialDebug("ProvisionTrail", "organization header required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.ForbiddenError{Detail: machine_types.ErrOrganizationRequired.Error(), Err: machine_types.ErrOrganizationRequired}
 	}
 
 	if _, err := uuid.Parse(orgID); err != nil {
+		c.logTrialDebug("ProvisionTrail", "invalid organization ID", fmt.Sprintf("user_id=%s org_id=%s", user.ID, orgID))
 		return nil, fuego.BadRequestError{Detail: machine_types.ErrInvalidOrganizationID.Error(), Err: machine_types.ErrInvalidOrganizationID}
 	}
 
 	body, err := f.Body()
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), user.ID.String())
+		c.logger.Log(logger.Debug, fmt.Sprintf("machine trial: ProvisionTrail body: %v", err), fmt.Sprintf("user_id=%s org_id=%s", user.ID, orgID))
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	if err := c.validator.ValidateRequest(&body); err != nil {
+		c.logger.Log(logger.Debug, fmt.Sprintf("machine trial: ProvisionTrail validation: %v", err), fmt.Sprintf("user_id=%s org_id=%s", user.ID, orgID))
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	result, err := c.service.ProvisionTrail(user.ID.String(), orgID, body)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), user.ID.String())
+		c.logger.Log(logger.Error, fmt.Sprintf("machine trial: ProvisionTrail: %v", err), fmt.Sprintf("user_id=%s org_id=%s", user.ID, orgID))
 		status := mapTrialErrorToStatus(err)
 		return nil, fuego.HTTPError{
 			Err:    err,
@@ -125,21 +131,24 @@ func (c *TrailController) GetStatus(f fuego.ContextNoBody) (*machine_types.Trail
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logTrialDebug("GetTrailStatus", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	sessionID := f.PathParam("sessionId")
 	if sessionID == "" {
+		c.logTrialDebug("GetTrailStatus", "session_id required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: machine_types.ErrInvalidSessionID.Error(), Err: machine_types.ErrInvalidSessionID}
 	}
 
 	if _, err := uuid.Parse(sessionID); err != nil {
+		c.logTrialDebug("GetTrailStatus", "invalid session_id", fmt.Sprintf("user_id=%s session_id=%s", user.ID, sessionID))
 		return nil, fuego.BadRequestError{Detail: machine_types.ErrInvalidSessionID.Error(), Err: machine_types.ErrInvalidSessionID}
 	}
 
 	result, err := c.service.GetStatus(user.ID.String(), sessionID)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), user.ID.String())
+		c.logger.Log(logger.Error, fmt.Sprintf("machine trial: GetTrailStatus: %v", err), fmt.Sprintf("user_id=%s session_id=%s", user.ID, sessionID))
 		status := mapTrialErrorToStatus(err)
 		return nil, fuego.HTTPError{
 			Err:    err,
@@ -161,25 +170,28 @@ func (c *TrailController) UpgradeResources(f fuego.ContextWithBody[machine_types
 
 	secret := r.Header.Get("X-Internal-Secret")
 	if secret == "" || secret != config.AppConfig.BetterAuth.Secret {
+		c.logTrialDebug("UpgradeResources", "unauthorized internal call", "")
 		return nil, fuego.UnauthorizedError{Detail: "unauthorized", Err: errors.New("unauthorized")}
 	}
 
 	body, err := f.Body()
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Debug, fmt.Sprintf("machine trial: UpgradeResources body: %v", err), "")
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	if body.UserID == "" || body.OrgID == "" {
+		c.logTrialDebug("UpgradeResources", "user_id and org_id required", "")
 		return nil, fuego.BadRequestError{Detail: "user_id and org_id are required", Err: errors.New("user_id and org_id are required")}
 	}
 
 	if body.VcpuCount <= 0 || body.MemoryMB <= 0 {
+		c.logTrialDebug("UpgradeResources", "invalid vcpu or memory", fmt.Sprintf("user_id=%s org_id=%s", body.UserID, body.OrgID))
 		return nil, fuego.BadRequestError{Detail: "vcpu_count and memory_mb must be positive", Err: errors.New("vcpu_count and memory_mb must be positive")}
 	}
 
 	if err := c.service.UpgradeResources(body.UserID, body.OrgID, body.VcpuCount, body.MemoryMB); err != nil {
-		c.logger.Log(logger.Error, err.Error(), body.UserID)
+		c.logger.Log(logger.Error, fmt.Sprintf("machine trial: UpgradeResources: %v", err), fmt.Sprintf("user_id=%s org_id=%s", body.UserID, body.OrgID))
 		status := mapTrialErrorToStatus(err)
 		return nil, fuego.HTTPError{
 			Err:    err,
@@ -192,4 +204,8 @@ func (c *TrailController) UpgradeResources(f fuego.ContextWithBody[machine_types
 		Status:  "success",
 		Message: "Resource upgrade enqueued",
 	}, nil
+}
+
+func (c *TrailController) logTrialDebug(handler, reason, data string) {
+	c.logger.Log(logger.Debug, fmt.Sprintf("machine trial: %s: %s", handler, reason), data)
 }

@@ -46,7 +46,7 @@ func sqliteTelemetryDB(t *testing.T) (*bun.DB, context.Context) {
 func TestNewTelemetryStorage(t *testing.T) {
 	t.Parallel()
 	db, ctx := sqliteTelemetryDB(t)
-	s := storage.NewTelemetryStorage(db, ctx)
+	s := storage.NewTelemetryStorage(db, ctx, nil)
 	require.NotNil(t, s)
 	assert.Equal(t, db, s.DB)
 	assert.Equal(t, ctx, s.Ctx)
@@ -55,7 +55,7 @@ func TestNewTelemetryStorage(t *testing.T) {
 func TestCreateInstallEvent_success(t *testing.T) {
 	t.Parallel()
 	db, ctx := sqliteTelemetryDB(t)
-	s := storage.NewTelemetryStorage(db, ctx)
+	s := storage.NewTelemetryStorage(db, ctx, nil)
 
 	event := &types.CliInstallation{
 		ID:        uuid.New(),
@@ -81,7 +81,7 @@ func TestCreateInstallEvent_dbError(t *testing.T) {
 	t.Parallel()
 	db, ctx := sqliteTelemetryDB(t)
 	require.NoError(t, db.Close())
-	s := storage.NewTelemetryStorage(db, ctx)
+	s := storage.NewTelemetryStorage(db, ctx, nil)
 
 	err := s.CreateInstallEvent(&types.CliInstallation{ID: uuid.New()})
 	require.Error(t, err)

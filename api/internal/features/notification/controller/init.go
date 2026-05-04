@@ -3,6 +3,7 @@ package controller
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/notification/storage"
 	"github.com/nixopus/nixopus/api/internal/features/notification/validation"
 	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/utils"
 )
 
 type NotificationController struct {
@@ -28,9 +30,9 @@ func NewNotificationController(
 	l logger.Logger,
 	dispatcher *notification.Dispatcher,
 ) *NotificationController {
-	s := storage.NotificationStorage{DB: store.DB, Ctx: ctx}
+	s := storage.NotificationStorage{DB: store.DB, Ctx: ctx, Logger: &l}
 	return &NotificationController{
-		validator:  validation.NewValidator(&s),
+		validator:  validation.NewValidatorWithLogger(&s, &l),
 		service:    service.NewNotificationService(store, ctx, l, &s),
 		ctx:        ctx,
 		logger:     l,
@@ -39,20 +41,22 @@ func NewNotificationController(
 }
 
 func (c *NotificationController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
+	data := notificationRequestLogData(r, utils.GetUser(w, r))
+
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		c.logger.Log(logger.Error, "Failed to read request body", err.Error())
+		c.logger.Log(logger.Debug, fmt.Sprintf("notification: parseAndValidate: read body: %v", err), data)
 		return false
 	}
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 
 	if err := c.validator.ParseRequestBody(r, io.NopCloser(bytes.NewBuffer(bodyBytes)), req); err != nil {
-		c.logger.Log(logger.Error, "Failed to decode request", err.Error())
+		c.logger.Log(logger.Debug, fmt.Sprintf("notification: parseAndValidate: decode JSON: %v", err), data)
 		return false
 	}
 
 	if err := c.validator.ValidateRequest(req); err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
+		c.logger.Log(logger.Debug, fmt.Sprintf("notification: parseAndValidate: validation: %v", err), data)
 		return false
 	}
 

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -22,7 +23,7 @@ func ListContainers(
 		Filters: buildDockerFilters(params),
 	})
 	if err != nil {
-		l.Log(logger.Error, err.Error(), "")
+		l.Log(logger.Error, fmt.Sprintf("container service: ListContainers: %v", err), "")
 		return container_types.ListContainersResponse{}, err
 	}
 

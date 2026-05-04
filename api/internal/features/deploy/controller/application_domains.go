@@ -41,7 +41,7 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 
 	data, err := f.Body()
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to read request body", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to read request body", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -133,7 +133,7 @@ func (c *DeployController) AddApplicationDomain(f fuego.ContextWithBody[AddAppli
 
 	err = c.storage.AddApplicationDomainWithService(appID, data.Domain, composeServiceID, data.Port)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to add domain", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to add domain", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -173,7 +173,7 @@ func (c *DeployController) RemoveApplicationDomain(f fuego.ContextWithBody[Remov
 
 	data, err := f.Body()
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to read request body", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to read request body", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -221,7 +221,7 @@ func (c *DeployController) RemoveApplicationDomain(f fuego.ContextWithBody[Remov
 	// Remove domain from database
 	err = c.storage.RemoveApplicationDomain(appID, data.Domain)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to remove domain", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to remove domain", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -231,9 +231,9 @@ func (c *DeployController) RemoveApplicationDomain(f fuego.ContextWithBody[Remov
 
 	orgCtx := context.WithValue(f.Request().Context(), shared_types.OrganizationIDKey, organizationID.String())
 	if err := caddy.RemoveDomainsWithRetry(orgCtx, nil, &c.logger, []string{data.Domain}); err != nil {
-		c.logger.Log(logger.Warning, "failed to remove domain from proxy, enqueueing for retry", err.Error())
+		c.logger.Log(logger.Warning, "deploy: failed to remove domain from proxy, enqueueing for retry", err.Error())
 		if enqErr := caddy.EnqueuePendingRemoval(organizationID, data.Domain); enqErr != nil {
-			c.logger.Log(logger.Error, "failed to enqueue pending removal", enqErr.Error())
+			c.logger.Log(logger.Error, "deploy: failed to enqueue pending removal", enqErr.Error())
 		}
 	}
 
@@ -284,9 +284,9 @@ func (c *DeployController) syncApplicationDomains(appID uuid.UUID, organizationI
 			}
 			orgCtx := context.WithValue(c.ctx, shared_types.OrganizationIDKey, organizationID.String())
 			if err := caddy.RemoveDomainsWithRetry(orgCtx, nil, &c.logger, []string{actualDomain}); err != nil {
-				c.logger.Log(logger.Warning, "failed to remove domain from proxy, enqueueing for retry", err.Error())
+				c.logger.Log(logger.Warning, "deploy: failed to remove domain from proxy, enqueueing for retry", err.Error())
 				if enqErr := caddy.EnqueuePendingRemoval(organizationID, actualDomain); enqErr != nil {
-					c.logger.Log(logger.Error, "failed to enqueue pending removal", enqErr.Error())
+					c.logger.Log(logger.Error, "deploy: failed to enqueue pending removal", enqErr.Error())
 				}
 			}
 		}
@@ -320,7 +320,7 @@ func (c *DeployController) syncApplicationDomains(appID uuid.UUID, organizationI
 				if app.BuildPack != shared_types.DockerCompose {
 					port, portErr = resolveDockerPublishedPort(orgCtx, app.Name)
 					if portErr != nil {
-						c.logger.Log(logger.Warning, fmt.Sprintf("failed to resolve port for %s, skipping domain routing: %v", app.Name, portErr), "")
+						c.logger.Log(logger.Warning, fmt.Sprintf("deploy: failed to resolve port for %s, skipping domain routing: %v", app.Name, portErr), "")
 					}
 				}
 				if port > 0 {
@@ -369,9 +369,9 @@ func (c *DeployController) syncComposeApplicationDomains(appID uuid.UUID, organi
 			}
 			orgCtx := context.WithValue(c.ctx, shared_types.OrganizationIDKey, organizationID.String())
 			if err := caddy.RemoveDomainsWithRetry(orgCtx, nil, &c.logger, []string{actualDomain}); err != nil {
-				c.logger.Log(logger.Warning, "failed to remove domain from proxy, enqueueing for retry", err.Error())
+				c.logger.Log(logger.Warning, "deploy: failed to remove domain from proxy, enqueueing for retry", err.Error())
 				if enqErr := caddy.EnqueuePendingRemoval(organizationID, actualDomain); enqErr != nil {
-					c.logger.Log(logger.Error, "failed to enqueue pending removal", enqErr.Error())
+					c.logger.Log(logger.Error, "deploy: failed to enqueue pending removal", enqErr.Error())
 				}
 			}
 		}
@@ -463,7 +463,7 @@ func (c *DeployController) tryAddRoutesToProxy(orgID uuid.UUID, routes []caddy.D
 	}
 	orgCtx := context.WithValue(c.ctx, shared_types.OrganizationIDKey, orgID.String())
 	if err := caddy.AddDomainsWithRetry(orgCtx, nil, &c.logger, routes); err != nil {
-		c.logger.Log(logger.Warning, "failed to add domains to proxy, will be synced on next deploy", err.Error())
+		c.logger.Log(logger.Warning, "deploy: failed to add domains to proxy, will be synced on next deploy", err.Error())
 	}
 }
 
@@ -472,7 +472,7 @@ func (c *DeployController) buildProxyRoutes(orgID uuid.UUID, app shared_types.Ap
 
 	upstreamHost, err := resolveSSHUpstreamHost(orgCtx)
 	if err != nil {
-		c.logger.Log(logger.Warning, "skipping proxy update: cannot resolve upstream host", err.Error())
+		c.logger.Log(logger.Warning, "deploy: skipping proxy update: cannot resolve upstream host", err.Error())
 		return nil
 	}
 
@@ -488,7 +488,7 @@ func (c *DeployController) buildProxyRoutes(orgID uuid.UUID, app shared_types.Ap
 	} else {
 		port, err = resolveDockerPublishedPort(orgCtx, app.Name)
 		if err != nil {
-			c.logger.Log(logger.Warning, "skipping proxy update: cannot resolve published port", err.Error())
+			c.logger.Log(logger.Warning, "deploy: skipping proxy update: cannot resolve published port", err.Error())
 			return nil
 		}
 	}
@@ -583,7 +583,7 @@ func (c *DeployController) GetComposeServices(f fuego.ContextNoBody) (*types.Com
 
 	services, err := c.storage.GetComposeServices(appID)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to get compose services", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to get compose services", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

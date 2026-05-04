@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -16,14 +17,17 @@ func (c *UserController) GetUserPreferences(s fuego.ContextNoBody) (*types.UserP
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logUserDebug("GetUserPreferences", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := userRequestData(r, user)
+
 	prefs, err := c.service.GetUserPreferences(user.ID.String())
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to get user preferences", err.Error())
+		c.logger.Log(logger.Error, fmt.Sprintf("user: GetUserPreferences: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -44,13 +48,17 @@ func (c *UserController) UpdateUserPreferences(s fuego.ContextWithBody[shared_ty
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logUserDebug("UpdateUserPreferences", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := userRequestData(r, user)
+
 	req, err := s.Body()
 	if err != nil {
+		c.logUserDebug("UpdateUserPreferences", fmt.Sprintf("parse body: %v", err), ctxStr)
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -59,7 +67,7 @@ func (c *UserController) UpdateUserPreferences(s fuego.ContextWithBody[shared_ty
 
 	prefs, err := c.service.UpdateUserPreferences(user.ID.String(), req)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to update user preferences", err.Error())
+		c.logger.Log(logger.Error, fmt.Sprintf("user: UpdateUserPreferences: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

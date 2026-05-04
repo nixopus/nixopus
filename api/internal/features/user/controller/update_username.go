@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -10,10 +11,9 @@ import (
 )
 
 func (u *UserController) UpdateUserName(s fuego.ContextWithBody[types.UpdateUserNameRequest]) (*types.UpdateUsernameResponse, error) {
-	u.logger.Log(logger.Info, "updating user name", "")
-
 	req, err := s.Body()
 	if err != nil {
+		u.logUserDebug("UpdateUserName", fmt.Sprintf("parse body: %v", err), "")
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -31,15 +31,19 @@ func (u *UserController) UpdateUserName(s fuego.ContextWithBody[types.UpdateUser
 
 	user := utils.GetUser(w, r)
 	if user == nil {
+		u.logUserDebug("UpdateUserName", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := userRequestData(r, user)
+	u.logger.Log(logger.Info, "user: UpdateUserName", ctxStr)
+
 	err = u.service.UpdateUsername(user.ID.String(), &req)
 
 	if err != nil {
-		u.logger.Log(logger.Error, err.Error(), "")
+		u.logger.Log(logger.Error, fmt.Sprintf("user: UpdateUserName: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

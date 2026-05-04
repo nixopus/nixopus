@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -43,10 +44,12 @@ func (c *MachineController) GetMachineMetrics(f fuego.ContextNoBody) (*machine_t
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 	if user == nil {
+		c.logMachineDebug("GetMachineMetrics", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
+		c.logMachineDebug("GetMachineMetrics", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
@@ -56,7 +59,11 @@ func (c *MachineController) GetMachineMetrics(f fuego.ContextNoBody) (*machine_t
 
 	resp, err := c.metricsService.GetMetrics(r.Context(), orgID, serverID, from, to, limit)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), orgID.String())
+		data := fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID)
+		if serverID != nil {
+			data = fmt.Sprintf("%s server_id=%s", data, *serverID)
+		}
+		c.logger.Log(logger.Error, fmt.Sprintf("machine: GetMachineMetrics: %v", err), data)
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 	return resp, nil
@@ -66,10 +73,12 @@ func (c *MachineController) GetMachineEvents(f fuego.ContextNoBody) (*machine_ty
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 	if user == nil {
+		c.logMachineDebug("GetMachineEvents", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
+		c.logMachineDebug("GetMachineEvents", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
@@ -79,7 +88,11 @@ func (c *MachineController) GetMachineEvents(f fuego.ContextNoBody) (*machine_ty
 
 	resp, err := c.metricsService.GetEvents(r.Context(), orgID, serverID, from, to, limit)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), orgID.String())
+		data := fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID)
+		if serverID != nil {
+			data = fmt.Sprintf("%s server_id=%s", data, *serverID)
+		}
+		c.logger.Log(logger.Error, fmt.Sprintf("machine: GetMachineEvents: %v", err), data)
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 	return resp, nil
@@ -89,10 +102,12 @@ func (c *MachineController) GetMachineMetricsSummary(f fuego.ContextNoBody) (*ma
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 	if user == nil {
+		c.logMachineDebug("GetMachineMetricsSummary", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
+		c.logMachineDebug("GetMachineMetricsSummary", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
@@ -101,7 +116,11 @@ func (c *MachineController) GetMachineMetricsSummary(f fuego.ContextNoBody) (*ma
 
 	resp, err := c.metricsService.GetSummary(r.Context(), orgID, serverID, from, to)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), orgID.String())
+		data := fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID)
+		if serverID != nil {
+			data = fmt.Sprintf("%s server_id=%s", data, *serverID)
+		}
+		c.logger.Log(logger.Error, fmt.Sprintf("machine: GetMachineMetricsSummary: %v", err), data)
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 	return resp, nil

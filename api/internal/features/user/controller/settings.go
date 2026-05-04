@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -19,13 +20,17 @@ func (c *UserController) UpdateFont(s fuego.ContextWithBody[UpdateFontRequest]) 
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logUserDebug("UpdateFont", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := userRequestData(r, user)
+
 	req, err := s.Body()
 	if err != nil {
+		c.logUserDebug("UpdateFont", fmt.Sprintf("parse body: %v", err), ctxStr)
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -34,7 +39,7 @@ func (c *UserController) UpdateFont(s fuego.ContextWithBody[UpdateFontRequest]) 
 
 	settings, err := c.service.UpdateFont(user.ID.String(), req.FontFamily, req.FontSize)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to update font settings", err.Error())
+		c.logger.Log(logger.Error, fmt.Sprintf("user: UpdateFont: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -58,13 +63,17 @@ func (c *UserController) UpdateTheme(s fuego.ContextWithBody[UpdateThemeRequest]
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logUserDebug("UpdateTheme", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := userRequestData(r, user)
+
 	req, err := s.Body()
 	if err != nil {
+		c.logUserDebug("UpdateTheme", fmt.Sprintf("parse body: %v", err), ctxStr)
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -73,7 +82,7 @@ func (c *UserController) UpdateTheme(s fuego.ContextWithBody[UpdateThemeRequest]
 
 	settings, err := c.service.UpdateTheme(user.ID.String(), req.Theme)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to update theme", err.Error())
+		c.logger.Log(logger.Error, fmt.Sprintf("user: UpdateTheme: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -97,13 +106,17 @@ func (c *UserController) UpdateLanguage(s fuego.ContextWithBody[UpdateLanguageRe
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logUserDebug("UpdateLanguage", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := userRequestData(r, user)
+
 	req, err := s.Body()
 	if err != nil {
+		c.logUserDebug("UpdateLanguage", fmt.Sprintf("parse body: %v", err), ctxStr)
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -112,7 +125,7 @@ func (c *UserController) UpdateLanguage(s fuego.ContextWithBody[UpdateLanguageRe
 
 	settings, err := c.service.UpdateLanguage(user.ID.String(), req.Language)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to update language", err.Error())
+		c.logger.Log(logger.Error, fmt.Sprintf("user: UpdateLanguage: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -136,13 +149,17 @@ func (c *UserController) UpdateAutoUpdate(s fuego.ContextWithBody[UpdateAutoUpda
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logUserDebug("UpdateAutoUpdate", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := userRequestData(r, user)
+
 	req, err := s.Body()
 	if err != nil {
+		c.logUserDebug("UpdateAutoUpdate", fmt.Sprintf("parse body: %v", err), ctxStr)
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -151,7 +168,7 @@ func (c *UserController) UpdateAutoUpdate(s fuego.ContextWithBody[UpdateAutoUpda
 
 	settings, err := c.service.UpdateAutoUpdate(user.ID.String(), req.AutoUpdate)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to update auto update setting", err.Error())
+		c.logger.Log(logger.Error, fmt.Sprintf("user: UpdateAutoUpdate: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -171,14 +188,17 @@ func (c *UserController) GetSettings(s fuego.ContextNoBody) (*types.UserSettings
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logUserDebug("GetSettings", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := userRequestData(r, user)
+
 	settings, err := c.service.GetSettings(user.ID.String())
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to get user settings", err.Error())
+		c.logger.Log(logger.Error, fmt.Sprintf("user: GetSettings: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
