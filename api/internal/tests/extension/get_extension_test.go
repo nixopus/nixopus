@@ -115,26 +115,26 @@ func seedTestExtension(t *testing.T, setup *testutils.TestSetup) (id uuid.UUID, 
 
 func TestIntegration_NewTemplateLoader(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	l := extservice.NewTemplateLoader(setup.DB)
+	l := extservice.NewTemplateLoader(setup.DB, nil)
 	require.NotNil(t, l)
 }
 
 func TestIntegration_TemplateLoader_LoadExtensionsFromDirectory_empty(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	l := extservice.NewTemplateLoader(setup.DB)
+	l := extservice.NewTemplateLoader(setup.DB, nil)
 	require.NoError(t, l.LoadExtensionsFromDirectory(setup.Ctx, t.TempDir()))
 }
 
 func TestIntegration_TemplateLoader_LoadExtensionsFromDirectory_nonexistent(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	l := extservice.NewTemplateLoader(setup.DB)
+	l := extservice.NewTemplateLoader(setup.DB, nil)
 	err := l.LoadExtensionsFromDirectory(setup.Ctx, "/nonexistent-template-dir-xyz")
 	require.Error(t, err)
 }
 
 func TestIntegration_TemplateLoader_insert_skip_update_orphan_restore(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	l := extservice.NewTemplateLoader(setup.DB)
+	l := extservice.NewTemplateLoader(setup.DB, nil)
 
 	extID := "svc-tpl-" + strings.ReplaceAll(uuid.New().String(), "-", "")
 	orphanID := "svc-tpl-" + strings.ReplaceAll(uuid.New().String(), "-", "")
@@ -190,7 +190,7 @@ func TestIntegration_TemplateLoader_insert_skip_update_orphan_restore(t *testing
 
 func TestIntegration_TemplateLoader_insert_noVariables(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	l := extservice.NewTemplateLoader(setup.DB)
+	l := extservice.NewTemplateLoader(setup.DB, nil)
 	extID := "svc-tpl-novar-" + strings.ReplaceAll(uuid.New().String(), "-", "")[:20]
 	root := t.TempDir()
 	sub := filepath.Join(root, "nv")
@@ -205,14 +205,14 @@ func TestIntegration_TemplateLoader_insert_noVariables(t *testing.T) {
 
 func TestIntegration_TemplateLoader_GetExtensionByID_notFound(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	l := extservice.NewTemplateLoader(setup.DB)
+	l := extservice.NewTemplateLoader(setup.DB, nil)
 	_, err := l.GetExtensionByID(setup.Ctx, "no-such-extension-id-zzzzz")
 	require.Error(t, err)
 }
 
 func TestIntegration_TemplateLoader_LoadExtensionsFromTemplates(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	l := extservice.NewTemplateLoader(setup.DB)
+	l := extservice.NewTemplateLoader(setup.DB, nil)
 	wd, err := os.Getwd()
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = os.Chdir(wd) })
@@ -231,7 +231,7 @@ func TestIntegration_TemplateLoader_LoadExtensionsFromTemplates(t *testing.T) {
 
 func TestIntegration_TemplateLoader_secondLoad(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	l := extservice.NewTemplateLoader(setup.DB)
+	l := extservice.NewTemplateLoader(setup.DB, nil)
 	root := t.TempDir()
 	extID := "svc-tpl-rmnoop-" + strings.ReplaceAll(uuid.New().String(), "-", "")
 	tplWriteTree(t, root, "one", extID, "1.0.0")
@@ -241,7 +241,7 @@ func TestIntegration_TemplateLoader_secondLoad(t *testing.T) {
 
 func TestIntegration_TemplateLoader_LoadExtensions_cancelledContext(t *testing.T) {
 	setup := testutils.NewTestSetup()
-	l := extservice.NewTemplateLoader(setup.DB)
+	l := extservice.NewTemplateLoader(setup.DB, nil)
 	extID := "svc-tpl-cancel-" + strings.ReplaceAll(uuid.New().String(), "-", "")[:16]
 	root := t.TempDir()
 	tplWriteTree(t, root, "x", extID, "1.0.0")
