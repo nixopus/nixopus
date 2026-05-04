@@ -16,18 +16,18 @@ import (
 // It copies all configurations from the source project and creates a new project in draft status.
 // Both projects are linked via a shared family_id.
 func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
-	s.logger.Log(logger.Info, "duplicating project", "source_id: "+req.SourceProjectID.String())
+	s.logger.Log(logger.Info, "deploy service: duplicating project", "source_id: "+req.SourceProjectID.String())
 
 	// Get the source project
 	sourceProject, err := s.storage.GetApplicationById(req.SourceProjectID.String(), organizationID)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to get source project", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to get source project", err.Error())
 		return shared_types.Application{}, types.ErrApplicationNotFound
 	}
 
 	// Check if trying to duplicate with the same environment
 	if sourceProject.Environment == req.Environment {
-		s.logger.Log(logger.Error, "cannot duplicate with same environment", "")
+		s.logger.Log(logger.Error, "deploy service: cannot duplicate with same environment", "")
 		return shared_types.Application{}, types.ErrSameEnvironmentAsDuplicate
 	}
 
@@ -39,11 +39,11 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 		// Check if the environment already exists in the family
 		exists, err := s.storage.IsEnvironmentInFamily(familyID, req.Environment)
 		if err != nil {
-			s.logger.Log(logger.Error, "failed to check environment in family", err.Error())
+			s.logger.Log(logger.Error, "deploy service: failed to check environment in family", err.Error())
 			return shared_types.Application{}, err
 		}
 		if exists {
-			s.logger.Log(logger.Error, "environment already exists in family", "")
+			s.logger.Log(logger.Error, "deploy service: environment already exists in family", "")
 			return shared_types.Application{}, types.ErrEnvironmentAlreadyExistsInFamily
 		}
 	} else {
@@ -52,7 +52,7 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 
 		// Update the source project with the new family_id
 		if err := s.storage.UpdateApplicationFamilyID(sourceProject.ID, &familyID); err != nil {
-			s.logger.Log(logger.Error, "failed to update source project family_id", err.Error())
+			s.logger.Log(logger.Error, "deploy service: failed to update source project family_id", err.Error())
 			return shared_types.Application{}, err
 		}
 	}
@@ -93,7 +93,7 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 
 	// Save the new project
 	if err := s.storage.AddApplication(&newProject); err != nil {
-		s.logger.Log(logger.Error, "failed to create duplicate project", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to create duplicate project", err.Error())
 		return shared_types.Application{}, err
 	}
 
@@ -110,11 +110,11 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 			req.PrimaryServerID,
 			routingStrategy,
 		); err != nil {
-			s.logger.Log(logger.Warning, "failed to set application servers for duplicate", err.Error())
+			s.logger.Log(logger.Warning, "deploy service: failed to set application servers for duplicate", err.Error())
 		}
 	} else {
 		if err := s.storage.CopyApplicationServers(sourceProject.ID, newProject.ID); err != nil {
-			s.logger.Log(logger.Warning, "failed to copy application servers to duplicate", err.Error())
+			s.logger.Log(logger.Warning, "deploy service: failed to copy application servers to duplicate", err.Error())
 		}
 	}
 
@@ -128,7 +128,7 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 	}
 
 	if err := s.storage.AddApplicationStatus(&appStatus); err != nil {
-		s.logger.Log(logger.Error, "failed to create application status", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to create application status", err.Error())
 		return shared_types.Application{}, err
 	}
 
@@ -138,7 +138,7 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 	// metadata available for domain-to-service assignment in the UI.
 	sourceServices, err := s.storage.GetComposeServices(sourceProject.ID)
 	if err != nil {
-		s.logger.Log(logger.Warning, "failed to load source compose services", err.Error())
+		s.logger.Log(logger.Warning, "deploy service: failed to load source compose services", err.Error())
 	} else if len(sourceServices) > 0 {
 		var newServices []shared_types.ComposeService
 		for _, svc := range sourceServices {
@@ -148,7 +148,7 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 			})
 		}
 		if err := s.storage.UpsertComposeServices(newProject.ID, newServices); err != nil {
-			s.logger.Log(logger.Warning, "failed to copy compose services to duplicate", err.Error())
+			s.logger.Log(logger.Warning, "deploy service: failed to copy compose services to duplicate", err.Error())
 		}
 	}
 
@@ -158,12 +158,12 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 		// Load domains from source project
 		sourceDomains, err := s.storage.GetApplicationDomains(sourceProject.ID)
 		if err != nil {
-			s.logger.Log(logger.Error, "failed to load source domains", err.Error())
+			s.logger.Log(logger.Error, "deploy service: failed to load source domains", err.Error())
 			return shared_types.Application{}, err
 		}
 		// When duplicating across environments, require explicit domains to avoid routing conflicts
 		if sourceProject.Environment != req.Environment {
-			s.logger.Log(logger.Error, "domains required when duplicating across environments", "")
+			s.logger.Log(logger.Error, "deploy service: domains required when duplicating across environments", "")
 			return shared_types.Application{}, types.ErrMissingDomain
 		}
 		// Same environment: copy domains from source
@@ -175,13 +175,13 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 	// Add domains to new project
 	if len(domains) > 0 {
 		if err := s.storage.AddApplicationDomains(newProject.ID, domains); err != nil {
-			s.logger.Log(logger.Error, "failed to add domains to duplicate project", err.Error())
+			s.logger.Log(logger.Error, "deploy service: failed to add domains to duplicate project", err.Error())
 			return shared_types.Application{}, err
 		}
 		// Load domains into newProject for response
 		domainsList, err := s.storage.GetApplicationDomains(newProject.ID)
 		if err != nil {
-			s.logger.Log(logger.Error, "failed to load domains after duplication", err.Error())
+			s.logger.Log(logger.Error, "deploy service: failed to load domains after duplication", err.Error())
 			return shared_types.Application{}, err
 		}
 		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
@@ -191,17 +191,17 @@ func (s *DeployService) DuplicateProject(req *types.DuplicateProjectRequest, use
 		newProject.Domains = domainPtrs
 	}
 
-	s.logger.Log(logger.Info, "project duplicated successfully", "new_id: "+newProject.ID.String())
+	s.logger.Log(logger.Info, "deploy service: project duplicated successfully", "new_id: "+newProject.ID.String())
 	return newProject, nil
 }
 
 // GetProjectFamily retrieves all projects that belong to a family.
 func (s *DeployService) GetProjectFamily(familyID uuid.UUID, organizationID uuid.UUID) ([]shared_types.Application, error) {
-	s.logger.Log(logger.Info, "getting project family", "family_id: "+familyID.String())
+	s.logger.Log(logger.Info, "deploy service: getting project family", "family_id: "+familyID.String())
 
 	projects, err := s.storage.GetProjectsByFamilyID(familyID, organizationID)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to get project family", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to get project family", err.Error())
 		return nil, err
 	}
 
@@ -214,11 +214,11 @@ func (s *DeployService) GetProjectFamily(familyID uuid.UUID, organizationID uuid
 
 // GetEnvironmentsInFamily retrieves all environments that exist in a project family.
 func (s *DeployService) GetEnvironmentsInFamily(familyID uuid.UUID, organizationID uuid.UUID) ([]shared_types.Environment, error) {
-	s.logger.Log(logger.Info, "getting environments in family", "family_id: "+familyID.String())
+	s.logger.Log(logger.Info, "deploy service: getting environments in family", "family_id: "+familyID.String())
 
 	environments, err := s.storage.GetEnvironmentsInFamily(familyID, organizationID)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to get environments in family", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to get environments in family", err.Error())
 		return nil, err
 	}
 
@@ -228,7 +228,7 @@ func (s *DeployService) GetEnvironmentsInFamily(familyID uuid.UUID, organization
 // AddApplicationToFamily adds a new application to an existing family (or creates a new family).
 // This is used for multi-application monorepo setups where multiple apps share the same repository.
 func (s *DeployService) AddApplicationToFamily(req *types.AddApplicationToFamilyRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
-	s.logger.Log(logger.Info, "adding application to family", "name: "+req.Name)
+	s.logger.Log(logger.Info, "deploy service: adding application to family", "name: "+req.Name)
 
 	// Determine family_id
 	var familyID *uuid.UUID
@@ -237,11 +237,11 @@ func (s *DeployService) AddApplicationToFamily(req *types.AddApplicationToFamily
 		// Validate that the family exists and belongs to the organization
 		existingApps, err := s.storage.GetProjectsByFamilyID(*familyID, organizationID)
 		if err != nil {
-			s.logger.Log(logger.Error, "failed to validate family", err.Error())
+			s.logger.Log(logger.Error, "deploy service: failed to validate family", err.Error())
 			return shared_types.Application{}, err
 		}
 		if len(existingApps) == 0 {
-			s.logger.Log(logger.Error, "family not found", "")
+			s.logger.Log(logger.Error, "deploy service: family not found", "")
 			return shared_types.Application{}, types.ErrProjectFamilyNotFound
 		}
 	} else {
@@ -305,7 +305,7 @@ func (s *DeployService) AddApplicationToFamily(req *types.AddApplicationToFamily
 
 	// Save the application
 	if err := s.storage.AddApplication(&application); err != nil {
-		s.logger.Log(logger.Error, "failed to create application", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to create application", err.Error())
 		return shared_types.Application{}, err
 	}
 
@@ -319,26 +319,26 @@ func (s *DeployService) AddApplicationToFamily(req *types.AddApplicationToFamily
 	}
 
 	if err := s.storage.AddApplicationStatus(&appStatus); err != nil {
-		s.logger.Log(logger.Error, "failed to create application status", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to create application status", err.Error())
 		return shared_types.Application{}, err
 	}
 
 	application.Status = &appStatus
 
 	if err := s.storage.EnsureApplicationServers(application.ID, organizationID); err != nil {
-		s.logger.Log(logger.Warning, "failed to ensure application servers for family app", err.Error())
+		s.logger.Log(logger.Warning, "deploy service: failed to ensure application servers for family app", err.Error())
 	}
 
 	// Add domains if provided
 	if len(req.Domains) > 0 {
 		if err := s.storage.AddApplicationDomains(application.ID, req.Domains); err != nil {
-			s.logger.Log(logger.Error, "failed to add domains", err.Error())
+			s.logger.Log(logger.Error, "deploy service: failed to add domains", err.Error())
 			return shared_types.Application{}, err
 		}
 		// Load domains into application for response
 		domainsList, err := s.storage.GetApplicationDomains(application.ID)
 		if err != nil {
-			s.logger.Log(logger.Error, "failed to load domains after creation", err.Error())
+			s.logger.Log(logger.Error, "deploy service: failed to load domains after creation", err.Error())
 			return shared_types.Application{}, err
 		}
 		domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
@@ -348,7 +348,7 @@ func (s *DeployService) AddApplicationToFamily(req *types.AddApplicationToFamily
 		application.Domains = domainPtrs
 	}
 
-	s.logger.Log(logger.Info, "application added to family successfully", "id: "+application.ID.String())
+	s.logger.Log(logger.Info, "deploy service: application added to family successfully", "id: "+application.ID.String())
 	return application, nil
 }
 

@@ -68,12 +68,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 				t.RegisterCancellation(deploymentID, cancel)
 				defer t.DeregisterCancellation(deploymentID)
 
-				t.Logger.Log(logger.Info, "starting create deployment", data.CorrelationID)
+				t.Logger.Log(logger.Info, "deploy tasks: starting create deployment", data.CorrelationID)
 				if err := t.BuildPack(ctx, data); err != nil {
-					t.Logger.Log(logger.Error, "create deployment failed: "+err.Error(), data.CorrelationID)
+					t.Logger.Log(logger.Error, "deploy tasks: create deployment failed: "+err.Error(), data.CorrelationID)
 					return err
 				}
-				t.Logger.Log(logger.Info, "create deployment completed", data.CorrelationID)
+				t.Logger.Log(logger.Info, "deploy tasks: create deployment completed", data.CorrelationID)
 				return nil
 			},
 		})
@@ -99,12 +99,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 				t.RegisterCancellation(deploymentID, cancel)
 				defer t.DeregisterCancellation(deploymentID)
 
-				t.Logger.Log(logger.Info, "starting update deployment", data.CorrelationID)
+				t.Logger.Log(logger.Info, "deploy tasks: starting update deployment", data.CorrelationID)
 				if err := t.HandleUpdateDeployment(ctx, data); err != nil {
-					t.Logger.Log(logger.Error, "update deployment failed: "+err.Error(), data.CorrelationID)
+					t.Logger.Log(logger.Error, "deploy tasks: update deployment failed: "+err.Error(), data.CorrelationID)
 					return err
 				}
-				t.Logger.Log(logger.Info, "update deployment completed", data.CorrelationID)
+				t.Logger.Log(logger.Info, "deploy tasks: update deployment completed", data.CorrelationID)
 				return nil
 			},
 		})
@@ -130,12 +130,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 				t.RegisterCancellation(deploymentID, cancel)
 				defer t.DeregisterCancellation(deploymentID)
 
-				t.Logger.Log(logger.Info, "starting redeploy", data.CorrelationID)
+				t.Logger.Log(logger.Info, "deploy tasks: starting redeploy", data.CorrelationID)
 				if err := t.HandleReDeploy(ctx, data); err != nil {
-					t.Logger.Log(logger.Error, "redeploy failed: "+err.Error(), data.CorrelationID)
+					t.Logger.Log(logger.Error, "deploy tasks: redeploy failed: "+err.Error(), data.CorrelationID)
 					return err
 				}
-				t.Logger.Log(logger.Info, "redeploy completed", data.CorrelationID)
+				t.Logger.Log(logger.Info, "deploy tasks: redeploy completed", data.CorrelationID)
 				return nil
 			},
 		})
@@ -155,12 +155,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:       TASK_ROLLBACK,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
-				t.Logger.Log(logger.Info, "starting rollback", data.CorrelationID)
+				t.Logger.Log(logger.Info, "deploy tasks: starting rollback", data.CorrelationID)
 				if err := t.HandleRollback(ctx, data); err != nil {
-					t.Logger.Log(logger.Error, "rollback failed: "+err.Error(), data.CorrelationID)
+					t.Logger.Log(logger.Error, "deploy tasks: rollback failed: "+err.Error(), data.CorrelationID)
 					return err
 				}
-				t.Logger.Log(logger.Info, "rollback completed", data.CorrelationID)
+				t.Logger.Log(logger.Info, "deploy tasks: rollback completed", data.CorrelationID)
 				return nil
 			},
 		})
@@ -180,12 +180,12 @@ func (t *TaskService) SetupCreateDeploymentQueue() {
 			Name:       TASK_RESTART,
 			RetryLimit: 1,
 			Handler: func(ctx context.Context, data shared_types.TaskPayload) error {
-				t.Logger.Log(logger.Info, "starting restart", data.CorrelationID)
+				t.Logger.Log(logger.Info, "deploy tasks: starting restart", data.CorrelationID)
 				if err := t.HandleRestart(ctx, data); err != nil {
-					t.Logger.Log(logger.Error, "restart failed: "+err.Error(), data.CorrelationID)
+					t.Logger.Log(logger.Error, "deploy tasks: restart failed: "+err.Error(), data.CorrelationID)
 					return err
 				}
-				t.Logger.Log(logger.Info, "restart completed", data.CorrelationID)
+				t.Logger.Log(logger.Info, "deploy tasks: restart completed", data.CorrelationID)
 				return nil
 			},
 		})

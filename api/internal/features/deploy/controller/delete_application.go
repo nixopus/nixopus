@@ -12,28 +12,28 @@ import (
 )
 
 func (c *DeployController) DeleteApplication(f fuego.ContextWithBody[types.DeleteDeploymentRequest]) (*types.MessageResponse, error) {
-	c.logger.Log(logger.Info, "starting application deletion process", "")
+	c.logger.Log(logger.Info, "deploy: starting application deletion process", "")
 
 	data, err := f.Body()
 	if err != nil {
 		if err == io.EOF {
-			c.logger.Log(logger.Error, "empty request body received", "id is required for deletion")
+			c.logger.Log(logger.Error, "deploy: empty request body received", "id is required for deletion")
 			return nil, fuego.BadRequestError{
 				Detail: types.ErrMissingID.Error(),
 				Err:    types.ErrMissingID,
 			}
 		}
-		c.logger.Log(logger.Error, "failed to read request body", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to read request body", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
 		}
 	}
 
-	c.logger.Log(logger.Info, "request body parsed successfully", "id: "+data.ID.String())
+	c.logger.Log(logger.Info, "deploy: request body parsed successfully", "id: "+data.ID.String())
 
 	if err := c.validator.ValidateRequest(&data); err != nil {
-		c.logger.Log(logger.Error, "request validation failed", "id: "+data.ID.String()+", error: "+err.Error())
+		c.logger.Log(logger.Error, "deploy: request validation failed", "id: "+data.ID.String()+", error: "+err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -42,7 +42,7 @@ func (c *DeployController) DeleteApplication(f fuego.ContextWithBody[types.Delet
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		c.logger.Log(logger.Error, "user authentication failed", "id: "+data.ID.String())
+		c.logger.Log(logger.Error, "deploy: user authentication failed", "id: "+data.ID.String())
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
@@ -50,17 +50,17 @@ func (c *DeployController) DeleteApplication(f fuego.ContextWithBody[types.Delet
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		c.logger.Log(logger.Error, "organization not found", "")
+		c.logger.Log(logger.Error, "deploy: organization not found", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "organization not found",
 		}
 	}
 
-	c.logger.Log(logger.Info, "attempting to delete application", "id: "+data.ID.String()+", user_id: "+user.ID.String())
+	c.logger.Log(logger.Info, "deploy: attempting to delete application", "id: "+data.ID.String()+", user_id: "+user.ID.String())
 
 	// err = c.service.DeleteDeployment(&data, user.ID, organizationID)
 	// if err != nil {
-	// 	c.logger.Log(logger.Error, "failed to delete application", "id: "+data.ID.String()+", error: "+err.Error())
+	// 	c.logger.Log(logger.Error, "deploy: failed to delete application", "id: "+data.ID.String()+", error: "+err.Error())
 	// 	return nil, fuego.HTTPError{
 	// 		Err:    err,
 	// 		Status: http.StatusInternalServerError,
@@ -69,7 +69,7 @@ func (c *DeployController) DeleteApplication(f fuego.ContextWithBody[types.Delet
 
 	err = c.taskService.DeleteDeployment(f.Request().Context(), &data, user.ID, organizationID)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to delete application", "id: "+data.ID.String()+", error: "+err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to delete application", "id: "+data.ID.String()+", error: "+err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -77,7 +77,7 @@ func (c *DeployController) DeleteApplication(f fuego.ContextWithBody[types.Delet
 		}
 	}
 
-	c.logger.Log(logger.Info, "application deleted successfully", "id: "+data.ID.String())
+	c.logger.Log(logger.Info, "deploy: application deleted successfully", "id: "+data.ID.String())
 	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Application deleted successfully",

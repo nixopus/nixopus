@@ -14,7 +14,7 @@ import (
 // CreateProject creates a new application without triggering deployment.
 // The application is saved with a "draft" status and can be deployed later.
 func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uuid.UUID, organizationID uuid.UUID) (shared_types.Application, error) {
-	s.logger.Log(logger.Info, "creating project without deployment", "name: "+req.Name)
+	s.logger.Log(logger.Info, "deploy service: creating project without deployment", "name: "+req.Name)
 
 	now := time.Now()
 
@@ -70,14 +70,14 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 	// Begin transaction for atomicity
 	tx, err := s.store.DB.BeginTx(s.Ctx, nil)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to begin transaction", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to begin transaction", err.Error())
 		return shared_types.Application{}, err
 	}
 	defer tx.Rollback()
 
 	// Save the application to the database
 	if _, err := tx.NewInsert().Model(&application).Exec(s.Ctx); err != nil {
-		s.logger.Log(logger.Error, "failed to create application", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to create application", err.Error())
 		return shared_types.Application{}, err
 	}
 
@@ -95,7 +95,7 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 				CreatedAt:     now,
 			}
 			if _, err := tx.NewInsert().Model(appDomain).Exec(s.Ctx); err != nil {
-				s.logger.Log(logger.Error, "failed to add domain", err.Error())
+				s.logger.Log(logger.Error, "deploy service: failed to add domain", err.Error())
 				return shared_types.Application{}, err
 			}
 		}
@@ -111,13 +111,13 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 	}
 
 	if _, err := tx.NewInsert().Model(&appStatus).Exec(s.Ctx); err != nil {
-		s.logger.Log(logger.Error, "failed to create application status", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to create application status", err.Error())
 		return shared_types.Application{}, err
 	}
 
 	// Commit transaction
 	if err := tx.Commit(); err != nil {
-		s.logger.Log(logger.Error, "failed to commit transaction", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to commit transaction", err.Error())
 		return shared_types.Application{}, err
 	}
 
@@ -128,23 +128,23 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 			req.PrimaryServerID,
 			req.RoutingStrategy,
 		); err != nil {
-			s.logger.Log(logger.Warning, "failed to set application servers", err.Error())
+			s.logger.Log(logger.Warning, "deploy service: failed to set application servers", err.Error())
 		}
 	} else {
 		if err := s.storage.EnsureApplicationServers(application.ID, organizationID); err != nil {
-			s.logger.Log(logger.Warning, "failed to ensure application servers", err.Error())
+			s.logger.Log(logger.Warning, "deploy service: failed to ensure application servers", err.Error())
 		}
 	}
 
 	if len(req.ComposeServices) > 0 {
 		if err := s.persistComposeServicesAndLinkDomains(application.ID, req.ComposeServices, req.ComposeDomains); err != nil {
-			s.logger.Log(logger.Error, "failed to persist compose services", err.Error())
+			s.logger.Log(logger.Error, "deploy service: failed to persist compose services", err.Error())
 		}
 	}
 
 	domainsList, err := s.storage.GetApplicationDomains(application.ID)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to load domains after creation", err.Error())
+		s.logger.Log(logger.Error, "deploy service: failed to load domains after creation", err.Error())
 		return shared_types.Application{}, err
 	}
 	domainPtrs := make([]*shared_types.ApplicationDomain, len(domainsList))
@@ -154,7 +154,7 @@ func (s *DeployService) CreateProject(req *types.CreateProjectRequest, userID uu
 	application.Domains = domainPtrs
 	application.Status = &appStatus
 
-	s.logger.Log(logger.Info, "project created successfully", "id: "+application.ID.String())
+	s.logger.Log(logger.Info, "deploy service: project created successfully", "id: "+application.ID.String())
 	return application, nil
 }
 
@@ -197,7 +197,7 @@ func (s *DeployService) persistComposeServicesAndLinkDomains(appID uuid.UUID, pr
 			port = svc.Port
 		}
 		if err := s.storage.UpdateApplicationDomainService(appID, domain, &svc.ID, &port); err != nil {
-			s.logger.Log(logger.Warning, "failed to link domain "+domain+" to service "+cd.ServiceName, err.Error())
+			s.logger.Log(logger.Warning, "deploy service: failed to link domain "+domain+" to service "+cd.ServiceName, err.Error())
 		}
 	}
 

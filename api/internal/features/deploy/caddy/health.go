@@ -127,10 +127,10 @@ func (h *HealthMonitor) run(ctx context.Context) {
 	for {
 		select {
 		case <-h.stopCh:
-			h.logger.Log(logger.Info, "health monitor stopped", "")
+			h.logger.Log(logger.Info, "deploy caddy: health monitor stopped", "")
 			return
 		case <-ctx.Done():
-			h.logger.Log(logger.Info, "health monitor context cancelled", "")
+			h.logger.Log(logger.Info, "deploy caddy: health monitor context cancelled", "")
 			return
 		case <-ticker.C:
 			h.enqueueAll(ctx)
@@ -143,12 +143,12 @@ func (h *HealthMonitor) run(ctx context.Context) {
 func (h *HealthMonitor) enqueueAll(ctx context.Context) {
 	orgIDs, err := h.orgFetcher(ctx)
 	if err != nil {
-		h.logger.Log(logger.Error, "health monitor: failed to fetch organizations", err.Error())
+		h.logger.Log(logger.Error, "deploy caddy: health monitor: failed to fetch organizations", err.Error())
 		return
 	}
 
 	if HealthCheckQueue == nil || TaskCaddyHealthCheck == nil {
-		h.logger.Log(logger.Warning, "health check queue not initialized, falling back to direct checks", "")
+		h.logger.Log(logger.Warning, "deploy caddy: health check queue not initialized, falling back to direct checks", "")
 		for _, orgID := range orgIDs {
 			h.checkServer(ctx, orgID)
 		}
@@ -162,7 +162,7 @@ func (h *HealthMonitor) enqueueAll(ctx context.Context) {
 		msg.OnceInPeriod(15 * time.Second)
 
 		if err := HealthCheckQueue.Add(msg); err != nil {
-			h.logger.Log(logger.Warning, "failed to enqueue health check for org "+orgID.String(), err.Error())
+			h.logger.Log(logger.Warning, "deploy caddy: failed to enqueue health check for org "+orgID.String(), err.Error())
 		}
 	}
 }
@@ -189,7 +189,7 @@ func (h *HealthMonitor) checkServer(ctx context.Context, orgID uuid.UUID) {
 		health := h.GetServerHealth(orgID)
 		if health != nil && health.FailCount >= 3 && h.shouldAttemptRestart(orgID) {
 			h.logger.Log(logger.Warning,
-				fmt.Sprintf("caddy on %s unreachable for %d consecutive checks, attempting recovery", host, health.FailCount),
+				fmt.Sprintf("deploy caddy: caddy on %s unreachable for %d consecutive checks, attempting recovery", host, health.FailCount),
 				orgID.String())
 			h.attemptCaddyRestart(orgCtx, orgID, host)
 		}
@@ -200,7 +200,7 @@ func (h *HealthMonitor) checkServer(ctx context.Context, orgID uuid.UUID) {
 
 	if !wasHealthy && existed {
 		h.logger.Log(logger.Info,
-			fmt.Sprintf("caddy on %s recovered, triggering reconciliation", host),
+			fmt.Sprintf("deploy caddy: caddy on %s recovered, triggering reconciliation", host),
 			orgID.String())
 		h.triggerReconciliation(orgID)
 	}
@@ -263,13 +263,13 @@ func (h *HealthMonitor) recordRestartAttempt(orgID uuid.UUID, containerMissing b
 func (h *HealthMonitor) attemptCaddyRestart(ctx context.Context, orgID uuid.UUID, host string) {
 	manager, err := getSSHManagerFromContextForCaddy(ctx)
 	if err != nil {
-		h.logger.Log(logger.Error, "failed to get SSH manager for caddy restart", err.Error())
+		h.logger.Log(logger.Error, "deploy caddy: failed to get SSH manager for caddy restart", err.Error())
 		return
 	}
 
 	sshClient, err := manager.GetDefaultSSH()
 	if err != nil {
-		h.logger.Log(logger.Error, "failed to get SSH config for caddy restart", err.Error())
+		h.logger.Log(logger.Error, "deploy caddy: failed to get SSH config for caddy restart", err.Error())
 		return
 	}
 
@@ -278,7 +278,7 @@ func (h *HealthMonitor) attemptCaddyRestart(ctx context.Context, orgID uuid.UUID
 	// the pooled connection.
 	conn, err := sshClient.Connect()
 	if err != nil {
-		h.logger.Log(logger.Error, "failed to SSH connect for caddy restart", err.Error())
+		h.logger.Log(logger.Error, "deploy caddy: failed to SSH connect for caddy restart", err.Error())
 		return
 	}
 	defer conn.Close()
@@ -287,7 +287,7 @@ func (h *HealthMonitor) attemptCaddyRestart(ctx context.Context, orgID uuid.UUID
 	dockerRestarted, containerMissing := h.tryDockerRestart(conn, orgID, host)
 	if dockerRestarted {
 		h.recordRestartAttempt(orgID, false)
-		h.logger.Log(logger.Info, fmt.Sprintf("caddy container restarted on %s", host), orgID.String())
+		h.logger.Log(logger.Info, fmt.Sprintf("deploy caddy: caddy container restarted on %s", host), orgID.String())
 		InvalidateTunnel(host)
 		return
 	}
@@ -303,7 +303,7 @@ func (h *HealthMonitor) attemptCaddyRestart(ctx context.Context, orgID uuid.UUID
 	// may have been caused by a stale SSH tunnel, not a dead Caddy).
 	if h.isCaddyAPIReachable(conn, host) {
 		h.logger.Log(logger.Info,
-			fmt.Sprintf("caddy on %s runs as a system service, admin API is reachable — refreshing tunnel", host),
+			fmt.Sprintf("deploy caddy: caddy on %s runs as a system service, admin API is reachable — refreshing tunnel", host),
 			orgID.String())
 		h.recordRestartAttempt(orgID, false)
 		InvalidateTunnel(host)
@@ -313,14 +313,14 @@ func (h *HealthMonitor) attemptCaddyRestart(ctx context.Context, orgID uuid.UUID
 	// Strategy 3: Admin API not reachable — try systemd restart.
 	if h.trySystemdRestart(conn, orgID, host) {
 		h.recordRestartAttempt(orgID, false)
-		h.logger.Log(logger.Info, fmt.Sprintf("caddy systemd service restarted on %s", host), orgID.String())
+		h.logger.Log(logger.Info, fmt.Sprintf("deploy caddy: caddy systemd service restarted on %s", host), orgID.String())
 		InvalidateTunnel(host)
 		return
 	}
 
 	h.recordRestartAttempt(orgID, true)
 	h.logger.Log(logger.Warning,
-		fmt.Sprintf("caddy on %s: no Docker container and systemd restart failed, will retry with backoff", host),
+		fmt.Sprintf("deploy caddy: caddy on %s: no Docker container and systemd restart failed, will retry with backoff", host),
 		orgID.String())
 }
 
@@ -330,7 +330,7 @@ func (h *HealthMonitor) attemptCaddyRestart(ctx context.Context, orgID uuid.UUID
 func (h *HealthMonitor) tryDockerRestart(conn *goph.Client, orgID uuid.UUID, host string) (restarted, containerMissing bool) {
 	session, err := conn.NewSession()
 	if err != nil {
-		h.logger.Log(logger.Error, "failed to create SSH session for docker restart", err.Error())
+		h.logger.Log(logger.Error, "deploy caddy: failed to create SSH session for docker restart", err.Error())
 		return false, false
 	}
 	defer session.Close()
@@ -340,7 +340,7 @@ func (h *HealthMonitor) tryDockerRestart(conn *goph.Client, orgID uuid.UUID, hos
 		missing := strings.Contains(string(output), "No such container")
 		if !missing {
 			h.logger.Log(logger.Error,
-				fmt.Sprintf("caddy container restart failed on %s", host),
+				fmt.Sprintf("deploy caddy: caddy container restart failed on %s", host),
 				fmt.Sprintf("error: %v, output: %s", err, string(output)))
 		}
 		return false, missing
@@ -375,7 +375,7 @@ func (h *HealthMonitor) isCaddyAPIReachable(conn *goph.Client, host string) bool
 func (h *HealthMonitor) trySystemdRestart(conn *goph.Client, orgID uuid.UUID, host string) bool {
 	session, err := conn.NewSession()
 	if err != nil {
-		h.logger.Log(logger.Error, "failed to create SSH session for systemd restart", err.Error())
+		h.logger.Log(logger.Error, "deploy caddy: failed to create SSH session for systemd restart", err.Error())
 		return false
 	}
 	defer session.Close()
@@ -383,7 +383,7 @@ func (h *HealthMonitor) trySystemdRestart(conn *goph.Client, orgID uuid.UUID, ho
 	output, err := session.CombinedOutput("systemctl restart caddy-api 2>/dev/null || systemctl restart caddy 2>/dev/null")
 	if err != nil {
 		h.logger.Log(logger.Warning,
-			fmt.Sprintf("caddy systemd restart failed on %s", host),
+			fmt.Sprintf("deploy caddy: caddy systemd restart failed on %s", host),
 			fmt.Sprintf("error: %v, output: %s", err, string(output)))
 		return false
 	}
@@ -394,6 +394,6 @@ func (h *HealthMonitor) trySystemdRestart(conn *goph.Client, orgID uuid.UUID, ho
 // it inline, so any available worker picks it up.
 func (h *HealthMonitor) triggerReconciliation(orgID uuid.UUID) {
 	if err := enqueueReconcileAfterRecovery(orgID); err != nil {
-		h.logger.Log(logger.Error, "failed to enqueue post-recovery reconciliation", err.Error())
+		h.logger.Log(logger.Error, "deploy caddy: failed to enqueue post-recovery reconciliation", err.Error())
 	}
 }

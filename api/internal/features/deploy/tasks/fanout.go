@@ -78,7 +78,7 @@ func (t *TaskService) updateParentStatus(ctx context.Context, parentDepID uuid.U
 		UpdatedAt:               now,
 	}
 	if err := t.Storage.AddApplicationDeploymentStatus(appStatus); err != nil {
-		t.Logger.Log(logger.Error, "failed to update parent deployment status", err.Error())
+		t.Logger.Log(logger.Error, "deploy tasks: failed to update parent deployment status", err.Error())
 	}
 }
 
@@ -117,7 +117,7 @@ func (t *TaskService) fanOut(
 
 			child, err := t.addChildDeployment(d.ApplicationDeployment, serverID)
 			if err != nil {
-				t.Logger.Log(logger.Error, "failed to create child deployment", err.Error())
+				t.Logger.Log(logger.Error, "deploy tasks: failed to create child deployment", err.Error())
 				errs[idx] = err
 				return
 			}

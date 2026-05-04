@@ -99,11 +99,11 @@ func (c *ContextTask) PersistCreateApplicationDeploymentData(application shared_
 	return c.TaskService.Storage.RunInTransaction(func(tx bun.Tx) error {
 		ctx := context.Background()
 		if _, err := tx.NewInsert().Model(&application).Exec(ctx); err != nil {
-			c.TaskService.Logger.Log(logger.Error, types.LogFailedToCreateApplicationRecord+err.Error(), "")
+			c.TaskService.Logger.Log(logger.Error, "deploy tasks: "+types.LogFailedToCreateApplicationRecord+err.Error(), "")
 			return err
 		}
 		if _, err := tx.NewInsert().Model(&applicationDeployment).Exec(ctx); err != nil {
-			c.TaskService.Logger.Log(logger.Error, types.LogFailedToCreateApplicationDeployment+err.Error(), "")
+			c.TaskService.Logger.Log(logger.Error, "deploy tasks: "+types.LogFailedToCreateApplicationDeployment+err.Error(), "")
 			return err
 		}
 		return nil
@@ -114,11 +114,11 @@ func (c *ContextTask) PersistUpdateApplicationDeploymentData(application shared_
 	return c.TaskService.Storage.RunInTransaction(func(tx bun.Tx) error {
 		ctx := context.Background()
 		if _, err := tx.NewUpdate().Model(&application).OmitZero().WherePK().Exec(ctx); err != nil {
-			c.TaskService.Logger.Log(logger.Error, types.LogFailedToUpdateApplicationRecord+err.Error(), "")
+			c.TaskService.Logger.Log(logger.Error, "deploy tasks: "+types.LogFailedToUpdateApplicationRecord+err.Error(), "")
 			return err
 		}
 		if _, err := tx.NewInsert().Model(&applicationDeployment).Exec(ctx); err != nil {
-			c.TaskService.Logger.Log(logger.Error, types.LogFailedToUpdateApplicationDeployment+err.Error(), "")
+			c.TaskService.Logger.Log(logger.Error, "deploy tasks: "+types.LogFailedToUpdateApplicationDeployment+err.Error(), "")
 			return err
 		}
 		return nil
@@ -176,11 +176,11 @@ func (c *ContextTask) PrepareCreateDeploymentContext() (shared_types.TaskPayload
 			deployment.PrimaryServerID,
 			deployment.RoutingStrategy,
 		); err != nil {
-			c.TaskService.Logger.Log(logger.Warning, "failed to set application servers", err.Error())
+			c.TaskService.Logger.Log(logger.Warning, "deploy tasks: failed to set application servers", err.Error())
 		}
 	} else {
 		if err := c.TaskService.Storage.EnsureApplicationServers(application.ID, c.OrganizationId); err != nil {
-			c.TaskService.Logger.Log(logger.Warning, "failed to ensure application servers", err.Error())
+			c.TaskService.Logger.Log(logger.Warning, "deploy tasks: failed to ensure application servers", err.Error())
 		}
 	}
 

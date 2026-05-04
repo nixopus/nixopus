@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -15,7 +16,7 @@ func (c *DeployController) GetApplicationById(f fuego.ContextNoBody) (*types.App
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		c.logger.Log(logger.Error, "user not found", "")
+		c.logger.Log(logger.Error, "deploy: user not found", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
@@ -23,15 +24,24 @@ func (c *DeployController) GetApplicationById(f fuego.ContextNoBody) (*types.App
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		c.logger.Log(logger.Error, "organization not found", "")
+		c.logger.Log(logger.Error, "deploy: organization not found", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "organization not found",
 		}
 	}
 
+	data := deployRequestData(f.Request(), user)
+	if id != "" {
+		if data == "" {
+			data = fmt.Sprintf("id=%s", id)
+		} else {
+			data = fmt.Sprintf("%s id=%s", data, id)
+		}
+	}
+
 	application, err := c.service.GetApplicationById(id, organizationID)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("deploy: GetApplicationById: %v", err), data)
 		if err.Error() == "application not found" {
 			return nil, fuego.NotFoundError{
 				Detail: err.Error(),

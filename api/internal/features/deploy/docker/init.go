@@ -129,7 +129,7 @@ func NewDockerServiceWithServer(db *bun.DB, ctx context.Context, organizationID 
 
 	// If SSH tunnel failed, cli will be nil
 	if cli == nil {
-		lgr.Log(logger.Error, "Failed to create Docker client via SSH tunnel", "")
+		lgr.Log(logger.Error, "deploy docker: failed to create Docker client via SSH tunnel", "")
 		return nil
 	}
 
@@ -146,12 +146,12 @@ func NewDockerServiceWithServer(db *bun.DB, ctx context.Context, organizationID 
 
 	if !isClusterInitialized(svc.Cli) {
 		if err := svc.InitCluster(); err != nil {
-			svc.logger.Log(logger.Warning, "Failed to initialize cluster", err.Error())
+			svc.logger.Log(logger.Warning, "deploy docker: failed to initialize cluster", err.Error())
 		} else {
-			svc.logger.Log(logger.Info, "Cluster initialized successfully", "")
+			svc.logger.Log(logger.Info, "deploy docker: cluster initialized successfully", "")
 		}
 	} else {
-		svc.logger.Log(logger.Info, "Cluster already initialized", "")
+		svc.logger.Log(logger.Info, "deploy docker: cluster already initialized", "")
 	}
 
 	return svc
@@ -159,27 +159,27 @@ func NewDockerServiceWithServer(db *bun.DB, ctx context.Context, organizationID 
 
 func newDockerClientWithSSHTunnel(lgr logger.Logger, ctx context.Context, organizationID uuid.UUID) (*client.Client, *SSHTunnel) {
 	if organizationID == uuid.Nil {
-		lgr.Log(logger.Error, "Organization ID is required", "")
+		lgr.Log(logger.Error, "deploy docker: organization ID is required", "")
 		return nil, nil
 	}
 
 	sshManager, err := ssh.GetSSHManagerFromContext(ctx)
 	if err != nil {
-		lgr.Log(logger.Error, "Failed to get SSH manager", err.Error())
+		lgr.Log(logger.Error, "deploy docker: failed to get SSH manager", err.Error())
 		return nil, nil
 	}
 
 	// Get SSH client struct (not the goph.Client connection)
 	sshClient, err := sshManager.GetOrganizationSSH()
 	if err != nil {
-		lgr.Log(logger.Error, "Failed to get SSH client", err.Error())
+		lgr.Log(logger.Error, "deploy docker: failed to get SSH client", err.Error())
 		return nil, nil
 	}
 
 	// Create SSH tunnel
 	tunnel, err := CreateSSHTunnel(sshClient, lgr)
 	if err != nil || tunnel == nil {
-		lgr.Log(logger.Error, "Failed to create SSH tunnel", err.Error())
+		lgr.Log(logger.Error, "deploy docker: failed to create SSH tunnel", err.Error())
 		return nil, nil
 	}
 
@@ -187,18 +187,18 @@ func newDockerClientWithSSHTunnel(lgr logger.Logger, ctx context.Context, organi
 	// Docker client requires unix:/// (three slashes) for absolute paths
 	// filepath.Join returns absolute paths, so tunnel.localSocket already starts with /
 	host := fmt.Sprintf("unix://%s", tunnel.localSocket)
-	lgr.Log(logger.Info, "SSH tunnel established; using tunneled docker socket", fmt.Sprintf("host=%s, socket=%s", host, tunnel.localSocket))
+	lgr.Log(logger.Info, "deploy docker: SSH tunnel established; using tunneled docker socket", fmt.Sprintf("host=%s, socket=%s", host, tunnel.localSocket))
 	cli, err := client.NewClientWithOpts(
 		client.WithHost(host),
 		client.WithAPIVersionNegotiation(),
 	)
 	if err != nil {
-		lgr.Log(logger.Error, "Failed to create docker client over SSH tunnel", err.Error())
+		lgr.Log(logger.Error, "deploy docker: failed to create docker client over SSH tunnel", err.Error())
 		tunnel.Close()
 		return nil, nil
 	}
 
-	lgr.Log(logger.Info, "Docker client created over SSH tunnel", "")
+	lgr.Log(logger.Info, "deploy docker: Docker client created over SSH tunnel", "")
 	return cli, tunnel
 }
 
@@ -436,7 +436,7 @@ func (s *DockerService) GetContainerById(containerID string) (container.InspectR
 func (s *DockerService) ListAllImages(opts image.ListOptions) []image.Summary {
 	images, err := s.Cli.ImageList(s.Ctx, opts)
 	if err != nil {
-		s.logger.Log(logger.Error, "Failed to list images", err.Error())
+		s.logger.Log(logger.Error, "deploy docker: failed to list images", err.Error())
 		return []image.Summary{}
 	}
 	return images

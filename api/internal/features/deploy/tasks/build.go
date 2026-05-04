@@ -295,7 +295,7 @@ func (s *TaskService) processBuildOutput(logReader *LogReader) error {
 	if logReader.PlainOutput {
 		_, err := io.Copy(io.Discard, logReader)
 		if err != nil {
-			errorMsg := fmt.Sprintf("Build output processing failed: %v", err)
+			errorMsg := fmt.Sprintf("deploy tasks: Build output processing failed: %v", err)
 			s.Logger.Log(logger.Error, errorMsg, logReader.deployment_config.ID.String())
 			logReader.TaskContext.AddLog(errorMsg)
 			return err
@@ -305,7 +305,7 @@ func (s *TaskService) processBuildOutput(logReader *LogReader) error {
 	termFd, isTerm := term.GetFdInfo(os.Stdout)
 	err := jsonmessage.DisplayJSONMessagesStream(logReader, io.Discard, termFd, isTerm, nil)
 	if err != nil {
-		errorMsg := fmt.Sprintf("Build output processing failed: %v", err)
+		errorMsg := fmt.Sprintf("deploy tasks: Build output processing failed: %v", err)
 		s.Logger.Log(logger.Error, errorMsg, logReader.deployment_config.ID.String())
 		logReader.TaskContext.AddLog(errorMsg)
 		return err
@@ -364,17 +364,17 @@ func (r *LogReader) Read(p []byte) (n int, err error) {
 // the error message. This helps in tracking the build process and diagnosing issues.
 func (r *LogReader) processJSONMessage(jsonMsg jsonmessage.JSONMessage) {
 	if jsonMsg.Stream != "" {
-		r.DeployService.Logger.Log(logger.Info, "Build: "+jsonMsg.Stream, r.deployment_config.ID.String())
+		r.DeployService.Logger.Log(logger.Info, "deploy tasks: Build: "+jsonMsg.Stream, r.deployment_config.ID.String())
 		r.TaskContext.AddLog("Build: " + jsonMsg.Stream)
 	} else if jsonMsg.Status != "" {
 		status := jsonMsg.Status
 		if jsonMsg.Progress != nil {
 			status += " " + jsonMsg.Progress.String()
 		}
-		r.DeployService.Logger.Log(logger.Info, "Build: "+status, r.deployment_config.ID.String())
+		r.DeployService.Logger.Log(logger.Info, "deploy tasks: Build: "+status, r.deployment_config.ID.String())
 		r.TaskContext.AddLog("Build: " + status)
 	} else if jsonMsg.Error != nil {
-		r.DeployService.Logger.Log(logger.Error, "Build error: "+jsonMsg.Error.Message, r.deployment_config.ID.String())
+		r.DeployService.Logger.Log(logger.Error, "deploy tasks: Build error: "+jsonMsg.Error.Message, r.deployment_config.ID.String())
 		r.TaskContext.AddLog("Build error: " + jsonMsg.Error.Message)
 	}
 }

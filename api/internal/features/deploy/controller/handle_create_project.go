@@ -13,21 +13,21 @@ import (
 // HandleCreateProject creates a new project (application) without triggering deployment.
 // This allows users to save configuration as a draft and deploy later.
 func (c *DeployController) HandleCreateProject(f fuego.ContextWithBody[types.CreateProjectRequest]) (*types.ApplicationResponse, error) {
-	c.logger.Log(logger.Info, "creating project without deployment", "")
+	c.logger.Log(logger.Info, "deploy: creating project without deployment", "")
 
 	data, err := f.Body()
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to read request body", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to read request body", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
 		}
 	}
 
-	c.logger.Log(logger.Info, "request body parsed successfully", "name: "+data.Name)
+	c.logger.Log(logger.Info, "deploy: request body parsed successfully", "name: "+data.Name)
 
 	if err := c.validator.ValidateRequest(&data); err != nil {
-		c.logger.Log(logger.Error, "request validation failed", "name: "+data.Name+", error: "+err.Error())
+		c.logger.Log(logger.Error, "deploy: request validation failed", "name: "+data.Name+", error: "+err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -36,7 +36,7 @@ func (c *DeployController) HandleCreateProject(f fuego.ContextWithBody[types.Cre
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		c.logger.Log(logger.Error, "user authentication failed", "name: "+data.Name)
+		c.logger.Log(logger.Error, "deploy: user authentication failed", "name: "+data.Name)
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
@@ -44,17 +44,17 @@ func (c *DeployController) HandleCreateProject(f fuego.ContextWithBody[types.Cre
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		c.logger.Log(logger.Error, "organization not found", "name: "+data.Name)
+		c.logger.Log(logger.Error, "deploy: organization not found", "name: "+data.Name)
 		return nil, fuego.UnauthorizedError{
 			Detail: "organization not found",
 		}
 	}
 
-	c.logger.Log(logger.Info, "attempting to create project", "name: "+data.Name+", user_id: "+user.ID.String())
+	c.logger.Log(logger.Info, "deploy: attempting to create project", "name: "+data.Name+", user_id: "+user.ID.String())
 
 	application, err := c.service.CreateProject(&data, user.ID, organizationID)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to create project", "name: "+data.Name+", error: "+err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to create project", "name: "+data.Name+", error: "+err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -62,7 +62,7 @@ func (c *DeployController) HandleCreateProject(f fuego.ContextWithBody[types.Cre
 		}
 	}
 
-	c.logger.Log(logger.Info, "project created successfully", "name: "+data.Name)
+	c.logger.Log(logger.Info, "deploy: project created successfully", "name: "+data.Name)
 	return &types.ApplicationResponse{
 		Status:  "success",
 		Message: "Project created successfully. You can deploy it when ready.",

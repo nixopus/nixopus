@@ -20,7 +20,7 @@ func (c *DeployController) GetApplicationDeployments(f fuego.ContextNoBody) (*ty
 	}
 
 	if id == "" {
-		c.logger.Log(logger.Error, "application ID is required", "")
+		c.logger.Log(logger.Error, "deploy: application ID is required", "")
 		return nil, fuego.BadRequestError{
 			Detail: "application ID is required",
 		}
@@ -36,7 +36,7 @@ func (c *DeployController) GetApplicationDeployments(f fuego.ContextNoBody) (*ty
 
 	applicationID, err := uuid.Parse(id)
 	if err != nil {
-		c.logger.Log(logger.Error, "Invalid application ID", err.Error())
+		c.logger.Log(logger.Error, "deploy: Invalid application ID", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -55,7 +55,7 @@ func (c *DeployController) GetApplicationDeployments(f fuego.ContextNoBody) (*ty
 
 	deployments, totalCount, err := c.service.GetApplicationDeployments(applicationID, pageInt, pageSizeInt)
 	if err != nil {
-		c.logger.Log(logger.Error, "Failed to get application deployments", err.Error())
+		c.logger.Log(logger.Error, "deploy: Failed to get application deployments", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

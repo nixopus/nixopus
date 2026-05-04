@@ -10,14 +10,20 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type Validator struct {
+	Logger *logger.Logger // optional; nil skips validation debug logs
 }
 
 func NewValidator() *Validator {
 	return &Validator{}
+}
+
+func NewValidatorWithLogger(l *logger.Logger) *Validator {
+	return &Validator{Logger: l}
 }
 
 func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decoded interface{}) error {
@@ -53,6 +59,9 @@ func (v *Validator) ValidateRequest(req interface{}) error {
 	case *types.CancelDeploymentRequest:
 		return validateCancelDeploymentRequest(*r)
 	default:
+		if v.Logger != nil {
+			v.Logger.Log(logger.Debug, fmt.Sprintf("deploy validation: invalid request type %T", req), "")
+		}
 		return types.ErrInvalidRequestType
 	}
 }

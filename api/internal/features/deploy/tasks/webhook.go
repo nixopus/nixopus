@@ -50,7 +50,7 @@ func (t *TaskService) EnqueueWebhookTask(payload shared_types.WebhookPayload) er
 
 		if commitHash != "" {
 			if isDup, _ := t.isWebhookDuplicate(application.ID.String(), commitHash); isDup {
-				t.Logger.Log(logger.Info, "skipping duplicate webhook for app "+application.Name+" commit "+commitHash, "")
+				t.Logger.Log(logger.Info, "deploy tasks: skipping duplicate webhook for app "+application.Name+" commit "+commitHash, "")
 				continue
 			}
 		}
@@ -69,11 +69,11 @@ func (t *TaskService) EnqueueWebhookTask(payload shared_types.WebhookPayload) er
 
 		_, err := t.UpdateDeploymentWithTrigger(deployment, application.UserID, application.OrganizationID)
 		if err != nil {
-			t.Logger.Log(logger.Error, "failed to update deployment for webhook", err.Error())
+			t.Logger.Log(logger.Error, "deploy tasks: failed to update deployment for webhook", err.Error())
 			continue
 		}
 
-		t.Logger.Log(logger.Info, types.LogDeploymentStarted, "")
+		t.Logger.Log(logger.Info, "deploy tasks: "+types.LogDeploymentStarted, "")
 	}
 
 	return nil

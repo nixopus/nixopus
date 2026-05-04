@@ -215,7 +215,7 @@ func AddDomainsAtomic(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Logge
 
 	if addErr := AddDomainsWithRetry(ctx, sshClient, lgr, domains); addErr != nil {
 		l := resolveLogger(lgr)
-		l.Log(logger.Warning, "domain add failed, rolling back caddy config", addErr.Error())
+		l.Log(logger.Warning, "deploy caddy: domain add failed, rolling back caddy config", addErr.Error())
 
 		if restoreErr := RestoreCaddyConfig(ctx, sshClient, lgr, snapshot); restoreErr != nil {
 			return fmt.Errorf("add failed AND rollback failed: %w (original: %v)", restoreErr, addErr)
@@ -239,7 +239,7 @@ func RemoveDomainsAtomic(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Lo
 
 	if removeErr := RemoveDomainsWithRetry(ctx, sshClient, lgr, domains); removeErr != nil {
 		l := resolveLogger(lgr)
-		l.Log(logger.Warning, "domain remove failed, rolling back caddy config", removeErr.Error())
+		l.Log(logger.Warning, "deploy caddy: domain remove failed, rolling back caddy config", removeErr.Error())
 
 		if restoreErr := RestoreCaddyConfig(ctx, sshClient, lgr, snapshot); restoreErr != nil {
 			return fmt.Errorf("remove failed AND rollback failed: %w (original: %v)", restoreErr, removeErr)

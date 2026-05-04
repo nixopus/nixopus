@@ -3,6 +3,7 @@ package controller
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 
@@ -40,7 +41,7 @@ func NewDeployController(
 	notifier shared_types.Notifier,
 	extensionLoader shared_storage.ExtensionTemplateLoader,
 ) (*DeployController, error) {
-	deployStorage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
+	deployStorage := storage.DeployStorage{DB: store.DB, Ctx: ctx, Logger: &l}
 	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx, Logger: &l})
 	taskService := tasks.NewTaskService(&deployStorage, l, github_service, store, notifier)
 	taskService.SetupCreateDeploymentQueue()
@@ -59,7 +60,7 @@ func NewDeployController(
 
 	return &DeployController{
 		store:           store,
-		validator:       validation.NewValidator(),
+		validator:       validation.NewValidatorWithLogger(&l),
 		service:         service.NewDeployService(store, ctx, l, &deployStorage),
 		storage:         &deployStorage,
 		ctx:             ctx,
@@ -112,22 +113,23 @@ func (c *DeployController) Service() *service.DeployService {
 //
 //	bool - true if parsing and validation succeed, false otherwise.
 func (c *DeployController) parseAndValidate(w http.ResponseWriter, r *http.Request, req interface{}) bool {
+	data := deployRequestData(r, utils.GetUser(w, r))
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
+		c.logger.Log(logger.Debug, fmt.Sprintf("deploy: parseAndValidate: read body: %v", err), data)
 		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
 		return false
 	}
 	defer r.Body.Close()
 
 	if err := c.validator.ParseRequestBody(r, io.NopCloser(bytes.NewReader(body)), req); err != nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToDecodeRequest.Error(), err.Error())
+		c.logger.Log(logger.Debug, fmt.Sprintf("deploy: parseAndValidate: decode JSON: %v", err), data)
 		utils.SendErrorResponse(w, shared_types.ErrFailedToDecodeRequest.Error(), http.StatusBadRequest)
 		return false
 	}
 
 	if err := c.validator.ValidateRequest(req); err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
+		c.logger.Log(logger.Debug, fmt.Sprintf("deploy: parseAndValidate: validation: %v", err), data)
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return false
 	}
