@@ -428,7 +428,7 @@ func (router *Router) createAuthController() *auth.AuthController {
 }
 
 func (router *Router) createFeatureFlagController() *feature_flags_controller.FeatureFlagController {
-	featureFlagStorage := &feature_flags_storage.FeatureFlagStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
+	featureFlagStorage := &feature_flags_storage.FeatureFlagStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx, Logger: &router.logger}
 	featureFlagService := feature_flags_service.NewFeatureFlagService(featureFlagStorage, router.logger, router.app.Ctx)
 	return feature_flags_controller.NewFeatureFlagController(featureFlagService, router.logger, router.app.Ctx, router.cache)
 }
