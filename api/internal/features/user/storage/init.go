@@ -8,14 +8,16 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/user/types"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 
 type UserStorage struct {
-	DB  *bun.DB
-	Ctx context.Context
+	DB     *bun.DB
+	Ctx    context.Context
+	Logger *logger.Logger // optional; nil disables storage logs
 }
 
 type UserRepository interface {
@@ -31,10 +33,11 @@ type UserRepository interface {
 	MarkOnboardingComplete(userID string) error
 }
 
-func CreateNewUserStorage(db *bun.DB, ctx context.Context) *UserStorage {
+func CreateNewUserStorage(db *bun.DB, ctx context.Context, l *logger.Logger) *UserStorage {
 	return &UserStorage{
-		DB:  db,
-		Ctx: ctx,
+		DB:     db,
+		Ctx:    ctx,
+		Logger: l,
 	}
 }
 
@@ -46,9 +49,12 @@ func CreateNewUserStorage(db *bun.DB, ctx context.Context) *UserStorage {
 // an empty user and a nil error. If an error occurs during the query, it returns
 // the error.
 func (s *UserStorage) GetUserById(id string) (*shared_types.User, error) {
+	data := fmt.Sprintf("user_id=%s", id)
+	storageLog(s.Logger, logger.Debug, "user storage: GetUserById", data)
 	user := &shared_types.User{}
 	err := s.DB.NewSelect().Model(user).Where("id = ?", id).Scan(s.Ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: GetUserById: %v", err), data)
 		return nil, err
 	}
 	return user, nil
@@ -66,13 +72,17 @@ func (s *UserStorage) GetUserById(id string) (*shared_types.User, error) {
 //
 //	error - an error if the update query fails, otherwise nil.
 func (s *UserStorage) UpdateUserName(userID string, userName string, updatedAt time.Time) error {
+	data := fmt.Sprintf("user_id=%s", userID)
+	storageLog(s.Logger, logger.Debug, "user storage: UpdateUserName", data)
 	_, err := s.DB.NewUpdate().
 		Model((*shared_types.User)(nil)).
 		Set("name = ?", userName).
 		Set("updated_at = ?", updatedAt).
 		Where("id = ?", userID).
 		Exec(s.Ctx)
-
+	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: UpdateUserName: %v", err), data)
+	}
 	return err
 }
 
@@ -84,6 +94,9 @@ func (s *UserStorage) UpdateUserName(userID string, userName string, updatedAt t
 // If the retrieval is successful, it returns a slice of types.UserOrganizationsResponse
 // structs containing the organization and role information for each organization user.
 func (s *UserStorage) GetUserOrganizationsWithRolesAndPermissions(userID string) ([]types.UserOrganizationsResponse, error) {
+	data := fmt.Sprintf("user_id=%s", userID)
+	storageLog(s.Logger, logger.Debug, "user storage: GetUserOrganizationsWithRolesAndPermissions", data)
+
 	var organizationUsers []shared_types.OrganizationUsers
 
 	query := s.DB.NewSelect().
@@ -94,6 +107,7 @@ func (s *UserStorage) GetUserOrganizationsWithRolesAndPermissions(userID string)
 
 	err := query.Scan(s.Ctx, &organizationUsers)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: GetUserOrganizations member scan: %v", err), data)
 		return nil, err
 	}
 
@@ -119,6 +133,9 @@ func (s *UserStorage) GetUserOrganizationsWithRolesAndPermissions(userID string)
 }
 
 func (s *UserStorage) GetUserSettings(userID string) (*shared_types.UserSettings, error) {
+	data := fmt.Sprintf("user_id=%s", userID)
+	storageLog(s.Logger, logger.Debug, "user storage: GetUserSettings", data)
+
 	var settings shared_types.UserSettings
 	err := s.DB.NewSelect().
 		Model(&settings).
@@ -143,18 +160,24 @@ func (s *UserStorage) GetUserSettings(userID string) (*shared_types.UserSettings
 				Model(defaultSettings).
 				Exec(s.Ctx)
 			if err != nil {
+				storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: GetUserSettings insert defaults: %v", err), data)
 				return nil, err
 			}
 			return defaultSettings, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: GetUserSettings: %v", err), data)
 		return nil, err
 	}
 	return &settings, nil
 }
 
 func (s *UserStorage) UpdateUserSettings(userID string, updates map[string]interface{}) (*shared_types.UserSettings, error) {
+	data := fmt.Sprintf("user_id=%s", userID)
+	storageLog(s.Logger, logger.Debug, "user storage: UpdateUserSettings", data)
+
 	// Ensure a settings row exists before updating.
 	if _, err := s.GetUserSettings(userID); err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: UpdateUserSettings ensure row: %v", err), data)
 		return nil, err
 	}
 
@@ -167,6 +190,7 @@ func (s *UserStorage) UpdateUserSettings(userID string, updates map[string]inter
 	}
 
 	if _, err := query.Exec(s.Ctx); err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: UpdateUserSettings exec: %v", err), data)
 		return nil, err
 	}
 
@@ -174,6 +198,9 @@ func (s *UserStorage) UpdateUserSettings(userID string, updates map[string]inter
 }
 
 func (s *UserStorage) UpdateUserAvatar(ctx context.Context, userID string, avatarData string) error {
+	data := fmt.Sprintf("user_id=%s payload_len=%d", userID, len(avatarData))
+	storageLog(s.Logger, logger.Debug, "user storage: UpdateUserAvatar", data)
+
 	var image interface{}
 	if avatarData == "" {
 		image = nil
@@ -188,6 +215,7 @@ func (s *UserStorage) UpdateUserAvatar(ctx context.Context, userID string, avata
 		Exec(ctx)
 
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: UpdateUserAvatar: %v", err), data)
 		return fmt.Errorf("failed to update user avatar: %w", err)
 	}
 
@@ -196,6 +224,9 @@ func (s *UserStorage) UpdateUserAvatar(ctx context.Context, userID string, avata
 
 // GetUserPreferences retrieves user preferences, creating defaults if none exist
 func (s *UserStorage) GetUserPreferences(userID string) (*shared_types.UserPreferences, error) {
+	data := fmt.Sprintf("user_id=%s", userID)
+	storageLog(s.Logger, logger.Debug, "user storage: GetUserPreferences", data)
+
 	var prefs shared_types.UserPreferences
 	err := s.DB.NewSelect().
 		Model(&prefs).
@@ -221,10 +252,12 @@ func (s *UserStorage) GetUserPreferences(userID string) (*shared_types.UserPrefe
 				Model(defaultPrefs).
 				Exec(s.Ctx)
 			if err != nil {
+				storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: GetUserPreferences insert defaults: %v", err), data)
 				return nil, err
 			}
 			return defaultPrefs, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: GetUserPreferences: %v", err), data)
 		return nil, err
 	}
 	return &prefs, nil
@@ -232,9 +265,13 @@ func (s *UserStorage) GetUserPreferences(userID string) (*shared_types.UserPrefe
 
 // UpdateUserPreferences updates user preferences with the provided data
 func (s *UserStorage) UpdateUserPreferences(userID string, preferences shared_types.UserPreferencesData) (*shared_types.UserPreferences, error) {
+	data := fmt.Sprintf("user_id=%s", userID)
+	storageLog(s.Logger, logger.Debug, "user storage: UpdateUserPreferences", data)
+
 	// Ensure preferences exist before updating
 	existingPrefs, err := s.GetUserPreferences(userID)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: UpdateUserPreferences load: %v", err), data)
 		return nil, fmt.Errorf("failed to get user preferences: %w", err)
 	}
 	if existingPrefs == nil {
@@ -251,20 +288,24 @@ func (s *UserStorage) UpdateUserPreferences(userID string, preferences shared_ty
 		Exec(s.Ctx)
 
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: UpdateUserPreferences exec: %v", err), data)
 		return nil, err
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: UpdateUserPreferences rows affected: %v", err), data)
 		return nil, fmt.Errorf("failed to get rows affected: %w", err)
 	}
 	if rowsAffected == 0 {
+		storageLog(s.Logger, logger.Debug, "user storage: UpdateUserPreferences: no rows updated", data)
 		return nil, fmt.Errorf("no rows updated for user ID: %s", userID)
 	}
 
 	// Re-fetch to ensure we have the updated data
 	updatedPrefs, err := s.GetUserPreferences(userID)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: UpdateUserPreferences refetch: %v", err), data)
 		return nil, fmt.Errorf("failed to refetch user preferences after update: %w", err)
 	}
 	return updatedPrefs, nil
@@ -272,6 +313,9 @@ func (s *UserStorage) UpdateUserPreferences(userID string, preferences shared_ty
 
 // GetIsOnboarded retrieves the is_onboarded status for a user from the database.
 func (s *UserStorage) GetIsOnboarded(userID string) (bool, error) {
+	data := fmt.Sprintf("user_id=%s", userID)
+	storageLog(s.Logger, logger.Debug, "user storage: GetIsOnboarded", data)
+
 	var user shared_types.User
 	err := s.DB.NewSelect().
 		Model(&user).
@@ -280,6 +324,7 @@ func (s *UserStorage) GetIsOnboarded(userID string) (bool, error) {
 		Scan(s.Ctx)
 
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: GetIsOnboarded: %v", err), data)
 		return false, fmt.Errorf("failed to get onboarding status: %w", err)
 	}
 
@@ -288,6 +333,9 @@ func (s *UserStorage) GetIsOnboarded(userID string) (bool, error) {
 
 // MarkOnboardingComplete sets the is_onboarded field to true for a user.
 func (s *UserStorage) MarkOnboardingComplete(userID string) error {
+	data := fmt.Sprintf("user_id=%s", userID)
+	storageLog(s.Logger, logger.Debug, "user storage: MarkOnboardingComplete", data)
+
 	_, err := s.DB.NewUpdate().
 		Model((*shared_types.User)(nil)).
 		Set("is_onboarded = ?", true).
@@ -296,6 +344,7 @@ func (s *UserStorage) MarkOnboardingComplete(userID string) error {
 		Exec(s.Ctx)
 
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("user storage: MarkOnboardingComplete: %v", err), data)
 		return fmt.Errorf("failed to mark onboarding as complete: %w", err)
 	}
 

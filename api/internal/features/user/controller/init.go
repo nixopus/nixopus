@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	cache "github.com/nixopus/nixopus/api/internal/cache"
@@ -29,8 +30,8 @@ func NewUserController(
 	cache *cache.Cache,
 ) *UserController {
 	return &UserController{
-		validator: validation.NewValidator(),
-		service:   service.NewUserService(store, ctx, l, &storage.UserStorage{DB: store.DB, Ctx: ctx}),
+		validator: validation.NewValidatorWithLogger(&l),
+		service:   service.NewUserService(store, ctx, l, &storage.UserStorage{DB: store.DB, Ctx: ctx, Logger: &l}),
 		ctx:       ctx,
 		logger:    l,
 		cache:     cache,
@@ -41,11 +42,12 @@ func (c *UserController) parseAndValidate(w http.ResponseWriter, r *http.Request
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logger.Log(logger.Debug, "user: parseAndValidate: authentication required", "")
 		return errors.New("authentication required")
 	}
 
 	if err := c.validator.ValidateRequest(req, *user); err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
+		c.logger.Log(logger.Debug, fmt.Sprintf("user: parseAndValidate: validation: %v", err), fmt.Sprintf("user_id=%s", user.ID))
 		return err
 	}
 

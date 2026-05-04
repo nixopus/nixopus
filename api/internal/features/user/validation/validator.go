@@ -2,18 +2,26 @@ package validation
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"strings"
 
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/user/types"
 
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
-type Validator struct{}
+type Validator struct {
+	Logger *logger.Logger // optional; nil skips validation debug logs
+}
 
 func NewValidator() *Validator {
 	return &Validator{}
+}
+
+func NewValidatorWithLogger(l *logger.Logger) *Validator {
+	return &Validator{Logger: l}
 }
 
 func (v *Validator) ParseRequestBody(req interface{}, body io.ReadCloser, decoded interface{}) error {
@@ -28,6 +36,9 @@ func (v *Validator) ValidateRequest(req interface{}, user shared_types.User) err
 	case *types.UpdateAvatarRequest:
 		return v.ValidateUpdateAvatarRequest(*r)
 	default:
+		if v.Logger != nil {
+			v.Logger.Log(logger.Debug, fmt.Sprintf("user validation: invalid request type %T", req), "")
+		}
 		return types.ErrInvalidRequestType
 	}
 }

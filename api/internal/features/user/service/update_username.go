@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -8,27 +9,27 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/user/types"
 )
 
-// Existing function that needs to be updated
+// UpdateUsername updates the authenticated user's display name (stored as name on the user row).
 func (s *UserService) UpdateUsername(id string, req *types.UpdateUserNameRequest) error {
+	data := fmt.Sprintf("user_id=%s", id)
 	if req == nil {
-		s.logger.Log(logger.Error, "invalid request type", "request is nil")
+		s.logger.Log(logger.Error, "user service: UpdateUsername: nil request", data)
 		return types.ErrInvalidRequestType
 	}
 
-	s.logger.Log(logger.Info, "Updating req", req.Name)
 	existingUser, err := s.storage.GetUserById(id)
 	if err != nil {
-		s.logger.Log(logger.Error, "error fetching user", err.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("user service: UpdateUsername: get user: %v", err), data)
 		return err
 	}
 
 	if existingUser.ID == uuid.Nil {
-		s.logger.Log(logger.Error, types.ErrUserDoesNotExist.Error(), "")
+		s.logger.Log(logger.Error, fmt.Sprintf("user service: UpdateUsername: %v", types.ErrUserDoesNotExist), data)
 		return types.ErrUserDoesNotExist
 	}
 
 	if err := s.storage.UpdateUserName(existingUser.ID.String(), req.Name, time.Now()); err != nil {
-		s.logger.Log(logger.Error, types.ErrFailedToUpdateUser.Error(), "")
+		s.logger.Log(logger.Error, fmt.Sprintf("user service: UpdateUsername: %v", types.ErrFailedToUpdateUser), data)
 		return types.ErrFailedToUpdateUser
 	}
 
