@@ -1,6 +1,10 @@
 package service
 
-import "github.com/nixopus/nixopus/api/internal/features/logger"
+import (
+	"fmt"
+
+	"github.com/nixopus/nixopus/api/internal/features/logger"
+)
 
 // DeleteSmtp deletes a SMTP configuration.
 //
@@ -8,6 +12,6 @@ import "github.com/nixopus/nixopus/api/internal/features/logger"
 //
 // It logs an info message to the logger before calling the storage layer.
 func (s *NotificationService) DeleteSmtp(ID string) error {
-	s.logger.Log(logger.Info, "Deleting SMTP configuration", "")
+	s.logger.Log(logger.Info, "notification service: DeleteSmtp", fmt.Sprintf("smtp_config_id=%s", ID))
 	return s.storage.DeleteSmtp(ID)
 }

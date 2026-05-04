@@ -51,15 +51,17 @@ func (d *Dispatcher) SetupQueue() {
 // Emit processes a notification event: checks user preferences,
 // resolves which channels to use, and enqueues delivery tasks.
 func (d *Dispatcher) Emit(event shared_types.NotificationEvent) error {
+	evData := fmt.Sprintf("user_id=%s org_id=%s event_type=%s", event.UserID, event.OrganizationID, event.Type)
+
 	if !skipPreferenceCheck[event.Type] {
 		pref, ok := eventPreferenceMap[event.Type]
 		if ok {
 			shouldSend, err := d.prefManager.CheckUserNotificationPreferences(event.UserID, pref.Category, pref.Type)
 			if err != nil {
-				d.logger.Log(logger.Error, fmt.Sprintf("preference check failed for event %s: %s", event.Type, err.Error()), event.UserID)
+				d.logger.Log(logger.Error, fmt.Sprintf("notification dispatcher: preference check failed: %v", err), evData)
 			}
 			if !shouldSend {
-				d.logger.Log(logger.Info, fmt.Sprintf("notification suppressed by preference for event %s", event.Type), event.UserID)
+				d.logger.Log(logger.Info, "notification dispatcher: suppressed by user preference", evData)
 				return nil
 			}
 		}
@@ -72,19 +74,19 @@ func (d *Dispatcher) Emit(event shared_types.NotificationEvent) error {
 
 	userEmail, err := d.resolveUserEmail(event.UserID)
 	if err != nil {
-		d.logger.Log(logger.Error, fmt.Sprintf("failed to resolve user email: %s", err.Error()), event.UserID)
+		d.logger.Log(logger.Error, fmt.Sprintf("notification dispatcher: resolve user email: %v", err), evData)
 		userEmail = ""
 	}
 
 	var firstErr error
 	for _, chName := range targetChannels {
 		if _, ok := d.channels[chName]; !ok {
-			d.logger.Log(logger.Error, fmt.Sprintf("channel %s not registered, skipping", chName), "")
+			d.logger.Log(logger.Error, fmt.Sprintf("notification dispatcher: channel %q not registered, skipping", chName), evData)
 			continue
 		}
 
 		if chName == "agent" && !d.isAgentEnabledForOrg(event.OrganizationID) {
-			d.logger.Log(logger.Info, fmt.Sprintf("agent channel disabled for org %s, skipping", event.OrganizationID), event.UserID)
+			d.logger.Log(logger.Info, fmt.Sprintf("notification dispatcher: agent channel disabled for org %s, skipping", event.OrganizationID), evData)
 			continue
 		}
 
@@ -96,7 +98,7 @@ func (d *Dispatcher) Emit(event shared_types.NotificationEvent) error {
 			UserID:         event.UserID,
 			Message:        msg,
 		}); err != nil {
-			d.logger.Log(logger.Error, fmt.Sprintf("failed to enqueue %s notification: %s", chName, err.Error()), event.UserID)
+			d.logger.Log(logger.Error, fmt.Sprintf("notification dispatcher: enqueue %s failed: %v", chName, err), fmt.Sprintf("%s channel=%s", evData, chName))
 			if firstErr == nil {
 				firstErr = err
 			}
@@ -110,7 +112,9 @@ func (d *Dispatcher) Emit(event shared_types.NotificationEvent) error {
 // or queue. Used by the /send API endpoint for explicit user-initiated sends.
 func (d *Dispatcher) SendDirect(req SendNotificationRequest, userID string, organizationID string) SendNotificationResponse {
 	ch, ok := d.channels[req.Channel]
+	ctxStr := fmt.Sprintf("user_id=%s org_id=%s channel=%s", userID, organizationID, req.Channel)
 	if !ok {
+		d.logger.Log(logger.Error, fmt.Sprintf("notification dispatcher: SendDirect unsupported channel %q", req.Channel), ctxStr)
 		return SendNotificationResponse{
 			Channel: req.Channel,
 			Success: false,
@@ -122,6 +126,7 @@ func (d *Dispatcher) SendDirect(req SendNotificationRequest, userID string, orga
 	if recipient == "" && req.Channel == "email" {
 		email, err := d.resolveUserEmail(userID)
 		if err != nil {
+			d.logger.Log(logger.Error, fmt.Sprintf("notification dispatcher: SendDirect resolve recipient: %v", err), ctxStr)
 			return SendNotificationResponse{
 				Channel: req.Channel,
 				Success: false,
@@ -144,6 +149,7 @@ func (d *Dispatcher) SendDirect(req SendNotificationRequest, userID string, orga
 	}
 
 	if err := ch.Send(d.ctx, msg); err != nil {
+		d.logger.Log(logger.Error, fmt.Sprintf("notification dispatcher: SendDirect send failed: %v", err), ctxStr)
 		return SendNotificationResponse{
 			Channel: req.Channel,
 			Success: false,
