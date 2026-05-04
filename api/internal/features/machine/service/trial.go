@@ -120,13 +120,13 @@ func (s *TrailService) ProvisionTrail(userID, orgID string, req machine_types.Pr
 	}
 
 	if !s.IsImageAllowed(image) {
-		s.logger.Log(logger.Warning, fmt.Sprintf("User %s requested disallowed image: %s", userID, image), userID)
+		s.logger.Log(logger.Warning, fmt.Sprintf("machine trial: User %s requested disallowed image: %s", userID, image), fmt.Sprintf("user_id=%s", userID))
 		return nil, machine_types.ErrImageNotAllowed
 	}
 
 	activeProvision, err := s.storage.GetActiveProvisionByUserAndOrg(userID, orgID)
 	if err != nil {
-		s.logger.Log(logger.Error, err.Error(), userID)
+		s.logger.Log(logger.Error, fmt.Sprintf("machine trial: %v", err), fmt.Sprintf("user_id=%s", userID))
 		return nil, fmt.Errorf("failed to check active provisions: %w", err)
 	}
 
@@ -136,24 +136,24 @@ func (s *TrailService) ProvisionTrail(userID, orgID string, req machine_types.Pr
 
 	count, err := s.storage.CountActiveProvisions()
 	if err != nil {
-		s.logger.Log(logger.Error, err.Error(), "")
+		s.logger.Log(logger.Error, fmt.Sprintf("machine trial: %v", err), "")
 		return nil, fmt.Errorf("failed to check system capacity: %w", err)
 	}
 
 	if count >= s.config.MaxConcurrentTrails {
-		s.logger.Log(logger.Warning, fmt.Sprintf("Max concurrent trails reached (%d/%d)", count, s.config.MaxConcurrentTrails), "")
+		s.logger.Log(logger.Warning, fmt.Sprintf("machine trial: max concurrent trails reached (%d/%d)", count, s.config.MaxConcurrentTrails), "")
 		return nil, machine_types.ErrSystemAtCapacity
 	}
 
 	subdomain, err := s.GenerateSubdomain()
 	if err != nil {
-		s.logger.Log(logger.Error, err.Error(), userID)
+		s.logger.Log(logger.Error, fmt.Sprintf("machine trial: %v", err), fmt.Sprintf("user_id=%s", userID))
 		return nil, fmt.Errorf("failed to generate subdomain: %w", err)
 	}
 
 	user, err := s.storage.GetUserByID(userID)
 	if err != nil {
-		s.logger.Log(logger.Error, err.Error(), userID)
+		s.logger.Log(logger.Error, fmt.Sprintf("machine trial: %v", err), fmt.Sprintf("user_id=%s", userID))
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
@@ -193,17 +193,17 @@ func (s *TrailService) ProvisionTrail(userID, orgID string, req machine_types.Pr
 		if strings.Contains(err.Error(), "active_provision_per_user_org") || strings.Contains(err.Error(), "duplicate") {
 			return nil, machine_types.ErrActiveProvisionExists
 		}
-		s.logger.Log(logger.Error, err.Error(), userID)
+		s.logger.Log(logger.Error, fmt.Sprintf("machine trial: %v", err), fmt.Sprintf("user_id=%s", userID))
 		return nil, fmt.Errorf("failed to create provision record: %w", err)
 	}
 
 	if err := s.storage.UpdateUserProvisionStatus(userID, machine_types.UserProvisionStatusProvisioning); err != nil {
-		s.logger.Log(logger.Warning, fmt.Sprintf("Failed to set user provision_status=provisioning: %v", err), userID)
+		s.logger.Log(logger.Warning, fmt.Sprintf("machine trial: failed to set user provision_status=provisioning: %v", err), fmt.Sprintf("user_id=%s", userID))
 	}
 
 	serverID, err := s.storage.SelectBestServer(1, 1024, 25)
 	if err != nil {
-		s.logger.Log(logger.Warning, fmt.Sprintf("Server scheduling failed, falling back to legacy queue: %v", err), userID)
+		s.logger.Log(logger.Warning, fmt.Sprintf("machine trial: server scheduling failed, falling back to legacy queue: %v", err), fmt.Sprintf("user_id=%s", userID))
 	}
 
 	payload := machine_types.ProvisionPayload{
@@ -218,14 +218,14 @@ func (s *TrailService) ProvisionTrail(userID, orgID string, req machine_types.Pr
 	}
 
 	if err := s.EnqueueProvisionTask(s.ctx, payload); err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("Failed to enqueue provision task: %v", err), userID)
+		s.logger.Log(logger.Error, fmt.Sprintf("machine trial: failed to enqueue provision task: %v", err), fmt.Sprintf("user_id=%s", userID))
 
 		if updateErr := s.storage.UpdateUserProvisionDetailsWithError(provisionDetails.ID.String(), fmt.Sprintf("Failed to enqueue task: %v", err)); updateErr != nil {
-			s.logger.Log(logger.Warning, fmt.Sprintf("Failed to update provision details error: %v", updateErr), userID)
+			s.logger.Log(logger.Warning, fmt.Sprintf("machine trial: failed to update provision details error: %v", updateErr), fmt.Sprintf("user_id=%s", userID))
 		}
 
 		if updateErr := s.storage.UpdateUserProvisionStatus(userID, machine_types.UserProvisionStatusFailed); updateErr != nil {
-			s.logger.Log(logger.Warning, fmt.Sprintf("Failed to update user provision_status: %v", updateErr), userID)
+			s.logger.Log(logger.Warning, fmt.Sprintf("machine trial: failed to update user provision_status: %v", updateErr), fmt.Sprintf("user_id=%s", userID))
 		}
 
 		return nil, machine_types.ErrFailedToEnqueueTask
@@ -242,7 +242,7 @@ func (s *TrailService) ProvisionTrail(userID, orgID string, req machine_types.Pr
 func (s *TrailService) GetStatus(userID, sessionID string) (*machine_types.StatusResponse, error) {
 	details, err := s.storage.GetUserProvisionDetailsByID(sessionID)
 	if err != nil {
-		s.logger.Log(logger.Error, err.Error(), userID)
+		s.logger.Log(logger.Error, fmt.Sprintf("machine trial: %v", err), fmt.Sprintf("user_id=%s", userID))
 		return nil, fmt.Errorf("failed to retrieve status: %w", err)
 	}
 
@@ -256,7 +256,7 @@ func (s *TrailService) GetStatus(userID, sessionID string) (*machine_types.Statu
 
 	userStatus, err := s.storage.GetUserProvisionStatus(userID)
 	if err != nil {
-		s.logger.Log(logger.Warning, fmt.Sprintf("Failed to get user provision status: %v", err), userID)
+		s.logger.Log(logger.Warning, fmt.Sprintf("machine trial: failed to get user provision status: %v", err), fmt.Sprintf("user_id=%s", userID))
 		userStatus = machine_types.UserProvisionStatusPending
 	}
 
@@ -330,17 +330,17 @@ func (s *TrailService) calculateProgress(step *shared_types.ProvisionStep, statu
 func (s *TrailService) UpgradeResources(userID, orgID string, vcpu, memoryMB int) error {
 	provision, err := s.storage.GetCompletedProvisionByUserID(userID)
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("Failed to look up completed provision: %v", err), userID)
+		s.logger.Log(logger.Error, fmt.Sprintf("machine trial: failed to look up completed provision: %v", err), fmt.Sprintf("user_id=%s", userID))
 		return fmt.Errorf("failed to look up provision: %w", err)
 	}
 
 	if provision == nil {
-		s.logger.Log(logger.Warning, "No completed provision found for resource upgrade", userID)
+		s.logger.Log(logger.Warning, "machine trial: no completed provision found for resource upgrade", fmt.Sprintf("user_id=%s", userID))
 		return machine_types.ErrProvisionNotFound
 	}
 
 	if provision.LXDContainerName == nil || *provision.LXDContainerName == "" {
-		s.logger.Log(logger.Error, "Completed provision has no container name", userID)
+		s.logger.Log(logger.Error, "machine trial: completed provision has no container name", fmt.Sprintf("user_id=%s", userID))
 		return fmt.Errorf("provision missing container name")
 	}
 
@@ -361,11 +361,11 @@ func (s *TrailService) UpgradeResources(userID, orgID string, vcpu, memoryMB int
 		enqueue = s.enqueueResourceFn
 	}
 	if err := enqueue(s.ctx, payload); err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("Failed to enqueue resource update: %v", err), userID)
+		s.logger.Log(logger.Error, fmt.Sprintf("machine trial: failed to enqueue resource update: %v", err), fmt.Sprintf("user_id=%s", userID))
 		return machine_types.ErrFailedToEnqueueTask
 	}
 
-	s.logger.Log(logger.Info, fmt.Sprintf("Resource upgrade enqueued: vm=%s vcpu=%d mem=%d", payload.VMName, vcpu, memoryMB), userID)
+	s.logger.Log(logger.Info, fmt.Sprintf("machine trial: resource upgrade enqueued: vm=%s vcpu=%d mem=%d", payload.VMName, vcpu, memoryMB), fmt.Sprintf("user_id=%s", userID))
 	return nil
 }
 

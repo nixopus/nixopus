@@ -8,13 +8,15 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/machine/types"
 	"github.com/uptrace/bun"
 )
 
 type BillingStorage struct {
-	DB  *bun.DB
-	Ctx context.Context
+	DB     *bun.DB
+	Ctx    context.Context
+	Logger *logger.Logger // optional; nil disables storage logs
 }
 
 func NewBillingStorage(db *bun.DB, ctx context.Context) *BillingStorage {
@@ -22,6 +24,8 @@ func NewBillingStorage(db *bun.DB, ctx context.Context) *BillingStorage {
 }
 
 func (s *BillingStorage) ListActivePlans() ([]types.MachinePlan, error) {
+	storageLog(s.Logger, logger.Debug, "storage: ListActivePlans", "")
+
 	var plans []types.MachinePlan
 	err := s.DB.NewSelect().
 		Model(&plans).
@@ -29,12 +33,16 @@ func (s *BillingStorage) ListActivePlans() ([]types.MachinePlan, error) {
 		OrderExpr("monthly_cost_cents ASC").
 		Scan(s.Ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: ListActivePlans: %v", err), "")
 		return nil, fmt.Errorf("failed to list machine plans: %w", err)
 	}
 	return plans, nil
 }
 
 func (s *BillingStorage) GetPlanByTier(tier string) (*types.MachinePlan, error) {
+	ctxStr := fmt.Sprintf("tier=%s", tier)
+	storageLog(s.Logger, logger.Debug, "storage: GetPlanByTier", ctxStr)
+
 	var plan types.MachinePlan
 	err := s.DB.NewSelect().
 		Model(&plan).
@@ -43,14 +51,19 @@ func (s *BillingStorage) GetPlanByTier(tier string) (*types.MachinePlan, error) 
 		Scan(s.Ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetPlanByTier not found", ctxStr)
 			return nil, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetPlanByTier: %v", err), ctxStr)
 		return nil, fmt.Errorf("failed to get plan by tier: %w", err)
 	}
 	return &plan, nil
 }
 
 func (s *BillingStorage) GetPlanByID(planID uuid.UUID) (*types.MachinePlan, error) {
+	ctxStr := fmt.Sprintf("plan_id=%s", planID)
+	storageLog(s.Logger, logger.Debug, "storage: GetPlanByID", ctxStr)
+
 	var plan types.MachinePlan
 	err := s.DB.NewSelect().
 		Model(&plan).
@@ -59,14 +72,19 @@ func (s *BillingStorage) GetPlanByID(planID uuid.UUID) (*types.MachinePlan, erro
 		Scan(s.Ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetPlanByID not found", ctxStr)
 			return nil, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetPlanByID: %v", err), ctxStr)
 		return nil, fmt.Errorf("failed to get plan by id: %w", err)
 	}
 	return &plan, nil
 }
 
 func (s *BillingStorage) GetBillingByOrgID(orgID uuid.UUID) (*types.OrgMachineBilling, error) {
+	ctxStr := fmt.Sprintf("org_id=%s", orgID)
+	storageLog(s.Logger, logger.Debug, "storage: GetBillingByOrgID", ctxStr)
+
 	var billing types.OrgMachineBilling
 	err := s.DB.NewSelect().
 		Model(&billing).
@@ -75,8 +93,10 @@ func (s *BillingStorage) GetBillingByOrgID(orgID uuid.UUID) (*types.OrgMachineBi
 		Scan(s.Ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetBillingByOrgID not found", ctxStr)
 			return nil, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetBillingByOrgID: %v", err), ctxStr)
 		return nil, fmt.Errorf("failed to get billing by org: %w", err)
 	}
 	return &billing, nil
@@ -340,6 +360,9 @@ type ProvisionInfo struct {
 }
 
 func (s *BillingStorage) IsServerUserOwned(orgID uuid.UUID, serverID uuid.UUID) (bool, error) {
+	ctxStr := fmt.Sprintf("org_id=%s server_id=%s", orgID, serverID)
+	storageLog(s.Logger, logger.Debug, "storage: IsServerUserOwned", ctxStr)
+
 	exists, err := s.DB.NewSelect().
 		TableExpr("user_provision_details AS upd").
 		Where("upd.organization_id = ?", orgID).
@@ -347,12 +370,19 @@ func (s *BillingStorage) IsServerUserOwned(orgID uuid.UUID, serverID uuid.UUID) 
 		Where("upd.type = 'user_owned'").
 		Exists(s.Ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: IsServerUserOwned: %v", err), ctxStr)
 		return false, fmt.Errorf("failed to check server ownership: %w", err)
 	}
 	return exists, nil
 }
 
 func (s *BillingStorage) GetProvisionInfo(ctx context.Context, orgID uuid.UUID, serverID *uuid.UUID) (*ProvisionInfo, error) {
+	ctxStr := fmt.Sprintf("org_id=%s", orgID)
+	if serverID != nil {
+		ctxStr = fmt.Sprintf("%s server_id=%s", ctxStr, *serverID)
+	}
+	storageLog(s.Logger, logger.Debug, "storage: GetProvisionInfo", ctxStr)
+
 	var row UserProvisionDetail
 	q := s.DB.NewSelect().Model(&row).Column("user_id", "lxd_container_name", "server_id")
 	if serverID != nil {
@@ -364,8 +394,10 @@ func (s *BillingStorage) GetProvisionInfo(ctx context.Context, orgID uuid.UUID, 
 	err := q.OrderExpr("created_at DESC").Limit(1).Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetProvisionInfo not found", ctxStr)
 			return nil, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetProvisionInfo: %v", err), ctxStr)
 		return nil, fmt.Errorf("failed to get provision info: %w", err)
 	}
 	info := &ProvisionInfo{UserID: row.UserID}

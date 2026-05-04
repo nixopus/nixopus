@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
@@ -50,7 +51,7 @@ func (s *ListService) ListMachines(orgID uuid.UUID, params types.MachineListPara
 
 	machines, totalCount, err := s.storage.ListMachinesByOrganizationID(orgID, params)
 	if err != nil {
-		s.logger.Log(logger.Error, err.Error(), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: ListMachines: %v", err), fmt.Sprintf("org_id=%s", orgID))
 		return nil, err
 	}
 
@@ -78,7 +79,7 @@ func (s *ListService) ListMachines(orgID uuid.UUID, params types.MachineListPara
 func (s *ListService) SetDefaultMachine(orgID uuid.UUID, machineID uuid.UUID) (*shared_types.SSHKey, error) {
 	oldDefaultID, err := s.storage.SetDefaultMachine(orgID, machineID)
 	if err != nil {
-		s.logger.Log(logger.Error, err.Error(), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: SetDefaultMachine: %v", err), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 		return nil, err
 	}
 
@@ -88,7 +89,7 @@ func (s *ListService) SetDefaultMachine(orgID uuid.UUID, machineID uuid.UUID) (*
 
 	key, err := s.storage.GetMachineByIDAndOrgID(machineID, orgID)
 	if err != nil {
-		s.logger.Log(logger.Error, err.Error(), machineID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: GetMachineByIDAndOrgID: %v", err), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 		return nil, err
 	}
 	return key, nil
@@ -103,7 +104,7 @@ func (s *ListService) CheckSSHConnection(orgID uuid.UUID) (*types.SSHConnectionS
 	}
 	sshMgr, err := sshProvider(s.ctx, orgID)
 	if err != nil {
-		s.logger.Log(logger.Error, err.Error(), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: CheckSSHConnection ssh manager: %v", err), fmt.Sprintf("org_id=%s", orgID))
 		return &types.SSHConnectionStatusResponse{
 			Status:       "error",
 			Connected:    false,
@@ -124,7 +125,7 @@ func (s *ListService) CheckSSHConnection(orgID uuid.UUID) (*types.SSHConnectionS
 
 	session, err := sshMgr.NewSessionWithRetry("")
 	if err != nil {
-		s.logger.Log(logger.Error, err.Error(), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: CheckSSHConnection session: %v", err), fmt.Sprintf("org_id=%s", orgID))
 		return &types.SSHConnectionStatusResponse{
 			Status:       "disconnected",
 			Connected:    false,

@@ -3,6 +3,7 @@ package controller
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -18,12 +19,13 @@ func (c *MachineController) ListMachines(f fuego.ContextNoBody) (*types.ListMach
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 	if user == nil {
+		c.logMachineDebug("ListMachines", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
-		c.logger.Log(logger.Error, "Organization ID not found in context", "")
+		c.logMachineDebug("ListMachines", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
@@ -59,7 +61,7 @@ func (c *MachineController) ListMachines(f fuego.ContextNoBody) (*types.ListMach
 
 	response, err := c.listService.ListMachines(orgID, params)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), orgID.String())
+		c.logger.Log(logger.Error, fmt.Sprintf("machine: ListMachines: %v", err), fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 
@@ -70,18 +72,19 @@ func (c *MachineController) CheckSSHStatus(f fuego.ContextNoBody) (*types.SSHCon
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 	if user == nil {
+		c.logMachineDebug("CheckSSHStatus", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
-		c.logger.Log(logger.Error, "Organization ID not found in context", "")
+		c.logMachineDebug("CheckSSHStatus", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	response, err := c.listService.CheckSSHConnection(orgID)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), orgID.String())
+		c.logger.Log(logger.Error, fmt.Sprintf("machine: CheckSSHStatus: %v", err), fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 
@@ -92,16 +95,19 @@ func (c *MachineController) SetDefaultMachine(f fuego.ContextNoBody) (*types.Set
 	w, r := f.Response(), f.Request()
 	user := utils.GetUser(w, r)
 	if user == nil {
+		c.logMachineDebug("SetDefaultMachine", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
+		c.logMachineDebug("SetDefaultMachine", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	machineID, err := uuid.Parse(f.PathParam("id"))
 	if err != nil {
+		c.logMachineDebug("SetDefaultMachine", "invalid machine ID", fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.BadRequestError{Detail: "invalid machine ID"}
 	}
 
@@ -113,7 +119,7 @@ func (c *MachineController) SetDefaultMachine(f fuego.ContextNoBody) (*types.Set
 		case errors.Is(err, types.ErrMachineInactive):
 			return nil, fuego.BadRequestError{Detail: err.Error()}
 		default:
-			c.logger.Log(logger.Error, err.Error(), machineID.String())
+			c.logger.Log(logger.Error, fmt.Sprintf("machine: SetDefaultMachine: %v", err), fmt.Sprintf("org_id=%s user_id=%s machine_id=%s", orgID, user.ID, machineID))
 			return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 		}
 	}
