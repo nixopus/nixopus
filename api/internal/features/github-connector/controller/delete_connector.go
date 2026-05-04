@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -13,6 +14,7 @@ func (c *GithubConnectorController) DeleteGithubConnector(f fuego.ContextWithBod
 	deleteRequest, err := f.Body()
 
 	if err != nil {
+		c.logger.Log(logger.Debug, fmt.Sprintf("github connector: DeleteGithubConnector body: %v", err), "")
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
@@ -28,9 +30,12 @@ func (c *GithubConnectorController) DeleteGithubConnector(f fuego.ContextWithBod
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
+	ctxStr := fmt.Sprintf("user_id=%s connector_id=%s", user.ID, deleteRequest.ID)
+	c.logger.Log(logger.Info, "github connector: DeleteGithubConnector", ctxStr)
+
 	err = c.service.DeleteConnector(deleteRequest.ID, user.ID.String())
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("github connector: DeleteGithubConnector: %v", err), ctxStr)
 		if err == types.ErrConnectorDoesNotExist {
 			return nil, fuego.NotFoundError{Detail: err.Error(), Err: err}
 		}
@@ -44,6 +49,7 @@ func (c *GithubConnectorController) DeleteGithubConnector(f fuego.ContextWithBod
 		}
 	}
 
+	c.logger.Log(logger.Info, "github connector: DeleteGithubConnector ok", ctxStr)
 	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Github Connector deleted successfully",

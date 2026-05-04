@@ -58,7 +58,7 @@ func (g *sshGit) Clone(repoURL, destinationPath string) error {
 	if err != nil {
 		return fmt.Errorf("git clone failed: %s, output: %s", err.Error(), output)
 	}
-	g.logger.Log(logger.Info, fmt.Sprintf("Successfully cloned repository to %s", destinationPath), "")
+	g.logger.Log(logger.Info, fmt.Sprintf("github connector git: cloned to %s", destinationPath), "")
 	return nil
 }
 
@@ -75,7 +75,7 @@ func (g *sshGit) Pull(repoURL, destinationPath string) error {
 	if err != nil {
 		return fmt.Errorf("git pull failed: %s, output: %s", err.Error(), output)
 	}
-	g.logger.Log(logger.Info, fmt.Sprintf("Successfully pulled latest changes for repository at %s", destinationPath), "")
+	g.logger.Log(logger.Info, fmt.Sprintf("github connector git: pulled at %s", destinationPath), "")
 	return nil
 }
 
@@ -92,7 +92,7 @@ func (g *sshGit) SetHeadToCommitHash(repoURL, destinationPath, commitHash string
 	if err != nil {
 		return fmt.Errorf("git checkout failed: %s, output: %s", err.Error(), output)
 	}
-	g.logger.Log(logger.Info, fmt.Sprintf("Successfully checked out commit %s at %s", commitHash, destinationPath), "")
+	g.logger.Log(logger.Info, fmt.Sprintf("github connector git: checked out commit %s at %s", commitHash, destinationPath), "")
 	return nil
 }
 
@@ -109,7 +109,7 @@ func (g *sshGit) SwitchBranch(destinationPath, branch string) error {
 	if err != nil {
 		return fmt.Errorf("git checkout branch failed: %s, output: %s", err.Error(), output)
 	}
-	g.logger.Log(logger.Info, fmt.Sprintf("Successfully switched to branch %s at %s", branch, destinationPath), "")
+	g.logger.Log(logger.Info, fmt.Sprintf("github connector git: switched to branch %s at %s", branch, destinationPath), "")
 	return nil
 }
 
@@ -146,7 +146,7 @@ func (g *sshGit) Stash(destinationPath string) (string, error) {
 	if stashID == "" {
 		return "", fmt.Errorf("no stash created")
 	}
-	g.logger.Log(logger.Info, fmt.Sprintf("Successfully stashed changes at %s with ID %s", destinationPath, stashID), "")
+	g.logger.Log(logger.Info, fmt.Sprintf("github connector git: stashed at %s id=%s", destinationPath, stashID), "")
 	return stashID, nil
 }
 
@@ -162,7 +162,7 @@ func (g *sshGit) ApplyStash(destinationPath, stashID string) error {
 	if err != nil {
 		return fmt.Errorf("git stash apply failed: %s, output: %s", err.Error(), output)
 	}
-	g.logger.Log(logger.Info, fmt.Sprintf("Successfully applied stash %s at %s", stashID, destinationPath), "")
+	g.logger.Log(logger.Info, fmt.Sprintf("github connector git: applied stash %s at %s", stashID, destinationPath), "")
 	return nil
 }
 
@@ -175,7 +175,7 @@ func (g *sshGit) ResetHard(destinationPath string) error {
 	if err != nil {
 		return fmt.Errorf("git reset --hard failed: %s, output: %s", err.Error(), output)
 	}
-	g.logger.Log(logger.Info, fmt.Sprintf("Successfully reset repository at %s", destinationPath), "")
+	g.logger.Log(logger.Info, fmt.Sprintf("github connector git: reset hard at %s", destinationPath), "")
 	return nil
 }
 

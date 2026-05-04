@@ -41,7 +41,7 @@ func NewDeployController(
 	extensionLoader shared_storage.ExtensionTemplateLoader,
 ) (*DeployController, error) {
 	deployStorage := storage.DeployStorage{DB: store.DB, Ctx: ctx}
-	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx})
+	github_service := github_service.NewGithubConnectorService(store, ctx, l, &github_storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx, Logger: &l})
 	taskService := tasks.NewTaskService(&deployStorage, l, github_service, store, notifier)
 	taskService.SetupCreateDeploymentQueue()
 

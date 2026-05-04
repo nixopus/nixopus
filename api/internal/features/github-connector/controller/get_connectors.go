@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -18,9 +19,12 @@ func (c *GithubConnectorController) GetGithubConnectors(f fuego.ContextNoBody) (
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
+	ctxStr := fmt.Sprintf("user_id=%s", user.ID)
+	c.logger.Log(logger.Info, "github connector: GetGithubConnectors", ctxStr)
+
 	connectors, err := c.service.GetAllConnectors(user.ID.String())
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("github connector: GetGithubConnectors: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -28,6 +32,7 @@ func (c *GithubConnectorController) GetGithubConnectors(f fuego.ContextNoBody) (
 		}
 	}
 
+	c.logger.Log(logger.Info, "github connector: GetGithubConnectors ok", fmt.Sprintf("%s count=%d", ctxStr, len(connectors)))
 	return &types.ListConnectorsResponse{
 		Status:  "success",
 		Message: "Connectors fetched successfully",

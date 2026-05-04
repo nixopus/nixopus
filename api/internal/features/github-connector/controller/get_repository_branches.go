@@ -25,6 +25,7 @@ func (c *GithubConnectorController) GetGithubRepositoryBranches(f fuego.ContextW
 
 	body, err := f.Body()
 	if err != nil {
+		c.logger.Log(logger.Debug, fmt.Sprintf("github connector: GetGithubRepositoryBranches body: %v", err), "")
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
@@ -32,9 +33,12 @@ func (c *GithubConnectorController) GetGithubRepositoryBranches(f fuego.ContextW
 		return nil, fuego.BadRequestError{Detail: "repository_name is required", Err: fmt.Errorf("repository_name is required")}
 	}
 
+	ctxStr := fmt.Sprintf("user_id=%s repository=%s", user.ID, body.RepositoryName)
+	c.logger.Log(logger.Info, "github connector: GetGithubRepositoryBranches", ctxStr)
+
 	branches, err := c.service.GetRepositoryBranches(user.ID.String(), body.RepositoryName)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("github connector: GetGithubRepositoryBranches: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -42,6 +46,7 @@ func (c *GithubConnectorController) GetGithubRepositoryBranches(f fuego.ContextW
 		}
 	}
 
+	c.logger.Log(logger.Info, "github connector: GetGithubRepositoryBranches ok", fmt.Sprintf("%s count=%d", ctxStr, len(branches)))
 	return &types.ListBranchesResponse{
 		Status:  "success",
 		Message: "Branches fetched successfully",

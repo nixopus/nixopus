@@ -1,9 +1,11 @@
 package validation
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/nixopus/nixopus/api/internal/features/github-connector/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
@@ -16,13 +18,27 @@ type GithubConnectorRepository interface {
 // Validator handles validation logic for github connector
 type Validator struct {
 	storage GithubConnectorRepository
+	Logger  *logger.Logger // optional; nil disables validation logs
 }
 
 // NewValidator creates a new validator instance
 func NewValidator(storage GithubConnectorRepository) *Validator {
+	return NewValidatorWithLogger(storage, nil)
+}
+
+// NewValidatorWithLogger is like NewValidator but attaches a logger for Debug detail on rule failures.
+func NewValidatorWithLogger(storage GithubConnectorRepository, log *logger.Logger) *Validator {
 	return &Validator{
 		storage: storage,
+		Logger:  log,
 	}
+}
+
+func (v *Validator) valog(sev logger.Severity, msg, data string) {
+	if v == nil || v.Logger == nil {
+		return
+	}
+	v.Logger.Log(sev, msg, data)
 }
 
 // ValidateRequest validates a request object against a set of predefined rules.
@@ -44,6 +60,7 @@ func (v *Validator) ValidateRequest(req any) error {
 	case *types.DeleteGithubConnectorRequest:
 		return v.validateDeleteGithubConnectorRequest(*r)
 	default:
+		v.valog(logger.Debug, "github connector validation: invalid request type", fmt.Sprintf("%T", req))
 		return types.ErrInvalidRequestType
 	}
 }
@@ -73,18 +90,23 @@ func (v *Validator) validateCreateGithubConnectorRequest(req types.CreateGithubC
 	// If any credential is provided, all must be provided (backward compatibility)
 	if hasCredentials {
 		if isEmpty(req.Slug) {
+			v.valog(logger.Debug, "github connector validation: create rejected", "reason=missing_slug")
 			return types.ErrMissingSlug
 		}
 		if isEmpty(req.Pem) {
+			v.valog(logger.Debug, "github connector validation: create rejected", "reason=missing_pem")
 			return types.ErrMissingPem
 		}
 		if isEmpty(req.ClientID) {
+			v.valog(logger.Debug, "github connector validation: create rejected", "reason=missing_client_id")
 			return types.ErrMissingClientID
 		}
 		if isEmpty(req.ClientSecret) {
+			v.valog(logger.Debug, "github connector validation: create rejected", "reason=missing_client_secret")
 			return types.ErrMissingClientSecret
 		}
 		if isEmpty(req.WebhookSecret) {
+			v.valog(logger.Debug, "github connector validation: create rejected", "reason=missing_webhook_secret")
 			return types.ErrMissingWebhookSecret
 		}
 	}
@@ -94,6 +116,7 @@ func (v *Validator) validateCreateGithubConnectorRequest(req types.CreateGithubC
 
 func (v *Validator) validateUpdateGithubConnectorRequest(req types.UpdateGithubConnectorRequest) error {
 	if req.InstallationID == "" {
+		v.valog(logger.Debug, "github connector validation: update rejected", "reason=missing_installation_id")
 		return types.ErrMissingInstallationID
 	}
 
@@ -102,6 +125,7 @@ func (v *Validator) validateUpdateGithubConnectorRequest(req types.UpdateGithubC
 
 func (v *Validator) validateDeleteGithubConnectorRequest(req types.DeleteGithubConnectorRequest) error {
 	if req.ID == "" {
+		v.valog(logger.Debug, "github connector validation: delete rejected", "reason=missing_id")
 		return types.ErrMissingID
 	}
 
