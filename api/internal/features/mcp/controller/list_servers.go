@@ -1,10 +1,12 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/go-fuego/fuego"
+	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/mcp/storage"
 	"github.com/nixopus/nixopus/api/internal/utils"
@@ -15,10 +17,16 @@ func (c *MCPController) ListServers(f fuego.ContextNoBody) (*Response, error) {
 
 	user := utils.GetUser(w, r)
 	if user == nil {
+		c.logMCPDebug("ListServers", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
+	if orgID == uuid.Nil {
+		c.logMCPDebug("ListServers", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
+	}
+
 	q := r.URL.Query()
 
 	page, _ := strconv.Atoi(q.Get("page"))
@@ -40,7 +48,7 @@ func (c *MCPController) ListServers(f fuego.ContextNoBody) (*Response, error) {
 
 	servers, totalCount, err := c.service.ListServers(orgID, params)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("mcp: ListServers: %v", err), fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 
@@ -66,14 +74,19 @@ func (c *MCPController) ListServersInternal(f fuego.ContextNoBody) (*Response, e
 
 	user := utils.GetUser(w, r)
 	if user == nil {
+		c.logMCPDebug("ListServersInternal", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
+	if orgID == uuid.Nil {
+		c.logMCPDebug("ListServersInternal", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
+	}
 
 	servers, _, err := c.service.ListServers(orgID, storage.ListServersParams{EnabledOnly: true})
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("mcp: ListServersInternal: %v", err), fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 

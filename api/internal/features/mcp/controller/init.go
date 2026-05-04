@@ -26,7 +26,7 @@ type Response struct {
 }
 
 func NewMCPController(store *shared_storage.Store, ctx context.Context, l logger.Logger) *MCPController {
-	repo := storage.MCPStorage{DB: store.DB, Ctx: ctx}
+	repo := storage.MCPStorage{DB: store.DB, Ctx: ctx, Logger: &l}
 	svc := service.NewMCPService(store, ctx, l, repo)
 	return &MCPController{store: store, service: svc, ctx: ctx, logger: l}
 }

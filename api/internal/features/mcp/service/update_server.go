@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,7 +11,7 @@ import (
 )
 
 func (s *MCPService) UpdateServer(req *validation.UpdateServerRequest, orgID uuid.UUID) (*shared_types.MCPServer, error) {
-	s.logger.Log(logger.Info, "Updating MCP server", req.ID)
+	s.logger.Log(logger.Info, "mcp service: UpdateServer", fmt.Sprintf("org_id=%s server_id=%s", orgID, req.ID))
 
 	id, err := uuid.Parse(req.ID)
 	if err != nil {
