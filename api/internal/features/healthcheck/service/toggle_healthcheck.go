@@ -10,7 +10,7 @@ import (
 )
 
 func (s *HealthCheckService) ToggleHealthCheck(organizationID uuid.UUID, req *types.ToggleHealthCheckRequest) (*shared_types.HealthCheck, error) {
-	s.logger.Log(logger.Info, "toggling health check", fmt.Sprintf("application_id: %s, enabled: %t", req.ApplicationID, req.Enabled))
+	s.logger.Log(logger.Info, "healthcheck service: ToggleHealthCheck", fmt.Sprintf("application_id=%s org_id=%s enabled=%t", req.ApplicationID, organizationID, req.Enabled))
 
 	applicationID, err := uuid.Parse(req.ApplicationID)
 	if err != nil {
@@ -18,7 +18,7 @@ func (s *HealthCheckService) ToggleHealthCheck(organizationID uuid.UUID, req *ty
 	}
 
 	if err := s.storage.ToggleHealthCheck(applicationID, organizationID, req.Enabled); err != nil {
-		s.logger.Log(logger.Error, "failed to toggle health check", err.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("healthcheck service: ToggleHealthCheck: %v", err), fmt.Sprintf("application_id=%s org_id=%s", req.ApplicationID, organizationID))
 		return nil, err
 	}
 

@@ -2,18 +2,22 @@ package storage
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
 type HealthCheckStorage struct {
-	DB  *bun.DB
-	Ctx context.Context
+	DB     *bun.DB
+	Ctx    context.Context
+	Logger *logger.Logger // optional; nil disables storage logs
 }
 
 type HealthCheckRepository interface {
@@ -32,6 +36,13 @@ type HealthCheckRepository interface {
 	UpdateHealthCheckStatus(healthCheckID uuid.UUID, consecutiveFails int, lastCheckedAt time.Time) error
 }
 
+func (s *HealthCheckStorage) storageLog(sev logger.Severity, msg, data string) {
+	if s.Logger == nil {
+		return
+	}
+	s.Logger.Log(sev, msg, data)
+}
+
 type HealthCheckStats struct {
 	TotalChecks      int     `json:"total_checks"`
 	SuccessfulChecks int     `json:"successful_checks"`
@@ -41,11 +52,18 @@ type HealthCheckStats struct {
 }
 
 func (s *HealthCheckStorage) CreateHealthCheck(healthCheck *shared_types.HealthCheck) error {
+	ctxStr := fmt.Sprintf("health_check_id=%s application_id=%s org_id=%s", healthCheck.ID, healthCheck.ApplicationID, healthCheck.OrganizationID)
+	s.storageLog(logger.Debug, "storage: CreateHealthCheck", ctxStr)
 	_, err := s.DB.NewInsert().Model(healthCheck).Exec(s.Ctx)
+	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: CreateHealthCheck: %v", err), ctxStr)
+	}
 	return err
 }
 
 func (s *HealthCheckStorage) GetHealthCheckByApplicationID(applicationID uuid.UUID, organizationID uuid.UUID) (*shared_types.HealthCheck, error) {
+	ctxStr := fmt.Sprintf("application_id=%s org_id=%s", applicationID, organizationID)
+	s.storageLog(logger.Debug, "storage: GetHealthCheckByApplicationID", ctxStr)
 	var healthCheck shared_types.HealthCheck
 	err := s.DB.NewSelect().
 		Model(&healthCheck).
@@ -53,12 +71,20 @@ func (s *HealthCheckStorage) GetHealthCheckByApplicationID(applicationID uuid.UU
 		Scan(s.Ctx)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			s.storageLog(logger.Debug, "storage: GetHealthCheckByApplicationID not found", ctxStr)
+		} else {
+			s.storageLog(logger.Error, fmt.Sprintf("storage: GetHealthCheckByApplicationID: %v", err), ctxStr)
+		}
 		return nil, err
 	}
+	s.storageLog(logger.Debug, "storage: GetHealthCheckByApplicationID ok", fmt.Sprintf("%s id=%s", ctxStr, healthCheck.ID))
 	return &healthCheck, nil
 }
 
 func (s *HealthCheckStorage) GetHealthCheckByID(id uuid.UUID, organizationID uuid.UUID) (*shared_types.HealthCheck, error) {
+	ctxStr := fmt.Sprintf("health_check_id=%s org_id=%s", id, organizationID)
+	s.storageLog(logger.Debug, "storage: GetHealthCheckByID", ctxStr)
 	var healthCheck shared_types.HealthCheck
 	err := s.DB.NewSelect().
 		Model(&healthCheck).
@@ -66,55 +92,81 @@ func (s *HealthCheckStorage) GetHealthCheckByID(id uuid.UUID, organizationID uui
 		Scan(s.Ctx)
 
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			s.storageLog(logger.Debug, "storage: GetHealthCheckByID not found", ctxStr)
+		} else {
+			s.storageLog(logger.Error, fmt.Sprintf("storage: GetHealthCheckByID: %v", err), ctxStr)
+		}
 		return nil, err
 	}
 	return &healthCheck, nil
 }
 
 func (s *HealthCheckStorage) UpdateHealthCheck(healthCheck *shared_types.HealthCheck) error {
+	ctxStr := fmt.Sprintf("health_check_id=%s application_id=%s", healthCheck.ID, healthCheck.ApplicationID)
+	s.storageLog(logger.Debug, "storage: UpdateHealthCheck", ctxStr)
 	_, err := s.DB.NewUpdate().
 		Model(healthCheck).
 		OmitZero().
 		Set("updated_at = CURRENT_TIMESTAMP").
 		WherePK().
 		Exec(s.Ctx)
+	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: UpdateHealthCheck: %v", err), ctxStr)
+	}
 	return err
 }
 
 func (s *HealthCheckStorage) DeleteHealthCheck(applicationID uuid.UUID, organizationID uuid.UUID) error {
+	ctxStr := fmt.Sprintf("application_id=%s org_id=%s", applicationID, organizationID)
+	s.storageLog(logger.Debug, "storage: DeleteHealthCheck", ctxStr)
 	result, err := s.DB.NewDelete().
 		Model((*shared_types.HealthCheck)(nil)).
 		Where("application_id = ? AND organization_id = ?", applicationID, organizationID).
 		Exec(s.Ctx)
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: DeleteHealthCheck: %v", err), ctxStr)
 		return err
 	}
 	if rows, _ := result.RowsAffected(); rows == 0 {
+		s.storageLog(logger.Debug, "storage: DeleteHealthCheck no rows", ctxStr)
 		return fmt.Errorf("health check not found")
 	}
 	return nil
 }
 
 func (s *HealthCheckStorage) ToggleHealthCheck(applicationID uuid.UUID, organizationID uuid.UUID, enabled bool) error {
+	ctxStr := fmt.Sprintf("application_id=%s org_id=%s enabled=%t", applicationID, organizationID, enabled)
+	s.storageLog(logger.Debug, "storage: ToggleHealthCheck", ctxStr)
 	_, err := s.DB.NewUpdate().
 		Model((*shared_types.HealthCheck)(nil)).
 		Set("enabled = ?", enabled).
 		Set("updated_at = CURRENT_TIMESTAMP").
 		Where("application_id = ? AND organization_id = ?", applicationID, organizationID).
 		Exec(s.Ctx)
+	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: ToggleHealthCheck: %v", err), ctxStr)
+	}
 	return err
 }
 
 func (s *HealthCheckStorage) GetEnabledHealthChecks() ([]*shared_types.HealthCheck, error) {
+	s.storageLog(logger.Debug, "storage: GetEnabledHealthChecks", "")
 	var healthChecks []*shared_types.HealthCheck
 	err := s.DB.NewSelect().
 		Model(&healthChecks).
 		Where("enabled = ?", true).
 		Scan(s.Ctx)
+	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: GetEnabledHealthChecks: %v", err), "")
+		return healthChecks, err
+	}
+	s.storageLog(logger.Debug, "storage: GetEnabledHealthChecks ok", fmt.Sprintf("count=%d", len(healthChecks)))
 	return healthChecks, err
 }
 
 func (s *HealthCheckStorage) GetDueHealthChecks() ([]*shared_types.HealthCheck, error) {
+	s.storageLog(logger.Debug, "storage: GetDueHealthChecks", "")
 	var healthChecks []*shared_types.HealthCheck
 	now := time.Now()
 
@@ -124,6 +176,7 @@ func (s *HealthCheckStorage) GetDueHealthChecks() ([]*shared_types.HealthCheck, 
 		Scan(s.Ctx)
 
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: GetDueHealthChecks select: %v", err), "")
 		return nil, err
 	}
 
@@ -140,15 +193,23 @@ func (s *HealthCheckStorage) GetDueHealthChecks() ([]*shared_types.HealthCheck, 
 		}
 	}
 
+	s.storageLog(logger.Debug, "storage: GetDueHealthChecks ok", fmt.Sprintf("enabled=%d due=%d", len(healthChecks), len(dueChecks)))
 	return dueChecks, nil
 }
 
 func (s *HealthCheckStorage) AddHealthCheckResult(result *shared_types.HealthCheckResult) error {
+	ctxStr := fmt.Sprintf("health_check_id=%s result_id=%s status=%s", result.HealthCheckID, result.ID, result.Status)
+	s.storageLog(logger.Debug, "storage: AddHealthCheckResult", ctxStr)
 	_, err := s.DB.NewInsert().Model(result).Exec(s.Ctx)
+	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: AddHealthCheckResult: %v", err), ctxStr)
+	}
 	return err
 }
 
 func (s *HealthCheckStorage) GetHealthCheckResults(healthCheckID uuid.UUID, limit int, startTime, endTime *time.Time) ([]*shared_types.HealthCheckResult, error) {
+	ctxStr := fmt.Sprintf("health_check_id=%s limit=%d", healthCheckID, limit)
+	s.storageLog(logger.Debug, "storage: GetHealthCheckResults", ctxStr)
 	var results []*shared_types.HealthCheckResult
 	query := s.DB.NewSelect().
 		Model(&results).
@@ -168,10 +229,17 @@ func (s *HealthCheckStorage) GetHealthCheckResults(healthCheckID uuid.UUID, limi
 	}
 
 	err := query.Scan(s.Ctx)
+	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: GetHealthCheckResults: %v", err), ctxStr)
+		return results, err
+	}
+	s.storageLog(logger.Debug, "storage: GetHealthCheckResults ok", fmt.Sprintf("%s count=%d", ctxStr, len(results)))
 	return results, err
 }
 
 func (s *HealthCheckStorage) GetHealthCheckStats(healthCheckID uuid.UUID, startTime, endTime time.Time) (*HealthCheckStats, error) {
+	ctxStr := fmt.Sprintf("health_check_id=%s", healthCheckID)
+	s.storageLog(logger.Debug, "storage: GetHealthCheckStats", ctxStr)
 	var stats HealthCheckStats
 
 	// Get total checks count
@@ -183,6 +251,7 @@ func (s *HealthCheckStorage) GetHealthCheckStats(healthCheckID uuid.UUID, startT
 		Count(s.Ctx)
 
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: GetHealthCheckStats total count: %v", err), ctxStr)
 		return nil, err
 	}
 
@@ -202,6 +271,7 @@ func (s *HealthCheckStorage) GetHealthCheckStats(healthCheckID uuid.UUID, startT
 		Count(s.Ctx)
 
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: GetHealthCheckStats success count: %v", err), ctxStr)
 		return nil, err
 	}
 
@@ -232,6 +302,8 @@ func (s *HealthCheckStorage) GetHealthCheckStats(healthCheckID uuid.UUID, startT
 }
 
 func (s *HealthCheckStorage) CleanupOldResults(retentionDays int) error {
+	ctxStr := fmt.Sprintf("retention_days=%d", retentionDays)
+	s.storageLog(logger.Debug, "storage: CleanupOldResults", ctxStr)
 	cutoffTime := time.Now().AddDate(0, 0, -retentionDays)
 
 	_, err := s.DB.NewDelete().
@@ -239,10 +311,15 @@ func (s *HealthCheckStorage) CleanupOldResults(retentionDays int) error {
 		Where("checked_at < ?", cutoffTime).
 		Exec(s.Ctx)
 
+	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: CleanupOldResults: %v", err), ctxStr)
+	}
 	return err
 }
 
 func (s *HealthCheckStorage) UpdateHealthCheckStatus(healthCheckID uuid.UUID, consecutiveFails int, lastCheckedAt time.Time) error {
+	ctxStr := fmt.Sprintf("health_check_id=%s consecutive_fails=%d", healthCheckID, consecutiveFails)
+	s.storageLog(logger.Debug, "storage: UpdateHealthCheckStatus", ctxStr)
 	_, err := s.DB.NewUpdate().
 		Model((*shared_types.HealthCheck)(nil)).
 		Set("consecutive_fails = ?", consecutiveFails).
@@ -250,5 +327,8 @@ func (s *HealthCheckStorage) UpdateHealthCheckStatus(healthCheckID uuid.UUID, co
 		Set("updated_at = CURRENT_TIMESTAMP").
 		Where("id = ?", healthCheckID).
 		Exec(s.Ctx)
+	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: UpdateHealthCheckStatus: %v", err), ctxStr)
+	}
 	return err
 }
