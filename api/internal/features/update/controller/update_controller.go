@@ -32,15 +32,18 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logUpdateDebug("CheckForUpdates", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
+
+	ctxStr := updateRequestData(r, user)
 
 	// If the environment is development, return current version but skip remote check
 	if config.AppConfig.App.Environment == "development" {
 		currentVersion, err := c.service.GetCurrentVersion()
 		if err != nil {
 			// In development, log the error but don't fail the request
-			c.logger.Log(logger.Warning, "Failed to get current version in development", err.Error())
+			c.logger.Log(logger.Warning, fmt.Sprintf("update: CheckForUpdates: get current version (dev): %v", err), ctxStr)
 			currentVersion = "unknown"
 		}
 		return &types.UpdateCheckResponse{
@@ -53,7 +56,7 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 
 	response, err := c.service.CheckForUpdates()
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to check for updates", err.Error())
+		c.logger.Log(logger.Error, fmt.Sprintf("update: CheckForUpdates: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -61,11 +64,13 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 		}
 	}
 
+	c.logger.Log(logger.Debug, "update: CheckForUpdates ok", fmt.Sprintf("%s update_available=%v current=%s latest=%s", ctxStr, response.UpdateAvailable, response.CurrentVersion, response.LatestVersion))
+
 	// If update is available and user has auto update enabled, perform the update
 	if response.UpdateAvailable {
 		autoUpdate, err := c.service.GetUserAutoUpdatePreference(user.ID)
 		if err != nil {
-			c.logger.Log(logger.Error, "failed to get user auto-update preference", err.Error())
+			c.logger.Log(logger.Error, fmt.Sprintf("update: CheckForUpdates: auto-update preference: %v", err), ctxStr)
 			return response, nil
 		}
 
@@ -74,7 +79,7 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 				// Get organization ID from request context
 				orgID := utils.GetOrganizationID(r)
 				if orgID == uuid.Nil {
-					c.logger.Log(logger.Error, "failed to perform auto-update", "organization ID not found in context")
+					c.logger.Log(logger.Error, "update: CheckForUpdates: auto-update skipped: organization ID required", ctxStr)
 					return
 				}
 				orgCtx := r.Context()
@@ -82,8 +87,9 @@ func (c *UpdateController) CheckForUpdates(s fuego.ContextNoBody) (*types.Update
 					orgCtx = context.Background()
 				}
 				orgCtx = context.WithValue(orgCtx, shared_types.OrganizationIDKey, orgID.String())
+				autoData := fmt.Sprintf("%s org_id=%s", ctxStr, orgID)
 				if err := c.service.PerformUpdate(orgCtx); err != nil {
-					c.logger.Log(logger.Error, "failed to perform auto-update", err.Error())
+					c.logger.Log(logger.Error, fmt.Sprintf("update: CheckForUpdates: auto-update: %v", err), autoData)
 				}
 			}()
 		}
@@ -98,6 +104,7 @@ func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateReq
 
 	// If the environment is development, we will not perform updates
 	if config.AppConfig.App.Environment == "development" {
+		c.logUpdateDebug("PerformUpdate", "skipped in development", updateRequestData(r, user))
 		return &types.UpdateResponse{
 			Success: true,
 			Message: "Update completed successfully",
@@ -105,17 +112,21 @@ func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateReq
 	}
 
 	if user == nil {
+		c.logUpdateDebug("PerformUpdate", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
+	ctxStr := updateRequestData(r, user)
+
 	req, err := s.Body()
 	if err != nil {
+		c.logUpdateDebug("PerformUpdate", fmt.Sprintf("parse body: %v", err), ctxStr)
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	updateInfo, err := c.service.CheckForUpdates()
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to check for updates", err.Error())
+		c.logger.Log(logger.Error, fmt.Sprintf("update: PerformUpdate: check: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -124,6 +135,7 @@ func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateReq
 	}
 
 	if !updateInfo.UpdateAvailable && !req.Force {
+		c.logger.Log(logger.Info, "update: PerformUpdate: no update available", fmt.Sprintf("%s force=%v", ctxStr, req.Force))
 		return &types.UpdateResponse{
 			Success: false,
 			Message: "No updates available",
@@ -133,18 +145,22 @@ func (c *UpdateController) PerformUpdate(s fuego.ContextWithBody[types.UpdateReq
 	// Get organization ID from request context
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
+		c.logUpdateDebug("PerformUpdate", "organization ID required", ctxStr)
 		return nil, fuego.BadRequestError{Detail: "organization ID not found in context", Err: fmt.Errorf("organization ID not found in context")}
 	}
 	orgCtx := r.Context()
-	orgCtx = context.WithValue(orgCtx, "organization_id", orgID.String())
+	orgCtx = context.WithValue(orgCtx, shared_types.OrganizationIDKey, orgID.String())
+	execCtx := fmt.Sprintf("%s org_id=%s force=%v", ctxStr, orgID, req.Force)
 	if err := c.service.PerformUpdate(orgCtx); err != nil {
-		c.logger.Log(logger.Error, "failed to perform update", err.Error())
+		c.logger.Log(logger.Error, fmt.Sprintf("update: PerformUpdate: %v", err), execCtx)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
 			Status: http.StatusInternalServerError,
 		}
 	}
+
+	c.logger.Log(logger.Info, "update: PerformUpdate completed", execCtx)
 
 	return &types.UpdateResponse{
 		Success: true,

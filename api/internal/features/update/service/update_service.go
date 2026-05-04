@@ -126,7 +126,7 @@ func (s *UpdateService) tryReadVersionFile(path string) (string, error) {
 		return "", fmt.Errorf("version.txt is empty")
 	}
 
-	s.logger.Log(logger.Info, "Read version from file", fmt.Sprintf("path: %s, version: %s", path, version))
+	s.logger.Log(logger.Info, "update service: read version from file", fmt.Sprintf("path=%s version=%s", path, version))
 	return version, nil
 }
 
@@ -214,32 +214,31 @@ func (s *UpdateService) isRepositoryRoot(dir string) bool {
 // fetchLatestVersion fetches the latest version from the appropriate branch from our repo
 func (s *UpdateService) fetchLatestVersion() (string, error) {
 	branch := s.getBranch()
-	s.logger.Log(logger.Info, "Fetching latest version", fmt.Sprintf("Using branch: %s", branch))
+	s.logger.Log(logger.Info, "update service: fetchLatestVersion", fmt.Sprintf("branch=%s", branch))
 
 	url := fmt.Sprintf("https://raw.githubusercontent.com/nixopus/nixopus/refs/heads/%s/version.txt", branch)
-	s.logger.Log(logger.Info, "Constructed version URL", url)
 
 	resp, err := http.Get(url)
 	if err != nil {
-		s.logger.Log(logger.Error, "Failed to fetch version", fmt.Sprintf("Error: %v", err))
+		s.logger.Log(logger.Error, fmt.Sprintf("update service: fetchLatestVersion request: %v", err), fmt.Sprintf("branch=%s", branch))
 		return "", err
 	}
 	defer resp.Body.Close()
 
-	s.logger.Log(logger.Info, "Version fetch response", fmt.Sprintf("Status: %d", resp.StatusCode))
+	s.logger.Log(logger.Debug, "update service: fetchLatestVersion response", fmt.Sprintf("branch=%s status=%d", branch, resp.StatusCode))
 	if resp.StatusCode != http.StatusOK {
-		s.logger.Log(logger.Error, "Failed to fetch version", fmt.Sprintf("Status code: %d", resp.StatusCode))
+		s.logger.Log(logger.Error, fmt.Sprintf("update service: fetchLatestVersion: HTTP %d", resp.StatusCode), fmt.Sprintf("branch=%s", branch))
 		return "", fmt.Errorf("failed to fetch version: status %d", resp.StatusCode)
 	}
 
 	versionBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		s.logger.Log(logger.Error, "Failed to read version response", fmt.Sprintf("Error: %v", err))
+		s.logger.Log(logger.Error, fmt.Sprintf("update service: fetchLatestVersion read body: %v", err), fmt.Sprintf("branch=%s", branch))
 		return "", err
 	}
 
 	version := strings.TrimSpace(string(versionBytes))
-	s.logger.Log(logger.Info, "Successfully fetched version", version)
+	s.logger.Log(logger.Info, "update service: fetchLatestVersion ok", fmt.Sprintf("branch=%s version=%s", branch, version))
 	return version, nil
 }
 
@@ -254,9 +253,6 @@ func (s *UpdateService) getBranch() string {
 // PerformUpdate performs an update by running the nixopus update CLI command via SSH on the host
 // Requires organization context to get organization-specific SSH configuration
 func (s *UpdateService) PerformUpdate(ctx context.Context) error {
-	s.logger.Log(logger.Info, "Starting Nixopus update", "Connecting via SSH to run nixopus update")
-
-	// Get organization ID from context
 	orgIDAny := ctx.Value(shared_types.OrganizationIDKey)
 	if orgIDAny == nil {
 		return fmt.Errorf("organization ID not found in context - system updates require organization context")
@@ -276,35 +272,39 @@ func (s *UpdateService) PerformUpdate(ctx context.Context) error {
 		return fmt.Errorf("unexpected organization ID type: %T", orgIDAny)
 	}
 
+	orgData := fmt.Sprintf("org_id=%s", orgID)
+
+	s.logger.Log(logger.Info, "update service: PerformUpdate starting", orgData)
+
 	// Get organization-specific SSH manager
 	manager, err := ssh.GetSSHManagerForOrganization(ctx, orgID)
 	if err != nil {
-		s.logger.Log(logger.Error, "Failed to get SSH manager", err.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("update service: PerformUpdate SSH manager: %v", err), orgData)
 		return fmt.Errorf("failed to get SSH manager: %w", err)
 	}
 
 	sshClient, err := manager.GetOrganizationSSH()
 	if err != nil {
-		s.logger.Log(logger.Error, "Failed to get SSH client", err.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("update service: PerformUpdate SSH client config: %v", err), orgData)
 		return fmt.Errorf("failed to get SSH client: %w", err)
 	}
 
 	client, err := sshClient.Connect()
 	if err != nil {
-		s.logger.Log(logger.Error, "Failed to connect via SSH", err.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("update service: PerformUpdate SSH connect: %v", err), orgData)
 		return fmt.Errorf("failed to connect via SSH: %w", err)
 	}
 	defer client.Close()
 
-	s.logger.Log(logger.Info, "SSH connected", "Running nixopus update command")
+	s.logger.Log(logger.Info, "update service: PerformUpdate running remote command", orgData)
 
 	output, err := sshClient.RunCommand("nixopus update")
 	if err != nil {
-		s.logger.Log(logger.Error, "Update failed", fmt.Sprintf("error: %v, output: %s", err, output))
+		s.logger.Log(logger.Error, fmt.Sprintf("update service: PerformUpdate command failed: %v", err), fmt.Sprintf("%s output_len=%d", orgData, len(output)))
 		return fmt.Errorf("failed to run nixopus update: %w (output: %s)", err, output)
 	}
 
-	s.logger.Log(logger.Info, "Update completed successfully", output)
+	s.logger.Log(logger.Info, "update service: PerformUpdate completed", fmt.Sprintf("%s output_len=%d", orgData, len(output)))
 	return nil
 }
 
