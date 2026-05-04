@@ -7,10 +7,10 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/joho/godotenv"
+	extservice "github.com/nixopus/nixopus/api/internal/features/extension/service"
 	"github.com/nixopus/nixopus/api/internal/secrets"
 	"github.com/nixopus/nixopus/api/internal/storage"
 	"github.com/nixopus/nixopus/api/internal/types"
@@ -28,8 +28,6 @@ var (
 
 // Test hooks (overridden in tests; defaults wire production behavior).
 var (
-	executableFn         = os.Executable
-	filepathAbsFn        = filepath.Abs
 	initNewDB            = storage.NewDB
 	initStoreInit        = defaultInitStoreInit
 	initLogFatalf        = log.Fatalf
@@ -38,29 +36,6 @@ var (
 	// initAfterViperHook runs after initViper() in Init (tests may poison viper before Unmarshal).
 	initAfterViperHook func()
 )
-
-// getMigrationsPath returns the migrations path from environment variable or defaults to path relative to executable
-func getMigrationsPath() string {
-	// Use MIGRATIONS_PATH environment variable if set
-	if migrationsPath := os.Getenv("MIGRATIONS_PATH"); migrationsPath != "" {
-		return migrationsPath
-	}
-
-	// Default: use migrations directory relative to executable location
-	// If executable is at api/nixopus-mcp-server or api/nixopus-api, migrations are at api/migrations
-	if execPath, err := executableFn(); err == nil {
-		execDir := filepath.Dir(execPath)
-		migrationsPath := filepath.Join(execDir, "migrations")
-		if absPath, err := filepathAbsFn(migrationsPath); err == nil {
-			if _, err := os.Stat(absPath); err == nil {
-				return absPath
-			}
-		}
-	}
-
-	// Final fallback: relative to current working directory
-	return "./migrations"
-}
 
 // Init initializes the app configuration using Viper to load values from config files,
 // environment variables, and defaults. It then creates a new PostgreSQL client using
@@ -123,19 +98,16 @@ func Init() *storage.Store {
 	log.Printf("Redis URL configured: %t", AppConfig.Redis.URL != "")
 	log.Printf("S3 image storage configured: %t", AppConfig.S3.Bucket != "")
 
-	migrationsPath := getMigrationsPath()
-
 	storage_config := storage.Config{
-		Host:           AppConfig.Database.Host,
-		Port:           AppConfig.Database.Port,
-		Username:       AppConfig.Database.Username,
-		Password:       AppConfig.Database.Password,
-		DBName:         AppConfig.Database.Name,
-		SSLMode:        AppConfig.Database.SSLMode,
-		MaxOpenConn:    AppConfig.Database.MaxOpenConn,
-		Debug:          AppConfig.Database.Debug,
-		MaxIdleConn:    AppConfig.Database.MaxIdleConn,
-		MigrationsPath: migrationsPath,
+		Host:        AppConfig.Database.Host,
+		Port:        AppConfig.Database.Port,
+		Username:    AppConfig.Database.Username,
+		Password:    AppConfig.Database.Password,
+		DBName:      AppConfig.Database.Name,
+		SSLMode:     AppConfig.Database.SSLMode,
+		MaxOpenConn: AppConfig.Database.MaxOpenConn,
+		Debug:       AppConfig.Database.Debug,
+		MaxIdleConn: AppConfig.Database.MaxIdleConn,
 	}
 
 	store, err := initNewDB(&storage_config)
@@ -144,6 +116,7 @@ func Init() *storage.Store {
 	}
 
 	storageInstance := storage.NewStore(store)
+	storageInstance.ExtensionLoader = extservice.NewTemplateLoader(storageInstance.DB)
 
 	err = initStoreInit(storageInstance, context.Background())
 

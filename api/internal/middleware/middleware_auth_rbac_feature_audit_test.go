@@ -683,7 +683,7 @@ func Test_AuditMiddleware_paths(t *testing.T) {
 	t.Run("map resource types and endpoint", func(t *testing.T) {
 		for _, rt := range []string{
 			"user", "organization", "role", "permission", "application", "deploy", "deployment",
-			"domain", "github-connector", "smtp", "notification", "feature_flags", "file-manager",
+			"domain", "github-connector", "smtp", "notification", "feature_flags",
 			"container", "audit", "terminal", "integration", "unknown-map-default",
 		} {
 			_ = mapResourceType(rt)

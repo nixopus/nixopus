@@ -14,6 +14,16 @@ import (
 	"golang.org/x/net/context"
 )
 
+// bunTxCommitHook is set by tests to simulate Commit failures (same package).
+var bunTxCommitHook func(tx *bun.Tx) error
+
+func commitNotificationBunTx(tx bun.Tx) error {
+	if bunTxCommitHook != nil {
+		return bunTxCommitHook(&tx)
+	}
+	return tx.Commit()
+}
+
 type NotificationStorage struct {
 	DB  *bun.DB
 	Ctx context.Context
@@ -75,19 +85,15 @@ func (s NotificationStorage) UpdateSmtp(config *notification.UpdateSMTPConfigReq
 // It takes an ID as a parameter, deletes the corresponding SMTP configuration
 // from the database, and returns an error if the database operation fails.
 func (s NotificationStorage) DeleteSmtp(ID string) error {
-	var config shared_types.SMTPConfigs
-	result, err := s.DB.NewDelete().Model(&config).Where("id = ?", ID).Exec(s.Ctx)
+	exists, err := s.DB.NewSelect().Model((*shared_types.SMTPConfigs)(nil)).Where("id = ?", ID).Exists(s.Ctx)
 	if err != nil {
 		return err
 	}
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	if rows == 0 {
+	if !exists {
 		return fmt.Errorf("smtp config not found")
 	}
-	return nil
+	_, err = s.DB.NewDelete().Model((*shared_types.SMTPConfigs)(nil)).Where("id = ?", ID).Exec(s.Ctx)
+	return err
 }
 
 // GetSmtp returns the SMTP configuration associated with the given ID.
@@ -116,9 +122,6 @@ func (s NotificationStorage) GetOrganizationsSmtp(organizationID string) ([]shar
 	configs := []shared_types.SMTPConfigs{}
 	err := s.DB.NewSelect().Model(&configs).Where("organization_id = ?", organizationID).Scan(s.Ctx)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return []shared_types.SMTPConfigs{}, nil
-		}
 		return nil, err
 	}
 	return configs, nil
@@ -263,7 +266,7 @@ func (s *NotificationStorage) initUserPreferences(ctx context.Context, userID uu
 		return fmt.Errorf("failed to insert preference items: %w", err)
 	}
 
-	if err = tx.Commit(); err != nil {
+	if err = commitNotificationBunTx(tx); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
@@ -303,7 +306,7 @@ func (s *NotificationStorage) initDefaultPreferences(ctx context.Context, userID
 		return fmt.Errorf("failed to insert preference items: %w", err)
 	}
 
-	if err = tx.Commit(); err != nil {
+	if err = commitNotificationBunTx(tx); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
 

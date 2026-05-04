@@ -251,6 +251,65 @@ func TestRestartContainer_ValidAuth_NoSSH(t *testing.T) {
 	)
 }
 
+// --- DELETE container (remove) ---
+
+func TestRemoveContainer_NoAuth(t *testing.T) {
+	containerID := uuid.New().String()
+	Test(t,
+		Description("DELETE /container/:id without auth returns 401"),
+		Delete(tests.GetContainerURL(containerID)),
+		Expect().Status().Equal(http.StatusUnauthorized),
+	)
+}
+
+func TestRemoveContainer_ValidAuth_NoSSH(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("DELETE /container/:id — OK or 500 (no SSH in CI); remove does not reject non-UUID in controller"),
+		Delete(tests.GetContainerURL(uuid.New().String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().OneOf(int64(http.StatusOK), int64(http.StatusInternalServerError)),
+	)
+}
+
+func TestRemoveContainer_InvalidOrgHeader(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("DELETE /container/:id with invalid org header returns 400"),
+		Delete(tests.GetContainerURL(uuid.New().String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add("not-a-uuid"),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestRemoveContainer_CrossOrgDenied(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("DELETE /container/:id for different org returns 403"),
+		Delete(tests.GetContainerURL(uuid.New().String())),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add("123e4567-e89b-12d3-a456-426614174000"),
+		Expect().Status().Equal(http.StatusForbidden),
+	)
+}
+
 // --- PUT container resources ---
 
 func TestGetContainerResources_NoAuth(t *testing.T) {

@@ -10,6 +10,55 @@ import (
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
+func (s *DomainStorage) GetDefaultSSHKeyByOrg(orgID uuid.UUID) (*shared_types.SSHKey, error) {
+	var key shared_types.SSHKey
+	err := s.getDB().NewSelect().
+		Model(&key).
+		Where("organization_id = ?", orgID).
+		Where("is_default = ?", true).
+		Where("is_active = ?", true).
+		Where("deleted_at IS NULL").
+		Limit(1).
+		Scan(s.Ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &key, nil
+}
+
+func (s *DomainStorage) GetProvisionDetailsBySSHKeyAndOrg(sshKeyID, orgID uuid.UUID) (*shared_types.UserProvisionDetails, error) {
+	var details shared_types.UserProvisionDetails
+	err := s.getDB().NewSelect().
+		Model(&details).
+		Where("ssh_key_id = ?", sshKeyID).
+		Where("organization_id = ?", orgID).
+		Limit(1).
+		Scan(s.Ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &details, nil
+}
+
+func (s *DomainStorage) GetProvisionDetailsBySubdomain(subdomain string) (*shared_types.UserProvisionDetails, error) {
+	var details shared_types.UserProvisionDetails
+	err := s.getDB().NewSelect().
+		Model(&details).
+		Where("subdomain = ?", subdomain).
+		Limit(1).
+		Scan(s.Ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &details, nil
+}
+
 func (s *DomainStorage) CreateCustomDomain(domain *shared_types.Domain) error {
 	domain.Type = "custom"
 	_, err := s.getDB().NewInsert().Model(domain).Exec(s.Ctx)

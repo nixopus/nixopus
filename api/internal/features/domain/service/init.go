@@ -5,21 +5,35 @@ import (
 
 	"github.com/nixopus/nixopus/api/internal/features/domain/storage"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
-	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 )
 
 type DomainsService struct {
 	storage storage.DomainStorageInterface
 	Ctx     context.Context
-	store   *shared_storage.Store
 	logger  logger.Logger
+	dns     DNSResolver
+	queue   QueueClient
 }
 
-func NewDomainsService(store *shared_storage.Store, ctx context.Context, logger logger.Logger, domain_repo storage.DomainStorageInterface) *DomainsService {
+// NewDomainsService creates a service wired to the real DNS and queue backends.
+func NewDomainsService(ctx context.Context, l logger.Logger, repo storage.DomainStorageInterface) *DomainsService {
+	return NewDomainsServiceWith(ctx, l, repo, NewRealDNSResolver(), &RealQueueClient{})
+}
+
+// NewDomainsServiceWith creates a service with explicit DNS and queue implementations.
+// Use this in tests to inject mocks.
+func NewDomainsServiceWith(
+	ctx context.Context,
+	l logger.Logger,
+	repo storage.DomainStorageInterface,
+	dns DNSResolver,
+	q QueueClient,
+) *DomainsService {
 	return &DomainsService{
-		storage: domain_repo,
-		store:   store,
+		storage: repo,
 		Ctx:     ctx,
-		logger:  logger,
+		logger:  l,
+		dns:     dns,
+		queue:   q,
 	}
 }

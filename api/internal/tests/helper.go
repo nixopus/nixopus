@@ -1,5 +1,7 @@
 package tests
 
+import "fmt"
+
 var baseURL = "http://localhost:8080/api/v1"
 
 func GetHealthURL() string {
@@ -76,6 +78,19 @@ func GetContainerURL(containerID string) string {
 
 func GetContainerLogsURL(containerID string) string {
 	return baseURL + "/container/" + containerID + "/logs"
+}
+
+// JQFirstContainerIDFromList resolves a container id from ListContainers grouped JSON (.groups / .ungrouped).
+func JQFirstContainerIDFromList() string {
+	return `(.data.ungrouped[0].id // .data.groups[0].containers[0].id)`
+}
+
+// JQContainerIDNamed builds jq that finds a container id by exact name among ungrouped and grouped containers.
+func JQContainerIDNamed(containerName string) string {
+	return fmt.Sprintf(
+		`[.data.ungrouped[]?, (.data.groups // [])[].containers[]?] | map(select(.name == %q)) | .[0].id`,
+		containerName,
+	)
 }
 
 func GetDomainURL() string {
@@ -334,6 +349,22 @@ func GetMCPServerTestURL() string {
 	return baseURL + "/mcp/servers/test"
 }
 
+func GetMCPProviderIconURL(providerID string) string {
+	return baseURL + "/mcp/catalog/" + providerID + "/icon"
+}
+
+func GetMCPInternalServersURL() string {
+	return baseURL + "/mcp/internal/servers"
+}
+
+func GetMCPInternalToolsURL() string {
+	return baseURL + "/mcp/internal/tools"
+}
+
+func GetMCPInternalToolsCallURL() string {
+	return baseURL + "/mcp/internal/tools/call"
+}
+
 // Machine billing / metrics
 func GetMachinePlansURL() string {
 	return baseURL + "/machines/plans"
@@ -357,6 +388,19 @@ func GetMachineEventsURL() string {
 
 func GetMachineMetricsSummaryURL() string {
 	return baseURL + "/machines/metrics/summary"
+}
+
+// Trial machine
+func GetMachineTrialProvisionURL() string {
+	return baseURL + "/machines/trial/provision"
+}
+
+func GetMachineTrialStatusURL(sessionID string) string {
+	return baseURL + "/machines/trial/status/" + sessionID
+}
+
+func GetTrailUpgradeResourcesURL() string {
+	return baseURL + "/trail/upgrade-resources"
 }
 
 // Container ops
@@ -406,7 +450,86 @@ func GetAuditURL() string {
 	return baseURL + "/audit"
 }
 
+func GetAuditLogsURL() string {
+	return baseURL + "/audit/logs"
+}
+
+// Telemetry
+func GetTelemetryURL() string {
+	return baseURL + "/cli/telemetry"
+}
+
 // Auth bootstrap
 func GetAuthBootstrapURL() string {
 	return baseURL + "/auth/bootstrap"
+}
+
+// GitHub connector
+func GetGithubConnectorURL() string {
+	return baseURL + "/github-connector"
+}
+
+func GetGithubConnectorsURL() string {
+	return baseURL + "/github-connector/all"
+}
+
+func GetGithubRepositoriesURL() string {
+	return baseURL + "/github-connector/repositories"
+}
+
+func GetGithubRepositoryBranchesURL() string {
+	return baseURL + "/github-connector/repository/branches"
+}
+
+// Deploy extended routes
+func GetDeployApplicationTemplateURL() string {
+	return baseURL + "/deploy/application/template"
+}
+
+func GetDeployApplicationProjectURL() string {
+	return baseURL + "/deploy/application/project"
+}
+
+func GetDeployApplicationProjectDeployURL() string {
+	return baseURL + "/deploy/application/project/deploy"
+}
+
+func GetDeployApplicationProjectDuplicateURL() string {
+	return baseURL + "/deploy/application/project/duplicate"
+}
+
+func GetDeployApplicationProjectAddToFamilyURL() string {
+	return baseURL + "/deploy/application/project/add-to-family"
+}
+
+func GetDeployApplicationProjectFamilyURL() string {
+	return baseURL + "/deploy/application/project/family"
+}
+
+func GetDeployApplicationProjectFamilyEnvironmentsURL() string {
+	return baseURL + "/deploy/application/project/family/environments"
+}
+
+func GetDeployApplicationLabelsURL() string {
+	return baseURL + "/deploy/application/labels"
+}
+
+func GetDeployApplicationDomainsURL() string {
+	return baseURL + "/deploy/application/domains"
+}
+
+func GetDeployApplicationComposeServicesURL() string {
+	return baseURL + "/deploy/application/compose-services"
+}
+
+func GetDeployApplicationPreviewComposeURL() string {
+	return baseURL + "/deploy/application/preview-compose"
+}
+
+func GetDeployApplicationRecoverURL() string {
+	return baseURL + "/deploy/application/recover"
+}
+
+func GetDeployApplicationServersURL() string {
+	return baseURL + "/deploy/application/servers"
 }

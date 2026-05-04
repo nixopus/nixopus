@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 
@@ -120,6 +121,9 @@ func PingCaddy(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Logger) erro
 	}
 	return nil
 }
+
+// pingCaddyProbe forwards to PingCaddy; tests may swap it.
+var pingCaddyProbe = PingCaddy
 
 // GetCurrentDomains reads the current Caddy config and returns all configured
 // domain-to-upstream mappings. This is used by the reconciler to diff against
@@ -371,7 +375,7 @@ type jsonBody struct {
 
 func (j *jsonBody) Read(p []byte) (int, error) {
 	if j.pos >= len(j.data) {
-		return 0, fmt.Errorf("EOF")
+		return 0, io.EOF
 	}
 	n := copy(p, j.data[j.pos:])
 	j.pos += n

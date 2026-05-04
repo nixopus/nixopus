@@ -34,12 +34,58 @@ func (n *NoOpBillingChecker) CanProvision(orgID uuid.UUID) error {
 	return nil
 }
 
+// RegistrationRepository is the minimal storage interface required by RegistrationService.
+// It is satisfied by *storage.RegistrationStorage in production and by a mock in tests.
+type RegistrationRepository interface {
+	HostPortExists(orgID uuid.UUID, host string, port int) (bool, error)
+	RunInTx(fn func(bun.Tx) error) error
+	InsertSSHKeyTx(tx bun.Tx, key *api_types.SSHKey) error
+	InsertProvisionDetailsTx(tx bun.Tx, userID, orgID, sshKeyID uuid.UUID, provType string, step api_types.ProvisionStep) error
+	GetSSHKeyByID(id, orgID uuid.UUID) (*api_types.SSHKey, error)
+	GetSSHKeyStatus(id, orgID uuid.UUID) (bool, *time.Time, error)
+	HasActiveAppServers(sshKeyID uuid.UUID) (bool, error)
+	SoftDeleteSSHKey(sshKeyID uuid.UUID) error
+	UpdateMachineName(sshKeyID uuid.UUID, name string) error
+	MarkMachineActive(sshKeyID uuid.UUID) error
+	MarkMachineInactive(sshKeyID uuid.UUID) error
+}
+
 type RegistrationService struct {
-	storage            *storage.RegistrationStorage
+	storage            RegistrationRepository
 	featureFlagService *ff_service.FeatureFlagService
 	billingChecker     MachineBillingChecker
 	logger             logger.Logger
 	ctx                context.Context
+	parsePrivateKeyFn  func(privateKey []byte) (cryptossh.Signer, error)                                         // nil -> cryptossh.ParsePrivateKey
+	dialSSHFn          func(network, addr string, config *cryptossh.ClientConfig) (RegistrationSSHClient, error) // nil -> cryptossh.Dial
+}
+
+// RegistrationSSHSession abstracts SSH session operations for testing VerifyMachine.
+type RegistrationSSHSession interface {
+	Run(cmd string) error
+	Close() error
+}
+
+// RegistrationSSHClient abstracts SSH client operations for testing VerifyMachine.
+type RegistrationSSHClient interface {
+	NewSession() (RegistrationSSHSession, error)
+	Close() error
+}
+
+type registrationSSHClientAdapter struct {
+	client *cryptossh.Client
+}
+
+func (a *registrationSSHClientAdapter) NewSession() (RegistrationSSHSession, error) {
+	sess, err := a.client.NewSession()
+	if err != nil {
+		return nil, err
+	}
+	return sess, nil
+}
+
+func (a *registrationSSHClientAdapter) Close() error {
+	return a.client.Close()
 }
 
 func NewRegistrationService(
@@ -59,6 +105,57 @@ func NewRegistrationService(
 		logger:             l,
 		ctx:                ctx,
 	}
+}
+
+// NewRegistrationServiceWith creates a RegistrationService with an injectable storage
+// interface, intended for use in tests.
+func NewRegistrationServiceWith(
+	s RegistrationRepository,
+	ffs *ff_service.FeatureFlagService,
+	bc MachineBillingChecker,
+	l logger.Logger,
+	ctx context.Context,
+) *RegistrationService {
+	if bc == nil {
+		bc = &NoOpBillingChecker{}
+	}
+	return &RegistrationService{
+		storage:            s,
+		featureFlagService: ffs,
+		billingChecker:     bc,
+		logger:             l,
+		ctx:                ctx,
+	}
+}
+
+func (s *RegistrationService) getParsePrivateKey() func(privateKey []byte) (cryptossh.Signer, error) {
+	if s.parsePrivateKeyFn != nil {
+		return s.parsePrivateKeyFn
+	}
+	return cryptossh.ParsePrivateKey
+}
+
+func (s *RegistrationService) getDialSSH() func(network, addr string, config *cryptossh.ClientConfig) (RegistrationSSHClient, error) {
+	if s.dialSSHFn != nil {
+		return s.dialSSHFn
+	}
+	return func(network, addr string, config *cryptossh.ClientConfig) (RegistrationSSHClient, error) {
+		client, err := cryptossh.Dial(network, addr, config)
+		if err != nil {
+			return nil, err
+		}
+		return &registrationSSHClientAdapter{client: client}, nil
+	}
+}
+
+// SetParsePrivateKeyFnForTest injects a private key parser for tests.
+func (s *RegistrationService) SetParsePrivateKeyFnForTest(fn func(privateKey []byte) (cryptossh.Signer, error)) {
+	s.parsePrivateKeyFn = fn
+}
+
+// SetDialSSHFnForTest injects an SSH dial function for tests.
+func (s *RegistrationService) SetDialSSHFnForTest(fn func(network, addr string, config *cryptossh.ClientConfig) (RegistrationSSHClient, error)) {
+	s.dialSSHFn = fn
 }
 
 func (s *RegistrationService) CreateMachine(orgID uuid.UUID, userID uuid.UUID, req types.CreateMachineRequest) (*types.CreateMachineResponse, error) {
@@ -136,7 +233,7 @@ func (s *RegistrationService) VerifyMachine(orgID uuid.UUID, machineID uuid.UUID
 		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
 	}
 
-	signer, err := cryptossh.ParsePrivateKey([]byte(*sshKey.PrivateKeyEncrypted))
+	signer, err := s.getParsePrivateKey()([]byte(*sshKey.PrivateKeyEncrypted))
 	if err != nil {
 		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
 	}
@@ -158,7 +255,7 @@ func (s *RegistrationService) VerifyMachine(orgID uuid.UUID, machineID uuid.UUID
 	}
 
 	addr := fmt.Sprintf("%s:%d", *sshKey.Host, port)
-	client, err := cryptossh.Dial("tcp", addr, config)
+	client, err := s.getDialSSH()("tcp", addr, config)
 	if err != nil {
 		s.logger.Log(logger.Error, fmt.Sprintf("SSH dial failed for machine %s: %v", machineID, err), orgID.String())
 		if dbErr := s.storage.MarkMachineInactive(machineID); dbErr != nil {

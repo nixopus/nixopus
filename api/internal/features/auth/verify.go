@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +10,15 @@ import (
 	"time"
 
 	"github.com/nixopus/nixopus/api/internal/config"
+)
+
+var (
+	authReadAll = io.ReadAll
+
+	// forwardCookiesList returns cookies to forward when the raw Cookie header is empty.
+	// Overridable in tests: net/http never exposes cookies without a Cookie header, but
+	// callers may still want the AddCookie path when using custom request shims.
+	forwardCookiesList = func(r *http.Request) []*http.Cookie { return r.Cookies() }
 )
 
 // HTTPClient is a shared HTTP client for Better Auth API calls.
@@ -72,7 +80,7 @@ func forwardCookies(originalReq *http.Request, targetReq *http.Request) {
 		return
 	}
 
-	cookies := originalReq.Cookies()
+	cookies := forwardCookiesList(originalReq)
 	if len(cookies) > 0 {
 		for _, cookie := range cookies {
 			targetReq.AddCookie(cookie)
@@ -204,46 +212,11 @@ func VerifySession(r *http.Request) (*SessionResponse, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := authReadAll(resp.Body)
 	if err != nil {
 		log.Printf("ERROR VerifySession: Failed to read response body: %v", err)
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 
 	return parseSessionResponse(body, resp.StatusCode, url, req, r)
-}
-
-// SendOTP sends an OTP to the user's email via Better Auth for passwordless authentication.
-func SendOTP(email string) error {
-	betterAuthAPI := getBetterAuthAPI()
-	url := betterAuthAPI + "/email-otp/send-verification-otp"
-
-	payload := map[string]interface{}{
-		"email": email,
-		"type":  "sign-in",
-	}
-
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := HTTPClient.Do(req)
-	if err != nil {
-		return fmt.Errorf("failed to send OTP: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("failed to send OTP: status %d, body: %s", resp.StatusCode, string(body))
-	}
-
-	return nil
 }

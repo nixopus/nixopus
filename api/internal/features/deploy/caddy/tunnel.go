@@ -84,7 +84,13 @@ func (t *CaddyTunnel) getOrCreateSSH() (*goph.Client, error) {
 		return t.persistSSH, nil
 	}
 
-	client, err := t.sshClient.Connect()
+	var client *goph.Client
+	var err error
+	if tunnelDialSSHHook != nil {
+		client, err = tunnelDialSSHHook(t.sshClient)
+	} else {
+		client, err = t.sshClient.Connect()
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -229,6 +235,22 @@ func evictIdleTunnels() {
 
 const defaultCaddyPort = "2019"
 
+var (
+	// testGetCaddyClientHook, when set by package tests, bypasses SSH tunnel creation.
+	testGetCaddyClientHook func(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Logger) (*caddygo.Client, error)
+	// tunnelCreateHook overrides CreateCaddyTunnel (tests can return a tunnel with a local admin URL).
+	tunnelCreateHook func(sshClient *ssh.SSH, remotePort string, orgID uuid.UUID, lgr logger.Logger) (*CaddyTunnel, error)
+	// tunnelDialSSHHook overrides ssh Connect when forwarding through a CaddyTunnel.
+	tunnelDialSSHHook func(sshClient *ssh.SSH) (*goph.Client, error)
+)
+
+func createCaddyTunnelForClient(sshClient *ssh.SSH, remotePort string, orgID uuid.UUID, lgr logger.Logger) (*CaddyTunnel, error) {
+	if tunnelCreateHook != nil {
+		return tunnelCreateHook(sshClient, remotePort, orgID, lgr)
+	}
+	return CreateCaddyTunnel(sshClient, remotePort, orgID, lgr)
+}
+
 func getCaddyPort() (string, error) {
 	port := config.AppConfig.Proxy.CaddyPort
 	if port == "" {
@@ -265,6 +287,10 @@ func orgIDFromContext(ctx context.Context) uuid.UUID {
 // the Caddy admin API on the given host. Uses existing SSH config (ctx org or sshClient).
 // Caches tunnel per host+port for reuse.
 func GetCaddyClient(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Logger) (*caddygo.Client, error) {
+	if testGetCaddyClientHook != nil {
+		return testGetCaddyClientHook(ctx, sshClient, lgr)
+	}
+
 	remotePort, err := getCaddyPort()
 	if err != nil {
 		return nil, err
@@ -312,7 +338,7 @@ func GetCaddyClient(ctx context.Context, sshClient *ssh.SSH, lgr *logger.Logger)
 		def := logger.NewLogger()
 		lgr = &def
 	}
-	tunnel, err := CreateCaddyTunnel(s, remotePort, orgID, *lgr)
+	tunnel, err := createCaddyTunnelForClient(s, remotePort, orgID, *lgr)
 	if err != nil {
 		return nil, err
 	}

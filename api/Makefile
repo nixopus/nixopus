@@ -51,6 +51,9 @@ test-all:
 test-routes:
 	@go test -p 1 ./internal/tests/routes/... -v -count=1
 
+cover-auth:
+	@go test -count=1 -cover ./internal/features/auth/...
+
 format:
 	@echo "Formatting Go files..."
 	@go fmt ./...
@@ -60,7 +63,7 @@ format:
 		echo "goimports not found. Install with: go install golang.org/x/tools/cmd/goimports@latest"; \
 	fi
 
-.PHONY: fixtures-load fixtures-recreate fixtures-clean fixtures-help format cli-build cli-build-dev cli-run cli-install
+.PHONY: fixtures-load fixtures-recreate fixtures-clean fixtures-help format cli-build cli-build-dev cli-run cli-install cover-auth
 
 fixtures-help:
 	@echo "Nixopus API Fixtures Commands:"

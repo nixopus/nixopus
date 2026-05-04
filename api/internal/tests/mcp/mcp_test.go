@@ -548,3 +548,44 @@ func TestTestMCPServer_ValidProvider_ConnectionFails(t *testing.T) {
 		Expect().Status().OneOf(int64(http.StatusOK), int64(http.StatusBadRequest), int64(http.StatusInternalServerError)),
 	)
 }
+
+// --- Provider icon (public route, no auth required) ---
+
+func TestGetMCPProviderIcon_UnknownProvider(t *testing.T) {
+	Test(t,
+		Description("GET /mcp/catalog/:provider_id/icon with unknown provider returns 404"),
+		Get(tests.GetMCPProviderIconURL("definitely-not-a-real-provider-xyz")),
+		Expect().Status().Equal(int64(http.StatusNotFound)),
+	)
+}
+
+func TestGetMCPProviderIcon_KnownProvider(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	// Fetch the catalog (with auth) to get a real provider_id
+	var providerID string
+	Test(t,
+		Description("Fetch catalog to get a valid provider ID for icon test"),
+		Get(tests.GetMCPCatalogURL()+"?limit=1"),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusOK),
+		Store().Response().Body().JSON().JQ(".data.items[0].provider_id").In(&providerID),
+	)
+
+	if providerID == "" {
+		t.Skip("no providers in catalog, skipping icon test")
+	}
+
+	// The icon endpoint is public — no auth headers needed
+	Test(t,
+		Description("GET /mcp/catalog/:provider_id/icon with known provider returns 200 SVG"),
+		Get(tests.GetMCPProviderIconURL(providerID)),
+		Expect().Status().Equal(int64(http.StatusOK)),
+		Expect().Headers("Content-Type").Contains("image/svg+xml"),
+	)
+}

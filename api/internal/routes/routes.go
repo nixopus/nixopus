@@ -24,7 +24,6 @@ import (
 	feature_flags_controller "github.com/nixopus/nixopus/api/internal/features/feature-flags/controller"
 	feature_flags_service "github.com/nixopus/nixopus/api/internal/features/feature-flags/service"
 	feature_flags_storage "github.com/nixopus/nixopus/api/internal/features/feature-flags/storage"
-	file_manager "github.com/nixopus/nixopus/api/internal/features/file-manager/controller"
 	githubConnector "github.com/nixopus/nixopus/api/internal/features/github-connector/controller"
 	healthcheck "github.com/nixopus/nixopus/api/internal/features/healthcheck/controller"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
@@ -248,7 +247,7 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 	trailInternalGroup := fuego.Group(server, apiV1.Path+"/trail", option.Tags("Trial"))
 	router.RegisterTrailInternalRoutes(trailInternalGroup, trailInternalController)
 
-	authController := router.createAuthController(dispatcher)
+	authController := router.createAuthController()
 	authGroup := fuego.Group(server, apiV1.Path+"/auth", option.Tags("Auth"))
 	router.RegisterAuthRoutes(authGroup, authController)
 
@@ -258,13 +257,21 @@ func (router *Router) registerPublicRoutes(server *fuego.Server, apiV1 api.Versi
 
 	telemetryCtrl := telemetry.NewTelemetryController(router.app.Store.DB, router.app.Ctx, router.logger)
 	telemetryGroup := fuego.Group(server, apiV1.Path+"/cli/telemetry", option.Tags("Telemetry"))
-	fuego.Use(telemetryGroup, middleware.NewRateLimiterWithConfig(0.01, 3))
+	// OS env wins over viper/app config (YAML "production" should not beat ENV=test from the shell).
+	env := strings.ToLower(strings.TrimSpace(os.Getenv("ENV")))
+	if env == "" {
+		env = strings.ToLower(strings.TrimSpace(config.AppConfig.App.Environment))
+	}
+	// Burst-3 limiter trips integration tests (many POSTs, one client IP). Enable only in prod.
+	if env == "production" || env == "prod" {
+		fuego.Use(telemetryGroup, middleware.NewRateLimiterWithConfig(0.01, 3))
+	}
 	router.RegisterTelemetryRoutes(telemetryGroup, telemetryCtrl)
 }
 
 // registerProtectedRoutes registers routes that require authentication
 func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Version, dispatcher *notification.Dispatcher, deployController *deploy.DeployController) {
-	authController := router.createAuthController(dispatcher)
+	authController := router.createAuthController()
 	authProtectedGroup := fuego.Group(server, apiV1.Path+"/auth", option.Tags("Auth"))
 	router.applyMiddleware(authProtectedGroup, MiddlewareConfig{RBAC: false, Audit: false, ResourceName: "auth"})
 	router.RegisterAuthProtectedRoutes(authProtectedGroup, authController)
@@ -298,17 +305,6 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		ResourceName: "notification",
 	})
 	router.RegisterNotificationRoutes(notificationGroup, notifController)
-
-	fileManagerController := file_manager.NewFileManagerController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
-	fileManagerGroup := fuego.Group(server, apiV1.Path+"/file-manager", option.Tags("File Manager"))
-	fuego.Use(fileManagerGroup, middleware.ServerIDMiddleware)
-	router.applyMiddleware(fileManagerGroup, MiddlewareConfig{
-		RBAC:         true,
-		FeatureFlag:  "file_manager",
-		Audit:        true,
-		ResourceName: "file-manager",
-	})
-	router.RegisterFileManagerRoutes(fileManagerGroup, fileManagerController)
 
 	deployGroup := fuego.Group(server, apiV1.Path+"/deploy", option.Tags("Deploy"))
 	router.applyMiddleware(deployGroup, MiddlewareConfig{
@@ -361,7 +357,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterHealthCheckRoutes(healthCheckGroup, healthCheckController)
 
-	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, router.logger, config.AppConfig.Redis.URL)
+	extensionController := extension.NewExtensionsController(router.app.Store, router.app.Ctx, router.logger, router.cache)
 	extensionGroup := fuego.Group(server, apiV1.Path+"/extensions", option.Tags("Extensions"))
 	router.applyMiddleware(extensionGroup, MiddlewareConfig{
 		RBAC:         true,
@@ -422,10 +418,10 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	router.RegisterMCPRoutes(mcpGroup, mcpCtrl)
 }
 
-func (router *Router) createAuthController(dispatcher *notification.Dispatcher) *auth.AuthController {
+func (router *Router) createAuthController() *auth.AuthController {
 	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
-	authService := auth_service.NewAuthService(userStorage, router.logger, router.app.Ctx, config.AppConfig.Redis.URL)
-	return auth.NewAuthController(router.app.Ctx, router.logger, dispatcher, *authService, router.app.Store)
+	authService := auth_service.NewAuthService(userStorage, userStorage.DB, router.logger, router.app.Ctx, config.AppConfig.Redis.URL)
+	return auth.NewAuthController(router.app.Ctx, router.logger, authService)
 }
 
 func (router *Router) createFeatureFlagController() *feature_flags_controller.FeatureFlagController {

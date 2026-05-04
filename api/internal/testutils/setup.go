@@ -16,7 +16,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
-	authService "github.com/nixopus/nixopus/api/internal/features/auth/service"
 	user_storage "github.com/nixopus/nixopus/api/internal/features/auth/storage"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	dbstorage "github.com/nixopus/nixopus/api/internal/storage"
@@ -56,7 +55,6 @@ type TestSetup struct {
 	Store       *dbstorage.Store
 	Logger      logger.Logger
 	UserStorage *user_storage.UserStorage
-	AuthService *authService.AuthService
 }
 
 func init() {
@@ -186,7 +184,6 @@ func NewTestSetup() *TestSetup {
 	store := dbstorage.NewStore(testDB)
 
 	userStorage := &user_storage.UserStorage{DB: testDB, Ctx: ctx}
-	authSvc := authService.NewAuthService(userStorage, l, ctx, "")
 
 	return &TestSetup{
 		DB:          testDB,
@@ -194,7 +191,6 @@ func NewTestSetup() *TestSetup {
 		Store:       store,
 		Logger:      l,
 		UserStorage: userStorage,
-		AuthService: authSvc,
 	}
 }
 
@@ -414,7 +410,8 @@ func (s *TestSetup) LoginTestUser(userID string) (*TestAuthResponse, error) {
 
 // CreateTestUserAndOrg creates a test user and organization via Better Auth test utils.
 func (s *TestSetup) CreateTestUserAndOrg() (*types.User, *types.Organization, error) {
-	authResponse, err := s.CreateTestUserViaAuth("test@example.com", "Test User")
+	uniqueEmail := fmt.Sprintf("test-%d@example.com", time.Now().UnixNano())
+	authResponse, err := s.CreateTestUserViaAuth(uniqueEmail, "Test User")
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create test user: %w", err)
 	}

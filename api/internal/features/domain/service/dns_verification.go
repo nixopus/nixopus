@@ -2,21 +2,22 @@ package service
 
 import (
 	"fmt"
-	"net"
 	"strings"
 )
 
-func VerifyDNSConfiguration(domain, targetSubdomain string) (bool, error) {
+// verifyDNSConfiguration checks whether domain's DNS points to targetSubdomain
+// via CNAME, matching A records, or a TXT ownership record.
+func verifyDNSConfiguration(resolver NetLookup, domain, targetSubdomain string) (bool, error) {
 	expectedTarget := fmt.Sprintf("%s.nixopus.ai.", targetSubdomain)
 
-	cname, err := net.LookupCNAME(domain)
+	cname, err := resolver.LookupCNAME(domain)
 	if err == nil && strings.EqualFold(cname, expectedTarget) {
 		return true, nil
 	}
 
-	hosts, err := net.LookupHost(domain)
+	hosts, err := resolver.LookupHost(domain)
 	if err == nil {
-		targetHosts, lookupErr := net.LookupHost(fmt.Sprintf("%s.nixopus.ai", targetSubdomain))
+		targetHosts, lookupErr := resolver.LookupHost(fmt.Sprintf("%s.nixopus.ai", targetSubdomain))
 		if lookupErr == nil {
 			for _, h := range hosts {
 				for _, th := range targetHosts {
@@ -29,7 +30,7 @@ func VerifyDNSConfiguration(domain, targetSubdomain string) (bool, error) {
 	}
 
 	expectedTXT := fmt.Sprintf("nixopus-domain-verify=%s", domain)
-	txtRecords, err := net.LookupTXT(fmt.Sprintf("_nixopus-verify.%s", domain))
+	txtRecords, err := resolver.LookupTXT(fmt.Sprintf("_nixopus-verify.%s", domain))
 	if err == nil {
 		for _, txt := range txtRecords {
 			if strings.EqualFold(strings.TrimSpace(txt), expectedTXT) {
@@ -41,8 +42,14 @@ func VerifyDNSConfiguration(domain, targetSubdomain string) (bool, error) {
 	return false, nil
 }
 
-func CheckDNSPropagation(domain string) (string, error) {
-	cname, err := net.LookupCNAME(domain)
+// VerifyDNSConfiguration is the exported entry point backed by defaultResolver.
+func VerifyDNSConfiguration(domain, targetSubdomain string) (bool, error) {
+	return verifyDNSConfiguration(defaultResolver, domain, targetSubdomain)
+}
+
+// checkDNSPropagation returns the propagation state of the domain's DNS records.
+func checkDNSPropagation(resolver NetLookup, domain string) (string, error) {
+	cname, err := resolver.LookupCNAME(domain)
 	if err == nil && cname != "" && cname != domain+"." {
 		if strings.Contains(strings.ToLower(cname), "nixopus.ai") {
 			return "verified", nil
@@ -50,7 +57,7 @@ func CheckDNSPropagation(domain string) (string, error) {
 	}
 
 	expectedTXT := fmt.Sprintf("nixopus-domain-verify=%s", domain)
-	txtRecords, err := net.LookupTXT(fmt.Sprintf("_nixopus-verify.%s", domain))
+	txtRecords, err := resolver.LookupTXT(fmt.Sprintf("_nixopus-verify.%s", domain))
 	if err == nil {
 		for _, txt := range txtRecords {
 			if strings.EqualFold(strings.TrimSpace(txt), expectedTXT) {
@@ -59,7 +66,7 @@ func CheckDNSPropagation(domain string) (string, error) {
 		}
 	}
 
-	_, err = net.LookupHost(domain)
+	_, err = resolver.LookupHost(domain)
 	if err != nil {
 		return "not_configured", nil
 	}
@@ -67,13 +74,17 @@ func CheckDNSPropagation(domain string) (string, error) {
 	return "propagating", nil
 }
 
-// VerifyARecordMatchesMachineIP checks that the domain resolves to machineIP.
-// Used for BYOS machines where traffic goes directly to the user's server.
-func VerifyARecordMatchesMachineIP(domain, machineIP string) (bool, error) {
+// CheckDNSPropagation is the exported entry point backed by defaultResolver.
+func CheckDNSPropagation(domain string) (string, error) {
+	return checkDNSPropagation(defaultResolver, domain)
+}
+
+// verifyARecordMatchesMachineIP checks that the domain resolves to machineIP.
+func verifyARecordMatchesMachineIP(resolver NetLookup, domain, machineIP string) (bool, error) {
 	if machineIP == "" {
 		return false, fmt.Errorf("machine IP is not configured")
 	}
-	hosts, err := net.LookupHost(domain)
+	hosts, err := resolver.LookupHost(domain)
 	if err != nil {
 		return false, nil
 	}
@@ -85,10 +96,15 @@ func VerifyARecordMatchesMachineIP(domain, machineIP string) (bool, error) {
 	return false, nil
 }
 
-// CheckDNSPropagationBYOS checks propagation state for a BYOS domain
-// that should resolve to machineIP via an A record.
-func CheckDNSPropagationBYOS(domain, machineIP string) (string, error) {
-	hosts, err := net.LookupHost(domain)
+// VerifyARecordMatchesMachineIP is the exported entry point backed by defaultResolver.
+func VerifyARecordMatchesMachineIP(domain, machineIP string) (bool, error) {
+	return verifyARecordMatchesMachineIP(defaultResolver, domain, machineIP)
+}
+
+// checkDNSPropagationBYOS returns the propagation state for a BYOS domain that
+// should resolve to machineIP via an A record.
+func checkDNSPropagationBYOS(resolver NetLookup, domain, machineIP string) (string, error) {
+	hosts, err := resolver.LookupHost(domain)
 	if err != nil {
 		return "not_configured", nil
 	}
@@ -98,4 +114,9 @@ func CheckDNSPropagationBYOS(domain, machineIP string) (string, error) {
 		}
 	}
 	return "propagating", nil
+}
+
+// CheckDNSPropagationBYOS is the exported entry point backed by defaultResolver.
+func CheckDNSPropagationBYOS(domain, machineIP string) (string, error) {
+	return checkDNSPropagationBYOS(defaultResolver, domain, machineIP)
 }

@@ -37,6 +37,39 @@ func TestGetSMTPConfig_ValidAuth_Empty(t *testing.T) {
 	)
 }
 
+func TestGetSMTPConfig_MissingIDQuery(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("GET /notification/smtp without id query returns 400"),
+		Get(tests.GetNotificationSMTPURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestGetSMTPConfig_QueryOrgMismatch(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	otherOrg := uuid.New().String()
+	Test(t,
+		Description("GET /notification/smtp with id not matching active org returns 403"),
+		Get(tests.GetNotificationSMTPURL()+"?id="+otherOrg),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Expect().Status().Equal(http.StatusForbidden),
+	)
+}
+
 func TestCreateSMTPConfig_NoAuth(t *testing.T) {
 	Test(t,
 		Description("POST /notification/smtp without auth returns 401"),
@@ -121,6 +154,69 @@ func TestCreateSMTPConfig_MissingPassword(t *testing.T) {
 		Send().Body().JSON(map[string]interface{}{
 			"host": "smtp.example.com", "port": 587, "username": "user@example.com",
 		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestCreateSMTPConfig_MissingOrganizationID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("POST /notification/smtp without organization_id returns 400"),
+		Post(tests.GetNotificationSMTPURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"host":     "smtp.example.com",
+			"port":     587,
+			"username": "user@example.com",
+			"password": "password123",
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestCreateSMTPConfig_NilOrganizationUUID(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("POST /notification/smtp with zero organization_id returns 400"),
+		Post(tests.GetNotificationSMTPURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"host":            "smtp.example.com",
+			"port":            587,
+			"username":        "user@example.com",
+			"password":        "password123",
+			"organization_id": uuid.Nil.String(),
+		}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestCreateSMTPConfig_InvalidJSONBody(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("POST /notification/smtp with invalid JSON returns 400"),
+		Post(tests.GetNotificationSMTPURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().String("{not valid json"),
 		Expect().Status().Equal(http.StatusBadRequest),
 	)
 }
@@ -219,6 +315,24 @@ func TestUpdateSMTPConfig_MissingID(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestUpdateSMTPConfig_InvalidJSONBody(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("PUT /notification/smtp with invalid JSON returns 400"),
+		Put(tests.GetNotificationSMTPURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().String("{"),
 		Expect().Status().Equal(http.StatusBadRequest),
 	)
 }
@@ -323,6 +437,24 @@ func TestDeleteSMTPConfig_MissingID(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestDeleteSMTPConfig_InvalidJSONBody(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("DELETE /notification/smtp with invalid JSON returns 400"),
+		Delete(tests.GetNotificationSMTPURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().String(`{"id": "`),
 		Expect().Status().Equal(http.StatusBadRequest),
 	)
 }
@@ -479,6 +611,24 @@ func TestUpdateNotificationPreferences_MissingType(t *testing.T) {
 		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"category": "activity", "enabled": true}),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestUpdateNotificationPreferences_InvalidJSONBody(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("PATCH /notification/preferences with invalid JSON returns 400"),
+		Method(http.MethodPatch, tests.GetNotificationPreferencesURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().String("{"),
 		Expect().Status().Equal(http.StatusBadRequest),
 	)
 }
@@ -874,6 +1024,46 @@ func TestSendNotification_InvalidChannel(t *testing.T) {
 		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
 		Send().Body().JSON(map[string]interface{}{"channel": "telegram", "message": "test"}),
 		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestSendNotification_InvalidJSONBody(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("POST /notification/send with invalid JSON returns 400"),
+		Post(tests.GetNotificationSendURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Headers("Content-Type").Add("application/json"),
+		Send().Body().String(`{"channel":`),
+		Expect().Status().Equal(http.StatusBadRequest),
+	)
+}
+
+func TestSendNotification_EmailChannel_WithRecipient(t *testing.T) {
+	setup := testutils.NewTestSetup()
+	auth, err := setup.GetAuthResponse()
+	if err != nil {
+		t.Fatalf("failed to get auth response: %v", err)
+	}
+
+	Test(t,
+		Description("POST /notification/send with email channel and explicit recipient is accepted"),
+		Post(tests.GetNotificationSendURL()),
+		Send().Headers("Cookie").Add(auth.GetAuthCookiesHeader()),
+		Send().Headers("X-Organization-ID").Add(auth.OrganizationID),
+		Send().Body().JSON(map[string]interface{}{
+			"channel": "email",
+			"to":      "integration-test-recipient@example.com",
+			"message": "integration test email body",
+			"subject": "Integration test subject",
+		}),
+		Expect().Status().OneOf(int64(http.StatusOK), int64(http.StatusInternalServerError)),
 	)
 }
 

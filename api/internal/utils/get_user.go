@@ -27,7 +27,9 @@ func GetUser(w http.ResponseWriter, r *http.Request) *types.User {
 	user, ok := userAny.(*types.User)
 
 	if !ok {
-		SendErrorResponse(w, types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
+		if w != nil {
+			SendErrorResponse(w, types.ErrFailedToGetUserFromContext.Error(), http.StatusInternalServerError)
+		}
 		return nil
 	}
 

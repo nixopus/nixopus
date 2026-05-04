@@ -10,7 +10,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/melbahja/goph"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
-	"github.com/nixopus/nixopus/api/internal/features/ssh"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/vmihailenco/taskq/v3"
 )
@@ -76,14 +75,18 @@ func (h *HealthMonitor) SetupQueue() {
 		Name:       TASK_CADDY_HEALTH,
 		RetryLimit: 0,
 		Handler: func(ctx context.Context, payload CaddyTaskPayload) error {
-			orgID, err := uuid.Parse(payload.OrganizationID)
-			if err != nil {
-				return fmt.Errorf("invalid org ID in health check task: %w", err)
-			}
-			h.checkServer(ctx, orgID)
-			return nil
+			return h.healthCheckTask(ctx, payload)
 		},
 	})
+}
+
+func (h *HealthMonitor) healthCheckTask(ctx context.Context, payload CaddyTaskPayload) error {
+	orgID, err := uuid.Parse(payload.OrganizationID)
+	if err != nil {
+		return fmt.Errorf("invalid org ID in health check task: %w", err)
+	}
+	h.checkServer(ctx, orgID)
+	return nil
 }
 
 func (h *HealthMonitor) Start(ctx context.Context) {
@@ -173,7 +176,7 @@ func (h *HealthMonitor) checkServer(ctx context.Context, orgID uuid.UUID) {
 		return
 	}
 
-	err = PingCaddy(orgCtx, nil, &h.logger)
+	err = pingCaddyProbe(orgCtx, nil, &h.logger)
 
 	h.mu.RLock()
 	prev, existed := h.servers[orgID]
@@ -258,7 +261,7 @@ func (h *HealthMonitor) recordRestartAttempt(orgID uuid.UUID, containerMissing b
 }
 
 func (h *HealthMonitor) attemptCaddyRestart(ctx context.Context, orgID uuid.UUID, host string) {
-	manager, err := ssh.GetSSHManagerFromContext(ctx)
+	manager, err := getSSHManagerFromContextForCaddy(ctx)
 	if err != nil {
 		h.logger.Log(logger.Error, "failed to get SSH manager for caddy restart", err.Error())
 		return
@@ -390,7 +393,7 @@ func (h *HealthMonitor) trySystemdRestart(conn *goph.Client, orgID uuid.UUID, ho
 // triggerReconciliation enqueues a reconcile job via Redis instead of running
 // it inline, so any available worker picks it up.
 func (h *HealthMonitor) triggerReconciliation(orgID uuid.UUID) {
-	if err := EnqueueReconcile(orgID); err != nil {
+	if err := enqueueReconcileAfterRecovery(orgID); err != nil {
 		h.logger.Log(logger.Error, "failed to enqueue post-recovery reconciliation", err.Error())
 	}
 }

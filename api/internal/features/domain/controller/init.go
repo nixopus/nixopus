@@ -24,10 +24,10 @@ func NewDomainsController(
 	l logger.Logger,
 	notifier shared_types.Notifier,
 ) *DomainsController {
-	storage := storage.DomainStorage{DB: store.DB, Ctx: ctx}
+	domainStorage := storage.DomainStorage{DB: store.DB, Ctx: ctx}
 	return &DomainsController{
 		store:    store,
-		service:  service.NewDomainsService(store, ctx, l, &storage),
+		service:  service.NewDomainsService(ctx, l, &domainStorage),
 		ctx:      ctx,
 		logger:   l,
 		notifier: notifier,

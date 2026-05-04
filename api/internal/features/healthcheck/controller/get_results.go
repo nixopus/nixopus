@@ -43,7 +43,17 @@ func (c *HealthCheckController) GetHealthCheckResults(f fuego.ContextNoBody) (*t
 	results, err := c.service.GetHealthCheckResults(applicationID, orgID, limit, startTime, endTime)
 	if err != nil {
 		c.logger.Log(logger.Error, err.Error(), "")
-		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
+		statusCode, mappedErr := mapHealthCheckError(err)
+		if statusCode == http.StatusNotFound {
+			// Plain HTTPError with Status set — reliable with Fuego's castHTTPError / StatusCode().
+			return nil, fuego.HTTPError{
+				Status: http.StatusNotFound,
+				Title:  "Not Found",
+				Detail: mappedErr.Error(),
+				Err:    mappedErr,
+			}
+		}
+		return nil, fuego.HTTPError{Detail: mappedErr.Error(), Status: statusCode}
 	}
 
 	return &types.HealthCheckResultsResponse{

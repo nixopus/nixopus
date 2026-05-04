@@ -67,8 +67,8 @@ func (s *UserStorage) GetUserById(id string) (*shared_types.User, error) {
 //	error - an error if the update query fails, otherwise nil.
 func (s *UserStorage) UpdateUserName(userID string, userName string, updatedAt time.Time) error {
 	_, err := s.DB.NewUpdate().
-		Table("users").
-		Set("username = ?", userName).
+		Model((*shared_types.User)(nil)).
+		Set("name = ?", userName).
 		Set("updated_at = ?", updatedAt).
 		Where("id = ?", userID).
 		Exec(s.Ctx)
@@ -153,27 +153,37 @@ func (s *UserStorage) GetUserSettings(userID string) (*shared_types.UserSettings
 }
 
 func (s *UserStorage) UpdateUserSettings(userID string, updates map[string]interface{}) (*shared_types.UserSettings, error) {
-	var settings shared_types.UserSettings
+	// Ensure a settings row exists before updating.
+	if _, err := s.GetUserSettings(userID); err != nil {
+		return nil, err
+	}
+
 	query := s.DB.NewUpdate().
-		Model(&settings).
+		TableExpr("user_settings").
 		Where("user_id = ?", userID)
 
 	for key, value := range updates {
 		query = query.Set(key+" = ?", value)
 	}
 
-	_, err := query.Returning("*").Exec(s.Ctx)
-	if err != nil {
+	if _, err := query.Exec(s.Ctx); err != nil {
 		return nil, err
 	}
-	return &settings, nil
+
+	return s.GetUserSettings(userID)
 }
 
 func (s *UserStorage) UpdateUserAvatar(ctx context.Context, userID string, avatarData string) error {
+	var image interface{}
+	if avatarData == "" {
+		image = nil
+	} else {
+		image = avatarData
+	}
 	_, err := s.DB.NewUpdate().
-		Table("users").
-		Set("avatar = ?", avatarData).
-		Set("updated_at = NOW()").
+		Model((*shared_types.User)(nil)).
+		Set("image = ?", image).
+		Set("updated_at = ?", time.Now()).
 		Where("id = ?", userID).
 		Exec(ctx)
 

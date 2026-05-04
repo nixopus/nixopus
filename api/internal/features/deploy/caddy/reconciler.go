@@ -19,6 +19,18 @@ import (
 	"github.com/vmihailenco/taskq/v3"
 )
 
+var (
+	getSSHManagerFromContextForCaddy = ssh.GetSSHManagerFromContext
+	getDockerServiceFromContext      = docker.GetDockerServiceFromContext
+	getSSHHostForOrgHook             func(ctx context.Context) (string, error)
+	reconcileGetPublishedPortHook    func(r *Reconciler, ctx context.Context, serviceName string) (int, error)
+	enqueueReconcileAfterRecovery    func(orgID uuid.UUID) error
+)
+
+func init() {
+	enqueueReconcileAfterRecovery = EnqueueReconcile
+}
+
 // ReconcileResult tracks what the reconciler did during a single run.
 type ReconcileResult struct {
 	Added   []string
@@ -274,7 +286,11 @@ func upstreamsEqual(a, b []string) bool {
 }
 
 func (r *Reconciler) getPublishedPort(ctx context.Context, serviceName string) (int, error) {
-	dockerService, err := docker.GetDockerServiceFromContext(ctx)
+	if reconcileGetPublishedPortHook != nil {
+		return reconcileGetPublishedPortHook(r, ctx, serviceName)
+	}
+
+	dockerService, err := getDockerServiceFromContext(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get docker service: %w", err)
 	}
@@ -341,7 +357,10 @@ func (r *Reconciler) fullRebuild(ctx context.Context, desired []DomainRoute) (*R
 }
 
 func getSSHHostForOrg(ctx context.Context) (string, error) {
-	manager, err := ssh.GetSSHManagerFromContext(ctx)
+	if getSSHHostForOrgHook != nil {
+		return getSSHHostForOrgHook(ctx)
+	}
+	manager, err := getSSHManagerFromContextForCaddy(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get SSH manager: %w", err)
 	}
@@ -417,20 +436,7 @@ func (d *ReconcilerDaemon) SetupQueues() {
 			Name:       TASK_CADDY_RECONCILE,
 			RetryLimit: 2,
 			Handler: func(ctx context.Context, payload CaddyTaskPayload) error {
-				orgID, err := uuid.Parse(payload.OrganizationID)
-				if err != nil {
-					return fmt.Errorf("invalid org ID in reconcile task: %w", err)
-				}
-				result, err := d.reconciler.ReconcileOrganization(ctx, orgID)
-				if err != nil {
-					return err
-				}
-				if len(result.Errors) > 0 {
-					d.logger.Log(logger.Warning,
-						fmt.Sprintf("reconciliation for org %s had %d errors", orgID, len(result.Errors)),
-						fmt.Sprintf("%v", result.Errors))
-				}
-				return nil
+				return d.handleReconcileTask(ctx, payload)
 			},
 		})
 
@@ -458,6 +464,23 @@ func (d *ReconcilerDaemon) Stop() {
 // Reconciler returns the underlying reconciler for on-demand reconciliation.
 func (d *ReconcilerDaemon) Reconciler() *Reconciler {
 	return d.reconciler
+}
+
+func (d *ReconcilerDaemon) handleReconcileTask(ctx context.Context, payload CaddyTaskPayload) error {
+	orgID, err := uuid.Parse(payload.OrganizationID)
+	if err != nil {
+		return fmt.Errorf("invalid org ID in reconcile task: %w", err)
+	}
+	result, err := d.reconciler.ReconcileOrganization(ctx, orgID)
+	if err != nil {
+		return err
+	}
+	if len(result.Errors) > 0 {
+		d.logger.Log(logger.Warning,
+			fmt.Sprintf("reconciliation for org %s had %d errors", orgID, len(result.Errors)),
+			fmt.Sprintf("%v", result.Errors))
+	}
+	return nil
 }
 
 // EnqueueReconcile adds a single org reconciliation job to the Redis queue.

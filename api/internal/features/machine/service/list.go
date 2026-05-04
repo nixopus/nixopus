@@ -9,16 +9,29 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/machine/types"
 	sshpkg "github.com/nixopus/nixopus/api/internal/features/ssh"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	cryptossh "golang.org/x/crypto/ssh"
 )
 
-type ListService struct {
-	storage *storage.ListStorage
-	logger  logger.Logger
-	ctx     context.Context
+// SSHConnectionChecker is the minimal SSH manager interface required by ListService.
+type SSHConnectionChecker interface {
+	GetSSHConfig() (*sshpkg.SSH, error)
+	NewSessionWithRetry(id string) (*cryptossh.Session, error)
 }
 
-func NewListService(storage *storage.ListStorage, l logger.Logger, ctx context.Context) *ListService {
+type ListService struct {
+	storage          storage.ListRepository
+	logger           logger.Logger
+	ctx              context.Context
+	sshMgrProviderFn func(ctx context.Context, orgID uuid.UUID) (SSHConnectionChecker, error) // nil -> production
+}
+
+func NewListService(storage storage.ListRepository, l logger.Logger, ctx context.Context) *ListService {
 	return &ListService{storage: storage, logger: l, ctx: ctx}
+}
+
+// SetSSHManagerProviderForTest injects an SSH manager provider for tests.
+func (s *ListService) SetSSHManagerProviderForTest(fn func(ctx context.Context, orgID uuid.UUID) (SSHConnectionChecker, error)) {
+	s.sshMgrProviderFn = fn
 }
 
 func (s *ListService) ListMachines(orgID uuid.UUID, params types.MachineListParams) (*types.ListMachinesResponse, error) {
@@ -82,7 +95,13 @@ func (s *ListService) SetDefaultMachine(orgID uuid.UUID, machineID uuid.UUID) (*
 }
 
 func (s *ListService) CheckSSHConnection(orgID uuid.UUID) (*types.SSHConnectionStatusResponse, error) {
-	sshMgr, err := sshpkg.GetSSHManagerForOrganization(s.ctx, orgID)
+	sshProvider := s.sshMgrProviderFn
+	if sshProvider == nil {
+		sshProvider = func(ctx context.Context, orgID uuid.UUID) (SSHConnectionChecker, error) {
+			return sshpkg.GetSSHManagerForOrganization(ctx, orgID)
+		}
+	}
+	sshMgr, err := sshProvider(s.ctx, orgID)
 	if err != nil {
 		s.logger.Log(logger.Error, err.Error(), orgID.String())
 		return &types.SSHConnectionStatusResponse{
@@ -113,7 +132,9 @@ func (s *ListService) CheckSSHConnection(orgID uuid.UUID) (*types.SSHConnectionS
 			IsConfigured: true,
 		}, nil
 	}
-	session.Close()
+	if session != nil {
+		_ = session.Close()
+	}
 
 	return &types.SSHConnectionStatusResponse{
 		Status:       "connected",

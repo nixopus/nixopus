@@ -5,14 +5,21 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/nixopus/nixopus/api/internal/features/extension/loader"
+	telemetrytypes "github.com/nixopus/nixopus/api/internal/features/telemetry/types"
 	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 
+// ExtensionTemplateLoader syncs extension YAML from disk into the database and serves
+// extension rows for deploy and other callers.
+type ExtensionTemplateLoader interface {
+	LoadExtensionsFromTemplates(ctx context.Context) error
+	GetExtensionByID(ctx context.Context, extensionID string) (*types.Extension, error)
+}
+
 type Store struct {
 	DB              *bun.DB
-	ExtensionLoader *loader.ExtensionLoader
+	ExtensionLoader ExtensionTemplateLoader
 }
 
 type App struct {
@@ -42,18 +49,22 @@ func (s *Store) DropTable(ctx context.Context, model interface{}) error {
 }
 
 func (s *Store) Init(ctx context.Context) error {
+	s.DB.RegisterModel((*telemetrytypes.CliInstallation)(nil))
+	if err := s.CreateTable(ctx, (*telemetrytypes.CliInstallation)(nil)); err != nil {
+		return fmt.Errorf("telemetry cli_installations: %w", err)
+	}
+
 	s.DB.RegisterModel((*types.OrganizationUsers)(nil))
 	s.DB.RegisterModel((*types.ComposeService)(nil))
 	s.DB.RegisterModel((*types.Extension)(nil))
 	s.DB.RegisterModel((*types.ExtensionVariable)(nil))
 
-	// Load extensions from templates directory
-	extensionLoader := loader.NewExtensionLoader(s.DB)
-	s.ExtensionLoader = extensionLoader
-	if err := extensionLoader.LoadExtensionsFromTemplates(ctx); err != nil {
-		log.Printf("Warning: Failed to load extensions from templates: %v", err)
-	} else {
-		log.Println("Extensions loaded successfully from templates")
+	if s.ExtensionLoader != nil {
+		if err := s.ExtensionLoader.LoadExtensionsFromTemplates(ctx); err != nil {
+			log.Printf("Warning: Failed to load extensions from templates: %v", err)
+		} else {
+			log.Println("Extensions loaded successfully from templates")
+		}
 	}
 
 	return nil
@@ -61,6 +72,7 @@ func (s *Store) Init(ctx context.Context) error {
 
 func (s *Store) DropAllTables(ctx context.Context) error {
 	models := []interface{}{
+		(*telemetrytypes.CliInstallation)(nil),
 		(*types.ApplicationLogs)(nil),
 		(*types.ApplicationDeploymentStatus)(nil),
 		(*types.ApplicationDeployment)(nil),

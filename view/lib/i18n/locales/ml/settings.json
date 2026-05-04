@@ -57,10 +57,6 @@
           "title": "ടെർമിനൽ",
           "description": "ടെർമിനൽ ആക്‌സസ്"
         },
-        "file_manager": {
-          "title": "ഫയൽ മാനേജർ",
-          "description": "ഫയൽ മാനേജർ ആക്‌സസ്"
-        },
         "self_hosted": {
           "title": "സ്വയം ഹോസ്റ്റ്",
           "description": "സ്വയം ഹോസ്റ്റഡ് ആക്‌സസ്"

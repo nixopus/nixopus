@@ -14,10 +14,20 @@ import (
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
+// getAppProvider returns the ApplicationProvider to use for health checks.
+// It returns the injected provider when set (e.g. in tests), otherwise it
+// creates one lazily from the shared store.
+func (s *HealthCheckService) getAppProvider() ApplicationProvider {
+	if s.appProvider != nil {
+		return s.appProvider
+	}
+	return &storage.DeployStorage{DB: s.store.DB, Ctx: s.ctx}
+}
+
 // buildHealthCheckURL constructs the URL for a health check request.
 // If endpoint is a full URL, it's used directly. Otherwise, it constructs
 // the URL from the application's first domain.
-func (s *HealthCheckService) buildHealthCheckURL(healthCheck *shared_types.HealthCheck, application *shared_types.Application, deployStorage *storage.DeployStorage) (string, error) {
+func (s *HealthCheckService) buildHealthCheckURL(healthCheck *shared_types.HealthCheck, application *shared_types.Application, appProvider ApplicationProvider) (string, error) {
 	// If endpoint is a full URL, use it directly
 	if strings.HasPrefix(healthCheck.Endpoint, "http://") || strings.HasPrefix(healthCheck.Endpoint, "https://") {
 		return healthCheck.Endpoint, nil
@@ -25,7 +35,7 @@ func (s *HealthCheckService) buildHealthCheckURL(healthCheck *shared_types.Healt
 
 	// Load domains if not already loaded
 	if len(application.Domains) == 0 {
-		domainsList, err := deployStorage.GetApplicationDomains(application.ID)
+		domainsList, err := appProvider.GetApplicationDomains(application.ID)
 		if err != nil {
 			return "", fmt.Errorf("failed to load domains: %w", err)
 		}
@@ -55,15 +65,14 @@ func (s *HealthCheckService) buildHealthCheckURL(healthCheck *shared_types.Healt
 func (s *HealthCheckService) ExecuteHealthCheck(healthCheck *shared_types.HealthCheck) (*shared_types.HealthCheckResult, error) {
 	startTime := time.Now()
 
-	// Get application to construct URL
-	deployStorage := &storage.DeployStorage{DB: s.store.DB, Ctx: s.ctx}
-	application, err := deployStorage.GetApplicationById(healthCheck.ApplicationID.String(), healthCheck.OrganizationID)
+	appProvider := s.getAppProvider()
+	application, err := appProvider.GetApplicationById(healthCheck.ApplicationID.String(), healthCheck.OrganizationID)
 	if err != nil {
 		s.logger.Log(logger.Error, "failed to get application for health check", err.Error())
 		return nil, fmt.Errorf("failed to get application: %w", err)
 	}
 
-	url, err := s.buildHealthCheckURL(healthCheck, &application, deployStorage)
+	url, err := s.buildHealthCheckURL(healthCheck, &application, appProvider)
 	if err != nil {
 		return nil, err
 	}
