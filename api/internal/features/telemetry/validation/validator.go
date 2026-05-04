@@ -1,17 +1,25 @@
 package validation
 
 import (
+	"fmt"
 	"regexp"
 
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/telemetry/types"
 )
 
 var semverRegex = regexp.MustCompile(`^\d+\.\d+\.\d+(-[a-zA-Z0-9.]+)?$`)
 
-type Validator struct{}
+type Validator struct {
+	Logger *logger.Logger // optional; nil skips validation debug logs
+}
 
 func NewValidator() *Validator {
 	return &Validator{}
+}
+
+func NewValidatorWithLogger(l *logger.Logger) *Validator {
+	return &Validator{Logger: l}
 }
 
 func (v *Validator) ValidateRequest(req any) error {
@@ -19,6 +27,9 @@ func (v *Validator) ValidateRequest(req any) error {
 	case *types.TrackInstallRequest:
 		return v.validateTrackInstall(*r)
 	default:
+		if v.Logger != nil {
+			v.Logger.Log(logger.Debug, fmt.Sprintf("telemetry validation: invalid request type %T", req), "")
+		}
 		return types.ErrInvalidRequestType
 	}
 }
