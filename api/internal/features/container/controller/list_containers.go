@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -8,14 +9,19 @@ import (
 	"github.com/go-fuego/fuego"
 	"github.com/nixopus/nixopus/api/internal/features/container/service"
 	containertypes "github.com/nixopus/nixopus/api/internal/features/container/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*containertypes.ListContainersResponse, error) {
 	params := parseContainerListParams(fuegoCtx.Request())
 	ctx := fuegoCtx.Request().Context()
 
+	ctxStr := fmt.Sprintf("page=%d page_size=%d status=%q search=%q", params.Page, params.PageSize, params.Status, params.Search)
+	c.logger.Log(logger.Info, "container: ListContainers", ctxStr)
+
 	dockerService, err := c.getDockerService(ctx)
 	if err != nil {
+		c.logger.Log(logger.Error, fmt.Sprintf("container: ListContainers docker service: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -25,6 +31,7 @@ func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*con
 
 	resp, err := service.ListContainers(dockerService, c.logger, params)
 	if err != nil {
+		c.logger.Log(logger.Error, fmt.Sprintf("container: ListContainers: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -32,6 +39,7 @@ func (c *ContainerController) ListContainers(fuegoCtx fuego.ContextNoBody) (*con
 		}
 	}
 
+	c.logger.Log(logger.Info, "container: ListContainers ok", fmt.Sprintf("%s group_count=%d total_count=%d", ctxStr, resp.Data.GroupCount, resp.Data.TotalCount))
 	return &resp, nil
 }
 

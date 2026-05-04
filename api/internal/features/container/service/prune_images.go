@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/docker/docker/api/types/filters"
 	container_types "github.com/nixopus/nixopus/api/internal/features/container/types"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
@@ -33,7 +35,7 @@ func PruneImages(
 
 	pruneReport, err := dockerService.PruneImages(filterArgs)
 	if err != nil {
-		l.Log(logger.Error, err.Error(), "")
+		l.Log(logger.Error, fmt.Sprintf("container service: PruneImages: %v", err), "")
 		return container_types.PruneImagesResponse{}, err
 	}
 

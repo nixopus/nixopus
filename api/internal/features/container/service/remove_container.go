@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/docker/docker/api/types/container"
 	container_types "github.com/nixopus/nixopus/api/internal/features/container/types"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
@@ -23,7 +25,7 @@ func RemoveContainer(
 		Force: opts.Force,
 	})
 	if err != nil {
-		l.Log(logger.Error, err.Error(), "")
+		l.Log(logger.Error, fmt.Sprintf("container service: RemoveContainer: %v", err), opts.ContainerID)
 		return container_types.ContainerActionResponse{}, err
 	}
 

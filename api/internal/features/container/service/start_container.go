@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/docker/docker/api/types/container"
 	container_types "github.com/nixopus/nixopus/api/internal/features/container/types"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/docker"
@@ -20,7 +22,7 @@ func StartContainer(
 ) (container_types.ContainerActionResponse, error) {
 	err := dockerService.StartContainer(opts.ContainerID, container.StartOptions{})
 	if err != nil {
-		l.Log(logger.Error, err.Error(), "")
+		l.Log(logger.Error, fmt.Sprintf("container service: StartContainer: %v", err), opts.ContainerID)
 		return container_types.ContainerActionResponse{}, err
 	}
 

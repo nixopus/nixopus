@@ -50,15 +50,17 @@ func (c *ContainerController) getDockerService(ctx context.Context) (docker.Dock
 func (c *ContainerController) isProtectedContainer(ctx context.Context, containerID string, action string) (*types.ContainerActionResponse, bool) {
 	dockerService, err := c.getDockerService(ctx)
 	if err != nil {
+		c.logger.Log(logger.Debug, fmt.Sprintf("container: isProtectedContainer skip (%s): docker service: %v", action, err), fmt.Sprintf("container_id=%s", containerID))
 		return nil, false
 	}
 	details, err := dockerService.GetContainerById(containerID)
 	if err != nil {
+		c.logger.Log(logger.Debug, fmt.Sprintf("container: isProtectedContainer skip (%s): %v", action, err), fmt.Sprintf("container_id=%s", containerID))
 		return nil, false
 	}
 	name := strings.ToLower(details.Name)
 	if strings.Contains(name, "nixopus") {
-		c.logger.Log(logger.Info, fmt.Sprintf("Skipping %s for protected container", action), details.Name)
+		c.logger.Log(logger.Info, fmt.Sprintf("container: protected skip %s", action), fmt.Sprintf("name=%s container_id=%s", details.Name, containerID))
 		return &types.ContainerActionResponse{
 			Status:  "success",
 			Message: "Operation skipped for protected container",

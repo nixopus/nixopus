@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/go-fuego/fuego"
 	container_types "github.com/nixopus/nixopus/api/internal/features/container/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 type ListImagesRequest struct {
@@ -19,6 +21,7 @@ type ListImagesRequest struct {
 func (c *ContainerController) ListImages(f fuego.ContextWithBody[ListImagesRequest]) (*container_types.ListImagesResponse, error) {
 	req, err := f.Body()
 	if err != nil {
+		c.logger.Log(logger.Debug, fmt.Sprintf("container: ListImages invalid body: %v", err), "")
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -26,8 +29,12 @@ func (c *ContainerController) ListImages(f fuego.ContextWithBody[ListImagesReque
 	}
 
 	ctx := f.Request().Context()
+	ctxStr := fmt.Sprintf("all=%v container_id=%s image_prefix=%q", req.All, req.ContainerID, req.ImagePrefix)
+	c.logger.Log(logger.Info, "container: ListImages", ctxStr)
+
 	dockerService, err := c.getDockerService(ctx)
 	if err != nil {
+		c.logger.Log(logger.Error, fmt.Sprintf("container: ListImages docker service: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -39,6 +46,7 @@ func (c *ContainerController) ListImages(f fuego.ContextWithBody[ListImagesReque
 	if req.ContainerID != "" {
 		_, err := dockerService.GetContainerById(req.ContainerID)
 		if err != nil {
+			c.logger.Log(logger.Debug, fmt.Sprintf("container: ListImages container not found: %v", err), ctxStr)
 			return nil, fuego.NotFoundError{
 				Detail: err.Error(),
 				Err:    err,
@@ -60,6 +68,7 @@ func (c *ContainerController) ListImages(f fuego.ContextWithBody[ListImagesReque
 	})
 
 	if len(images) == 0 {
+		c.logger.Log(logger.Info, "container: ListImages ok", fmt.Sprintf("%s count=0", ctxStr))
 		return &container_types.ListImagesResponse{
 			Status:  "success",
 			Message: "No images found",
@@ -83,6 +92,7 @@ func (c *ContainerController) ListImages(f fuego.ContextWithBody[ListImagesReque
 		result = append(result, imageData)
 	}
 
+	c.logger.Log(logger.Info, "container: ListImages ok", fmt.Sprintf("%s count=%d", ctxStr, len(result)))
 	return &container_types.ListImagesResponse{
 		Status:  "success",
 		Message: "Images listed successfully",

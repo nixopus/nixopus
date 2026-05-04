@@ -54,7 +54,7 @@ func GetContainerLogs(
 		ShowStderr: opts.Stderr,
 	})
 	if err != nil {
-		l.Log(logger.Error, err.Error(), "")
+		l.Log(logger.Error, fmt.Sprintf("container service: GetContainerLogs docker: %v", err), opts.ContainerID)
 		return "", fmt.Errorf("failed to get container logs: %w", err)
 	}
 
@@ -62,7 +62,7 @@ func GetContainerLogs(
 	buf := new(bytes.Buffer)
 	_, err = io.Copy(buf, logsReader)
 	if err != nil {
-		l.Log(logger.Error, err.Error(), "")
+		l.Log(logger.Error, fmt.Sprintf("container service: GetContainerLogs read: %v", err), opts.ContainerID)
 		return "", fmt.Errorf("failed to read container logs: %w", err)
 	}
 
