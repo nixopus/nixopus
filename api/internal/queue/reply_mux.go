@@ -2,7 +2,7 @@ package queue
 
 import (
 	"context"
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"strings"
 	"sync"
 )
@@ -24,7 +24,7 @@ func NewReplyMultiplexerWithPrefix(prefix string) *ReplyMultiplexer {
 
 func (m *ReplyMultiplexer) Start(ctx context.Context) {
 	if redisClient == nil {
-		log.Println("[reply-mux] Redis client not initialized, skipping PSUBSCRIBE")
+		apilog.Println("[reply-mux] Redis client not initialized, skipping PSUBSCRIBE")
 		return
 	}
 

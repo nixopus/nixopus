@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"sync"
 	"time"
 
@@ -59,7 +59,7 @@ func SetupMachineLifecycleQueue(ctx context.Context) {
 		replyMux = NewReplyMultiplexer()
 		replyMux.Start(ctx)
 
-		log.Printf("Machine lifecycle queue and reply multiplexer initialized")
+		apilog.Printf("Machine lifecycle queue and reply multiplexer initialized")
 	})
 }
 

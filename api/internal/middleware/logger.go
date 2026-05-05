@@ -2,24 +2,11 @@ package middleware
 
 import (
 	"bufio"
-	"fmt"
 	"net"
 	"net/http"
 	"time"
-)
 
-const (
-	Reset    = "\033[0m"
-	Bold     = "\033[1m"
-	Green    = "\033[32m"
-	Yellow   = "\033[33m"
-	Blue     = "\033[34m"
-	Magenta  = "\033[35m"
-	Cyan     = "\033[36m"
-	White    = "\033[37m"
-	BgGreen  = "\033[42m"
-	BgRed    = "\033[41m"
-	BgYellow = "\033[43m"
+	"github.com/sirupsen/logrus"
 )
 
 type responseWriter struct {
@@ -58,7 +45,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		start := time.Now()
 
 		if isWebSocketUpgrade(r) {
-			logWebSocketConnection(r, start)
+			logWebSocketConnection(r)
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -69,116 +56,30 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func logWebSocketConnection(r *http.Request, _ time.Time) {
-	logEntry := fmt.Sprintf("%s┌ %s%s\n",
-		White,
-		time.Now().Format("2006-01-02 15:04:05"),
-		Reset,
-	)
-
-	logEntry += fmt.Sprintf("%s├ %s%s %s%s %s%s%s\n",
-		White,
-		Cyan,
-		padMethod("WS"),
-		Blue,
-		r.URL.Path,
-		Green,
-		"UPGRADE",
-		Reset,
-	)
-
-	logEntry += fmt.Sprintf("%s└ %s%s%s · %s%s%s\n",
-		White,
-		Cyan,
-		"WebSocket Connection",
-		White,
-		Yellow,
-		r.RemoteAddr,
-		Reset,
-	)
-
-	fmt.Print(logEntry)
+func logWebSocketConnection(r *http.Request) {
+	logrus.WithFields(logrus.Fields{
+		"req": map[string]interface{}{
+			"method":        "WS",
+			"url":           r.URL.Path,
+			"remoteAddress": r.RemoteAddr,
+		},
+	}).Info("websocket upgrade")
 }
 
 func logHTTPRequest(rw *responseWriter, r *http.Request, start time.Time) {
 	duration := time.Since(start)
-
-	var durationStr string
-	if duration.Milliseconds() < 1 {
-		durationStr = fmt.Sprintf("%d µs", duration.Microseconds())
-	} else if duration.Seconds() < 1 {
-		durationStr = fmt.Sprintf("%d ms", duration.Milliseconds())
-	} else {
-		durationStr = fmt.Sprintf("%.2f s", duration.Seconds())
-	}
-
-	statusColor := getStatusColor(rw.statusCode)
-	methodColor := getMethodColor(r.Method)
-
-	logEntry := fmt.Sprintf("%s┌ %s%s\n",
-		White,
-		time.Now().Format("2006-01-02 15:04:05"),
-		Reset,
-	)
-
-	logEntry += fmt.Sprintf("%s├ %s%s %s%s %s%d%s\n",
-		White,
-		methodColor,
-		padMethod(r.Method),
-		Blue,
-		r.URL.Path,
-		statusColor,
-		rw.statusCode,
-		Reset,
-	)
-
-	logEntry += fmt.Sprintf("%s└ %s%s%s · %s%d bytes%s\n",
-		White,
-		Cyan,
-		durationStr,
-		White,
-		Yellow,
-		rw.length,
-		Reset,
-	)
-
-	fmt.Print(logEntry)
-}
-
-func getStatusColor(code int) string {
-	switch {
-	case code >= 500:
-		return BgRed + White
-	case code >= 400:
-		return Yellow
-	case code >= 300:
-		return Magenta
-	case code >= 200:
-		return Green
-	default:
-		return White
-	}
-}
-
-func getMethodColor(method string) string {
-	switch method {
-	case http.MethodGet:
-		return Green
-	case http.MethodPost:
-		return Yellow
-	case http.MethodPut:
-		return Blue
-	case http.MethodDelete:
-		return BgRed + White
-	case http.MethodPatch:
-		return Magenta
-	default:
-		return White
-	}
-}
-
-func padMethod(method string) string {
-	return fmt.Sprintf("%-7s", method)
+	logrus.WithFields(logrus.Fields{
+		"req": map[string]interface{}{
+			"method":        r.Method,
+			"url":           r.URL.Path,
+			"remoteAddress": r.RemoteAddr,
+		},
+		"res": map[string]interface{}{
+			"statusCode": rw.statusCode,
+		},
+		"responseTime": duration.Milliseconds(),
+		"bytes":        rw.length,
+	}).Info("request completed")
 }
 
 func isWebSocketUpgrade(r *http.Request) bool {

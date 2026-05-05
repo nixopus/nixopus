@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	apilog "github.com/nixopus/nixopus/api/internal/log"
+
 	"golang.org/x/time/rate"
 )
 
@@ -47,7 +49,7 @@ func cleanupClients() {
 
 	for ip, client := range clients {
 		if time.Since(client.lastSeen) > 3*time.Minute {
-			fmt.Printf("Removing inactive client: %s\n", ip)
+			apilog.Infof("Removing inactive client: %s", ip)
 			delete(clients, ip)
 		}
 	}
@@ -83,7 +85,7 @@ func RateLimiter(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ip := extractIP(r.RemoteAddr)
 
-		fmt.Printf("Request from: %s (raw: %s), Path: %s\n", ip, r.RemoteAddr, r.URL.Path)
+		apilog.Infof("Request from: %s (raw: %s), Path: %s", ip, r.RemoteAddr, r.URL.Path)
 
 		clientsMtx.Lock()
 
@@ -102,7 +104,7 @@ func RateLimiter(next http.Handler) http.Handler {
 
 		if !allowed {
 			clientsMtx.Unlock()
-			fmt.Printf("Rate limit exceeded for IP: %s\n", ip)
+			apilog.Infof("Rate limit exceeded for IP: %s", ip)
 			w.Header().Set("Content-Type", "application/json")
 			w.Header().Set("X-RateLimit-Limit", "10")
 			w.Header().Set("X-RateLimit-Remaining", "0")

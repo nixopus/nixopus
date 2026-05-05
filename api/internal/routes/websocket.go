@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 
 	"github.com/go-fuego/fuego"
 	deploy "github.com/nixopus/nixopus/api/internal/features/deploy/controller"
@@ -13,7 +13,7 @@ import (
 func (router *Router) RegisterWebSocketRoutes(server *fuego.Server, deployController *deploy.DeployController, healthCheckScheduler *scheduler.HealthCheckScheduler) {
 	wsServer, err := realtime.NewSocketServer(deployController, router.app.Store.DB, router.app.Ctx)
 	if err != nil {
-		log.Fatal(err)
+		apilog.Fatal(err)
 	}
 	router.socketServer = wsServer
 
@@ -23,7 +23,7 @@ func (router *Router) RegisterWebSocketRoutes(server *fuego.Server, deployContro
 	}
 
 	wsHandler := func(c fuego.ContextNoBody) (interface{}, error) {
-		log.Printf("WebSocket connection attempt from: %s", c.Request().RemoteAddr)
+		apilog.Printf("WebSocket connection attempt from: %s", c.Request().RemoteAddr)
 
 		wsServer.HandleHTTP(c.Response(), c.Request())
 		return nil, nil
