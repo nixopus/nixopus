@@ -1,6 +1,7 @@
 # Workflow: Installer Tests
-# Runs the cross-distro installer test suite only when installer-related
-# files change. Each distro runs as a parallel matrix job.
+# Jobs:
+#   unit-test  — bats unit tests (fast, no Docker, runs on every installer change)
+#   test       — cross-distro integration matrix (Docker-in-Docker, 5 distros)
 
 name: Test Nixopus Installer
 
@@ -40,12 +41,34 @@ jobs:
               - 'installer/**'
               - '.github/workflows/installer-test.yaml'
 
-  test:
+  unit-test:
     needs: detect-changes
     if: |
       always() &&
       (needs.detect-changes.result == 'skipped' || needs.detect-changes.outputs.installer == 'true')
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y bats
+
+      - name: Run bats unit tests
+        run: bash installer/test/run-unit-tests.sh
+
+  test:
+    needs: [detect-changes, unit-test]
+    if: |
+      always() &&
+      needs.unit-test.result == 'success' &&
+      (needs.detect-changes.result == 'skipped' || needs.detect-changes.outputs.installer == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -73,3 +96,4 @@ jobs:
           name: installer-test-logs-${{ env.DISTRO_LABEL }}
           path: /tmp/nixopus-test-*.log
           if-no-files-found: ignore
+          retention-days: 14
