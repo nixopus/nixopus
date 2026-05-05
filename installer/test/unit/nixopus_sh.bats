@@ -234,7 +234,7 @@ load_nixopus() {
     AGENT_MODEL="" AGENT_LIGHT_MODEL="" LLM_PROVIDER="openrouter"
 
     sync_view_llm_env
-    perms=$(stat -f "%Lp" "$tmp_home/view-llm.env" 2>/dev/null || stat -c "%a" "$tmp_home/view-llm.env")
+    perms=$(stat -c "%a" "$tmp_home/view-llm.env" 2>/dev/null || stat -f "%Lp" "$tmp_home/view-llm.env")
     [ "$perms" = "600" ]
     rm -rf "$tmp_home"
 }
