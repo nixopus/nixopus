@@ -34,6 +34,11 @@ parse_args() {
             --help|-h)
                 echo "Usage: curl -fsSL install.nixopus.com | sudo bash -s -- [options]"
                 echo ""
+                echo "Non-interactive / env-heavy installs: if variables are ignored or the"
+                echo "completion summary is missing, sudo may be stripping the environment."
+                echo "Use a nested shell so exports apply to the same bash that runs this script:"
+                echo '  sudo bash -c '"'"'export ADMIN_EMAIL=… ADMIN_PASSWORD=…; curl -fsSL install.nixopus.com | bash'"'"
+                echo ""
                 echo "Options:"
                 echo "  --preview <pr>        Install from a PR's preview images (pr number)"
                 echo "  --branch <name>       Use installer files from a specific branch"
@@ -694,6 +699,7 @@ AUTH_SERVICE_SECRET=${AUTH_SERVICE_SECRET}
 JWT_SECRET=${JWT_SECRET}
 
 ALLOWED_ORIGIN=${ALLOWED_ORIGIN}
+BASE_URL=${BASE_URL}
 API_URL=${API_URL}
 AUTH_PUBLIC_URL=${AUTH_PUBLIC_URL}
 AUTH_COOKIE_DOMAIN=${AUTH_COOKIE_DOMAIN}
@@ -813,7 +819,15 @@ start_services() {
         log_info "Using external Redis"
     fi
     if [ "${USE_AGENT:-true}" = true ]; then
-        log_info "Agent enabled with OpenRouter"
+        case "${LLM_PROVIDER:-openrouter}" in
+            openrouter) log_info "Agent enabled with OpenRouter" ;;
+            openai) log_info "Agent enabled with OpenAI" ;;
+            anthropic) log_info "Agent enabled with Anthropic" ;;
+            google) log_info "Agent enabled with Google (Gemini)" ;;
+            deepseek) log_info "Agent enabled with DeepSeek" ;;
+            groq) log_info "Agent enabled with Groq" ;;
+            *) log_info "Agent enabled (LLM provider: ${LLM_PROVIDER:-openrouter})" ;;
+        esac
     fi
 
     log_info "Pulling container images (this may take several minutes on first install)..."
@@ -971,6 +985,30 @@ send_telemetry() {
     return 0
 }
 
+# Public web URL for humans (duplicates AUTH_PUBLIC_URL; used by completion output).
+resolve_access_url() {
+    local u="${BASE_URL:-${AUTH_PUBLIC_URL:-${ALLOWED_ORIGIN:-}}}"
+    if [ -n "$u" ]; then
+        printf '%s' "$u"
+        return 0
+    fi
+    [ -f "${NIXOPUS_HOME:-}/.env" ] || return 1
+    local fallback=""
+    while IFS= read -r line || [ -n "$line" ]; do
+        case "$line" in
+            BASE_URL=*)
+                u="${line#BASE_URL=}"
+                [ -n "$u" ] && { printf '%s' "$u"; return 0; }
+                ;;
+            AUTH_PUBLIC_URL=*)
+                [ -z "$fallback" ] && fallback="${line#AUTH_PUBLIC_URL=}"
+                ;;
+        esac
+    done < "$NIXOPUS_HOME/.env"
+    [ -n "$fallback" ] && { printf '%s' "$fallback"; return 0; }
+    return 1
+}
+
 show_banner() {
     echo ""
     echo -e "${BOLD}  Nixopus Self-Host Installer v${NIXOPUS_VERSION}${NC}"
@@ -985,24 +1023,31 @@ show_banner() {
 
 show_complete() {
     local duration=$(( $(date +%s) - INSTALL_START ))
+    local access_url
+    access_url="$(resolve_access_url || true)"
+    if [ -z "$access_url" ]; then
+        log_warn "Could not determine access URL. Run: nixopus info"
+        access_url="(run: nixopus info)"
+    fi
     echo ""
     echo -e "  ${GREEN}${BOLD}Nixopus is running!${NC}"
     echo ""
-    echo -e "  ${BOLD}Access:${NC}    $BASE_URL"
+    echo -e "  ${BOLD}Access:${NC}    $access_url"
     echo -e "  ${BOLD}Config:${NC}    $NIXOPUS_HOME/.env"
     echo -e "  ${BOLD}Installed:${NC} ${duration}s"
     if [ -n "${ADMIN_EMAIL:-}" ] && [ "${ADMIN_BOOTSTRAPPED:-false}" = true ]; then
         echo ""
         echo -e "  ${BOLD}Admin credentials:${NC}"
         echo -e "    ${BOLD}Email:${NC}    $ADMIN_EMAIL"
-        echo -e "    ${BOLD}Password:${NC} $ADMIN_PASSWORD"
+        echo -ne "    ${BOLD}Password:${NC} "
+        printf '%s\n' "$ADMIN_PASSWORD"
         if [ "${ADMIN_PASSWORD_GENERATED:-false}" = true ]; then
             echo -e "    ${YELLOW}Auto-generated. Save it now and change it after first login.${NC}"
         fi
         echo -e "    ${DIM}Also stored in $NIXOPUS_HOME/.env (ADMIN_PASSWORD)${NC}"
     elif [ -n "${ADMIN_EMAIL:-}" ]; then
         echo ""
-        echo -e "  ${BOLD}Admin:${NC}     register at $BASE_URL/register"
+        echo -e "  ${BOLD}Admin:${NC}     register at ${access_url}/register"
     fi
     if [ -n "$PREVIEW_PR" ] || [ -n "$PREVIEW_BRANCH" ] || [ -n "$PREVIEW_FORK" ]; then
         echo ""
