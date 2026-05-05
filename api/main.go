@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"io"
-	"log"
+	stdlog "log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,7 +14,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/joho/godotenv"
 	"github.com/nixopus/nixopus/api/internal/config"
-	_ "github.com/nixopus/nixopus/api/internal/log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"github.com/nixopus/nixopus/api/internal/queue"
 	"github.com/nixopus/nixopus/api/internal/redisclient"
 	"github.com/nixopus/nixopus/api/internal/routes"
@@ -33,11 +33,11 @@ func testRedisConnection(ctx context.Context, redisClient *redis.Client) {
 		env := strings.ToLower(config.AppConfig.App.Environment)
 		isProduction := env == "production" || env == "prod"
 		if isProduction {
-			log.Fatalf("failed to connect to Redis in production: %v", err)
+			apilog.Fatalf("failed to connect to Redis in production: %v", err)
 		}
-		log.Printf("Warning: failed to connect to Redis: %v (continuing in non-production environment)", err)
+		apilog.Printf("Warning: failed to connect to Redis: %v (continuing in non-production environment)", err)
 	} else {
-		log.Println("Successfully connected to Redis")
+		apilog.Println("Successfully connected to Redis")
 	}
 }
 
@@ -45,7 +45,7 @@ func main() {
 	// Load .env file if it exists (optional when using secret manager)
 	if err := godotenv.Load(); err != nil {
 		// .env file is optional when using secret manager, so we just log a warning
-		log.Println("Info: .env file not found, using environment variables and secret manager")
+		apilog.Println("Info: .env file not found, using environment variables and secret manager")
 	}
 
 	types.InitJWTSecret()
@@ -56,13 +56,13 @@ func main() {
 	// Initialize task queue (Redis) and start consumers alongside the server
 	redisClient, err := redisclient.New(config.AppConfig.Redis.URL)
 	if err != nil {
-		log.Fatalf("failed to create redis client for queue due to %v", err)
+		apilog.Fatalf("failed to create redis client for queue due to %v", err)
 	}
 
 	// Test Redis connection - fail early in production if connection fails
 	testRedisConnection(ctx, redisClient)
 
-	taskq.SetLogger(log.New(io.Discard, "", 0))
+	taskq.SetLogger(stdlog.New(io.Discard, "", 0))
 	queue.Init(redisClient)
 
 	queue.SetupProvisionQueue()
@@ -81,18 +81,18 @@ func main() {
 
 	// Start schedulers
 	if err := schedulers.Main.Start(); err != nil {
-		log.Printf("Warning: failed to start scheduler: %v", err)
+		apilog.Printf("Warning: failed to start scheduler: %v", err)
 	} else {
-		log.Println("Scheduler started successfully")
+		apilog.Println("Scheduler started successfully")
 	}
 	schedulers.HealthCheck.Start()
-	log.Println("Health check scheduler started successfully")
+	apilog.Println("Health check scheduler started successfully")
 	schedulers.Billing.Start()
-	log.Println("Billing scheduler started successfully")
+	apilog.Println("Billing scheduler started successfully")
 	schedulers.Backup.Start()
-	log.Println("Backup scheduler started successfully")
+	apilog.Println("Backup scheduler started successfully")
 	schedulers.TrialExpiry.Start()
-	log.Println("Trial expiry scheduler started successfully")
+	apilog.Println("Trial expiry scheduler started successfully")
 	schedulers.StaleMachineCleanup.Start()
 	schedulers.MachineHealthCheck.Start()
 
@@ -103,7 +103,7 @@ func main() {
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 		<-sigChan
-		log.Println("Shutting down...")
+		apilog.Println("Shutting down...")
 		queue.Close()
 		schedulers.Main.Stop()
 		schedulers.HealthCheck.Stop()
@@ -114,6 +114,6 @@ func main() {
 		schedulers.MachineHealthCheck.Stop()
 		os.Exit(0)
 	}()
-	log.Printf("Server starting on port %s", config.AppConfig.Server.Port)
-	log.Fatal(http.ListenAndServe(":"+config.AppConfig.Server.Port, nil))
+	apilog.Printf("Server starting on port %s", config.AppConfig.Server.Port)
+	apilog.Fatal(http.ListenAndServe(":"+config.AppConfig.Server.Port, nil))
 }

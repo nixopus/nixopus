@@ -2,9 +2,11 @@ package logger
 
 import (
 	"bytes"
+	"encoding/json"
 	"strings"
 	"testing"
 
+	_ "github.com/nixopus/nixopus/api/internal/log"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,6 +30,15 @@ func captureLogrus(t *testing.T) *bytes.Buffer {
 	return &buf
 }
 
+func firstJSONRecord(t *testing.T, buf *bytes.Buffer) map[string]interface{} {
+	t.Helper()
+	line := strings.TrimSpace(buf.String())
+	require.NotEmpty(t, line)
+	var m map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(line), &m))
+	return m
+}
+
 func TestNewLogger(t *testing.T) {
 	l := NewLogger()
 	assert.Equal(t, Info, l.Severity)
@@ -38,14 +49,14 @@ func TestNewLogger(t *testing.T) {
 
 func TestLog_development_severities(t *testing.T) {
 	sevs := []struct {
-		sev  Severity
-		want string
+		sev       Severity
+		wantLevel float64
 	}{
-		{Debug, "level=debug"},
-		{Info, "level=info"},
-		{Warning, "level=warning"},
-		{Error, "level=error"},
-		{Severity("OTHER"), "level=info"},
+		{Debug, 20},
+		{Info, 30},
+		{Warning, 40},
+		{Error, 50},
+		{Severity("OTHER"), 30},
 	}
 	for _, tc := range sevs {
 		t.Run(string(tc.sev), func(t *testing.T) {
@@ -56,9 +67,9 @@ func TestLog_development_severities(t *testing.T) {
 			assert.Equal(t, tc.sev, l.Severity)
 			assert.Equal(t, "hello", l.Message)
 			assert.Equal(t, "meta", l.Data)
-			s := buf.String()
-			require.Contains(t, strings.ToLower(s), tc.want)
-			require.Contains(t, s, "hello meta")
+			m := firstJSONRecord(t, buf)
+			require.Equal(t, tc.wantLevel, m["level"])
+			require.Contains(t, m["msg"].(string), "hello meta")
 		})
 	}
 }
@@ -69,9 +80,9 @@ func TestLog_development_fatal(t *testing.T) {
 	l.Env = Development
 	l.Log(Fatal, "bye", "ctx")
 	assert.Equal(t, Fatal, l.Severity)
-	s := buf.String()
-	require.Contains(t, strings.ToLower(s), "level=fatal")
-	require.Contains(t, s, "bye ctx")
+	m := firstJSONRecord(t, buf)
+	require.Equal(t, float64(60), m["level"])
+	require.Contains(t, m["msg"].(string), "bye ctx")
 }
 
 func TestLog_production(t *testing.T) {
@@ -80,10 +91,10 @@ func TestLog_production(t *testing.T) {
 	l.Env = Production
 	l.Log(Error, "prodmsg", "ignored")
 	assert.Equal(t, Error, l.Severity)
-	s := buf.String()
-	require.Contains(t, strings.ToLower(s), "level=info")
-	require.Contains(t, s, "prodmsg")
-	require.NotContains(t, s, "ignored")
+	m := firstJSONRecord(t, buf)
+	require.Equal(t, float64(30), m["level"])
+	require.Contains(t, m["msg"].(string), "prodmsg")
+	require.NotContains(t, m["msg"].(string), "ignored")
 }
 
 func TestLog_unknownEnvironment(t *testing.T) {
@@ -100,7 +111,7 @@ func TestLog_development_emptyMessageAndData(t *testing.T) {
 	l := NewLogger()
 	l.Env = Development
 	l.Log(Info, "", "")
-	s := buf.String()
-	require.Contains(t, strings.ToLower(s), "level=info")
-	require.Contains(t, s, " ")
+	m := firstJSONRecord(t, buf)
+	require.Equal(t, float64(30), m["level"])
+	require.Contains(t, m["msg"].(string), " ")
 }

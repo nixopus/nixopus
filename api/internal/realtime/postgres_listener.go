@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -137,7 +137,7 @@ func (s *SocketServer) handleNotifications(notificationChan <-chan *PostgresNoti
 			}
 
 			if err := json.Unmarshal([]byte(notification.Payload), &parsedPayload); err != nil {
-				log.Printf("Error parsing notification payload: %v", err)
+				apilog.Printf("Error parsing notification payload: %v", err)
 				continue
 			}
 

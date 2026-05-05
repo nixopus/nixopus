@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -261,7 +261,7 @@ func LoadSecretsIntoEnv(manager SecretManager, prefix string) error {
 
 	for key, value := range secrets {
 		if err := os.Setenv(key, value); err != nil {
-			log.Printf("Warning: Failed to set environment variable %s: %v", key, err)
+			apilog.Printf("Warning: Failed to set environment variable %s: %v", key, err)
 		}
 	}
 

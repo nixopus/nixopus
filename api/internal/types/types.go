@@ -1,7 +1,7 @@
 package types
 
 import (
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"os"
 )
 
@@ -179,7 +179,7 @@ const defaultJWTSecret = "a3f1b9c7e2d4a6f8b0c1d3e5f7a9b2c4d6e8f0a1b3c5d7e9f0a2b4
 func InitJWTSecret() {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" || len(secret) < 32 {
-		log.Println("WARNING: JWT_SECRET is not set or too short, falling back to default secret.")
+		apilog.Println("WARNING: JWT_SECRET is not set or too short, falling back to default secret.")
 		secret = defaultJWTSecret
 	}
 	JWTSecretKey = []byte(secret)

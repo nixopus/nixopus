@@ -1,11 +1,12 @@
 package routes
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-fuego/fuego"
@@ -68,7 +69,7 @@ type MiddlewareConfig struct {
 func NewRouter(app *storage.App) *Router {
 	cache, err := cache.NewCache(config.AppConfig.Redis.URL)
 	if err != nil {
-		log.Fatal("Error creating redis client", err)
+		apilog.Fatal("Error creating redis client", err)
 	}
 
 	// Initialize RBAC cache for middleware
@@ -115,6 +116,10 @@ func (router *Router) createServer(port string) *fuego.Server {
 			fuego.WithOpenAPIGeneratorSchemaCustomizer(openapi.SchemaCustomizer),
 		),
 		fuego.WithoutAutoGroupTags(),
+		fuego.WithLoggingMiddleware(fuego.LoggingConfig{
+			DisableRequest:  true,
+			DisableResponse: true,
+		}),
 		fuego.WithGlobalMiddlewares(
 			middleware.RecoveryMiddleware(router.logger),
 			middleware.RequestIDMiddleware,
@@ -190,7 +195,7 @@ func (router *Router) initChannels() map[string]channel.Channel {
 // SetupRoutes initializes and configures all application routes
 func (router *Router) SetupRoutes() {
 	if err := godotenv.Load(); err != nil {
-		log.Println("Info: .env file not found, using environment variables and secret manager")
+		apilog.Println("Info: .env file not found, using environment variables and secret manager")
 	}
 
 	// Initialize notification dispatcher with channel adapters
@@ -211,19 +216,19 @@ func (router *Router) SetupRoutes() {
 
 	deployController, err := deploy.NewDeployController(router.app.Store, router.app.Ctx, router.logger, dispatcher, router.app.Store.ExtensionLoader)
 	if err != nil {
-		log.Fatalf("Failed to create deploy controller: %v", err)
+		apilog.Fatalf("Failed to create deploy controller: %v", err)
 	}
 
 	router.registerPublicRoutes(server, apiV1, dispatcher, deployController)
 	router.setupAuthentication(server)
 	router.registerProtectedRoutes(server, apiV1, dispatcher, deployController)
 
-	log.Printf("Server starting on port %s", PORT)
-	log.Printf("Swagger UI available at: http://localhost:%s/swagger/", PORT)
+	apilog.Printf("Server starting on port %s", PORT)
+	apilog.Printf("Swagger UI available at: http://localhost:%s/swagger/", PORT)
 	_ = os.Remove("doc/openapi.json")
 	go func() {
 		if err := openapi.PostProcessSpecWithRetry("doc/openapi.json", 30*time.Second); err != nil {
-			log.Printf("Warning: failed to post-process OpenAPI spec: %v", err)
+			apilog.Printf("Warning: failed to post-process OpenAPI spec: %v", err)
 		}
 	}()
 
@@ -338,7 +343,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 
 	containerController, err := container.NewContainerController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
 	if err != nil {
-		log.Fatalf("Failed to create container controller: %v", err)
+		apilog.Fatalf("Failed to create container controller: %v", err)
 	}
 	containerGroup := fuego.Group(server, apiV1.Path+"/container", option.Tags("Containers"))
 	fuego.Use(containerGroup, middleware.ServerIDMiddleware)

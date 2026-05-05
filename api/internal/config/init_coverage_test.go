@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
 
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"github.com/nixopus/nixopus/api/internal/secrets"
 	"github.com/nixopus/nixopus/api/internal/storage"
 	"github.com/nixopus/nixopus/api/internal/types"
@@ -33,8 +33,8 @@ func resetInitHooks(t *testing.T) {
 	t.Cleanup(func() {
 		initNewDB = storage.NewDB
 		initStoreInit = defaultInitStoreInit
-		initLogFatalf = log.Fatalf
-		initLogFatal = log.Fatal
+		initLogFatalf = apilog.Fatalf
+		initLogFatal = apilog.Fatal
 		initNewSecretManager = secrets.NewSecretManager
 		initAfterViperHook = nil
 		GlobalStore = nil

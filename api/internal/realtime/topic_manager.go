@@ -2,7 +2,7 @@ package realtime
 
 import (
 	"fmt"
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 
 	"github.com/gorilla/websocket"
 	"github.com/nixopus/nixopus/api/internal/types"
@@ -86,7 +86,7 @@ func (s *SocketServer) SubscribeToTopic(topic Topics, resourceID string, conn *w
 		Data:   nil,
 	})
 
-	log.Printf("Client %s subscribed to topic %s", conn.RemoteAddr(), topicKey)
+	apilog.Printf("Client %s subscribed to topic %s", conn.RemoteAddr(), topicKey)
 }
 
 // UnsubscribeFromTopic removes a connection from the specified topic.
@@ -118,7 +118,7 @@ func (s *SocketServer) UnsubscribeFromTopic(topic Topics, resourceID string, con
 			Data:   nil,
 		})
 
-		log.Printf("Client %s unsubscribed from topic %s", conn.RemoteAddr(), topicKey)
+		apilog.Printf("Client %s unsubscribed from topic %s", conn.RemoteAddr(), topicKey)
 	}
 }
 
@@ -146,12 +146,12 @@ func (s *SocketServer) BroadcastToTopic(topic Topics, resourceID string, payload
 			})
 
 			if err != nil {
-				log.Printf("Error broadcasting to client %s: %v", conn.RemoteAddr(), err)
+				apilog.Printf("Error broadcasting to client %s: %v", conn.RemoteAddr(), err)
 				go func(c *websocket.Conn) {
 					s.UnsubscribeFromTopic(topic, resourceID, c)
 				}(conn)
 			}
 		}
-		log.Printf("Broadcast message to %d clients on topic %s", len(connections), topicKey)
+		apilog.Printf("Broadcast message to %d clients on topic %s", len(connections), topicKey)
 	}
 }

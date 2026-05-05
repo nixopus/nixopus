@@ -6,7 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"strings"
 	"sync"
 	"time"
@@ -268,7 +268,7 @@ func SetupMachineBackupQueue(ctx context.Context, db *bun.DB) {
 		backupReplyMux = NewReplyMultiplexerWithPrefix(backupReplyPrefix)
 		backupReplyMux.Start(ctx)
 
-		log.Printf("Machine backup queue and reply multiplexer initialized")
+		apilog.Printf("Machine backup queue and reply multiplexer initialized")
 	})
 }
 

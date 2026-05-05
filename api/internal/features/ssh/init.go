@@ -18,6 +18,7 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/ssh/service"
 	sshstorage "github.com/nixopus/nixopus/api/internal/features/ssh/storage"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"github.com/nixopus/nixopus/api/internal/types"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
@@ -1054,12 +1055,12 @@ func (s *SSH) RunCommand(cmd string) (string, error) {
 func (s *SSH) Terminal() {
 	client, err := s.Connect()
 	if err != nil {
-		fmt.Print("Failed to connect to ssh")
+		apilog.Error("Failed to connect to ssh")
 		return
 	}
 	session, err := client.NewSession()
 	if err != nil {
-		fmt.Printf("Failed to create session: %s\n", err)
+		apilog.Errorf("Failed to create session: %s", err)
 		return
 	}
 	defer session.Close()
