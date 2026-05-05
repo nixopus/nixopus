@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
@@ -383,6 +384,47 @@ func TestUserStorage_GetLatestUserProvisionDetails_canceledContext(t *testing.T)
 
 	_, err := us.GetLatestUserProvisionDetails(ctx2, uuid.New())
 	require.Error(t, err)
+}
+
+func TestUserStorage_StorageLog_WithLogger(t *testing.T) {
+	t.Parallel()
+	db, ctx := sqliteAuthDB(t)
+	l := logger.NewLogger()
+	us := &UserStorage{DB: db, Ctx: ctx, Logger: &l}
+
+	// Any call with Logger != nil exercises the storageLog Logger.Log branch.
+	rows, err := us.ListBootstrapOrganizations(ctx, uuid.New())
+	require.NoError(t, err)
+	require.Empty(t, rows)
+}
+
+// TestUserStorage_ListBootstrapOrganizations_OrphanMember inserts a member whose
+// organization does not exist, verifying that ListBootstrapOrganizations skips it
+// (covers the errOrg != nil / continue branch).
+func TestUserStorage_ListBootstrapOrganizations_OrphanMember(t *testing.T) {
+	t.Parallel()
+	db, ctx := sqliteAuthDB(t)
+	us := &UserStorage{DB: db, Ctx: ctx}
+
+	user, org := seedUserOrgMember(t, db, ctx)
+
+	// Insert a member pointing to a non-existent organization.
+	// No FK constraint is declared on the CREATE TABLE, so SQLite allows it.
+	orphan := &types.Member{
+		ID:             uuid.New(),
+		OrganizationID: uuid.New(), // does not exist in organization table
+		UserID:         user.ID,
+		Role:           types.RoleMember,
+		CreatedAt:      time.Now().UTC(),
+	}
+	_, err := db.NewInsert().Model(orphan).Exec(ctx)
+	require.NoError(t, err)
+
+	rows, err := us.ListBootstrapOrganizations(ctx, user.ID)
+	require.NoError(t, err)
+	// The valid org must appear; the orphan must be silently skipped.
+	require.GreaterOrEqual(t, len(rows), 1)
+	require.Equal(t, org.ID, rows[0].ID)
 }
 
 func ptr(s string) *string { return &s }
