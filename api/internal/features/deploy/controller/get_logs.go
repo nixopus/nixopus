@@ -78,6 +78,14 @@ func (c *DeployController) GetLogs(f fuego.ContextNoBody) (*types.LogsResponse, 
 		}
 	}
 
+	if applicationID != "" {
+		if _, err := uuid.Parse(applicationID); err != nil {
+			return nil, fuego.BadRequestError{
+				Detail: "invalid application ID format",
+			}
+		}
+	}
+
 	logData := deployRequestData(f.Request(), user)
 	if applicationID != "" {
 		if logData == "" {

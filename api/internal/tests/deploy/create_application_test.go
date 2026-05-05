@@ -173,8 +173,8 @@ func TestCreateApplication(t *testing.T) {
 				Branch:      "main",
 				Port:        3000,
 			},
-			expectedStatus: http.StatusInternalServerError, // API returns 500 for invalid enum values
-			description:    "Should return 500 when environment is invalid",
+			expectedStatus: http.StatusBadRequest,
+			description:    "Should return 400 when environment is invalid",
 		},
 		{
 			name:           "Create application with invalid build pack",
@@ -189,8 +189,8 @@ func TestCreateApplication(t *testing.T) {
 				Branch:      "main",
 				Port:        3000,
 			},
-			expectedStatus: http.StatusInternalServerError, // API returns 500 for invalid enum values
-			description:    "Should return 500 when build pack is invalid",
+			expectedStatus: http.StatusBadRequest,
+			description:    "Should return 400 when build pack is invalid",
 		},
 	}
 

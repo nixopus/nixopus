@@ -30,6 +30,14 @@ func (c *DeployController) GetApplicationById(f fuego.ContextNoBody) (*types.App
 		}
 	}
 
+	if id != "" {
+		if _, err := uuid.Parse(id); err != nil {
+			return nil, fuego.BadRequestError{
+				Detail: "invalid application ID format",
+			}
+		}
+	}
+
 	data := deployRequestData(f.Request(), user)
 	if id != "" {
 		if data == "" {

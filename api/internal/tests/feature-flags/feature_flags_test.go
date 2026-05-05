@@ -676,7 +676,7 @@ func TestFeatureFlagErrorHandling(t *testing.T) {
 				"feature_name": longFeatureName,
 				"is_enabled":   true,
 			}),
-			Expect().Status().Equal(http.StatusInternalServerError), // Database returns 500 for varchar length constraint
+			Expect().Status().Equal(http.StatusBadRequest),
 		)
 	})
 
