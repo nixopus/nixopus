@@ -8,6 +8,9 @@ name: Test Nixopus Installer
 on:
   pull_request:
     branches: [master]
+    paths:
+      - 'installer/**'
+      - '.github/workflows/installer-test.yaml'
   push:
     branches: [master]
     paths:
