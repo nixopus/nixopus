@@ -3,7 +3,6 @@ package logger
 import (
 	"bytes"
 	"encoding/json"
-	"strings"
 	"testing"
 
 	_ "github.com/nixopus/nixopus/api/internal/log"
