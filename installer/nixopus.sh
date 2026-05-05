@@ -413,7 +413,16 @@ cmd_admin_bootstrap() {
     return 1
 }
 
-# cmd_report prints a single paste-friendly bundle for support (secrets redacted in .env).
+# Strip ANSI and redact secrets from an installer transcript (used by cmd_report).
+redact_install_log_lines() {
+    sed $'s/\e\[[0-9;]*m//g' \
+    | sed -E \
+        's/^(ADMIN_PASSWORD|DB_PASSWORD|REDIS_PASSWORD|AUTH_SERVICE_SECRET|JWT_SECRET|OPENROUTER_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|GOOGLE_GENERATIVE_AI_API_KEY|DEEPSEEK_API_KEY|GROQ_API_KEY)=.*/\1=<redacted>/' \
+    | sed -E 's/^(DATABASE_URL|REDIS_URL)=.*/\1=<redacted>/' \
+    | sed -E '/Password:/s/^(.*Password:[[:space:]]+).*/\1<redacted>/'
+}
+
+# cmd_report prints a single paste-friendly bundle (installer log + .env redacted for pasting).
 cmd_report() {
     load_env
     echo "=== Nixopus support report $(date -u +"%Y-%m-%dT%H:%M:%SZ") ==="
@@ -421,8 +430,8 @@ cmd_report() {
     echo "Home:    $NIXOPUS_HOME"
     echo ""
     if [ -f "$NIXOPUS_HOME/install.log" ]; then
-        echo "=== Installer log (last 400 lines) ==="
-        tail -n 400 "$NIXOPUS_HOME/install.log" 2>/dev/null || echo "(unreadable)"
+        echo "=== Installer log (last 400 lines, secrets redacted) ==="
+        tail -n 400 "$NIXOPUS_HOME/install.log" 2>/dev/null | redact_install_log_lines || echo "(unreadable)"
         echo ""
     fi
     echo "=== uname -a ==="
@@ -452,7 +461,7 @@ cmd_report() {
     fi
     echo ""
     echo "=== End of report ==="
-    echo "Tip: sudo nixopus report > /tmp/nixopus-report.txt && cat /tmp/nixopus-report.txt"
+    echo "Tip: sudo nixopus report > /tmp/nixopus-report.txt — safe to share; review compose logs for app secrets."
 }
 
 cmd_help() {
@@ -475,7 +484,7 @@ cmd_help() {
     echo "  backup              Backup database and config"
     echo "  info                Show install info and status"
     echo "  admin-bootstrap     Create admin account via auth API (uses ADMIN_EMAIL/ADMIN_PASSWORD)"
-    echo "  report              Print paste-friendly support bundle (redacted .env)"
+    echo "  report              Print support bundle (installer log + .env redacted)"
     echo "  help                Show this help"
 }
 

@@ -13,6 +13,8 @@ INSTALL_LOG=""
 
 start_install_session_log() {
     INSTALL_LOG="/tmp/nixopus-install-$(date +%Y%m%dT%H%M%S)-$$.log"
+    : >"$INSTALL_LOG"
+    chmod 600 "$INSTALL_LOG" || true
     # Duplicate stdout/stderr to a file for copy-paste debugging.
     exec > >(tee "$INSTALL_LOG") 2>&1
 }
@@ -144,9 +146,11 @@ fail() {
     if [ -n "${INSTALL_LOG:-}" ] && [ -f "$INSTALL_LOG" ]; then
         local log_path="$INSTALL_LOG"
         if [ -d "${NIXOPUS_HOME:-}" ]; then
-            cp -f "$INSTALL_LOG" "$NIXOPUS_HOME/install.log" 2>/dev/null || true
-            chmod 600 "$NIXOPUS_HOME/install.log" 2>/dev/null || true
-            [ -f "$NIXOPUS_HOME/install.log" ] && log_path="$NIXOPUS_HOME/install.log"
+            if cp -f "$INSTALL_LOG" "$NIXOPUS_HOME/install.log" 2>/dev/null; then
+                chmod 600 "$NIXOPUS_HOME/install.log" 2>/dev/null || true
+                log_path="$NIXOPUS_HOME/install.log"
+                rm -f "$INSTALL_LOG" 2>/dev/null || true
+            fi
         fi
         log_error "Installer log: $log_path"
         log_error "Attach when asking for help (may include secrets — redact before sharing)."
@@ -1004,8 +1008,10 @@ show_banner() {
 finalize_install_session_log() {
     [ -n "${INSTALL_LOG:-}" ] && [ -f "$INSTALL_LOG" ] || return 0
     [ -d "${NIXOPUS_HOME:-}" ] || return 0
-    cp -f "$INSTALL_LOG" "$NIXOPUS_HOME/install.log" 2>/dev/null || true
-    chmod 600 "$NIXOPUS_HOME/install.log" 2>/dev/null || true
+    if cp -f "$INSTALL_LOG" "$NIXOPUS_HOME/install.log" 2>/dev/null; then
+        chmod 600 "$NIXOPUS_HOME/install.log" 2>/dev/null || true
+        rm -f "$INSTALL_LOG" 2>/dev/null || true
+    fi
 }
 
 show_complete() {

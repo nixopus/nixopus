@@ -369,7 +369,7 @@ docker exec -i nixopus-db psql -U nixopus nixopus < /opt/nixopus/backups/<timest
 
 ### Reporting install or runtime issues
 
-The installer writes a full transcript to `/opt/nixopus/install.log` (and shows the path on failure). Attach that file when asking for help, or generate a single paste-friendly bundle **with secrets redacted in `.env`**:
+The installer writes a full transcript to `/opt/nixopus/install.log` (and shows the path on failure). Attach that file when asking for help, or generate a paste-friendly bundle with **`sudo nixopus report`** (redacts the installer log tail and `.env`; compose logs may still contain secrets — review before sharing):
 
 ```bash
 sudo nixopus report
