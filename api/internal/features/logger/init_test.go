@@ -32,10 +32,10 @@ func captureLogrus(t *testing.T) *bytes.Buffer {
 
 func firstJSONRecord(t *testing.T, buf *bytes.Buffer) map[string]interface{} {
 	t.Helper()
-	line := strings.TrimSpace(buf.String())
-	require.NotEmpty(t, line)
+	require.NotEmpty(t, buf.String())
 	var m map[string]interface{}
-	require.NoError(t, json.Unmarshal([]byte(line), &m))
+	decoder := json.NewDecoder(buf)
+	require.NoError(t, decoder.Decode(&m))
 	return m
 }
 

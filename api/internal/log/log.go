@@ -53,7 +53,9 @@ func (f *pinoFormatter) Format(entry *logrus.Entry) ([]byte, error) {
 	rec["hostname"] = pinoHostname
 	rec["msg"] = entry.Message
 
-	if entry.HasCaller() {
+	// Prefer explicit "caller" field from entry.Data (set by stdio.go wrappers)
+	// Otherwise fall back to entry.Caller if HasCaller() is true
+	if _, hasExplicitCaller := rec["caller"]; !hasExplicitCaller && entry.HasCaller() {
 		rec["caller"] = formatFilePath(entry.Caller.File) + ":" + strconv.Itoa(entry.Caller.Line)
 	}
 

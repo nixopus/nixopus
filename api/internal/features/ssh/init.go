@@ -1055,7 +1055,7 @@ func (s *SSH) RunCommand(cmd string) (string, error) {
 func (s *SSH) Terminal() {
 	client, err := s.Connect()
 	if err != nil {
-		apilog.Error("Failed to connect to ssh")
+		apilog.Errorf("Failed to connect to ssh: %v", err)
 		return
 	}
 	session, err := client.NewSession()

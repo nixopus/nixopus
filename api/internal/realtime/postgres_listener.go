@@ -137,7 +137,7 @@ func (s *SocketServer) handleNotifications(notificationChan <-chan *PostgresNoti
 			}
 
 			if err := json.Unmarshal([]byte(notification.Payload), &parsedPayload); err != nil {
-				apilog.Printf("Error parsing notification payload: %v", err)
+				apilog.Errorf("Error parsing notification payload: %v", err)
 				continue
 			}
 

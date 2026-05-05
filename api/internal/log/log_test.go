@@ -37,8 +37,12 @@ func TestInitLogrusEmitsPinoJSONWithCaller(t *testing.T) {
 	t.Setenv("LOG_COLOR", "false")
 	t.Setenv("LOG_PRETTY", "false")
 	var buf bytes.Buffer
+	oldOut := logrus.StandardLogger().Out
+	oldLevel := logrus.GetLevel()
 	logrus.SetOutput(&buf)
 	logrus.SetLevel(logrus.InfoLevel)
+	defer logrus.SetOutput(oldOut)
+	defer logrus.SetLevel(oldLevel)
 	logrus.Info("init coverage ping")
 
 	line := strings.TrimSpace(buf.String())

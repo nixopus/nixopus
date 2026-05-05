@@ -261,7 +261,7 @@ func LoadSecretsIntoEnv(manager SecretManager, prefix string) error {
 
 	for key, value := range secrets {
 		if err := os.Setenv(key, value); err != nil {
-			apilog.Printf("Warning: Failed to set environment variable %s: %v", key, err)
+			apilog.Warnf("Failed to set environment variable %s: %v", key, err)
 		}
 	}
 

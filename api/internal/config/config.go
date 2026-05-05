@@ -87,11 +87,11 @@ func Init() *storage.Store {
 		AppConfig.Server.Port = "8080"
 	}
 
-	apilog.Printf("Configuration loaded successfully for environment: %s", AppConfig.App.Environment)
-
 	if err := validateConfig(AppConfig); err != nil {
 		initLogFatalf("Configuration validation failed: %v", err)
 	}
+
+	apilog.Printf("Configuration loaded successfully for environment: %s", AppConfig.App.Environment)
 
 	// Log key configuration values (without sensitive data)
 	apilog.Printf("Server will start on port: %s", AppConfig.Server.Port)
