@@ -546,7 +546,7 @@ load_fn() {
     NIXOPUS_API_IMAGE="" NIXOPUS_VIEW_IMAGE="" NIXOPUS_AUTH_IMAGE="" NIXOPUS_AGENT_IMAGE=""
 
     write_env
-    perms=$(stat -f "%Lp" "$tmp_home/.env" 2>/dev/null || stat -c "%a" "$tmp_home/.env")
+    perms=$(stat -c "%a" "$tmp_home/.env" 2>/dev/null || stat -f "%Lp" "$tmp_home/.env")
     [ "$perms" = "600" ]
     rm -rf "$tmp_home"
 }
@@ -1605,11 +1605,11 @@ load_fn() {
     # Pre-create key
     ssh-keygen -t rsa -b 2048 -f "$tmp_home/ssh/id_rsa" -N "" -q
     local original_mtime
-    original_mtime=$(stat -f "%m" "$tmp_home/ssh/id_rsa" 2>/dev/null || stat -c "%Y" "$tmp_home/ssh/id_rsa")
+    original_mtime=$(stat -c "%Y" "$tmp_home/ssh/id_rsa" 2>/dev/null || stat -f "%m" "$tmp_home/ssh/id_rsa")
 
     setup_ssh
     local new_mtime
-    new_mtime=$(stat -f "%m" "$tmp_home/ssh/id_rsa" 2>/dev/null || stat -c "%Y" "$tmp_home/ssh/id_rsa")
+    new_mtime=$(stat -c "%Y" "$tmp_home/ssh/id_rsa" 2>/dev/null || stat -f "%m" "$tmp_home/ssh/id_rsa")
     [ "$original_mtime" = "$new_mtime" ]
     rm -rf "$tmp_home"
 }
