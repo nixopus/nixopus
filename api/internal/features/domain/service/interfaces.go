@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/nixopus/nixopus/api/internal/features/domain/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/queue"
 )
 
@@ -54,6 +55,14 @@ func (r *realNetLookup) LookupTXT(name string) ([]string, error) {
 // Tests can swap it via restoreDefaultResolver to avoid real network calls.
 var defaultResolver NetLookup = &realNetLookup{}
 
+// dnsLog emits a log line when log is non-nil (used by DNS helper functions).
+func dnsLog(l *logger.Logger, sev logger.Severity, msg, data string) {
+	if l == nil {
+		return
+	}
+	l.Log(sev, msg, data)
+}
+
 // DNSResolver abstracts all DNS network operations and instruction generation
 // so that service logic can be tested without real network calls.
 type DNSResolver interface {
@@ -76,35 +85,37 @@ type QueueClient interface {
 // RealDNSResolver delegates to the package-level DNS functions backed by net.Lookup*.
 type RealDNSResolver struct {
 	net NetLookup
+	log *logger.Logger
 }
 
 // NewRealDNSResolver creates a RealDNSResolver backed by the stdlib net package.
-func NewRealDNSResolver() *RealDNSResolver {
-	return &RealDNSResolver{net: &realNetLookup{}}
+// Pass non-nil log for Debug/Error detail on DNS lookups; tests typically pass nil.
+func NewRealDNSResolver(log *logger.Logger) *RealDNSResolver {
+	return &RealDNSResolver{net: &realNetLookup{}, log: log}
 }
 
 func (r *RealDNSResolver) DetectProvider(domain string) (string, error) {
-	return detectDNSProvider(r.net, domain)
+	return detectDNSProvider(r.net, domain, r.log)
 }
 
 func (r *RealDNSResolver) GenerateToken() string {
-	return GenerateVerificationToken()
+	return generateVerificationToken(r.log)
 }
 
 func (r *RealDNSResolver) VerifyDNSConfig(domain, target string) (bool, error) {
-	return verifyDNSConfiguration(r.net, domain, target)
+	return verifyDNSConfiguration(r.net, domain, target, r.log)
 }
 
 func (r *RealDNSResolver) VerifyARecord(domain, machineIP string) (bool, error) {
-	return verifyARecordMatchesMachineIP(r.net, domain, machineIP)
+	return verifyARecordMatchesMachineIP(r.net, domain, machineIP, r.log)
 }
 
 func (r *RealDNSResolver) CheckPropagation(domain string) (string, error) {
-	return checkDNSPropagation(r.net, domain)
+	return checkDNSPropagation(r.net, domain, r.log)
 }
 
 func (r *RealDNSResolver) CheckPropagationBYOS(domain, machineIP string) (string, error) {
-	return checkDNSPropagationBYOS(r.net, domain, machineIP)
+	return checkDNSPropagationBYOS(r.net, domain, machineIP, r.log)
 }
 
 func (r *RealDNSResolver) GenerateDNSInstructions(domain, targetSubdomain, provider string) []types.DNSInstruction {

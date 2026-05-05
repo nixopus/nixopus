@@ -21,7 +21,7 @@ type TestResult struct {
 }
 
 func (s *MCPService) TestServer(req *validation.TestServerRequest) *TestResult {
-	s.logger.Log(logger.Info, "Testing MCP server connection", req.ProviderID)
+	s.logger.Log(logger.Info, "mcp service: TestServer", fmt.Sprintf("provider_id=%s", req.ProviderID))
 
 	provider := mcp.GetProvider(req.ProviderID)
 	if provider == nil {

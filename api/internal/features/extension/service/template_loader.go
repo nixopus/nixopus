@@ -3,10 +3,10 @@ package service
 import (
 	"context"
 	"fmt"
-	"log"
 	"path/filepath"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	shared_storage "github.com/nixopus/nixopus/api/internal/storage"
 	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
@@ -15,17 +15,29 @@ import (
 // TemplateLoader reads extension metadata.yaml trees from disk and syncs them into Postgres.
 type TemplateLoader struct {
 	store extensionTemplateStore
+	log   *logger.Logger // optional; nil disables loader logs
 }
 
 var _ shared_storage.ExtensionTemplateLoader = (*TemplateLoader)(nil)
 
 // NewTemplateLoader constructs a loader backed by the application database.
-func NewTemplateLoader(db *bun.DB) *TemplateLoader {
-	return newTemplateLoader(newBunExtensionTemplateStore(db))
+func NewTemplateLoader(db *bun.DB, log *logger.Logger) *TemplateLoader {
+	return newTemplateLoader(newBunExtensionTemplateStore(db), log)
 }
 
-func newTemplateLoader(store extensionTemplateStore) *TemplateLoader {
-	return &TemplateLoader{store: store}
+func newTemplateLoader(store extensionTemplateStore, logOptional ...*logger.Logger) *TemplateLoader {
+	var log *logger.Logger
+	if len(logOptional) > 0 {
+		log = logOptional[0]
+	}
+	return &TemplateLoader{store: store, log: log}
+}
+
+func (l *TemplateLoader) tplLog(sev logger.Severity, msg, data string) {
+	if l == nil || l.log == nil {
+		return
+	}
+	l.log.Log(sev, msg, data)
 }
 
 func (l *TemplateLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPath string) error {
@@ -36,7 +48,7 @@ func (l *TemplateLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPat
 		return fmt.Errorf("failed to load extensions from directory: %w", err)
 	}
 
-	log.Printf("Found %d extension files in %s", len(extensions), dirPath)
+	l.tplLog(logger.Info, fmt.Sprintf("extension template loader: found %d extension files", len(extensions)), dirPath)
 
 	if len(extensions) == 0 {
 		return nil
@@ -95,7 +107,7 @@ func (l *TemplateLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPat
 		}
 	}
 
-	log.Printf("Processing: %d new, %d updated, %d unchanged", len(toInsert), len(toUpdate), skippedCount)
+	l.tplLog(logger.Info, fmt.Sprintf("extension template loader: processing new=%d updated=%d unchanged=%d", len(toInsert), len(toUpdate), skippedCount), dirPath)
 
 	if len(toInsert) > 0 {
 		if err := l.batchInsertExtensions(ctx, toInsert, insertVariables); err != nil {
@@ -110,7 +122,7 @@ func (l *TemplateLoader) LoadExtensionsFromDirectory(ctx context.Context, dirPat
 	}
 
 	if err := l.removeDeletedExtensions(ctx, foundExtensionIDs); err != nil {
-		log.Printf("Warning: Failed to remove deleted extensions: %v", err)
+		l.tplLog(logger.Warning, fmt.Sprintf("extension template loader: remove deleted extensions: %v", err), dirPath)
 	}
 
 	return nil
@@ -218,7 +230,7 @@ func (l *TemplateLoader) removeDeletedExtensions(ctx context.Context, foundExten
 		return nil
 	}
 
-	log.Printf("Removing %d extensions that are no longer in templates directory", len(extensionsToDelete))
+	l.tplLog(logger.Info, fmt.Sprintf("extension template loader: soft-deleting %d extensions absent from templates dir", len(extensionsToDelete)), "")
 
 	if err := l.store.softDeleteExtensionsByExtensionIDs(ctx, extensionsToDelete); err != nil {
 		return fmt.Errorf("failed to delete removed extensions: %w", err)
@@ -236,6 +248,7 @@ func (l *TemplateLoader) LoadExtensionsFromTemplates(ctx context.Context) error 
 func (l *TemplateLoader) GetExtensionByID(ctx context.Context, extensionID string) (*types.Extension, error) {
 	ext, err := l.store.getExtensionWithVariables(ctx, extensionID)
 	if err != nil {
+		l.tplLog(logger.Error, fmt.Sprintf("extension template loader: GetExtensionByID: %v", err), extensionID)
 		return nil, fmt.Errorf("failed to get extension: %w", err)
 	}
 	return ext, nil

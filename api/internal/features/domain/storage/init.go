@@ -2,15 +2,25 @@ package storage
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/uptrace/bun"
 )
 
 type DomainStorage struct {
-	DB  *bun.DB
-	Ctx context.Context
+	DB     *bun.DB
+	Ctx    context.Context
+	Logger *logger.Logger // optional; when nil, storage emits no logs
+}
+
+func (s *DomainStorage) storageLog(sev logger.Severity, msg, data string) {
+	if s.Logger == nil {
+		return
+	}
+	s.Logger.Log(sev, msg, data)
 }
 
 type DomainStorageInterface interface {
@@ -33,12 +43,17 @@ func (s *DomainStorage) getDB() bun.IDB {
 }
 
 func (s *DomainStorage) GetDomains(OrganizationID string, UserID uuid.UUID) ([]shared_types.Domain, error) {
+	ctxStr := fmt.Sprintf("org_id=%s user_id=%s", OrganizationID, UserID)
+	s.storageLog(logger.Debug, "storage: GetDomains", ctxStr)
+
 	var domains []shared_types.Domain
 	err := s.getDB().NewSelect().Model(&domains).
 		Where("organization_id = ? AND deleted_at IS NULL", OrganizationID).
 		Scan(s.Ctx)
 	if err != nil {
+		s.storageLog(logger.Error, fmt.Sprintf("storage: GetDomains: %v", err), ctxStr)
 		return nil, err
 	}
+	s.storageLog(logger.Debug, "storage: GetDomains ok", fmt.Sprintf("%s count=%d", ctxStr, len(domains)))
 	return domains, nil
 }

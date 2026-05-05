@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
@@ -17,7 +18,8 @@ func (c *DeployController) IsNameAlreadyTaken(w http.ResponseWriter, r *http.Req
 	value, err := c.service.IsNameAlreadyTaken(request.Name)
 
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
+		data := deployRequestData(r, utils.GetUser(w, r))
+		c.logger.Log(logger.Error, fmt.Sprintf("deploy: IsNameAlreadyTaken: %v", err), data)
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -34,7 +36,8 @@ func (c *DeployController) IsDomainAlreadyTaken(w http.ResponseWriter, r *http.R
 	is_taken, err := c.service.IsDomainAlreadyTaken(request.Domain)
 
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
+		data := deployRequestData(r, utils.GetUser(w, r))
+		c.logger.Log(logger.Error, fmt.Sprintf("deploy: IsDomainAlreadyTaken taken: %v", err), data)
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -42,7 +45,8 @@ func (c *DeployController) IsDomainAlreadyTaken(w http.ResponseWriter, r *http.R
 	is_valid, err := c.service.IsDomainValid(request.Domain)
 
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
+		data := deployRequestData(r, utils.GetUser(w, r))
+		c.logger.Log(logger.Error, fmt.Sprintf("deploy: IsDomainAlreadyTaken valid: %v", err), data)
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -64,7 +68,8 @@ func (c *DeployController) IsPortAlreadyTaken(w http.ResponseWriter, r *http.Req
 	value, err := c.service.IsPortAlreadyTaken(request.Port)
 
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
+		data := deployRequestData(r, utils.GetUser(w, r))
+		c.logger.Log(logger.Error, fmt.Sprintf("deploy: IsPortAlreadyTaken: %v", err), data)
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
 		return
 	}

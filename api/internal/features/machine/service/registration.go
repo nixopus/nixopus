@@ -257,9 +257,9 @@ func (s *RegistrationService) VerifyMachine(orgID uuid.UUID, machineID uuid.UUID
 	addr := fmt.Sprintf("%s:%d", *sshKey.Host, port)
 	client, err := s.getDialSSH()("tcp", addr, config)
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("SSH dial failed for machine %s: %v", machineID, err), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: registration: SSH dial failed for machine %s: %v", machineID, err), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 		if dbErr := s.storage.MarkMachineInactive(machineID); dbErr != nil {
-			s.logger.Log(logger.Error, fmt.Sprintf("Failed to mark machine %s inactive after SSH dial error: %v", machineID, dbErr), orgID.String())
+			s.logger.Log(logger.Error, fmt.Sprintf("machine service: registration: mark inactive after SSH dial: %v", dbErr), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 		}
 		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
 	}
@@ -267,18 +267,18 @@ func (s *RegistrationService) VerifyMachine(orgID uuid.UUID, machineID uuid.UUID
 
 	session, err := client.NewSession()
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("SSH session failed for machine %s: %v", machineID, err), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: registration: SSH session failed for machine %s: %v", machineID, err), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 		if dbErr := s.storage.MarkMachineInactive(machineID); dbErr != nil {
-			s.logger.Log(logger.Error, fmt.Sprintf("Failed to mark machine %s inactive after SSH session error: %v", machineID, dbErr), orgID.String())
+			s.logger.Log(logger.Error, fmt.Sprintf("machine service: registration: mark inactive after SSH session: %v", dbErr), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 		}
 		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
 	}
 	defer session.Close()
 
 	if err := session.Run("echo ok"); err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("SSH command failed for machine %s: %v", machineID, err), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: registration: SSH command failed for machine %s: %v", machineID, err), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 		if dbErr := s.storage.MarkMachineInactive(machineID); dbErr != nil {
-			s.logger.Log(logger.Error, fmt.Sprintf("Failed to mark machine %s inactive after SSH command error: %v", machineID, dbErr), orgID.String())
+			s.logger.Log(logger.Error, fmt.Sprintf("machine service: registration: mark inactive after SSH command: %v", dbErr), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 		}
 		return &types.VerifyMachineResponse{Status: "failed", IsActive: false}, nil
 	}
@@ -302,19 +302,19 @@ func (s *RegistrationService) RenameMachine(orgID uuid.UUID, machineID uuid.UUID
 	_, err := s.storage.GetSSHKeyByID(machineID, orgID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			s.logger.Log(logger.Error, fmt.Sprintf("Machine not found for rename: machineID=%s, orgID=%s", machineID, orgID), orgID.String())
+			s.logger.Log(logger.Error, fmt.Sprintf("machine service: registration: machine not found for rename: machineID=%s orgID=%s", machineID, orgID), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 			return nil, types.ErrMachineNotFound
 		}
-		s.logger.Log(logger.Error, fmt.Sprintf("Failed to get machine for rename: machineID=%s, error=%v", machineID, err), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: registration: get machine for rename: %v", err), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 		return nil, fmt.Errorf("failed to get machine: %w", err)
 	}
 
 	if err := s.storage.UpdateMachineName(machineID, trimmed); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			s.logger.Log(logger.Error, fmt.Sprintf("Machine not found during rename update: machineID=%s", machineID), orgID.String())
+			s.logger.Log(logger.Error, fmt.Sprintf("machine service: registration: machine not found during rename update: machineID=%s", machineID), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 			return nil, types.ErrMachineNotFound
 		}
-		s.logger.Log(logger.Error, fmt.Sprintf("Failed to update machine name: machineID=%s, error=%v", machineID, err), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: registration: update machine name: %v", err), fmt.Sprintf("org_id=%s machine_id=%s", orgID, machineID))
 		return nil, fmt.Errorf("failed to rename machine: %w", err)
 	}
 

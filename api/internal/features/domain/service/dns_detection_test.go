@@ -119,7 +119,7 @@ func TestMatchNSToProvider_Empty(t *testing.T) {
 
 func TestDetectDNSProvider_RootDomainNSMatch(t *testing.T) {
 	mock := &mockNetLookup{nsRecords: []*net.NS{ns("ns1.cloudflare.com.")}}
-	provider, err := detectDNSProvider(mock, "app.example.com")
+	provider, err := detectDNSProvider(mock, "app.example.com", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -136,7 +136,7 @@ func TestDetectDNSProvider_SubdomainNSMatch(t *testing.T) {
 			"app.example.com": {ns("ns1.cloudflare.com.")},
 		},
 	}
-	provider, err := detectDNSProvider(mock, "app.example.com")
+	provider, err := detectDNSProvider(mock, "app.example.com", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestDetectDNSProvider_SubdomainSkippedWhenSameAsRoot(t *testing.T) {
 	mock.nsErr = errors.New("no NS")
 	_ = callCount
 
-	provider, err := detectDNSProvider(mock, "example.com")
+	provider, err := detectDNSProvider(mock, "example.com", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -166,7 +166,7 @@ func TestDetectDNSProvider_SubdomainSkippedWhenSameAsRoot(t *testing.T) {
 
 func TestDetectDNSProvider_FallbackToOther(t *testing.T) {
 	mock := &mockNetLookup{nsErr: errors.New("no NS records")}
-	provider, err := detectDNSProvider(mock, "app.example.com")
+	provider, err := detectDNSProvider(mock, "app.example.com", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -177,7 +177,7 @@ func TestDetectDNSProvider_FallbackToOther(t *testing.T) {
 
 func TestDetectDNSProvider_Route53(t *testing.T) {
 	mock := &mockNetLookup{nsRecords: []*net.NS{ns("ns1.awsdns-01.com.")}}
-	provider, _ := detectDNSProvider(mock, "example.com")
+	provider, _ := detectDNSProvider(mock, "example.com", nil)
 	if provider != "route53" {
 		t.Errorf("expected route53, got %s", provider)
 	}
@@ -327,7 +327,7 @@ func TestDetectDNSProvider_ThirdBlock_Match(t *testing.T) {
 		},
 		errs: []error{nil, nil},
 	}
-	provider, err := detectDNSProvider(mock, "example.com")
+	provider, err := detectDNSProvider(mock, "example.com", nil)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

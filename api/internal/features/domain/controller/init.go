@@ -24,7 +24,7 @@ func NewDomainsController(
 	l logger.Logger,
 	notifier shared_types.Notifier,
 ) *DomainsController {
-	domainStorage := storage.DomainStorage{DB: store.DB, Ctx: ctx}
+	domainStorage := storage.DomainStorage{DB: store.DB, Ctx: ctx, Logger: &l}
 	return &DomainsController{
 		store:    store,
 		service:  service.NewDomainsService(ctx, l, &domainStorage),

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/docker/docker/api/types/filters"
@@ -29,7 +30,7 @@ func ListImages(
 	if opts.ContainerID != "" {
 		_, err := dockerService.GetContainerById(opts.ContainerID)
 		if err != nil {
-			l.Log(logger.Error, err.Error(), "")
+			l.Log(logger.Error, fmt.Sprintf("container service: ListImages invalid container: %v", err), opts.ContainerID)
 			return container_types.ListImagesResponse{}, err
 		}
 	}

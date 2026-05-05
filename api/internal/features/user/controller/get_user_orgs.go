@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -11,19 +12,22 @@ import (
 
 func (u *UserController) GetUserOrganizations(s fuego.ContextNoBody) (*types.UserOrganizationsListResponse, error) {
 	w, r := s.Response(), s.Request()
-	u.logger.Log(logger.Info, "getting user organizations", "")
 
 	user := utils.GetUser(w, r)
 	if user == nil {
+		u.logUserDebug("GetUserOrganizations", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
+	ctxStr := userRequestData(r, user)
+	u.logger.Log(logger.Info, "user: GetUserOrganizations", ctxStr)
+
 	organizations, err := u.service.GetUserOrganizations(user.ID.String())
 
 	if err != nil {
-		u.logger.Log(logger.Error, err.Error(), "")
+		u.logger.Log(logger.Error, fmt.Sprintf("user: GetUserOrganizations: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

@@ -14,6 +14,7 @@ import (
 	"github.com/nixopus/nixopus/api/internal/cache"
 	"github.com/nixopus/nixopus/api/internal/config"
 	audit "github.com/nixopus/nixopus/api/internal/features/audit/controller"
+	authsession "github.com/nixopus/nixopus/api/internal/features/auth"
 	auth "github.com/nixopus/nixopus/api/internal/features/auth/controller"
 	auth_service "github.com/nixopus/nixopus/api/internal/features/auth/service"
 	user_storage "github.com/nixopus/nixopus/api/internal/features/auth/storage"
@@ -73,18 +74,20 @@ func NewRouter(app *storage.App) *Router {
 	// Initialize RBAC cache for middleware
 	middleware.InitRBACCache(cache)
 
-	return &Router{
+	router := &Router{
 		app:    app,
 		cache:  cache,
 		logger: logger.NewLogger(),
 	}
+	authsession.VerifySessionLogger = &router.logger
+	return router
 }
 
 // applyMiddleware applies middleware chain to a route group based on configuration
 func (router *Router) applyMiddleware(group *fuego.Server, cfg MiddlewareConfig) {
 	if cfg.RBAC {
 		fuego.Use(group, func(next http.Handler) http.Handler {
-			return middleware.RBACMiddleware(next, router.app, cfg.ResourceName)
+			return middleware.RBACMiddleware(next, router.app, cfg.ResourceName, router.logger)
 		})
 	}
 	if cfg.FeatureFlag != "" {
@@ -113,7 +116,7 @@ func (router *Router) createServer(port string) *fuego.Server {
 		),
 		fuego.WithoutAutoGroupTags(),
 		fuego.WithGlobalMiddlewares(
-			middleware.RecoveryMiddleware,
+			middleware.RecoveryMiddleware(router.logger),
 			middleware.RequestIDMiddleware,
 			middleware.CorsMiddleware,
 			middleware.LoggingMiddleware,
@@ -146,7 +149,7 @@ func (router *Router) setupAuthentication(server *fuego.Server) {
 				next.ServeHTTP(w, r)
 				return
 			}
-			middleware.AuthMiddleware(next, router.app, router.cache).ServeHTTP(w, r)
+			middleware.AuthMiddleware(next, router.app, router.cache, router.logger).ServeHTTP(w, r)
 		})
 	})
 }
@@ -419,13 +422,13 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 }
 
 func (router *Router) createAuthController() *auth.AuthController {
-	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
+	userStorage := &user_storage.UserStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx, Logger: &router.logger}
 	authService := auth_service.NewAuthService(userStorage, userStorage.DB, router.logger, router.app.Ctx, config.AppConfig.Redis.URL)
 	return auth.NewAuthController(router.app.Ctx, router.logger, authService)
 }
 
 func (router *Router) createFeatureFlagController() *feature_flags_controller.FeatureFlagController {
-	featureFlagStorage := &feature_flags_storage.FeatureFlagStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx}
+	featureFlagStorage := &feature_flags_storage.FeatureFlagStorage{DB: router.app.Store.DB, Ctx: router.app.Ctx, Logger: &router.logger}
 	featureFlagService := feature_flags_service.NewFeatureFlagService(featureFlagStorage, router.logger, router.app.Ctx)
 	return feature_flags_controller.NewFeatureFlagController(featureFlagService, router.logger, router.app.Ctx, router.cache)
 }

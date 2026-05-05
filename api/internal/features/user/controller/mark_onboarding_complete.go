@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -15,16 +16,18 @@ func (u *UserController) MarkOnboardingComplete(s fuego.ContextNoBody) (*types.M
 
 	user := utils.GetUser(w, r)
 	if user == nil {
+		u.logUserDebug("MarkOnboardingComplete", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
 
-	u.logger.Log(logger.Info, "marking onboarding as complete", user.ID.String())
+	ctxStr := userRequestData(r, user)
+	u.logger.Log(logger.Info, "user: MarkOnboardingComplete", ctxStr)
 
 	err := u.service.MarkOnboardingComplete(user.ID.String())
 	if err != nil {
-		u.logger.Log(logger.Error, err.Error(), user.ID.String())
+		u.logger.Log(logger.Error, fmt.Sprintf("user: MarkOnboardingComplete: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

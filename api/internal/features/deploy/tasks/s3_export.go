@@ -105,7 +105,7 @@ func (s *TaskService) ExportAndRecordImage(ctx context.Context, payload shared_t
 
 	orgSettings, err := utils.GetOrganizationSettings(ctx, s.Store.DB, payload.Application.OrganizationID)
 	if err != nil {
-		s.Logger.Log(logger.Warning, "Failed to get organization settings for S3 export: "+err.Error(), payload.ApplicationDeployment.ID.String())
+		s.Logger.Log(logger.Warning, "deploy tasks: Failed to get organization settings for S3 export: "+err.Error(), payload.ApplicationDeployment.ID.String())
 		return
 	}
 	if orgSettings.S3ArtifactUploadEnabled == nil || !*orgSettings.S3ArtifactUploadEnabled {
@@ -120,7 +120,7 @@ func (s *TaskService) ExportAndRecordImage(ctx context.Context, payload shared_t
 			bgCtx = context.WithValue(bgCtx, shared_types.ServerIDKey, serverID)
 		}
 
-		s.Logger.Log(logger.Info, "Starting async S3 image export", deploymentCopy.ID.String())
+		s.Logger.Log(logger.Info, "deploy tasks: Starting async S3 image export", deploymentCopy.ID.String())
 		key, size, err := s.ExportImageToS3(bgCtx, ExportConfig{
 			ImageTag:     commitTag,
 			OrgID:        payload.Application.OrganizationID,
@@ -128,14 +128,14 @@ func (s *TaskService) ExportAndRecordImage(ctx context.Context, payload shared_t
 			DeploymentID: deploymentCopy.ID,
 		}, taskCtx)
 		if err != nil {
-			s.Logger.Log(logger.Warning, "Failed to export image to S3 (non-fatal): "+err.Error(), deploymentCopy.ID.String())
+			s.Logger.Log(logger.Warning, "deploy tasks: Failed to export image to S3 (non-fatal): "+err.Error(), deploymentCopy.ID.String())
 			return
 		}
 
 		deploymentCopy.ImageS3Key = key
 		deploymentCopy.ImageSize = size
 		if err := s.Storage.UpdateApplicationDeployment(&deploymentCopy); err != nil {
-			s.Logger.Log(logger.Warning, "Failed to record S3 image metadata: "+err.Error(), deploymentCopy.ID.String())
+			s.Logger.Log(logger.Warning, "deploy tasks: Failed to record S3 image metadata: "+err.Error(), deploymentCopy.ID.String())
 		}
 		taskCtx.FlushLogs()
 	}()
@@ -150,7 +150,7 @@ func (s *TaskService) ExportComposeImagesToS3(ctx context.Context, payload share
 
 	orgSettings, err := utils.GetOrganizationSettings(ctx, s.Store.DB, payload.Application.OrganizationID)
 	if err != nil {
-		s.Logger.Log(logger.Warning, "Failed to get organization settings for S3 export: "+err.Error(), payload.ApplicationDeployment.ID.String())
+		s.Logger.Log(logger.Warning, "deploy tasks: Failed to get organization settings for S3 export: "+err.Error(), payload.ApplicationDeployment.ID.String())
 		return
 	}
 	if orgSettings.S3ArtifactUploadEnabled == nil || !*orgSettings.S3ArtifactUploadEnabled {
@@ -162,15 +162,15 @@ func (s *TaskService) ExportComposeImagesToS3(ctx context.Context, payload share
 	// then run the S3 upload in a background goroutine with a detached context.
 	imageTags, err := s.listComposeImages(ctx, composeFilePath, envVars)
 	if err != nil {
-		s.Logger.Log(logger.Warning, "Failed to list compose images (non-fatal): "+err.Error(), deploymentCopy.ID.String())
+		s.Logger.Log(logger.Warning, "deploy tasks: Failed to list compose images (non-fatal): "+err.Error(), deploymentCopy.ID.String())
 		return
 	}
 	if len(imageTags) == 0 {
-		s.Logger.Log(logger.Warning, "No compose images found to export", deploymentCopy.ID.String())
+		s.Logger.Log(logger.Warning, "deploy tasks: No compose images found to export", deploymentCopy.ID.String())
 		return
 	}
 
-	s.Logger.Log(logger.Info, fmt.Sprintf("Found %d compose image(s) to export: %s", len(imageTags), strings.Join(imageTags, ", ")), deploymentCopy.ID.String())
+	s.Logger.Log(logger.Info, fmt.Sprintf("deploy tasks: Found %d compose image(s) to export: %s", len(imageTags), strings.Join(imageTags, ", ")), deploymentCopy.ID.String())
 
 	go func() {
 		defer func() {
@@ -193,14 +193,14 @@ func (s *TaskService) ExportComposeImagesToS3(ctx context.Context, payload share
 			DeploymentID: deploymentCopy.ID,
 		}, taskCtx)
 		if err != nil {
-			s.Logger.Log(logger.Warning, "Failed to export compose images to S3 (non-fatal): "+err.Error(), deploymentCopy.ID.String())
+			s.Logger.Log(logger.Warning, "deploy tasks: Failed to export compose images to S3 (non-fatal): "+err.Error(), deploymentCopy.ID.String())
 			return
 		}
 
 		deploymentCopy.ImageS3Key = key
 		deploymentCopy.ImageSize = size
 		if err := s.Storage.UpdateApplicationDeployment(&deploymentCopy); err != nil {
-			s.Logger.Log(logger.Warning, "Failed to record S3 image metadata: "+err.Error(), deploymentCopy.ID.String())
+			s.Logger.Log(logger.Warning, "deploy tasks: Failed to record S3 image metadata: "+err.Error(), deploymentCopy.ID.String())
 		}
 		taskCtx.FlushLogs()
 	}()

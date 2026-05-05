@@ -67,8 +67,9 @@ func (s *HealthCheckService) ExecuteHealthCheck(healthCheck *shared_types.Health
 
 	appProvider := s.getAppProvider()
 	application, err := appProvider.GetApplicationById(healthCheck.ApplicationID.String(), healthCheck.OrganizationID)
+	execCtx := fmt.Sprintf("health_check_id=%s application_id=%s org_id=%s", healthCheck.ID, healthCheck.ApplicationID, healthCheck.OrganizationID)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to get application for health check", err.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("healthcheck service: ExecuteHealthCheck get application: %v", err), execCtx)
 		return nil, fmt.Errorf("failed to get application: %w", err)
 	}
 
@@ -87,7 +88,7 @@ func (s *HealthCheckService) ExecuteHealthCheck(healthCheck *shared_types.Health
 	}
 
 	if reqErr != nil {
-		s.logger.Log(logger.Error, "failed to create HTTP request", reqErr.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("healthcheck service: ExecuteHealthCheck new request: %v", reqErr), execCtx)
 		result := &shared_types.HealthCheckResult{
 			ID:            uuid.New(),
 			HealthCheckID: healthCheck.ID,
@@ -161,8 +162,9 @@ func (s *HealthCheckService) ExecuteHealthCheck(healthCheck *shared_types.Health
 
 // ProcessHealthCheckResult processes a health check result and updates the health check status
 func (s *HealthCheckService) ProcessHealthCheckResult(healthCheck *shared_types.HealthCheck, result *shared_types.HealthCheckResult) error {
+	procCtx := fmt.Sprintf("health_check_id=%s result_id=%s status=%s", healthCheck.ID, result.ID, result.Status)
 	if err := s.storage.AddHealthCheckResult(result); err != nil {
-		s.logger.Log(logger.Error, "failed to save health check result", err.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("healthcheck service: ProcessHealthCheckResult save result: %v", err), procCtx)
 		return err
 	}
 
@@ -180,7 +182,7 @@ func (s *HealthCheckService) ProcessHealthCheckResult(healthCheck *shared_types.
 	}
 
 	if err := s.storage.UpdateHealthCheckStatus(healthCheck.ID, consecutiveFails, result.CheckedAt); err != nil {
-		s.logger.Log(logger.Error, "failed to update health check status", err.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("healthcheck service: ProcessHealthCheckResult update status: %v", err), fmt.Sprintf("health_check_id=%s consecutive_fails=%d", healthCheck.ID, consecutiveFails))
 		return err
 	}
 

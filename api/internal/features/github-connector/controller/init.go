@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/nixopus/nixopus/api/internal/features/github-connector/service"
@@ -28,10 +29,10 @@ func NewGithubConnectorController(
 	l logger.Logger,
 	notifier shared_types.Notifier,
 ) *GithubConnectorController {
-	storage := storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx}
+	storage := storage.GithubConnectorStorage{DB: store.DB, Ctx: ctx, Logger: &l}
 	return &GithubConnectorController{
 		store:     store,
-		validator: validation.NewValidator(&storage),
+		validator: validation.NewValidatorWithLogger(&storage, &l),
 		service:   service.NewGithubConnectorService(store, ctx, l, &storage),
 		ctx:       ctx,
 		logger:    l,
@@ -43,12 +44,12 @@ func (c *GithubConnectorController) parseAndValidate(w http.ResponseWriter, r *h
 	user := utils.GetUser(w, r)
 
 	if user == nil {
-		c.logger.Log(logger.Error, shared_types.ErrFailedToGetUserFromContext.Error(), shared_types.ErrFailedToGetUserFromContext.Error())
+		c.logger.Log(logger.Error, "github connector: parseAndValidate no user in context", "")
 		return shared_types.ErrFailedToGetUserFromContext
 	}
 
 	if err := c.validator.ValidateRequest(req); err != nil {
-		c.logger.Log(logger.Error, err.Error(), err.Error())
+		c.logger.Log(logger.Debug, fmt.Sprintf("github connector: validation failed: %v", err), fmt.Sprintf("user_id=%s", user.ID))
 		return err
 	}
 

@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -40,7 +41,7 @@ func (s *HealthCheckService) GetHealthCheckResults(applicationIDStr string, orga
 
 	results, err := s.storage.GetHealthCheckResults(healthCheck.ID, limit, startTime, endTime)
 	if err != nil {
-		s.logger.Log(logger.Error, "failed to get health check results", err.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("healthcheck service: GetHealthCheckResults: %v", err), fmt.Sprintf("application_id=%s org_id=%s health_check_id=%s", applicationIDStr, organizationID, healthCheck.ID))
 		return nil, err
 	}
 

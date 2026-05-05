@@ -11,14 +11,14 @@ import (
 
 // HandleReDeploy fans out redeployment across all configured servers (or org default for single-server apps).
 func (s *TaskService) HandleReDeploy(ctx context.Context, TaskPayload shared_types.TaskPayload) error {
-	s.Logger.Log(logger.Info, fmt.Sprintf("redeploy: fetching servers for app %s (buildpack=%s)", TaskPayload.Application.ID, TaskPayload.Application.BuildPack), "")
+	s.Logger.Log(logger.Info, fmt.Sprintf("deploy tasks: redeploy: fetching servers for app %s (buildpack=%s)", TaskPayload.Application.ID, TaskPayload.Application.BuildPack), "")
 	allServers, err := s.Storage.GetApplicationServers(TaskPayload.Application.ID)
 	if err != nil {
 		return fmt.Errorf("failed to retrieve application servers: %w", err)
 	}
-	s.Logger.Log(logger.Info, fmt.Sprintf("redeploy: got %d servers for app %s", len(allServers), TaskPayload.Application.ID), "")
+	s.Logger.Log(logger.Info, fmt.Sprintf("deploy tasks: redeploy: got %d servers for app %s", len(allServers), TaskPayload.Application.ID), "")
 	if len(allServers) == 0 {
-		s.Logger.Log(logger.Info, "redeploy: no application_servers rows, falling back to org default", "")
+		s.Logger.Log(logger.Info, "deploy tasks: redeploy: no application_servers rows, falling back to org default", "")
 		return s.handleReDeploySingle(ctx, TaskPayload)
 	}
 	servers := filterServers(allServers, TaskPayload.TargetServerIDs)

@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
 
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	machine_types "github.com/nixopus/nixopus/api/internal/features/machine/types"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
@@ -32,8 +33,9 @@ type TrailRepository interface {
 
 // TrailStorage implements TrailRepository using Bun ORM.
 type TrailStorage struct {
-	DB  *bun.DB
-	Ctx context.Context
+	DB     *bun.DB
+	Ctx    context.Context
+	Logger *logger.Logger // optional; nil disables storage logs
 }
 
 // NewTrailStorage creates a new TrailStorage instance.
@@ -45,6 +47,9 @@ func NewTrailStorage(db *bun.DB, ctx context.Context) *TrailStorage {
 }
 
 func (s *TrailStorage) GetActiveProvisionByUserAndOrg(userID, orgID string) (*shared_types.UserProvisionDetails, error) {
+	ctxStr := fmt.Sprintf("user_id=%s org_id=%s", userID, orgID)
+	storageLog(s.Logger, logger.Debug, "storage: GetActiveProvisionByUserAndOrg", ctxStr)
+
 	var provision shared_types.UserProvisionDetails
 
 	err := s.DB.NewSelect().
@@ -57,8 +62,10 @@ func (s *TrailStorage) GetActiveProvisionByUserAndOrg(userID, orgID string) (*sh
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetActiveProvisionByUserAndOrg not found", ctxStr)
 			return nil, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetActiveProvisionByUserAndOrg: %v", err), ctxStr)
 		return nil, fmt.Errorf("failed to get active provision: %w", err)
 	}
 
@@ -66,12 +73,15 @@ func (s *TrailStorage) GetActiveProvisionByUserAndOrg(userID, orgID string) (*sh
 }
 
 func (s *TrailStorage) CountActiveProvisions() (int, error) {
+	storageLog(s.Logger, logger.Debug, "storage: CountActiveProvisions", "")
+
 	count, err := s.DB.NewSelect().
 		Model((*shared_types.UserProvisionDetails)(nil)).
 		Where("step IS NOT NULL AND step != ?", shared_types.ProvisionStepCompleted).
 		Count(s.Ctx)
 
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: CountActiveProvisions: %v", err), "")
 		return 0, fmt.Errorf("failed to count active provisions: %w", err)
 	}
 
@@ -79,21 +89,33 @@ func (s *TrailStorage) CountActiveProvisions() (int, error) {
 }
 
 func (s *TrailStorage) CreateActiveUserProvision(details *shared_types.UserProvisionDetails) error {
+	ctxStr := fmt.Sprintf("user_id=%s org_id=%s", details.UserID, details.OrganizationID)
+	storageLog(s.Logger, logger.Debug, "storage: CreateActiveUserProvision", ctxStr)
+
 	tx, err := s.DB.BeginTx(s.Ctx, nil)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: CreateActiveUserProvision begin tx: %v", err), ctxStr)
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
 	_, err = tx.NewInsert().Model(details).Exec(s.Ctx)
 	if err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: CreateActiveUserProvision insert: %v", err), ctxStr)
 		return fmt.Errorf("failed to create provision: %w", err)
 	}
 
-	return tx.Commit()
+	if err := tx.Commit(); err != nil {
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: CreateActiveUserProvision commit: %v", err), ctxStr)
+		return err
+	}
+	return nil
 }
 
 func (s *TrailStorage) GetUserProvisionDetailsByID(sessionID string) (*shared_types.UserProvisionDetails, error) {
+	ctxStr := fmt.Sprintf("session_id=%s", sessionID)
+	storageLog(s.Logger, logger.Debug, "storage: GetUserProvisionDetailsByID", ctxStr)
+
 	var provision shared_types.UserProvisionDetails
 
 	err := s.DB.NewSelect().
@@ -103,8 +125,10 @@ func (s *TrailStorage) GetUserProvisionDetailsByID(sessionID string) (*shared_ty
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
+			storageLog(s.Logger, logger.Debug, "storage: GetUserProvisionDetailsByID not found", ctxStr)
 			return nil, nil
 		}
+		storageLog(s.Logger, logger.Error, fmt.Sprintf("storage: GetUserProvisionDetailsByID: %v", err), ctxStr)
 		return nil, fmt.Errorf("failed to get provision details: %w", err)
 	}
 

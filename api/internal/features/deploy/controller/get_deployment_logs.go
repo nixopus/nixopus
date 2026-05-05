@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -63,7 +64,7 @@ func (c *DeployController) GetDeploymentLogs(f fuego.ContextNoBody) (*types.Logs
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		c.logger.Log(logger.Error, "user not found", "")
+		c.logger.Log(logger.Error, "deploy: user not found", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
@@ -71,15 +72,24 @@ func (c *DeployController) GetDeploymentLogs(f fuego.ContextNoBody) (*types.Logs
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		c.logger.Log(logger.Error, "organization not found", "")
+		c.logger.Log(logger.Error, "deploy: organization not found", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "organization not found",
 		}
 	}
 
+	logData := deployRequestData(f.Request(), user)
+	if deploymentID != "" {
+		if logData == "" {
+			logData = fmt.Sprintf("deployment_id=%s", deploymentID)
+		} else {
+			logData = fmt.Sprintf("%s deployment_id=%s", logData, deploymentID)
+		}
+	}
+
 	logs, totalCount, err := c.service.GetDeploymentLogs(f.Request().Context(), deploymentID, page, pageSize, level, startTime, endTime, searchTerm)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("deploy: GetDeploymentLogs: %v", err), logData)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

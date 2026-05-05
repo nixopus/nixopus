@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -14,6 +15,7 @@ func (c *GithubConnectorController) CreateGithubConnector(f fuego.ContextWithBod
 	githubConnectorRequest, err := f.Body()
 
 	if err != nil {
+		c.logger.Log(logger.Debug, fmt.Sprintf("github connector: CreateGithubConnector body: %v", err), "")
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
@@ -28,9 +30,12 @@ func (c *GithubConnectorController) CreateGithubConnector(f fuego.ContextWithBod
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
+	ctxStr := fmt.Sprintf("user_id=%s", user.ID)
+	c.logger.Log(logger.Info, "github connector: CreateGithubConnector", ctxStr)
+
 	err = c.service.CreateConnector(&githubConnectorRequest, user.ID.String())
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("github connector: CreateGithubConnector: %v", err), ctxStr)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -38,6 +43,7 @@ func (c *GithubConnectorController) CreateGithubConnector(f fuego.ContextWithBod
 		}
 	}
 
+	c.logger.Log(logger.Info, "github connector: CreateGithubConnector ok", ctxStr)
 	return &types.MessageResponse{
 		Status:  "success",
 		Message: "connector created",

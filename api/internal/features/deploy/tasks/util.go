@@ -87,7 +87,7 @@ func (s *TaskService) NewTaskContext(result shared_types.TaskPayload) *TaskConte
 func (tc *TaskContext) UpdateDeployment(deployment *shared_types.ApplicationDeployment) {
 	err := tc.service.Storage.UpdateApplicationDeployment(deployment)
 	if err != nil {
-		tc.service.Logger.Log(logger.Error, "Failed to update application deployment: "+err.Error(), "")
+		tc.service.Logger.Log(logger.Error, "deploy tasks: Failed to update application deployment: "+err.Error(), "")
 	}
 }
 
@@ -101,7 +101,7 @@ func (tc *TaskContext) UpdateStatus(status shared_types.Status) {
 
 	err := tc.service.Storage.UpdateApplicationDeploymentStatus(&appStatus)
 	if err != nil {
-		tc.service.Logger.Log(logger.Error, "Failed to update application deployment status: "+err.Error(), "")
+		tc.service.Logger.Log(logger.Error, "deploy tasks: Failed to update application deployment status: "+err.Error(), "")
 	}
 }
 
@@ -141,10 +141,10 @@ func (tc *TaskContext) FlushLogs() {
 	tc.mu.Unlock()
 
 	if err := tc.service.Storage.AddApplicationLogsBatch(batch); err != nil {
-		tc.service.Logger.Log(logger.Error, "Failed to flush log batch: "+err.Error(), "")
+		tc.service.Logger.Log(logger.Error, "deploy tasks: Failed to flush log batch: "+err.Error(), "")
 		for _, log := range batch {
 			if singleErr := tc.service.Storage.AddApplicationLogs(&log); singleErr != nil {
-				tc.service.Logger.Log(logger.Error, "Failed to add individual log: "+singleErr.Error(), "")
+				tc.service.Logger.Log(logger.Error, "deploy tasks: Failed to add individual log: "+singleErr.Error(), "")
 			}
 		}
 	}
@@ -199,7 +199,7 @@ func (s *TaskService) NewLiveDevTaskContext(config LiveDevConfig) (*LiveDevTaskC
 	}
 
 	if err := s.Storage.AddApplicationDeployment(deployment); err != nil {
-		s.Logger.Log(logger.Error, "Failed to create live dev deployment record: "+err.Error(), "")
+		s.Logger.Log(logger.Error, "deploy tasks: Failed to create live dev deployment record: "+err.Error(), "")
 		return nil, err
 	}
 
@@ -212,7 +212,7 @@ func (s *TaskService) NewLiveDevTaskContext(config LiveDevConfig) (*LiveDevTaskC
 	}
 
 	if err := s.Storage.AddApplicationDeploymentStatus(initialStatus); err != nil {
-		s.Logger.Log(logger.Error, "Failed to create live dev deployment status: "+err.Error(), "")
+		s.Logger.Log(logger.Error, "deploy tasks: Failed to create live dev deployment status: "+err.Error(), "")
 		return nil, err
 	}
 
@@ -241,7 +241,7 @@ func (tc *LiveDevTaskContext) AddLog(logMessage string) {
 
 	err := tc.service.Storage.AddApplicationLogs(&appLog)
 	if err != nil {
-		tc.service.Logger.Log(logger.Error, "Failed to add live dev log: "+err.Error(), "")
+		tc.service.Logger.Log(logger.Error, "deploy tasks: Failed to add live dev log: "+err.Error(), "")
 	}
 	if tc.OnBuildLog != nil {
 		tc.OnBuildLog(tc.applicationID, logMessage)
@@ -259,7 +259,7 @@ func (tc *LiveDevTaskContext) UpdateStatus(status shared_types.Status) {
 
 	err := tc.service.Storage.UpdateApplicationDeploymentStatus(&appStatus)
 	if err != nil {
-		tc.service.Logger.Log(logger.Error, "Failed to update live dev deployment status: "+err.Error(), "")
+		tc.service.Logger.Log(logger.Error, "deploy tasks: Failed to update live dev deployment status: "+err.Error(), "")
 	}
 }
 
@@ -291,7 +291,7 @@ func (tc *LiveDevTaskContext) UpdateDeployment(updates map[string]interface{}) {
 
 	err := tc.service.Storage.UpdateApplicationDeployment(deployment)
 	if err != nil {
-		tc.service.Logger.Log(logger.Error, "Failed to update live dev deployment: "+err.Error(), "")
+		tc.service.Logger.Log(logger.Error, "deploy tasks: Failed to update live dev deployment: "+err.Error(), "")
 	}
 }
 

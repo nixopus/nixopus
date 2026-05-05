@@ -12,13 +12,15 @@ func (u *UserController) GetUserDetails(s fuego.ContextNoBody) (*types.UserRespo
 
 	user := utils.GetUser(w, r)
 
-	u.logger.Log(logger.Info, "getting user details", "")
-
 	if user == nil {
+		u.logUserDebug("GetUserDetails", "authentication required", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
 	}
+
+	ctxStr := userRequestData(r, user)
+	u.logger.Log(logger.Info, "user: GetUserDetails", ctxStr)
 
 	return &types.UserResponse{
 		Status:  "success",

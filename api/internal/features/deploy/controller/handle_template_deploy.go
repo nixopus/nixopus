@@ -14,16 +14,16 @@ import (
 )
 
 func (c *DeployController) HandleTemplateDeploy(f fuego.ContextWithBody[types.CreateTemplateDeploymentRequest]) (*types.ApplicationResponse, error) {
-	c.logger.Log(logger.Info, "starting template deployment", "")
+	c.logger.Log(logger.Info, "deploy: starting template deployment", "")
 
 	data, err := f.Body()
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to read request body", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to read request body", err.Error())
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	if err := c.validator.ValidateRequest(&data); err != nil {
-		c.logger.Log(logger.Error, "template deployment validation failed", err.Error())
+		c.logger.Log(logger.Error, "deploy: template deployment validation failed", err.Error())
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
@@ -88,7 +88,7 @@ func (c *DeployController) HandleTemplateDeploy(f fuego.ContextWithBody[types.Cr
 
 	application, err := c.taskService.CreateTemplateDeploymentTask(deployReq, user.ID, organizationID, data.TemplateID)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to create template deployment", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to create template deployment", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

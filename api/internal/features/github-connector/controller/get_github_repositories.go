@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -42,9 +43,12 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 		sortDirection = "asc" // Default to asc if invalid
 	}
 
+	ctxStr := fmt.Sprintf("user_id=%s page=%d page_size=%d connector_id=%s search=%q sort_by=%s sort_dir=%s", user.ID, page, pageSize, connectorID, search, sortBy, sortDirection)
+	c.logger.Log(logger.Info, "github connector: GetGithubRepositories", ctxStr)
+
 	repositories, totalCount, err := c.service.GetRepositoriesPaginated(user.ID.String(), page, pageSize, connectorID, search, sortBy, sortDirection)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("github connector: GetGithubRepositories: %v", err), ctxStr)
 
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "invalid GitHub installation") || strings.Contains(errMsg, "installation not found") {
@@ -64,6 +68,7 @@ func (c *GithubConnectorController) GetGithubRepositories(f fuego.ContextNoBody)
 		}
 	}
 
+	c.logger.Log(logger.Info, "github connector: GetGithubRepositories ok", fmt.Sprintf("%s total=%d count=%d", ctxStr, totalCount, len(repositories)))
 	return &types.ListRepositoriesResponse{
 		Status:  "success",
 		Message: "Repositories fetched successfully",

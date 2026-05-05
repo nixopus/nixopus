@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/notification"
 
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
@@ -26,6 +27,7 @@ func (s *NotificationService) CreateWebhookConfig(ctx context.Context, req *noti
 
 	err := s.storage.CreateWebhookConfig(ctx, config)
 	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("notification service: CreateWebhookConfig: %v", err), fmt.Sprintf("org_id=%s user_id=%s type=%s", organizationID, userID, req.Type))
 		return nil, fmt.Errorf("failed to create webhook config: %w", err)
 	}
 
@@ -35,6 +37,7 @@ func (s *NotificationService) CreateWebhookConfig(ctx context.Context, req *noti
 func (s *NotificationService) UpdateWebhookConfig(ctx context.Context, req *notification.UpdateWebhookConfigRequest, organizationID uuid.UUID) (*shared_types.WebhookConfig, error) {
 	config, err := s.storage.GetWebhookConfig(ctx, req.Type, organizationID)
 	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("notification service: UpdateWebhookConfig load: %v", err), fmt.Sprintf("org_id=%s type=%s", organizationID, req.Type))
 		return nil, fmt.Errorf("webhook config not found: %w", err)
 	}
 
@@ -48,6 +51,7 @@ func (s *NotificationService) UpdateWebhookConfig(ctx context.Context, req *noti
 
 	err = s.storage.UpdateWebhookConfig(ctx, config)
 	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("notification service: UpdateWebhookConfig: %v", err), fmt.Sprintf("org_id=%s type=%s webhook_id=%s", organizationID, req.Type, config.ID))
 		return nil, fmt.Errorf("failed to update webhook config: %w", err)
 	}
 
@@ -57,6 +61,7 @@ func (s *NotificationService) UpdateWebhookConfig(ctx context.Context, req *noti
 func (s *NotificationService) DeleteWebhookConfig(ctx context.Context, req *notification.DeleteWebhookConfigRequest, organizationID uuid.UUID) error {
 	err := s.storage.DeleteWebhookConfig(ctx, req.Type, organizationID)
 	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("notification service: DeleteWebhookConfig: %v", err), fmt.Sprintf("org_id=%s type=%s", organizationID, req.Type))
 		return fmt.Errorf("failed to delete webhook config: %w", err)
 	}
 	return nil
@@ -65,6 +70,7 @@ func (s *NotificationService) DeleteWebhookConfig(ctx context.Context, req *noti
 func (s *NotificationService) GetWebhookConfig(ctx context.Context, req *notification.GetWebhookConfigRequest, organizationID uuid.UUID) (*shared_types.WebhookConfig, error) {
 	config, err := s.storage.GetWebhookConfig(ctx, req.Type, organizationID)
 	if err != nil {
+		s.logger.Log(logger.Error, fmt.Sprintf("notification service: GetWebhookConfig: %v", err), fmt.Sprintf("org_id=%s type=%s", organizationID, req.Type))
 		return nil, fmt.Errorf("webhook config not found: %w", err)
 	}
 	return config, nil

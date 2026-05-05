@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"strconv"
 
 	container_types "github.com/nixopus/nixopus/api/internal/features/container/types"
@@ -16,7 +17,7 @@ func GetContainer(
 ) (container_types.Container, error) {
 	containerInfo, err := dockerService.GetContainerById(containerID)
 	if err != nil {
-		l.Log(logger.Error, err.Error(), "")
+		l.Log(logger.Error, fmt.Sprintf("container service: GetContainer: %v", err), containerID)
 		return container_types.Container{}, err
 	}
 

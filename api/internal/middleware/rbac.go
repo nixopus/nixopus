@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/cache"
 	betterauth "github.com/nixopus/nixopus/api/internal/features/auth"
+	applogger "github.com/nixopus/nixopus/api/internal/features/logger"
 	appStorage "github.com/nixopus/nixopus/api/internal/storage"
 	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/nixopus/nixopus/api/internal/utils"
@@ -35,28 +35,28 @@ func InitRBACCache(c *cache.Cache) {
 // RBACMiddleware validates permissions for the given resource based on HTTP method.
 // It extracts organization ID from header and validates permissions from the database.
 // Uses Redis cache to reduce database calls.
-func RBACMiddleware(next http.Handler, app *appStorage.App, resource string) http.Handler {
+func RBACMiddleware(next http.Handler, app *appStorage.App, resource string, l applogger.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requiredPermission := buildRequiredPermission(resource, r.Method)
-		log.Printf("DEBUG RBAC: %s %s -> required permission=%s", r.Method, r.URL.Path, requiredPermission)
+		l.Log(applogger.Debug, "middleware rbac: required permission", fmt.Sprintf("method=%s path=%s permission=%s", r.Method, r.URL.Path, requiredPermission))
 
-		organizationID := extractOrganizationID(w, r)
+		organizationID := extractOrganizationID(w, r, l)
 		if organizationID == "" {
-			log.Printf("DEBUG RBAC: %s %s -> blocked: missing or invalid X-Organization-Id header", r.Method, r.URL.Path)
+			l.Log(applogger.Debug, "middleware rbac: blocked: missing org", fmt.Sprintf("method=%s path=%s", r.Method, r.URL.Path))
 			return
 		}
 
 		// Get user from context (set by AuthMiddleware)
 		userAny := r.Context().Value(types.UserContextKey)
 		if userAny == nil {
-			log.Printf("DEBUG RBAC: %s %s -> blocked: user not in context", r.Method, r.URL.Path)
+			l.Log(applogger.Debug, "middleware rbac: blocked: no user in context", fmt.Sprintf("method=%s path=%s", r.Method, r.URL.Path))
 			utils.SendErrorResponse(w, "User not found in context", http.StatusUnauthorized)
 			return
 		}
 
 		user, ok := userAny.(*types.User)
 		if !ok {
-			log.Printf("DEBUG RBAC: %s %s -> blocked: invalid user type in context", r.Method, r.URL.Path)
+			l.Log(applogger.Debug, "middleware rbac: blocked: invalid user in context", fmt.Sprintf("method=%s path=%s", r.Method, r.URL.Path))
 			utils.SendErrorResponse(w, "Invalid user type in context", http.StatusUnauthorized)
 			return
 		}
@@ -65,28 +65,28 @@ func RBACMiddleware(next http.Handler, app *appStorage.App, resource string) htt
 		ctx := context.WithValue(r.Context(), "http_request", r)
 
 		// Validate permission
-		if !validateUserPermission(ctx, user, organizationID, requiredPermission, app) {
-			log.Printf("DEBUG RBAC: %s %s -> blocked: user %s lacks %s for org %s", r.Method, r.URL.Path, user.ID, requiredPermission, organizationID)
+		if !validateUserPermission(ctx, user, organizationID, requiredPermission, app, l) {
+			l.Log(applogger.Debug, "middleware rbac: blocked: insufficient permission", fmt.Sprintf("method=%s path=%s user_id=%s permission=%s org_id=%s", r.Method, r.URL.Path, user.ID, requiredPermission, organizationID))
 			utils.SendErrorResponse(w, fmt.Sprintf("User lacks permission %s for organization %s", requiredPermission, organizationID), http.StatusForbidden)
 			return
 		}
 
-		log.Printf("DEBUG RBAC: %s %s -> allowed (user=%s, org=%s)", r.Method, r.URL.Path, user.ID, organizationID)
+		l.Log(applogger.Debug, "middleware rbac: allowed", fmt.Sprintf("method=%s path=%s user_id=%s org_id=%s", r.Method, r.URL.Path, user.ID, organizationID))
 		next.ServeHTTP(w, r)
 	})
 }
 
 // validateUserPermission validates user permissions using database
-func validateUserPermission(ctx context.Context, user *types.User, organizationID, requiredPermission string, app *appStorage.App) bool {
+func validateUserPermission(ctx context.Context, user *types.User, organizationID, requiredPermission string, app *appStorage.App, l applogger.Logger) bool {
 	// Try cache first
 	if result := validateCachedPermissions(user.ID.String(), organizationID, requiredPermission); result != nil {
-		log.Printf("DEBUG RBAC: cache hit for user=%s org=%s -> hasPerm=%v", user.ID, organizationID, *result)
+		l.Log(applogger.Debug, "middleware rbac: cache hit", fmt.Sprintf("user_id=%s org_id=%s has_perm=%v", user.ID, organizationID, *result))
 		return *result
 	}
 
-	log.Printf("DEBUG RBAC: cache miss for user=%s org=%s -> fetching from Better Auth", user.ID, organizationID)
+	l.Log(applogger.Debug, "middleware rbac: cache miss", fmt.Sprintf("user_id=%s org_id=%s", user.ID, organizationID))
 	// Cache miss: fetch from database
-	return validateAndCachePermissions(ctx, user, organizationID, requiredPermission, app)
+	return validateAndCachePermissions(ctx, user, organizationID, requiredPermission, app, l)
 }
 
 // validateCachedPermissions validates permissions using cached data
@@ -111,7 +111,7 @@ func validateCachedPermissions(userID, organizationID, requiredPermission string
 }
 
 // validateAndCachePermissions fetches permissions from Better Auth, caches them, and validates
-func validateAndCachePermissions(ctx context.Context, user *types.User, organizationID, requiredPermission string, app *appStorage.App) bool {
+func validateAndCachePermissions(ctx context.Context, user *types.User, organizationID, requiredPermission string, app *appStorage.App, l applogger.Logger) bool {
 	// Get the HTTP request from context to forward cookies to Better Auth
 	req := ctx.Value("http_request")
 	var httpReq *http.Request
@@ -120,14 +120,14 @@ func validateAndCachePermissions(ctx context.Context, user *types.User, organiza
 	}
 
 	// Get user's role from Better Auth organization membership
-	member, err := getBetterAuthOrganizationMember(ctx, httpReq, user.ID.String(), organizationID)
+	member, err := getBetterAuthOrganizationMember(ctx, httpReq, user.ID.String(), organizationID, l)
 	if err != nil || member == nil {
-		log.Printf("DEBUG RBAC: getBetterAuthOrganizationMember failed for user=%s org=%s: err=%v", user.ID, organizationID, err)
+		l.Log(applogger.Debug, "middleware rbac: list-members failed", fmt.Sprintf("user_id=%s org_id=%s error=%v", user.ID, organizationID, err))
 		// If we can't verify membership, deny access
 		return false
 	}
 
-	log.Printf("DEBUG RBAC: Better Auth member found for user=%s org=%s, role=%v", user.ID, organizationID, member.Role)
+	l.Log(applogger.Debug, "middleware rbac: member resolved", fmt.Sprintf("user_id=%s org_id=%s role=%v", user.ID, organizationID, member.Role))
 
 	// Extract role from Better Auth member data
 	// Better Auth can return role as string or array
@@ -150,7 +150,7 @@ func validateAndCachePermissions(ctx context.Context, user *types.User, organiza
 	roles := []string{role}
 	permissions := getPermissionsForRole(role)
 
-	log.Printf("DEBUG RBAC: resolved role=%s -> %d permissions, hasRequired=%v", role, len(permissions), hasPermission(permissions, requiredPermission))
+	l.Log(applogger.Debug, "middleware rbac: role resolved", fmt.Sprintf("role=%s permission_count=%d has_required=%v", role, len(permissions), hasPermission(permissions, requiredPermission)))
 
 	// Cache permissions
 	cachePermissions(user.ID.String(), organizationID, roles, permissions)
@@ -175,7 +175,7 @@ type BetterAuthMember struct {
 }
 
 // getBetterAuthOrganizationMember fetches organization membership from Better Auth API
-func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Request, userID, organizationID string) (*BetterAuthMember, error) {
+func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Request, userID, organizationID string, l applogger.Logger) (*BetterAuthMember, error) {
 	betterAuthURL := os.Getenv("AUTH_SERVICE_URL")
 	if betterAuthURL == "" {
 		betterAuthURL = "http://localhost:9090"
@@ -228,7 +228,7 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 		// If that fails, try as object with data/members field
 		var responseObj map[string]interface{}
 		if err2 := json.Unmarshal(body, &responseObj); err2 != nil {
-			log.Printf("DEBUG getBetterAuthOrganizationMember: Failed to parse response as array or object. Response body: %s", string(body))
+			l.Log(applogger.Debug, "middleware rbac: list-members parse failed", fmt.Sprintf("expected_array_or_object body=%s", string(body)))
 			return nil, fmt.Errorf("failed to parse response: %w (also tried object format: %v)", err, err2)
 		}
 
@@ -237,13 +237,13 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 			// Convert to []BetterAuthMember
 			dataBytes, _ := json.Marshal(data)
 			if err := json.Unmarshal(dataBytes, &members); err != nil {
-				log.Printf("DEBUG getBetterAuthOrganizationMember: Failed to parse data field. Data: %s", string(dataBytes))
+				l.Log(applogger.Debug, "middleware rbac: list-members data field parse failed", fmt.Sprintf("data=%s", string(dataBytes)))
 				return nil, fmt.Errorf("failed to parse data array: %w", err)
 			}
 		} else if membersData, ok := responseObj["members"]; ok {
 			membersBytes, _ := json.Marshal(membersData)
 			if err := json.Unmarshal(membersBytes, &members); err != nil {
-				log.Printf("DEBUG getBetterAuthOrganizationMember: Failed to parse members field. Members: %s", string(membersBytes))
+				l.Log(applogger.Debug, "middleware rbac: list-members members field parse failed", fmt.Sprintf("members=%s", string(membersBytes)))
 				return nil, fmt.Errorf("failed to parse members array: %w", err)
 			}
 		} else {
@@ -252,7 +252,7 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 			if err := json.Unmarshal(body, &singleMember); err == nil && singleMember.UserID != "" {
 				members = []BetterAuthMember{singleMember}
 			} else {
-				log.Printf("DEBUG getBetterAuthOrganizationMember: Response is not array or single member. Response: %s", string(body))
+				l.Log(applogger.Debug, "middleware rbac: list-members unexpected shape", fmt.Sprintf("body=%s", string(body)))
 				return nil, fmt.Errorf("response does not contain array or single member: %s", string(body))
 			}
 		}
@@ -397,26 +397,26 @@ func buildRequiredPermission(resource, method string) string {
 
 // extractOrganizationID extracts and validates organization ID from request header or auth context.
 // Falls back to OrganizationIDKey from AuthMiddleware (Better Auth session) when header is missing.
-func extractOrganizationID(w http.ResponseWriter, r *http.Request) string {
+func extractOrganizationID(w http.ResponseWriter, r *http.Request, l applogger.Logger) string {
 	organizationID := r.Header.Get("X-Organization-Id")
 	if organizationID == "" {
 		// Fallback: use org from auth context (set by AuthMiddleware from Better Auth session)
 		if orgAny := r.Context().Value(types.OrganizationIDKey); orgAny != nil {
 			if orgStr, ok := orgAny.(string); ok && orgStr != "" {
 				organizationID = orgStr
-				log.Printf("DEBUG RBAC: using org from context for %s %s (header missing)", r.Method, r.URL.Path)
+				l.Log(applogger.Debug, "middleware rbac: using org from context", fmt.Sprintf("method=%s path=%s", r.Method, r.URL.Path))
 			}
 		}
 	}
 	if organizationID == "" {
-		log.Printf("DEBUG RBAC: X-Organization-Id header missing and no org in context for %s %s", r.Method, r.URL.Path)
+		l.Log(applogger.Debug, "middleware rbac: missing X-Organization-Id and context org", fmt.Sprintf("method=%s path=%s", r.Method, r.URL.Path))
 		utils.SendErrorResponse(w, "Organization ID is required", http.StatusBadRequest)
 		return ""
 	}
 
 	// Validate UUID format
 	if _, err := uuid.Parse(organizationID); err != nil {
-		log.Printf("DEBUG RBAC: X-Organization-Id invalid format '%s' for %s %s", organizationID, r.Method, r.URL.Path)
+		l.Log(applogger.Debug, "middleware rbac: invalid X-Organization-Id", fmt.Sprintf("org_id=%s method=%s path=%s", organizationID, r.Method, r.URL.Path))
 		utils.SendErrorResponse(w, "Invalid organization ID format", http.StatusBadRequest)
 		return ""
 	}

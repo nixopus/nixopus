@@ -57,7 +57,7 @@ func BuildMultiUpstreamRoutes(
 		}
 
 		if len(domainUpstreams) == 0 {
-			lgr.Log(logger.Warning, fmt.Sprintf("skipping domain %s: no valid upstreams", d.Domain), "")
+			lgr.Log(logger.Warning, fmt.Sprintf("deploy caddy: skipping domain %s: no valid upstreams", d.Domain), "")
 			continue
 		}
 

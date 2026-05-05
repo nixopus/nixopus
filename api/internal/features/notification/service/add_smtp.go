@@ -1,6 +1,8 @@
 package service
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/notification"
@@ -14,7 +16,8 @@ import (
 // It calls s.storage.AddSmtp with the new config.
 // It returns an error if the storage operation fails.
 func (s *NotificationService) AddSmtp(SMTPConfigs notification.CreateSMTPConfigRequest, userID uuid.UUID) error {
-	s.logger.Log(logger.Info, "Adding SMTP configuration", "")
+	data := fmt.Sprintf("org_id=%s user_id=%s", SMTPConfigs.OrganizationID, userID)
+	s.logger.Log(logger.Info, "notification service: AddSmtp", data)
 
 	existing_smtp, _ := s.storage.GetSmtp(userID.String())
 	if existing_smtp != nil {

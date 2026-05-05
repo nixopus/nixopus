@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -17,7 +18,7 @@ type UpdateLabelsRequest struct {
 func (c *DeployController) UpdateApplicationLabels(f fuego.ContextWithBody[UpdateLabelsRequest]) (*types.LabelsResponse, error) {
 	data, err := f.Body()
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to read request body", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to read request body", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -26,7 +27,7 @@ func (c *DeployController) UpdateApplicationLabels(f fuego.ContextWithBody[Updat
 
 	applicationID := f.QueryParam("id")
 	if applicationID == "" {
-		c.logger.Log(logger.Error, "application id is required", "")
+		c.logger.Log(logger.Error, "deploy: application id is required", "")
 		return nil, fuego.BadRequestError{
 			Detail: "application ID is required",
 		}
@@ -34,7 +35,7 @@ func (c *DeployController) UpdateApplicationLabels(f fuego.ContextWithBody[Updat
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		c.logger.Log(logger.Error, "user not found", "")
+		c.logger.Log(logger.Error, "deploy: user not found", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
@@ -42,7 +43,7 @@ func (c *DeployController) UpdateApplicationLabels(f fuego.ContextWithBody[Updat
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		c.logger.Log(logger.Error, "organization not found", "")
+		c.logger.Log(logger.Error, "deploy: organization not found", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "organization not found",
 		}
@@ -50,16 +51,23 @@ func (c *DeployController) UpdateApplicationLabels(f fuego.ContextWithBody[Updat
 
 	appID, err := uuid.Parse(applicationID)
 	if err != nil {
-		c.logger.Log(logger.Error, "invalid application id", err.Error())
+		c.logger.Log(logger.Error, "deploy: invalid application id", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
 		}
 	}
 
+	logData := deployRequestData(f.Request(), user)
+	if logData == "" {
+		logData = fmt.Sprintf("application_id=%s", appID.String())
+	} else {
+		logData = fmt.Sprintf("%s application_id=%s", logData, appID.String())
+	}
+
 	err = c.service.UpdateApplicationLabels(appID, data.Labels, organizationID)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("deploy: UpdateApplicationLabels: %v", err), logData)
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

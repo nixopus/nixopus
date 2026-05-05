@@ -60,5 +60,5 @@ func (s *GithubConnectorService) GetClonePath(ctx context.Context, userID, envir
 	if s.clonePathProvider != nil {
 		return s.clonePathProvider(ctx, userID, environment, applicationID)
 	}
-	return git.ResolveClonePath(ctx, userID, environment, applicationID)
+	return git.ResolveClonePath(ctx, s.Logger, userID, environment, applicationID)
 }

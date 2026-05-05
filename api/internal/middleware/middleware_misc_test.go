@@ -10,12 +10,13 @@ import (
 	"time"
 
 	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestRecoveryMiddleware_panicAndOK(t *testing.T) {
-	h := RecoveryMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	h := RecoveryMiddleware(logger.NewLogger())(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/panic" {
 			panic("boom")
 		}

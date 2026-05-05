@@ -23,7 +23,7 @@ func NewExtensionsController(
 	l logger.Logger,
 	appCache *cache.Cache,
 ) *ExtensionsController {
-	storage := storage.ExtensionStorage{DB: store.DB, Ctx: ctx}
+	storage := storage.ExtensionStorage{DB: store.DB, Ctx: ctx, Logger: &l}
 	var svc *service.ExtensionService
 	if appCache == nil {
 		svc = service.NewExtensionService(ctx, l, &storage, nil)

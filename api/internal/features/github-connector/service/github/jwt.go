@@ -10,6 +10,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/nixopus/nixopus/api/internal/config"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
+	"github.com/sirupsen/logrus"
 )
 
 // InstallationToken exchanges a GitHub App JWT for an installation access token.
@@ -62,7 +63,7 @@ func GenerateJwt(appCredentials *shared_types.GithubConnector) string {
 	} else {
 		githubConfig := config.AppConfig.GitHub
 		if githubConfig.Pem == "" || githubConfig.AppID == "" {
-			fmt.Println("Error: GitHub App credentials not configured")
+			logrus.Error("github connector service: GenerateJwt GitHub App credentials not configured")
 			return ""
 		}
 		pem = githubConfig.Pem
@@ -70,7 +71,7 @@ func GenerateJwt(appCredentials *shared_types.GithubConnector) string {
 	}
 	privateKey, err := jwt.ParseRSAPrivateKeyFromPEM([]byte(pem))
 	if err != nil {
-		fmt.Println("Error parsing private key:", err)
+		logrus.Errorf("github connector service: GenerateJwt parse private key: %v", err)
 		return ""
 	}
 	now := time.Now()
@@ -82,7 +83,7 @@ func GenerateJwt(appCredentials *shared_types.GithubConnector) string {
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 	tokenString, err := token.SignedString(privateKey)
 	if err != nil {
-		fmt.Println("Error signing token:", err)
+		logrus.Errorf("github connector service: GenerateJwt sign token: %v", err)
 		return ""
 	}
 	return tokenString

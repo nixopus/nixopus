@@ -95,7 +95,7 @@ func (r *Reconciler) ReconcileOrganization(ctx context.Context, organizationID u
 
 	actual, err := GetCurrentDomains(orgCtx, nil, &r.Logger)
 	if err != nil {
-		r.Logger.Log(logger.Warning, "failed to read caddy state, attempting full rebuild", err.Error())
+		r.Logger.Log(logger.Warning, "deploy caddy: failed to read caddy state, attempting full rebuild", err.Error())
 		return r.fullRebuild(orgCtx, desired)
 	}
 
@@ -134,7 +134,7 @@ func (r *Reconciler) ReconcileOrganization(ctx context.Context, organizationID u
 	// deleted from the DB but whose Caddy removal failed at delete time.
 	pendingRemovals, pendingErr := GetPendingRemovals(orgCtx, organizationID)
 	if pendingErr != nil {
-		r.Logger.Log(logger.Warning, "failed to read pending removals", pendingErr.Error())
+		r.Logger.Log(logger.Warning, "deploy caddy: failed to read pending removals", pendingErr.Error())
 	}
 
 	needsReload := len(toAdd) > 0 || len(toUpdate) > 0 || len(pendingRemovals) > 0
@@ -167,7 +167,7 @@ func (r *Reconciler) ReconcileOrganization(ctx context.Context, organizationID u
 			} else {
 				result.Removed = append(result.Removed, domain)
 				if clearErr := ClearPendingRemoval(organizationID, domain); clearErr != nil {
-					r.Logger.Log(logger.Warning, "failed to clear pending removal for "+domain, clearErr.Error())
+					r.Logger.Log(logger.Warning, "deploy caddy: failed to clear pending removal for "+domain, clearErr.Error())
 				}
 			}
 		}
@@ -178,7 +178,7 @@ func (r *Reconciler) ReconcileOrganization(ctx context.Context, organizationID u
 	}
 
 	r.Logger.Log(logger.Info,
-		fmt.Sprintf("reconciliation complete: added=%d updated=%d removed=%d errors=%d",
+		fmt.Sprintf("deploy caddy: reconciliation complete: added=%d updated=%d removed=%d errors=%d",
 			len(result.Added), len(result.Updated), len(result.Removed), len(result.Errors)),
 		organizationID.String())
 
@@ -198,7 +198,7 @@ func (r *Reconciler) buildDesiredState(ctx context.Context, organizationID uuid.
 	// Source 2: extension-managed domains from Redis hash.
 	extRoutes, err := GetExtensionDomains(ctx, organizationID)
 	if err != nil {
-		r.Logger.Log(logger.Warning, "failed to read extension domains from redis", err.Error())
+		r.Logger.Log(logger.Warning, "deploy caddy: failed to read extension domains from redis", err.Error())
 	} else {
 		desired = append(desired, extRoutes...)
 	}
@@ -232,7 +232,7 @@ func (r *Reconciler) buildDeployDomains(ctx context.Context, organizationID uuid
 		} else {
 			port, err := r.getPublishedPort(ctx, app.Name)
 			if err != nil {
-				r.Logger.Log(logger.Warning, fmt.Sprintf("skipping %s: %v", app.Name, err), "")
+				r.Logger.Log(logger.Warning, fmt.Sprintf("deploy caddy: skipping %s: %v", app.Name, err), "")
 				continue
 			}
 			swarmRoutes := BuildMultiUpstreamRoutes(
@@ -351,7 +351,7 @@ func (r *Reconciler) fullRebuild(ctx context.Context, desired []DomainRoute) (*R
 	}
 
 	r.Logger.Log(logger.Info,
-		fmt.Sprintf("full rebuild complete: added=%d errors=%d", len(result.Added), len(result.Errors)), "")
+		fmt.Sprintf("deploy caddy: full rebuild complete: added=%d errors=%d", len(result.Added), len(result.Errors)), "")
 
 	return result, nil
 }
@@ -477,7 +477,7 @@ func (d *ReconcilerDaemon) handleReconcileTask(ctx context.Context, payload Cadd
 	}
 	if len(result.Errors) > 0 {
 		d.logger.Log(logger.Warning,
-			fmt.Sprintf("reconciliation for org %s had %d errors", orgID, len(result.Errors)),
+			fmt.Sprintf("deploy caddy: reconciliation for org %s had %d errors", orgID, len(result.Errors)),
 			fmt.Sprintf("%v", result.Errors))
 	}
 	return nil
@@ -505,10 +505,10 @@ func (d *ReconcilerDaemon) run(ctx context.Context) {
 	for {
 		select {
 		case <-d.stopCh:
-			d.logger.Log(logger.Info, "reconciler daemon stopped", "")
+			d.logger.Log(logger.Info, "deploy caddy: reconciler daemon stopped", "")
 			return
 		case <-ctx.Done():
-			d.logger.Log(logger.Info, "reconciler daemon context cancelled", "")
+			d.logger.Log(logger.Info, "deploy caddy: reconciler daemon context cancelled", "")
 			return
 		case <-ticker.C:
 			d.enqueueAll(ctx)
@@ -521,14 +521,14 @@ func (d *ReconcilerDaemon) run(ctx context.Context) {
 func (d *ReconcilerDaemon) enqueueAll(ctx context.Context) {
 	orgIDs, err := d.orgFetcher(ctx)
 	if err != nil {
-		d.logger.Log(logger.Error, "failed to fetch organizations for reconciliation", err.Error())
+		d.logger.Log(logger.Error, "deploy caddy: failed to fetch organizations for reconciliation", err.Error())
 		return
 	}
 
 	enqueued := 0
 	for _, orgID := range orgIDs {
 		if err := EnqueueReconcile(orgID); err != nil {
-			d.logger.Log(logger.Warning, "failed to enqueue reconcile for org "+orgID.String(), err.Error())
+			d.logger.Log(logger.Warning, "deploy caddy: failed to enqueue reconcile for org "+orgID.String(), err.Error())
 		} else {
 			enqueued++
 		}
@@ -536,7 +536,7 @@ func (d *ReconcilerDaemon) enqueueAll(ctx context.Context) {
 
 	if enqueued > 0 {
 		d.logger.Log(logger.Info,
-			fmt.Sprintf("enqueued %d/%d reconciliation jobs", enqueued, len(orgIDs)), "")
+			fmt.Sprintf("deploy caddy: enqueued %d/%d reconciliation jobs", enqueued, len(orgIDs)), "")
 	}
 }
 

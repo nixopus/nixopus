@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/go-fuego/fuego"
@@ -40,9 +41,13 @@ func NewMachineController(
 	ts *machine_storage.TimescaleStore,
 ) *MachineController {
 	bs := machine_storage.NewBillingStorage(store.DB, ctx)
+	bs.Logger = &l
 	backupStore := machine_storage.NewBackupStorage(store.DB, ctx)
+	backupStore.Logger = &l
 	regStore := machine_storage.NewRegistrationStorage(store.DB, ctx)
+	regStore.Logger = &l
 	listStore := machine_storage.NewListStorage(store.DB, ctx)
+	listStore.Logger = &l
 	ffStorage := ff_storage.NewFeatureFlagStorage(store.DB, ctx)
 	ffService := ff_service.NewFeatureFlagService(ffStorage, l, ctx)
 	regService := service.NewRegistrationService(regStore, ffService, nil, l, ctx)
@@ -65,12 +70,13 @@ func (c *MachineController) GetSystemStats(f fuego.ContextNoBody) (*types.System
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logMachineDebug("GetSystemStats", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
-		c.logger.Log(logger.Error, "Organization ID not found in context", "")
+		c.logMachineDebug("GetSystemStats", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
@@ -81,7 +87,7 @@ func (c *MachineController) GetSystemStats(f fuego.ContextNoBody) (*types.System
 
 	response, err := c.service.GetSystemStats(ctx, orgID)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), orgID.String())
+		c.logger.Log(logger.Error, fmt.Sprintf("machine: GetSystemStats: %v", err), fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -97,21 +103,24 @@ func (c *MachineController) ExecCommand(f fuego.ContextWithBody[types.HostExecRe
 	user := utils.GetUser(w, r)
 
 	if user == nil {
+		c.logMachineDebug("ExecCommand", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
 	if orgID == uuid.Nil {
-		c.logger.Log(logger.Error, "Organization ID not found in context", "")
+		c.logMachineDebug("ExecCommand", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
 		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
 	}
 
 	body, err := f.Body()
 	if err != nil {
+		c.logMachineDebug("ExecCommand", "invalid body", fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.BadRequestError{Detail: "invalid request body"}
 	}
 
 	if body.Command == "" {
+		c.logMachineDebug("ExecCommand", "command required", fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.BadRequestError{Detail: "command is required"}
 	}
 
@@ -122,7 +131,7 @@ func (c *MachineController) ExecCommand(f fuego.ContextWithBody[types.HostExecRe
 
 	response, err := c.service.ExecCommand(ctx, orgID, body.Command)
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), orgID.String())
+		c.logger.Log(logger.Error, fmt.Sprintf("machine: ExecCommand: %v", err), fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),

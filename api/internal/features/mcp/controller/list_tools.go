@@ -2,11 +2,13 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/go-fuego/fuego"
+	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	mcp "github.com/nixopus/nixopus/api/internal/features/mcp"
 	"github.com/nixopus/nixopus/api/internal/features/mcp/service"
@@ -22,14 +24,19 @@ func (c *MCPController) ListTools(f fuego.ContextNoBody) (*Response, error) {
 
 	user := utils.GetUser(w, r)
 	if user == nil {
+		c.logMCPDebug("ListTools", "authentication required", "")
 		return nil, fuego.UnauthorizedError{Detail: "authentication required"}
 	}
 
 	orgID := utils.GetOrganizationID(r)
+	if orgID == uuid.Nil {
+		c.logMCPDebug("ListTools", "organization ID required", fmt.Sprintf("user_id=%s", user.ID))
+		return nil, fuego.BadRequestError{Detail: "organization ID is required"}
+	}
 
 	servers, _, err := c.service.ListServers(orgID, storage.ListServersParams{EnabledOnly: true})
 	if err != nil {
-		c.logger.Log(logger.Error, err.Error(), "")
+		c.logger.Log(logger.Error, fmt.Sprintf("mcp: ListTools list servers: %v", err), fmt.Sprintf("org_id=%s user_id=%s", orgID, user.ID))
 		return nil, fuego.HTTPError{Err: err, Detail: err.Error(), Status: http.StatusInternalServerError}
 	}
 
@@ -65,7 +72,7 @@ func (c *MCPController) ListTools(f fuego.ContextNoBody) (*Response, error) {
 
 			tools, err := service.DiscoverServerTools(ctx, provider, customURL, srv.Credentials)
 			if err != nil {
-				c.logger.Log(logger.Warning, "tool discovery failed for "+srv.Name, err.Error())
+				c.logger.Log(logger.Warning, fmt.Sprintf("mcp: ListTools discovery failed for server: %v", err), fmt.Sprintf("org_id=%s server_id=%s server_name=%s", orgID, srv.ID, srv.Name))
 				results[i].Error = err.Error()
 				return
 			}

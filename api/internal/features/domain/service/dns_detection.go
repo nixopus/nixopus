@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/nixopus/nixopus/api/internal/features/domain/types"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 // randReadFn is the source of randomness for GenerateVerificationToken.
@@ -78,11 +79,13 @@ func matchNSToProvider(nsRecords []*net.NS) string {
 
 // detectDNSProvider determines the DNS provider for a domain using the supplied
 // NetLookup. Falls back to "other" when no provider can be identified.
-func detectDNSProvider(resolver NetLookup, domain string) (string, error) {
+func detectDNSProvider(resolver NetLookup, domain string, log *logger.Logger) (string, error) {
 	rootDomain := extractRootDomain(domain)
+	dnsLog(log, logger.Debug, "dns: detect provider start", fmt.Sprintf("domain=%s root=%s", domain, rootDomain))
 
 	if nsRecords, err := resolver.LookupNS(rootDomain); err == nil && len(nsRecords) > 0 {
 		if provider := matchNSToProvider(nsRecords); provider != "" {
+			dnsLog(log, logger.Debug, "dns: detect provider done", fmt.Sprintf("domain=%s provider=%s via=root_ns", domain, provider))
 			return provider, nil
 		}
 	}
@@ -90,6 +93,7 @@ func detectDNSProvider(resolver NetLookup, domain string) (string, error) {
 	if domain != rootDomain {
 		if nsRecords, err := resolver.LookupNS(domain); err == nil && len(nsRecords) > 0 {
 			if provider := matchNSToProvider(nsRecords); provider != "" {
+				dnsLog(log, logger.Debug, "dns: detect provider done", fmt.Sprintf("domain=%s provider=%s via=fqdn_ns", domain, provider))
 				return provider, nil
 			}
 		}
@@ -100,18 +104,20 @@ func detectDNSProvider(resolver NetLookup, domain string) (string, error) {
 			host := strings.ToLower(strings.TrimSuffix(ns.Host, "."))
 			for pattern, provider := range nsProviderMap {
 				if strings.Contains(host, pattern) {
+					dnsLog(log, logger.Debug, "dns: detect provider done", fmt.Sprintf("domain=%s provider=%s via=root_ns_pattern", domain, provider))
 					return provider, nil
 				}
 			}
 		}
 	}
 
+	dnsLog(log, logger.Debug, "dns: detect provider done", fmt.Sprintf("domain=%s provider=other", domain))
 	return "other", nil
 }
 
 // DetectDNSProvider is the exported entry point backed by defaultResolver.
 func DetectDNSProvider(domain string) (string, error) {
-	return detectDNSProvider(defaultResolver, domain)
+	return detectDNSProvider(defaultResolver, domain, nil)
 }
 
 // GenerateDNSInstructions returns CNAME + TXT setup instructions for a managed domain.
@@ -163,9 +169,14 @@ func GenerateDNSInstructions(domain, targetSubdomain, provider string) []types.D
 
 // GenerateVerificationToken produces a 32-character hex verification token.
 func GenerateVerificationToken() string {
+	return generateVerificationToken(nil)
+}
+
+func generateVerificationToken(log *logger.Logger) string {
 	bytes := make([]byte, 16)
 	_, err := randReadFn(bytes)
 	if err != nil {
+		dnsLog(log, logger.Warning, "dns: verification token crypto/rand failed, using zero fallback", err.Error())
 		return hex.EncodeToString(make([]byte, 16))
 	}
 	return hex.EncodeToString(bytes)

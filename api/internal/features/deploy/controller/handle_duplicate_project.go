@@ -13,21 +13,21 @@ import (
 // HandleDuplicateProject duplicates an existing project with a different environment.
 // All configurations are copied and a new project is created in draft status.
 func (c *DeployController) HandleDuplicateProject(f fuego.ContextWithBody[types.DuplicateProjectRequest]) (*types.ApplicationResponse, error) {
-	c.logger.Log(logger.Info, "duplicating project", "")
+	c.logger.Log(logger.Info, "deploy: duplicating project", "")
 
 	data, err := f.Body()
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to read request body", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to read request body", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
 		}
 	}
 
-	c.logger.Log(logger.Info, "request body parsed successfully", "source_id: "+data.SourceProjectID.String())
+	c.logger.Log(logger.Info, "deploy: request body parsed successfully", "source_id: "+data.SourceProjectID.String())
 
 	if err := c.validator.ValidateRequest(&data); err != nil {
-		c.logger.Log(logger.Error, "request validation failed", err.Error())
+		c.logger.Log(logger.Error, "deploy: request validation failed", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -36,7 +36,7 @@ func (c *DeployController) HandleDuplicateProject(f fuego.ContextWithBody[types.
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		c.logger.Log(logger.Error, "user authentication failed", "")
+		c.logger.Log(logger.Error, "deploy: user authentication failed", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
@@ -44,17 +44,17 @@ func (c *DeployController) HandleDuplicateProject(f fuego.ContextWithBody[types.
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		c.logger.Log(logger.Error, "organization not found", "")
+		c.logger.Log(logger.Error, "deploy: organization not found", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "organization not found",
 		}
 	}
 
-	c.logger.Log(logger.Info, "attempting to duplicate project", "source_id: "+data.SourceProjectID.String()+", user_id: "+user.ID.String())
+	c.logger.Log(logger.Info, "deploy: attempting to duplicate project", "source_id: "+data.SourceProjectID.String()+", user_id: "+user.ID.String())
 
 	application, err := c.service.DuplicateProject(&data, user.ID, organizationID)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to duplicate project", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to duplicate project", err.Error())
 
 		if err == types.ErrApplicationNotFound {
 			return nil, fuego.NotFoundError{
@@ -75,7 +75,7 @@ func (c *DeployController) HandleDuplicateProject(f fuego.ContextWithBody[types.
 		}
 	}
 
-	c.logger.Log(logger.Info, "project duplicated successfully", "new_id: "+application.ID.String())
+	c.logger.Log(logger.Info, "deploy: project duplicated successfully", "new_id: "+application.ID.String())
 
 	return &types.ApplicationResponse{
 		Status:  "success",
@@ -88,7 +88,7 @@ func (c *DeployController) HandleDuplicateProject(f fuego.ContextWithBody[types.
 func (c *DeployController) HandleGetProjectFamily(f fuego.ContextNoBody) (*types.ProjectFamilyResponse, error) {
 	familyIDStr := f.QueryParam("family_id")
 	if familyIDStr == "" {
-		c.logger.Log(logger.Error, "family_id is required", "")
+		c.logger.Log(logger.Error, "deploy: family_id is required", "")
 		return nil, fuego.BadRequestError{
 			Detail: types.ErrMissingID.Error(),
 			Err:    types.ErrMissingID,
@@ -97,7 +97,7 @@ func (c *DeployController) HandleGetProjectFamily(f fuego.ContextNoBody) (*types
 
 	familyID, err := uuid.Parse(familyIDStr)
 	if err != nil {
-		c.logger.Log(logger.Error, "invalid family_id", err.Error())
+		c.logger.Log(logger.Error, "deploy: invalid family_id", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -106,7 +106,7 @@ func (c *DeployController) HandleGetProjectFamily(f fuego.ContextNoBody) (*types
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		c.logger.Log(logger.Error, "user authentication failed", "")
+		c.logger.Log(logger.Error, "deploy: user authentication failed", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
@@ -114,17 +114,17 @@ func (c *DeployController) HandleGetProjectFamily(f fuego.ContextNoBody) (*types
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		c.logger.Log(logger.Error, "organization not found", "")
+		c.logger.Log(logger.Error, "deploy: organization not found", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "organization not found",
 		}
 	}
 
-	c.logger.Log(logger.Info, "getting project family", "family_id: "+familyID.String())
+	c.logger.Log(logger.Info, "deploy: getting project family", "family_id: "+familyID.String())
 
 	projects, err := c.service.GetProjectFamily(familyID, organizationID)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to get project family", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to get project family", err.Error())
 
 		if err == types.ErrProjectFamilyNotFound {
 			return nil, fuego.NotFoundError{
@@ -153,7 +153,7 @@ func (c *DeployController) HandleGetProjectFamily(f fuego.ContextNoBody) (*types
 func (c *DeployController) HandleGetEnvironmentsInFamily(f fuego.ContextNoBody) (*types.EnvironmentsInFamilyResponse, error) {
 	familyIDStr := f.QueryParam("family_id")
 	if familyIDStr == "" {
-		c.logger.Log(logger.Error, "family_id is required", "")
+		c.logger.Log(logger.Error, "deploy: family_id is required", "")
 		return nil, fuego.BadRequestError{
 			Detail: types.ErrMissingID.Error(),
 			Err:    types.ErrMissingID,
@@ -162,7 +162,7 @@ func (c *DeployController) HandleGetEnvironmentsInFamily(f fuego.ContextNoBody) 
 
 	familyID, err := uuid.Parse(familyIDStr)
 	if err != nil {
-		c.logger.Log(logger.Error, "invalid family_id", err.Error())
+		c.logger.Log(logger.Error, "deploy: invalid family_id", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -171,7 +171,7 @@ func (c *DeployController) HandleGetEnvironmentsInFamily(f fuego.ContextNoBody) 
 
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		c.logger.Log(logger.Error, "user authentication failed", "")
+		c.logger.Log(logger.Error, "deploy: user authentication failed", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
@@ -179,17 +179,17 @@ func (c *DeployController) HandleGetEnvironmentsInFamily(f fuego.ContextNoBody) 
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		c.logger.Log(logger.Error, "organization not found", "")
+		c.logger.Log(logger.Error, "deploy: organization not found", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "organization not found",
 		}
 	}
 
-	c.logger.Log(logger.Info, "getting environments in family", "family_id: "+familyID.String())
+	c.logger.Log(logger.Info, "deploy: getting environments in family", "family_id: "+familyID.String())
 
 	environments, err := c.service.GetEnvironmentsInFamily(familyID, organizationID)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to get environments in family", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to get environments in family", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -209,21 +209,21 @@ func (c *DeployController) HandleGetEnvironmentsInFamily(f fuego.ContextNoBody) 
 // HandleAddApplicationToFamily adds a new application to an existing family (or creates a new family).
 // This is used for multi-application monorepo setups.
 func (c *DeployController) HandleAddApplicationToFamily(f fuego.ContextWithBody[types.AddApplicationToFamilyRequest]) (*types.ApplicationResponse, error) {
-	c.logger.Log(logger.Info, "adding application to family", "")
+	c.logger.Log(logger.Info, "deploy: adding application to family", "")
 
 	data, err := f.Body()
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to read request body", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to read request body", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
 		}
 	}
 
-	c.logger.Log(logger.Info, "request body parsed successfully", "name: "+data.Name)
+	c.logger.Log(logger.Info, "deploy: request body parsed successfully", "name: "+data.Name)
 
 	if err := c.validator.ValidateRequest(&data); err != nil {
-		c.logger.Log(logger.Error, "request validation failed", err.Error())
+		c.logger.Log(logger.Error, "deploy: request validation failed", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -233,7 +233,7 @@ func (c *DeployController) HandleAddApplicationToFamily(f fuego.ContextWithBody[
 	// Get user and organization from context (set by AuthMiddleware)
 	user := utils.GetUser(f.Response(), f.Request())
 	if user == nil {
-		c.logger.Log(logger.Error, "user authentication failed", "")
+		c.logger.Log(logger.Error, "deploy: user authentication failed", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "authentication required",
 		}
@@ -241,17 +241,17 @@ func (c *DeployController) HandleAddApplicationToFamily(f fuego.ContextWithBody[
 
 	organizationID := utils.GetOrganizationID(f.Request())
 	if organizationID == uuid.Nil {
-		c.logger.Log(logger.Error, "organization not found", "")
+		c.logger.Log(logger.Error, "deploy: organization not found", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "organization not found",
 		}
 	}
 
-	c.logger.Log(logger.Info, "attempting to add application to family", "name: "+data.Name+", user_id: "+user.ID.String())
+	c.logger.Log(logger.Info, "deploy: attempting to add application to family", "name: "+data.Name+", user_id: "+user.ID.String())
 
 	application, err := c.service.AddApplicationToFamily(&data, user.ID, organizationID)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to add application to family", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to add application to family", err.Error())
 
 		if err == types.ErrProjectFamilyNotFound {
 			return nil, fuego.NotFoundError{
@@ -267,7 +267,7 @@ func (c *DeployController) HandleAddApplicationToFamily(f fuego.ContextWithBody[
 		}
 	}
 
-	c.logger.Log(logger.Info, "application added to family successfully", "id: "+application.ID.String())
+	c.logger.Log(logger.Info, "deploy: application added to family successfully", "id: "+application.ID.String())
 
 	return &types.ApplicationResponse{
 		Status:  "success",

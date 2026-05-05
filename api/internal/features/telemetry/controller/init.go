@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -21,10 +22,10 @@ type TelemetryController struct {
 }
 
 func NewTelemetryController(db *bun.DB, ctx context.Context, l logger.Logger) *TelemetryController {
-	repo := storage.NewTelemetryStorage(db, ctx)
+	repo := storage.NewTelemetryStorage(db, ctx, &l)
 	return &TelemetryController{
 		service:   service.NewTelemetryService(repo, ctx, l),
-		validator: validation.NewValidator(),
+		validator: validation.NewValidatorWithLogger(&l),
 		logger:    l,
 	}
 }
@@ -32,21 +33,23 @@ func NewTelemetryController(db *bun.DB, ctx context.Context, l logger.Logger) *T
 func (c *TelemetryController) HandleTrackInstall(f fuego.ContextWithBody[types.TrackInstallRequest]) (*types.TrackInstallResponse, error) {
 	body, err := f.Body()
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to parse telemetry request body", err.Error())
+		c.logger.Log(logger.Debug, fmt.Sprintf("telemetry: TrackInstall: parse body: %v", err), "")
 		return nil, fuego.BadRequestError{Detail: "invalid request body", Err: err}
 	}
 
 	if err := c.validator.ValidateRequest(&body); err != nil {
+		c.logger.Log(logger.Debug, fmt.Sprintf("telemetry: TrackInstall: validation: %v", err), trackInstallRequestData(&body))
 		return nil, fuego.BadRequestError{Detail: err.Error(), Err: err}
 	}
 
 	clientIP := extractClientIP(f.Request())
 
 	if err := c.service.TrackInstall(&body, clientIP); err != nil {
-		c.logger.Log(logger.Error, "failed to track install event", err.Error())
+		c.logger.Log(logger.Error, fmt.Sprintf("telemetry: TrackInstall: %v", err), trackInstallRequestData(&body))
 		return nil, fuego.HTTPError{Err: err, Detail: "failed to record event", Status: http.StatusInternalServerError}
 	}
 
+	c.logger.Log(logger.Info, "telemetry: TrackInstall", trackInstallRequestData(&body))
 	return &types.TrackInstallResponse{
 		Status:  "success",
 		Message: "event recorded",

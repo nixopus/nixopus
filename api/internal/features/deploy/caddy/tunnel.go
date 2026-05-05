@@ -64,7 +64,7 @@ func (t *CaddyTunnel) handleConnections(remotePort string, lgr logger.Logger) {
 	for {
 		localConn, err := t.listener.Accept()
 		if err != nil {
-			lgr.Log(logger.Error, "Caddy tunnel listener error", err.Error())
+			lgr.Log(logger.Error, "deploy caddy: tunnel listener error", err.Error())
 			return
 		}
 
@@ -117,7 +117,7 @@ func (t *CaddyTunnel) forwardConnection(localConn net.Conn, remotePort string, l
 
 	sshConn, err := t.getOrCreateSSH()
 	if err != nil {
-		lgr.Log(logger.Error, "Caddy tunnel: failed to establish SSH connection", t.tunnelErrLog(hostLabel, err.Error()))
+		lgr.Log(logger.Error, "deploy caddy: failed to establish SSH connection", t.tunnelErrLog(hostLabel, err.Error()))
 		return
 	}
 
@@ -138,12 +138,12 @@ func (t *CaddyTunnel) forwardConnection(localConn net.Conn, remotePort string, l
 
 		sshConn, err = t.getOrCreateSSH()
 		if err != nil {
-			lgr.Log(logger.Error, "Caddy tunnel: failed to reconnect SSH", t.tunnelErrLog(hostLabel, err.Error()))
+			lgr.Log(logger.Error, "deploy caddy: failed to reconnect SSH", t.tunnelErrLog(hostLabel, err.Error()))
 			return
 		}
 		remoteConn, err = sshConn.Dial("tcp", "127.0.0.1:"+remotePort)
 		if err != nil {
-			lgr.Log(logger.Error, "Caddy tunnel: failed to connect to remote Caddy after reconnect", t.tunnelErrLog(hostLabel, err.Error()))
+			lgr.Log(logger.Error, "deploy caddy: failed to connect to remote Caddy after reconnect", t.tunnelErrLog(hostLabel, err.Error()))
 			return
 		}
 	}

@@ -3,6 +3,7 @@ package service
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/healthcheck/types"
@@ -22,7 +23,7 @@ func (s *HealthCheckService) GetHealthCheck(applicationIDStr string, organizatio
 			// Return nil, nil when health check is not found (not an error)
 			return nil, nil
 		}
-		s.logger.Log(logger.Error, "failed to get health check", err.Error())
+		s.logger.Log(logger.Error, fmt.Sprintf("healthcheck service: GetHealthCheck: %v", err), fmt.Sprintf("application_id=%s org_id=%s", applicationIDStr, organizationID))
 		return nil, types.ErrHealthCheckNotFound
 	}
 

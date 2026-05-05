@@ -51,12 +51,12 @@ func verifyWebhookSignature(payload []byte, signature, secret string) bool {
 }
 
 func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.MessageResponse, error) {
-	c.logger.Log(logger.Info, "handling github webhook", "")
+	c.logger.Log(logger.Info, "deploy: handling github webhook", "")
 
 	deliveryID := f.Request().Header.Get("X-GitHub-Delivery")
 	if deliveryID != "" {
 		if _, loaded := processedDeliveries.LoadOrStore(deliveryID, time.Now()); loaded {
-			c.logger.Log(logger.Info, "duplicate webhook delivery, skipping", deliveryID)
+			c.logger.Log(logger.Info, "deploy: duplicate webhook delivery, skipping", deliveryID)
 			return &types.MessageResponse{
 				Status:  "success",
 				Message: "Duplicate delivery ignored",
@@ -66,7 +66,7 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.Me
 
 	payload, err := io.ReadAll(f.Request().Body)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to read webhook payload", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to read webhook payload", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -75,7 +75,7 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.Me
 
 	signature := f.Request().Header.Get("X-Hub-Signature-256")
 	if signature == "" {
-		c.logger.Log(logger.Error, "missing webhook signature", "")
+		c.logger.Log(logger.Error, "deploy: missing webhook signature", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "missing webhook signature",
 			Err:    fmt.Errorf("missing webhook signature"),
@@ -84,7 +84,7 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.Me
 
 	webhookSecret := config.AppConfig.GitHub.WebhookSecret
 	if !verifyWebhookSignature(payload, signature, webhookSecret) {
-		c.logger.Log(logger.Error, "invalid webhook signature", "")
+		c.logger.Log(logger.Error, "deploy: invalid webhook signature", "")
 		return nil, fuego.UnauthorizedError{
 			Detail: "invalid webhook signature",
 			Err:    fmt.Errorf("invalid webhook signature"),
@@ -93,7 +93,7 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.Me
 
 	eventType := f.Request().Header.Get("X-GitHub-Event")
 	if eventType != "push" {
-		c.logger.Log(logger.Info, "ignoring non-push event", eventType)
+		c.logger.Log(logger.Info, "deploy: ignoring non-push event", eventType)
 		return &types.MessageResponse{
 			Status:  "success",
 			Message: "Ignored non-push event",
@@ -102,7 +102,7 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.Me
 
 	var webhookPayload shared_types.WebhookPayload
 	if err := json.Unmarshal(payload, &webhookPayload); err != nil {
-		c.logger.Log(logger.Error, "failed to parse webhook payload", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to parse webhook payload", err.Error())
 		return nil, fuego.BadRequestError{
 			Detail: err.Error(),
 			Err:    err,
@@ -111,7 +111,7 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.Me
 
 	ref := webhookPayload.Ref
 	if !strings.HasPrefix(ref, "refs/heads/") {
-		c.logger.Log(logger.Info, "ignoring non-branch ref", ref)
+		c.logger.Log(logger.Info, "deploy: ignoring non-branch ref", ref)
 		return &types.MessageResponse{
 			Status:  "success",
 			Message: fmt.Sprintf("Ignored ref %s", ref),
@@ -120,7 +120,7 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.Me
 
 	err = c.taskService.EnqueueWebhookTask(webhookPayload)
 	if err != nil {
-		c.logger.Log(logger.Error, "failed to enqueue webhook task", err.Error())
+		c.logger.Log(logger.Error, "deploy: failed to enqueue webhook task", err.Error())
 		return nil, fuego.HTTPError{
 			Err:    err,
 			Detail: err.Error(),
@@ -128,7 +128,7 @@ func (c *DeployController) HandleGithubWebhook(f fuego.ContextNoBody) (*types.Me
 		}
 	}
 
-	c.logger.Log(logger.Info, "github webhook handled successfully", webhookPayload.Repository.FullName)
+	c.logger.Log(logger.Info, "deploy: github webhook handled successfully", webhookPayload.Repository.FullName)
 	return &types.MessageResponse{
 		Status:  "success",
 		Message: "Github webhook handled successfully",

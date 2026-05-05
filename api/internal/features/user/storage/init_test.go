@@ -108,7 +108,7 @@ func insertTestUser(t *testing.T, db *bun.DB, ctx context.Context) shared_types.
 func TestCreateNewUserStorage(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 	require.NotNil(t, s)
 	assert.Equal(t, db, s.DB)
 	assert.Equal(t, ctx, s.Ctx)
@@ -119,7 +119,7 @@ func TestCreateNewUserStorage(t *testing.T) {
 func TestGetUserById_found(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 	user := insertTestUser(t, db, ctx)
 
 	result, err := s.GetUserById(user.ID.String())
@@ -131,7 +131,7 @@ func TestGetUserById_found(t *testing.T) {
 func TestGetUserById_notFound(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	_, err := s.GetUserById(uuid.New().String())
 	require.Error(t, err)
@@ -141,7 +141,7 @@ func TestGetUserById_dbError(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
 	require.NoError(t, db.Close())
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	_, err := s.GetUserById(uuid.New().String())
 	require.Error(t, err)
@@ -152,7 +152,7 @@ func TestGetUserById_dbError(t *testing.T) {
 func TestUpdateUserName_success(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	id := uuid.New()
 	_, err := db.ExecContext(ctx,
@@ -174,7 +174,7 @@ func TestUpdateUserName_dbError(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
 	require.NoError(t, db.Close())
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	err := s.UpdateUserName(uuid.New().String(), "name", time.Now())
 	require.Error(t, err)
@@ -185,7 +185,7 @@ func TestUpdateUserName_dbError(t *testing.T) {
 func TestGetUserOrgs_empty(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	orgs, err := s.GetUserOrganizationsWithRolesAndPermissions(uuid.New().String())
 	require.NoError(t, err)
@@ -195,7 +195,7 @@ func TestGetUserOrgs_empty(t *testing.T) {
 func TestGetUserOrgs_orgNotFound_continue(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 	user := insertTestUser(t, db, ctx)
 
 	// Member row points to a non-existent organization → hits the "continue" branch
@@ -213,7 +213,7 @@ func TestGetUserOrgs_orgNotFound_continue(t *testing.T) {
 func TestGetUserOrgs_withOrgs(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 	user := insertTestUser(t, db, ctx)
 
 	orgID := uuid.New()
@@ -239,7 +239,7 @@ func TestGetUserOrgs_dbError(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
 	require.NoError(t, db.Close())
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	_, err := s.GetUserOrganizationsWithRolesAndPermissions(uuid.New().String())
 	require.Error(t, err)
@@ -250,7 +250,7 @@ func TestGetUserOrgs_dbError(t *testing.T) {
 func TestGetUserSettings_found(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	userID := uuid.New()
 	_, err := db.ExecContext(ctx,
@@ -269,7 +269,7 @@ func TestGetUserSettings_found(t *testing.T) {
 func TestGetUserSettings_noRows_createsDefault(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	userID := uuid.New()
 	settings, err := s.GetUserSettings(userID.String())
@@ -283,7 +283,7 @@ func TestGetUserSettings_dbError(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
 	require.NoError(t, db.Close())
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	_, err := s.GetUserSettings(uuid.New().String())
 	require.Error(t, err)
@@ -294,7 +294,7 @@ func TestGetUserSettings_dbError(t *testing.T) {
 func TestUpdateUserSettings_success(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	userID := uuid.New()
 	_, err := db.ExecContext(ctx,
@@ -318,7 +318,7 @@ func TestUpdateUserSettings_dbError(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
 	require.NoError(t, db.Close())
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	_, err := s.UpdateUserSettings(uuid.New().String(), map[string]interface{}{"theme": "dark"})
 	require.Error(t, err)
@@ -330,7 +330,7 @@ func TestUpdateUserAvatar_dbError(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
 	require.NoError(t, db.Close())
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	err := s.UpdateUserAvatar(ctx, uuid.New().String(), "data:image/png;base64,abc")
 	require.Error(t, err)
@@ -341,7 +341,7 @@ func TestUpdateUserAvatar_dbError(t *testing.T) {
 func TestGetUserPreferences_found(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	userID := uuid.New()
 	_, err := db.ExecContext(ctx,
@@ -359,7 +359,7 @@ func TestGetUserPreferences_found(t *testing.T) {
 func TestGetUserPreferences_noRows_createsDefault(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	userID := uuid.New()
 	prefs, err := s.GetUserPreferences(userID.String())
@@ -371,7 +371,7 @@ func TestGetUserPreferences_noRows_createsDefault(t *testing.T) {
 func TestGetUserPreferences_invalidUserID_noRows(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	_, err := s.GetUserPreferences("not-a-valid-uuid")
 	require.Error(t, err)
@@ -382,7 +382,7 @@ func TestGetUserPreferences_dbError(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
 	require.NoError(t, db.Close())
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	_, err := s.GetUserPreferences(uuid.New().String())
 	require.Error(t, err)
@@ -393,7 +393,7 @@ func TestGetUserPreferences_dbError(t *testing.T) {
 func TestUpdateUserPreferences_success(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	userID := uuid.New()
 	_, err := db.ExecContext(ctx,
@@ -413,7 +413,7 @@ func TestUpdateUserPreferences_dbError(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
 	require.NoError(t, db.Close())
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	_, err := s.UpdateUserPreferences(uuid.New().String(), shared_types.UserPreferencesData{})
 	require.Error(t, err)
@@ -424,7 +424,7 @@ func TestUpdateUserPreferences_dbError(t *testing.T) {
 func TestGetIsOnboarded_true(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	userID := uuid.New()
 	_, err := db.ExecContext(ctx,
@@ -441,7 +441,7 @@ func TestGetIsOnboarded_true(t *testing.T) {
 func TestGetIsOnboarded_false(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	userID := uuid.New()
 	_, err := db.ExecContext(ctx,
@@ -459,7 +459,7 @@ func TestGetIsOnboarded_dbError(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
 	require.NoError(t, db.Close())
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	_, err := s.GetIsOnboarded(uuid.New().String())
 	require.Error(t, err)
@@ -470,7 +470,7 @@ func TestGetIsOnboarded_dbError(t *testing.T) {
 func TestMarkOnboardingComplete_success(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	userID := uuid.New()
 	_, err := db.ExecContext(ctx,
@@ -492,7 +492,7 @@ func TestMarkOnboardingComplete_dbError(t *testing.T) {
 	t.Parallel()
 	db, ctx := newTestUserDB(t)
 	require.NoError(t, db.Close())
-	s := user_storage.CreateNewUserStorage(db, ctx)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
 
 	err := s.MarkOnboardingComplete(uuid.New().String())
 	require.Error(t, err)

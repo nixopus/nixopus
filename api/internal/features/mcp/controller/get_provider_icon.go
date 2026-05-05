@@ -11,11 +11,13 @@ import (
 func (c *MCPController) GetProviderIcon(f fuego.ContextNoBody) (any, error) {
 	providerID := f.PathParam("provider_id")
 	if mcp.GetProvider(providerID) == nil {
+		c.logMCPDebug("GetProviderIcon", "unknown provider", fmt.Sprintf("provider_id=%s", providerID))
 		return nil, fuego.NotFoundError{Detail: "provider not found"}
 	}
 
 	data, err := mcp.IconFS.ReadFile(fmt.Sprintf("icons/%s.svg", providerID))
 	if err != nil {
+		c.logMCPDebug("GetProviderIcon", "icon file missing", fmt.Sprintf("provider_id=%s", providerID))
 		return nil, fuego.NotFoundError{Detail: "icon not found"}
 	}
 

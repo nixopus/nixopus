@@ -31,10 +31,10 @@ func (s *TaskService) formatLog(
 ) {
 	if len(args) > 0 {
 		formattedMessage := fmt.Sprintf(message, args...)
-		s.Logger.Log(logger.Info, formattedMessage, taskContext.GetDeploymentID().String())
+		s.Logger.Log(logger.Info, "deploy tasks: "+formattedMessage, taskContext.GetDeploymentID().String())
 		taskContext.AddLog(formattedMessage)
 	} else {
-		s.Logger.Log(logger.Info, message, taskContext.GetDeploymentID().String())
+		s.Logger.Log(logger.Info, "deploy tasks: "+message, taskContext.GetDeploymentID().String())
 		taskContext.AddLog(message)
 	}
 }
@@ -103,7 +103,7 @@ func (s *TaskService) AtomicUpdateContainer(ctx context.Context, r shared_types.
 
 	taskContext.LogAndUpdateStatus("Starting container update", shared_types.Deploying)
 
-	s.Logger.Log(logger.Info, types.LogUpdatingContainer, r.Application.Name)
+	s.Logger.Log(logger.Info, "deploy tasks: "+types.LogUpdatingContainer, r.Application.Name)
 	s.formatLog(taskContext, types.LogPreparingToUpdateContainer, r.Application.Name)
 
 	// Check if service already exists

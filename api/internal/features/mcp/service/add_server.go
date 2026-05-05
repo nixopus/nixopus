@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,7 +11,7 @@ import (
 )
 
 func (s *MCPService) AddServer(req *validation.CreateServerRequest, orgID, userID uuid.UUID) (*shared_types.MCPServer, error) {
-	s.logger.Log(logger.Info, "Adding MCP server", req.Name)
+	s.logger.Log(logger.Info, "mcp service: AddServer", fmt.Sprintf("org_id=%s user_id=%s provider_id=%s name=%s", orgID, userID, req.ProviderID, req.Name))
 
 	existing, err := s.storage.GetServerByName(orgID, req.Name)
 	if err != nil {

@@ -82,7 +82,7 @@ func (s *MachineService) GetMachineStatus(ctx context.Context, orgID uuid.UUID) 
 
 	runner, err := s.getSSHRunner(ctx)
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH manager: %s", err.Error()), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: failed to get SSH manager: %s", err.Error()), fmt.Sprintf("org_id=%s", orgID))
 		return nil, fmt.Errorf("failed to connect to server: %w", err)
 	}
 
@@ -122,7 +122,7 @@ func (s *MachineService) lazyFillSpecs(ctx context.Context, runner SSHCommandRun
 
 	stats, err := s.collectSystemStats(runner)
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("lazy fill: failed to collect stats: %s", err.Error()), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: lazy fill collect stats: %s", err.Error()), fmt.Sprintf("org_id=%s", orgID))
 		return
 	}
 
@@ -135,7 +135,7 @@ func (s *MachineService) lazyFillSpecs(ctx context.Context, runner SSHCommandRun
 	}
 
 	if err := s.regStore.UpdateProvisionResources(serverID, cpuCores, memMB, diskGB); err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("lazy fill: failed to persist specs: %s", err.Error()), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: lazy fill persist specs: %s", err.Error()), fmt.Sprintf("org_id=%s", orgID))
 	}
 }
 
@@ -152,13 +152,13 @@ func ParseUptimeToState(raw string) *types.MachineState {
 func (s *MachineService) GetSystemStats(ctx context.Context, orgID uuid.UUID) (*types.SystemStatsResponse, error) {
 	runner, err := s.getSSHRunner(ctx)
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH manager: %s", err.Error()), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: failed to get SSH manager: %s", err.Error()), fmt.Sprintf("org_id=%s", orgID))
 		return nil, fmt.Errorf("failed to connect to server: %w", err)
 	}
 
 	stats, err := s.collectSystemStats(runner)
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("failed to collect system stats: %s", err.Error()), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: collect system stats: %s", err.Error()), fmt.Sprintf("org_id=%s", orgID))
 		return nil, fmt.Errorf("failed to collect system stats: %w", err)
 	}
 
@@ -172,7 +172,7 @@ func (s *MachineService) GetSystemStats(ctx context.Context, orgID uuid.UUID) (*
 func (s *MachineService) RestartMachine(ctx context.Context, orgID uuid.UUID) (*types.MachineActionResponse, error) {
 	runner, err := s.getSSHRunner(ctx)
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH manager: %s", err.Error()), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: failed to get SSH manager: %s", err.Error()), fmt.Sprintf("org_id=%s", orgID))
 		return nil, fmt.Errorf("failed to connect to server: %w", err)
 	}
 
@@ -186,7 +186,7 @@ func (s *MachineService) RestartMachine(ctx context.Context, orgID uuid.UUID) (*
 
 func (s *MachineService) PauseMachine(ctx context.Context, orgID uuid.UUID, serverID uuid.UUID) (*types.MachineActionResponse, error) {
 	if err := s.regStore.SetMachineActive(serverID, false); err != nil {
-		s.logger.Log(logger.Error, err.Error(), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: pause machine: %v", err), fmt.Sprintf("org_id=%s server_id=%s", orgID, serverID))
 		return nil, fmt.Errorf("failed to pause machine: %w", err)
 	}
 	return &types.MachineActionResponse{
@@ -197,7 +197,7 @@ func (s *MachineService) PauseMachine(ctx context.Context, orgID uuid.UUID, serv
 
 func (s *MachineService) ResumeMachine(ctx context.Context, orgID uuid.UUID, serverID uuid.UUID) (*types.MachineActionResponse, error) {
 	if err := s.regStore.SetMachineActive(serverID, true); err != nil {
-		s.logger.Log(logger.Error, err.Error(), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: resume machine: %v", err), fmt.Sprintf("org_id=%s server_id=%s", orgID, serverID))
 		return nil, fmt.Errorf("failed to resume machine: %w", err)
 	}
 	return &types.MachineActionResponse{
@@ -224,7 +224,7 @@ func (s *MachineService) ExecCommand(ctx context.Context, orgID uuid.UUID, comma
 	}
 	runner, err := s.getSSHRunner(ctx)
 	if err != nil {
-		s.logger.Log(logger.Error, fmt.Sprintf("failed to get SSH manager: %s", err.Error()), orgID.String())
+		s.logger.Log(logger.Error, fmt.Sprintf("machine service: failed to get SSH manager: %s", err.Error()), fmt.Sprintf("org_id=%s", orgID))
 		return nil, fmt.Errorf("failed to connect to server: %w", err)
 	}
 	stdout, err := runner.RunCommand(command)

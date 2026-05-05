@@ -62,7 +62,7 @@ func Test_AuthMiddleware_moreBranches(t *testing.T) {
 		h := AuthMiddleware(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
 			u2 := r.Context().Value(types.UserContextKey).(*types.User)
 			hit = u2.Email == "gaps@x"
-		}), app, c)
+		}), app, c, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := authReq(t, "/api/v1/machines")
 		h.ServeHTTP(rec, req)
@@ -74,7 +74,7 @@ func Test_AuthMiddleware_moreBranches(t *testing.T) {
 			return sessionResp(uid.String(), oid.String()), nil
 		}
 		require.NoError(t, c.SetOrgMembership(ctx, uid.String(), oid.String(), true))
-		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c)
+		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := authReq(t, "/api/v1/machines")
 		req.Header.Set("X-Disable-Cache", "true")
@@ -89,7 +89,7 @@ func Test_AuthMiddleware_moreBranches(t *testing.T) {
 		t.Setenv("AUTH_SERVICE_URL", "http://127.0.0.1:9")
 		t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 		_ = c.InvalidateOrgMembership(ctx, uid.String(), oid.String())
-		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c)
+		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := authReq(t, "/api/v1/machines")
 		h.ServeHTTP(rec, req)
@@ -103,7 +103,7 @@ func Test_AuthMiddleware_moreBranches(t *testing.T) {
 		}
 		_ = c.InvalidateUserByID(ctx, uid.String())
 		require.NoError(t, db.Close())
-		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c)
+		h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, c, logger.NewLogger())
 		rec := httptest.NewRecorder()
 		req := authReq(t, "/api/v1/machines")
 		h.ServeHTTP(rec, req)
@@ -113,7 +113,7 @@ func Test_AuthMiddleware_moreBranches(t *testing.T) {
 
 func Test_resolveAndVerifyOrganization_noOrg_badUserID(t *testing.T) {
 	app := testApp(t)
-	_, err := resolveAndVerifyOrganization(context.Background(), httptest.NewRequest(http.MethodGet, "/", nil), nil, app, "not-uuid", sessionResp("not-uuid", ""))
+	_, err := resolveAndVerifyOrganization(context.Background(), httptest.NewRequest(http.MethodGet, "/", nil), nil, app, "not-uuid", sessionResp("not-uuid", ""), logger.NewLogger())
 	require.ErrorContains(t, err, "no organization ID")
 }
 
@@ -122,7 +122,7 @@ func Test_verifyOrganizationMembership_cacheReadError(t *testing.T) {
 	c, err := cache.NewCache("redis://" + mr.Addr())
 	require.NoError(t, err)
 	mr.Close()
-	_, err = verifyOrganizationMembership(context.Background(), nil, c, "u", "00000000-0000-0000-0000-000000000001")
+	_, err = verifyOrganizationMembership(context.Background(), nil, c, "u", "00000000-0000-0000-0000-000000000001", logger.NewLogger())
 	require.Error(t, err)
 }
 
@@ -147,7 +147,7 @@ func Test_validateAndCachePermissions_variants(t *testing.T) {
 	t.Run("member fetch fails", func(t *testing.T) {
 		t.Setenv("AUTH_SERVICE_URL", "http://127.0.0.1:9")
 		t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
-		require.False(t, validateAndCachePermissions(ctx, u, oid, "user:read", app))
+		require.False(t, validateAndCachePermissions(ctx, u, oid, "user:read", app, logger.NewLogger()))
 	})
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -157,7 +157,7 @@ func Test_validateAndCachePermissions_variants(t *testing.T) {
 	t.Cleanup(srv.Close)
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
-	require.False(t, validateAndCachePermissions(ctx, u, oid, "user:read", app))
+	require.False(t, validateAndCachePermissions(ctx, u, oid, "user:read", app, logger.NewLogger()))
 
 	srv2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		body := `[{"userId":"` + uid.String() + `","organizationId":"` + oid + `","role":123,"user":{"id":"` + uid.String() + `"}}]`
@@ -166,7 +166,7 @@ func Test_validateAndCachePermissions_variants(t *testing.T) {
 	}))
 	t.Cleanup(srv2.Close)
 	t.Setenv("AUTH_SERVICE_URL", srv2.URL)
-	ok := validateAndCachePermissions(ctx, u, oid, "user:read", app)
+	ok := validateAndCachePermissions(ctx, u, oid, "user:read", app, logger.NewLogger())
 	require.True(t, ok)
 
 	srv3 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
@@ -176,7 +176,7 @@ func Test_validateAndCachePermissions_variants(t *testing.T) {
 	}))
 	t.Cleanup(srv3.Close)
 	t.Setenv("AUTH_SERVICE_URL", srv3.URL)
-	require.True(t, validateAndCachePermissions(ctx, u, oid, "user:read", app))
+	require.True(t, validateAndCachePermissions(ctx, u, oid, "user:read", app, logger.NewLogger()))
 }
 
 func Test_cacheRBACPermissionsFromMember_variants(t *testing.T) {
@@ -301,7 +301,7 @@ func Test_tryM2MJWTAuth_validateFailsFallsThrough(t *testing.T) {
 	rc := testRedisCache(t)
 	require.NoError(t, rc.SetOrgMembership(context.Background(), uid.String(), oid.String(), true))
 
-	h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, rc)
+	h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, rc, logger.NewLogger())
 	rec := httptest.NewRecorder()
 	req := authReq(t, "/api/v1/machines")
 	req.Header.Set("Authorization", "Bearer not-a-jwt-shape")
@@ -423,7 +423,7 @@ func Test_validateAndCachePermissions_roleJSONString(t *testing.T) {
 	t.Cleanup(srv.Close)
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
-	require.True(t, validateAndCachePermissions(ctx, u, oid, "user:read", app))
+	require.True(t, validateAndCachePermissions(ctx, u, oid, "user:read", app, logger.NewLogger()))
 }
 
 func Test_validateAndCachePermissions_noHTTPRequestInContext(t *testing.T) {
@@ -439,7 +439,7 @@ func Test_validateAndCachePermissions_noHTTPRequestInContext(t *testing.T) {
 	t.Cleanup(srv.Close)
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
-	require.True(t, validateAndCachePermissions(context.Background(), u, oid, "user:read", app))
+	require.True(t, validateAndCachePermissions(context.Background(), u, oid, "user:read", app, logger.NewLogger()))
 }
 
 func Test_validateAndCachePermissions_httpRequestWrongTypeInContext(t *testing.T) {
@@ -456,7 +456,7 @@ func Test_validateAndCachePermissions_httpRequestWrongTypeInContext(t *testing.T
 	t.Cleanup(srv.Close)
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
-	require.True(t, validateAndCachePermissions(ctx, u, oid, "user:read", app))
+	require.True(t, validateAndCachePermissions(ctx, u, oid, "user:read", app, logger.NewLogger()))
 }
 
 func Test_RBACMiddleware_cacheMissFetchesFromBetterAuth(t *testing.T) {
@@ -477,7 +477,7 @@ func Test_RBACMiddleware_cacheMissFetchesFromBetterAuth(t *testing.T) {
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "user")
+	h := RBACMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), &storage.App{}, "user", logger.NewLogger())
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/users", nil)
 	req.Header.Set("X-Organization-Id", oid.String())
@@ -505,7 +505,7 @@ func Test_verifyOrganizationMembership_successSetsOrgCacheAndRBAC(t *testing.T) 
 	t.Setenv("AUTH_SERVICE_URL", srv.URL)
 	t.Cleanup(func() { _ = os.Unsetenv("AUTH_SERVICE_URL") })
 
-	ok, err := verifyOrganizationMembership(ctx, httptest.NewRequest(http.MethodGet, "/", nil), c, uid, oid)
+	ok, err := verifyOrganizationMembership(ctx, httptest.NewRequest(http.MethodGet, "/", nil), c, uid, oid, logger.NewLogger())
 	require.NoError(t, err)
 	require.True(t, ok)
 	cached, err := c.GetOrgMembership(ctx, uid, oid)
@@ -568,7 +568,7 @@ func Test_tryM2MJWTAuth_invalidSignedJWTFallsThrough(t *testing.T) {
 	rc := testRedisCache(t)
 	require.NoError(t, rc.SetOrgMembership(ctx, uid.String(), oid.String(), true))
 
-	h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, rc)
+	h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, rc, logger.NewLogger())
 	rec := httptest.NewRecorder()
 	req := authReq(t, "/api/v1/machines")
 	req.Header.Set("Authorization", "Bearer "+badTok)
@@ -620,7 +620,7 @@ func Test_tryM2MJWTAuth_userMissingInDatabase(t *testing.T) {
 	require.NoError(t, err)
 
 	missingUser := uuid.New()
-	h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, nil)
+	h := AuthMiddleware(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}), app, nil, logger.NewLogger())
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/api/v1/x", nil)
 	req.Header.Set("Authorization", "Bearer "+string(raw))

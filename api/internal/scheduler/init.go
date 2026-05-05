@@ -36,7 +36,7 @@ func InitSchedulers(store *shared_storage.Store, ctx context.Context) *Scheduler
 	sched.RegisterJob(container.NewPruneImagesJob(l))
 	sched.RegisterJob(container.NewPruneBuildCacheJob(l))
 
-	healthCheckStorage := healthcheck_storage.HealthCheckStorage{DB: store.DB, Ctx: ctx}
+	healthCheckStorage := healthcheck_storage.HealthCheckStorage{DB: store.DB, Ctx: ctx, Logger: &l}
 	healthCheckService := healthcheck_service.NewHealthCheckService(store, ctx, l, &healthCheckStorage)
 	healthCheckScheduler := NewHealthCheckScheduler(healthCheckService, l, ctx, nil)
 

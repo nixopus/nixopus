@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/nixopus/nixopus/api/internal/config"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 )
 
 var (
@@ -19,7 +19,20 @@ var (
 	// Overridable in tests: net/http never exposes cookies without a Cookie header, but
 	// callers may still want the AddCookie path when using custom request shims.
 	forwardCookiesList = func(r *http.Request) []*http.Cookie { return r.Cookies() }
+
+	// VerifySessionLogger, when set (e.g. from routes.NewRouter), is used for VerifySession logs.
+	// If nil, logging falls back to a default Development logger.NewLogger().
+	VerifySessionLogger *logger.Logger
 )
+
+func verifySessionLog(sev logger.Severity, msg, data string) {
+	if VerifySessionLogger != nil {
+		VerifySessionLogger.Log(sev, msg, data)
+		return
+	}
+	l := logger.NewLogger()
+	l.Log(sev, msg, data)
+}
 
 // HTTPClient is a shared HTTP client for Better Auth API calls.
 // Uses connection pooling and timeouts to reduce latency from repeated connection setup.
@@ -76,7 +89,7 @@ func forwardCookies(originalReq *http.Request, targetReq *http.Request) {
 	cookieHeader := originalReq.Header.Get("Cookie")
 	if cookieHeader != "" {
 		targetReq.Header.Set("Cookie", cookieHeader)
-		log.Printf("DEBUG VerifySession: Forwarding Cookie header (length: %d)", len(cookieHeader))
+		verifySessionLog(logger.Debug, "auth: VerifySession forward Cookie header", fmt.Sprintf("length=%d", len(cookieHeader)))
 		return
 	}
 
@@ -85,9 +98,9 @@ func forwardCookies(originalReq *http.Request, targetReq *http.Request) {
 		for _, cookie := range cookies {
 			targetReq.AddCookie(cookie)
 		}
-		log.Printf("DEBUG VerifySession: Forwarding %d cookies individually", len(cookies))
+		verifySessionLog(logger.Debug, "auth: VerifySession forward cookies individually", fmt.Sprintf("count=%d", len(cookies)))
 	} else {
-		log.Printf("WARN VerifySession: No cookies found in request - session validation will likely fail")
+		verifySessionLog(logger.Warning, "auth: VerifySession no cookies on request", "session validation may fail")
 	}
 }
 
@@ -166,24 +179,27 @@ func parseSessionResponse(body []byte, statusCode int, url string, req *http.Req
 			}
 			cookieInfo = fmt.Sprintf("%d cookies: %v", len(cookieNames), cookieNames)
 		}
-		log.Printf("ERROR VerifySession: Better Auth returned null response. Status: %d, URL: %s, Origin: %s, Referer: %s, Cookies: %s",
-			statusCode, url, req.Header.Get("Origin"), req.Header.Get("Referer"), cookieInfo)
+		verifySessionLog(logger.Error, "auth: VerifySession Better Auth returned null",
+			fmt.Sprintf("status=%d url=%s origin=%s referer=%s cookies=%s",
+				statusCode, url, req.Header.Get("Origin"), req.Header.Get("Referer"), cookieInfo))
 		return nil, fmt.Errorf("invalid session: Better Auth returned null (no active session)")
 	}
 
 	var sessionResp SessionResponse
 	if err := json.Unmarshal(body, &sessionResp); err != nil {
-		log.Printf("ERROR VerifySession: Failed to parse JSON response: %v, body: %s, status: %d", err, bodyStr, statusCode)
+		verifySessionLog(logger.Error, fmt.Sprintf("auth: VerifySession parse JSON: %v", err),
+			fmt.Sprintf("status=%d body=%s", statusCode, bodyStr))
 		return nil, fmt.Errorf("failed to parse response: %w (body: %s)", err, bodyStr)
 	}
 
 	if sessionResp.Error != nil {
-		log.Printf("ERROR VerifySession: Better Auth returned error: %s (status: %d)", sessionResp.Error.Message, sessionResp.Error.Status)
+		verifySessionLog(logger.Error, "auth: VerifySession Better Auth error response",
+			fmt.Sprintf("message=%s status=%d", sessionResp.Error.Message, sessionResp.Error.Status))
 		return nil, fmt.Errorf("session verification failed: %s (status: %d)", sessionResp.Error.Message, sessionResp.Error.Status)
 	}
 
 	if sessionResp.User.ID == "" {
-		log.Printf("ERROR VerifySession: Session has no user data, response: %s", bodyStr)
+		verifySessionLog(logger.Error, "auth: VerifySession missing user in response", fmt.Sprintf("body=%s", bodyStr))
 		return nil, fmt.Errorf("invalid session: no user data (response: %s)", bodyStr)
 	}
 
@@ -198,7 +214,7 @@ func VerifySession(r *http.Request) (*SessionResponse, error) {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Printf("ERROR VerifySession: Failed to create request: %v", err)
+		verifySessionLog(logger.Error, fmt.Sprintf("auth: VerifySession build request: %v", err), url)
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
@@ -207,14 +223,14 @@ func VerifySession(r *http.Request) (*SessionResponse, error) {
 
 	resp, err := HTTPClient.Do(req)
 	if err != nil {
-		log.Printf("ERROR VerifySession: HTTP request failed: %v", err)
+		verifySessionLog(logger.Error, fmt.Sprintf("auth: VerifySession HTTP: %v", err), url)
 		return nil, fmt.Errorf("failed to verify session: %w", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := authReadAll(resp.Body)
 	if err != nil {
-		log.Printf("ERROR VerifySession: Failed to read response body: %v", err)
+		verifySessionLog(logger.Error, fmt.Sprintf("auth: VerifySession read body: %v", err), fmt.Sprintf("url=%s", url))
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
 

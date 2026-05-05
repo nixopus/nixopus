@@ -3,21 +3,31 @@ package validation
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/notification"
 	"github.com/nixopus/nixopus/api/internal/features/notification/storage"
 )
 
 type Validator struct {
 	storage storage.NotificationRepository
+	Logger  *logger.Logger // optional; nil skips validation debug logs
 }
 
 func NewValidator(storage storage.NotificationRepository) *Validator {
 	return &Validator{
 		storage: storage,
+	}
+}
+
+func NewValidatorWithLogger(storage storage.NotificationRepository, l *logger.Logger) *Validator {
+	return &Validator{
+		storage: storage,
+		Logger:  l,
 	}
 }
 
@@ -35,6 +45,9 @@ func (v *Validator) ValidateRequest(req any) error {
 	case *notification.UpdatePreferenceRequest:
 		return v.validateUpdatePreferenceRequest(*r)
 	default:
+		if v.Logger != nil {
+			v.Logger.Log(logger.Debug, fmt.Sprintf("notification validation: invalid request type %T", req), "")
+		}
 		return notification.ErrInvalidRequestType
 	}
 }

@@ -16,9 +16,10 @@ import (
 // CreateConnector creates a new GitHub connector for the given user.
 func (a *API) CreateConnector(connector *gctypes.CreateGithubConnectorRequest, userID string) error {
 	if _, err := uuid.Parse(userID); err != nil {
-		a.Logger.Log(logger.Error, err.Error(), "")
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: CreateConnector invalid user_id: %v", err), userID)
 		return err
 	}
+	ctxStr := fmt.Sprintf("user_id=%s", userID)
 	githubConfig := config.AppConfig.GitHub
 	appID := connector.AppID
 	slug := connector.Slug
@@ -28,7 +29,7 @@ func (a *API) CreateConnector(connector *gctypes.CreateGithubConnectorRequest, u
 	webhookSecret := connector.WebhookSecret
 	if appID == "" || pem == "" {
 		if githubConfig.AppID == "" || githubConfig.Pem == "" {
-			a.Logger.Log(logger.Error, "GitHub App credentials not configured", "")
+			a.Logger.Log(logger.Error, "github connector service: CreateConnector GitHub App credentials not configured", ctxStr)
 			return fmt.Errorf("GitHub App credentials not configured")
 		}
 		appID = githubConfig.AppID
@@ -52,23 +53,30 @@ func (a *API) CreateConnector(connector *gctypes.CreateGithubConnectorRequest, u
 		DeletedAt:      nil,
 		UserID:         uuid.MustParse(userID),
 	}
-	return a.Storage.CreateConnector(&newConn)
+	if err := a.Storage.CreateConnector(&newConn); err != nil {
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: CreateConnector: %v", err), ctxStr)
+		return err
+	}
+	a.Logger.Log(logger.Info, "github connector service: CreateConnector ok", fmt.Sprintf("%s connector_id=%s", ctxStr, newConn.ID))
+	return nil
 }
 
 // UpdateConnectorInstallation updates the GitHub App installation ID for the user's connector.
 func (a *API) UpdateConnectorInstallation(installationID, userID, connectorID string) error {
+	ctxStr := fmt.Sprintf("user_id=%s connector_id=%s", userID, connectorID)
 	connectors, err := a.Storage.GetAllConnectors(userID)
 	if err != nil {
-		fmt.Println(err)
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: UpdateConnectorInstallation list: %v", err), ctxStr)
 		return err
 	}
 	if len(connectors) == 0 {
-		fmt.Println("no connector found")
+		a.Logger.Log(logger.Error, "github connector service: UpdateConnectorInstallation no connectors for user", ctxStr)
 		return fmt.Errorf("no connectors found for user")
 	}
 	var connectorToUpdate *shared_types.GithubConnector
 	if connectorID != "" {
 		if _, err := uuid.Parse(connectorID); err != nil {
+			a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: UpdateConnectorInstallation invalid connector_id: %v", err), ctxStr)
 			return fmt.Errorf("invalid connector_id format: %v", err)
 		}
 		for i := range connectors {
@@ -78,10 +86,12 @@ func (a *API) UpdateConnectorInstallation(installationID, userID, connectorID st
 			}
 		}
 		if connectorToUpdate == nil {
+			a.Logger.Log(logger.Error, "github connector service: UpdateConnectorInstallation connector not found for user", ctxStr)
 			return fmt.Errorf("connector with id %s not found", connectorID)
 		}
 	} else {
 		if len(connectors) > 1 {
+			a.Logger.Log(logger.Error, "github connector service: UpdateConnectorInstallation connector_id required when multiple connectors", ctxStr)
 			return fmt.Errorf("connector_id is required when multiple connectors exist")
 		}
 		for i := range connectors {
@@ -94,29 +104,37 @@ func (a *API) UpdateConnectorInstallation(installationID, userID, connectorID st
 			connectorToUpdate = &connectors[0]
 		}
 	}
-	return a.Storage.UpdateConnector(connectorToUpdate.ID.String(), installationID)
+	ctxStr = fmt.Sprintf("%s target_connector_id=%s", ctxStr, connectorToUpdate.ID)
+	if err := a.Storage.UpdateConnector(connectorToUpdate.ID.String(), installationID); err != nil {
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: UpdateConnectorInstallation: %v", err), ctxStr)
+		return err
+	}
+	a.Logger.Log(logger.Info, "github connector service: UpdateConnectorInstallation ok", ctxStr)
+	return nil
 }
 
 // DeleteConnector soft-deletes a connector after ownership checks.
 func (a *API) DeleteConnector(connectorID, userID string) error {
+	ctxStr := fmt.Sprintf("connector_id=%s user_id=%s", connectorID, userID)
 	connector, err := a.Storage.GetConnector(connectorID)
 	if err != nil {
-		a.Logger.Log(logger.Error, err.Error(), "")
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: DeleteConnector lookup: %v", err), ctxStr)
 		return gctypes.ErrConnectorDoesNotExist
 	}
 	if connector.UserID.String() != userID {
-		a.Logger.Log(logger.Error, "User does not own this connector", "")
+		a.Logger.Log(logger.Error, "github connector service: DeleteConnector permission denied", ctxStr)
 		return gctypes.ErrPermissionDenied
 	}
 	if connector.DeletedAt != nil {
-		a.Logger.Log(logger.Error, "Connector already deleted", "")
+		a.Logger.Log(logger.Error, "github connector service: DeleteConnector already deleted", ctxStr)
 		return gctypes.ErrConnectorDoesNotExist
 	}
 	err = a.Storage.DeleteConnector(connectorID, userID)
 	if err != nil {
-		a.Logger.Log(logger.Error, err.Error(), "")
+		a.Logger.Log(logger.Error, fmt.Sprintf("github connector service: DeleteConnector: %v", err), ctxStr)
 		return err
 	}
+	a.Logger.Log(logger.Info, "github connector service: DeleteConnector ok", ctxStr)
 	return nil
 }
 
