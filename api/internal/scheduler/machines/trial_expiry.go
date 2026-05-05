@@ -3,7 +3,7 @@ package machines
 import (
 	"context"
 	"fmt"
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"sync"
 
 	"github.com/nixopus/nixopus/api/internal/features/logger"
@@ -151,7 +151,7 @@ func (t *TrialExpiry) run() {
 				t.logger.Log(logger.Warning, fmt.Sprintf("trial expiry: notification failed for user %s: %v", user.UserID, err), user.UserID.String())
 			}
 		} else {
-			log.Printf("[trial-expiry] notifier not available, skipping notification for user %s", user.UserID)
+			apilog.Printf("[trial-expiry] notifier not available, skipping notification for user %s", user.UserID)
 		}
 
 		processed++

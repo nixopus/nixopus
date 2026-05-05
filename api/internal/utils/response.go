@@ -2,7 +2,7 @@ package utils
 
 import (
 	"encoding/json"
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"net/http"
 )
 
@@ -31,7 +31,7 @@ func SendJSONResponse(w http.ResponseWriter, status string, message string, data
 	if data != nil {
 		encodedData, err := json.Marshal(data)
 		if err != nil {
-			log.Printf("Error marshaling response data: %v", err)
+			apilog.Printf("Error marshaling response data: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			_ = json.NewEncoder(w).Encode(jsonErrorResponse{
 				Code:    "internal_error",
@@ -43,7 +43,7 @@ func SendJSONResponse(w http.ResponseWriter, status string, message string, data
 	}
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Error encoding response: %v", err)
+		apilog.Printf("Error encoding response: %v", err)
 	}
 }
 
@@ -56,7 +56,7 @@ func SendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 		Message: message,
 	}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Printf("Error encoding error response: %v", err)
+		apilog.Printf("Error encoding error response: %v", err)
 	}
 }
 

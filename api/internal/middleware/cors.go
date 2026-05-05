@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -20,7 +19,6 @@ func CorsMiddleware(next http.Handler) http.Handler {
 
 		origin := r.Header.Get("Origin")
 		allowedOriginConfig := config.AppConfig.CORS.AllowedOrigin
-		fmt.Println("allowedOrigin", allowedOriginConfig)
 
 		// Parse comma-separated origins from config
 		var allowedOrigins []string

@@ -3,7 +3,7 @@ package queue
 import (
 	"context"
 	"fmt"
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"sync"
 	"time"
 
@@ -80,7 +80,7 @@ func SetupMachineVerifyQueue(ctx context.Context, db *bun.DB) {
 			RetryLimit: 1,
 			Handler:    machineVerifyTaskHandler,
 		})
-		log.Printf("Machine verify queue initialized")
+		apilog.Printf("Machine verify queue initialized")
 	})
 }
 
@@ -145,14 +145,14 @@ func handleMachineVerify(ctx context.Context, db *bun.DB, payload MachineVerifyP
 		return fmt.Errorf("failed to update ssh key status: %w", err)
 	}
 
-	log.Printf("[machine-verify] success: machine_id=%s", payload.MachineID)
+	apilog.Printf("[machine-verify] success: machine_id=%s", payload.MachineID)
 	return nil
 }
 
 func markMachineInactive(ctx context.Context, db *bun.DB, machineID string) {
 	id, parseErr := uuid.Parse(machineID)
 	if parseErr != nil {
-		log.Printf("[machine-verify] failed to mark inactive: invalid machine_id=%s err=%v", machineID, parseErr)
+		apilog.Printf("[machine-verify] failed to mark inactive: invalid machine_id=%s err=%v", machineID, parseErr)
 		return
 	}
 	_, err := db.NewUpdate().
@@ -162,7 +162,7 @@ func markMachineInactive(ctx context.Context, db *bun.DB, machineID string) {
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
-		log.Printf("[machine-verify] failed to mark inactive: machine_id=%s err=%v", machineID, err)
+		apilog.Printf("[machine-verify] failed to mark inactive: machine_id=%s err=%v", machineID, err)
 	}
 }
 

@@ -166,24 +166,6 @@ func TestLoggingMiddleware_andHelpers(t *testing.T) {
 		h.ServeHTTP(rec, req)
 	})
 
-	t.Run("status and method colors", func(t *testing.T) {
-		for _, tc := range []struct {
-			code   int
-			method string
-		}{
-			{100, "TRACE"},
-			{201, http.MethodGet},
-			{301, http.MethodPost},
-			{401, http.MethodPut},
-			{501, http.MethodDelete},
-			{200, http.MethodPatch},
-		} {
-			_ = getStatusColor(tc.code)
-			_ = getMethodColor(tc.method)
-		}
-		require.Equal(t, "GET    ", padMethod(http.MethodGet))
-	})
-
 	t.Run("responseWriter hijack not supported", func(t *testing.T) {
 		base := httptest.NewRecorder()
 		rw := newResponseWriter(base)

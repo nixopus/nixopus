@@ -3,7 +3,7 @@ package queue
 import (
 	"context"
 	"fmt"
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"sync"
 	"time"
 
@@ -54,7 +54,7 @@ func RegisterQueue(opts *taskq.QueueOptions) taskq.Queue {
 	registeredQueues = append(registeredQueues, opts.Name)
 	queuesMutex.Unlock()
 
-	log.Printf("Registered queue: %s (MinNumWorker: %d, MaxNumWorker: %d)", opts.Name, opts.MinNumWorker, opts.MaxNumWorker)
+	apilog.Printf("Registered queue: %s (MinNumWorker: %d, MaxNumWorker: %d)", opts.Name, opts.MinNumWorker, opts.MaxNumWorker)
 	return queue
 }
 
@@ -104,7 +104,7 @@ func cleanupDeadConsumers(ctx context.Context) error {
 		return nil
 	}
 
-	log.Println("Cleaning up dead consumers from Redis consumer groups...")
+	apilog.Println("Cleaning up dead consumers from Redis consumer groups...")
 	cleanedCount := 0
 
 	// taskq uses "taskq" as the default consumer group name
@@ -123,7 +123,7 @@ func cleanupDeadConsumers(ctx context.Context) error {
 
 		consumers, err := cmd.Result()
 		if err != nil {
-			log.Printf("Warning: Failed to get consumers for queue %s: %v", queueName, err)
+			apilog.Printf("Warning: Failed to get consumers for queue %s: %v", queueName, err)
 			continue
 		}
 
@@ -136,21 +136,21 @@ func cleanupDeadConsumers(ctx context.Context) error {
 			if idleTime > deadConsumerIdleThreshold && consumer.Pending == 0 {
 				delCmd := redisClient.XGroupDelConsumer(ctx, streamKey, groupName, consumer.Name)
 				if delCmd.Err() == nil {
-					log.Printf("Removed dead consumer '%s' from queue '%s' (idle for %v)", consumer.Name, queueName, idleTime)
+					apilog.Printf("Removed dead consumer '%s' from queue '%s' (idle for %v)", consumer.Name, queueName, idleTime)
 					cleanedCount++
 				} else {
-					log.Printf("Warning: Failed to remove dead consumer '%s' from queue '%s': %v", consumer.Name, queueName, delCmd.Err())
+					apilog.Printf("Warning: Failed to remove dead consumer '%s' from queue '%s': %v", consumer.Name, queueName, delCmd.Err())
 				}
 			} else if consumer.Pending > 0 {
-				log.Printf("Skipping consumer '%s' from queue '%s' (has %d pending messages, idle for %v)", consumer.Name, queueName, consumer.Pending, idleTime)
+				apilog.Printf("Skipping consumer '%s' from queue '%s' (has %d pending messages, idle for %v)", consumer.Name, queueName, consumer.Pending, idleTime)
 			}
 		}
 	}
 
 	if cleanedCount > 0 {
-		log.Printf("Cleaned up %d dead consumer(s)", cleanedCount)
+		apilog.Printf("Cleaned up %d dead consumer(s)", cleanedCount)
 	} else {
-		log.Println("No dead consumers found to clean up")
+		apilog.Println("No dead consumers found to clean up")
 	}
 
 	return nil
@@ -165,13 +165,13 @@ func StartConsumers(ctx context.Context) error {
 		// Clean up dead consumers before starting new ones
 		_ = cleanupDeadConsumers(ctx)
 
-		log.Println("Starting task queue consumers...")
+		apilog.Println("Starting task queue consumers...")
 		err = factory.StartConsumers(ctx)
 		if err != nil {
-			log.Printf("Error starting consumers: %v", err)
+			apilog.Printf("Error starting consumers: %v", err)
 		} else {
 			consumersStarted = true
-			log.Println("Task queue consumers started successfully")
+			apilog.Println("Task queue consumers started successfully")
 		}
 	})
 	return err
@@ -184,7 +184,7 @@ func IsConsumersStarted() bool {
 
 // Close gracefully closes all consumers and cleans up resources
 func Close() error {
-	log.Println("Closing task queue consumers...")
+	apilog.Println("Closing task queue consumers...")
 	consumersStarted = false
 	_ = producerFactory.Close()
 	return factory.Close()

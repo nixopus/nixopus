@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/features/deploy/types"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 )
 
@@ -64,7 +65,7 @@ func (s *TaskService) UpdateDeploymentWithTrigger(deployment *types.UpdateDeploy
 
 	err = UpdateDeploymentQueue.Add(TaskUpdateDeployment.WithArgs(context.Background(), TaskPayload))
 	if err != nil {
-		fmt.Printf("error enqueuing update deployment: %v\n", err)
+		apilog.Errorf("error enqueuing update deployment: %v", err)
 		return shared_types.Application{}, err
 	}
 

@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"log"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 
 	telemetrytypes "github.com/nixopus/nixopus/api/internal/features/telemetry/types"
 	"github.com/nixopus/nixopus/api/internal/types"
@@ -61,9 +61,9 @@ func (s *Store) Init(ctx context.Context) error {
 
 	if s.ExtensionLoader != nil {
 		if err := s.ExtensionLoader.LoadExtensionsFromTemplates(ctx); err != nil {
-			log.Printf("Warning: Failed to load extensions from templates: %v", err)
+			apilog.Printf("Warning: Failed to load extensions from templates: %v", err)
 		} else {
-			log.Println("Extensions loaded successfully from templates")
+			apilog.Println("Extensions loaded successfully from templates")
 		}
 	}
 

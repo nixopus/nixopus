@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
 	"strings"
@@ -12,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	extservice "github.com/nixopus/nixopus/api/internal/features/extension/service"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"github.com/nixopus/nixopus/api/internal/secrets"
 	"github.com/nixopus/nixopus/api/internal/storage"
 	"github.com/nixopus/nixopus/api/internal/types"
@@ -31,8 +31,8 @@ var (
 var (
 	initNewDB            = storage.NewDB
 	initStoreInit        = defaultInitStoreInit
-	initLogFatalf        = log.Fatalf
-	initLogFatal         = log.Fatal
+	initLogFatalf        = apilog.Fatalf
+	initLogFatal         = apilog.Fatal
 	initNewSecretManager = secrets.NewSecretManager
 	// initAfterViperHook runs after initViper() in Init (tests may poison viper before Unmarshal).
 	initAfterViperHook func()
@@ -48,13 +48,13 @@ func Init() *storage.Store {
 	if secretConfig.Enabled {
 		secretManager, err := initNewSecretManager(secretConfig)
 		if err != nil {
-			log.Printf("Warning: Failed to initialize secret manager: %v. Falling back to .env files", err)
+			apilog.Printf("Warning: Failed to initialize secret manager: %v. Falling back to .env files", err)
 		} else {
 			// Load secrets with service-specific prefix (e.g., "API_", "NIXOPUS_API_")
 			prefixes := []string{"API_", "NIXOPUS_API_", ""}
 			for _, prefix := range prefixes {
 				if err := secrets.LoadSecretsIntoEnv(secretManager, prefix); err != nil {
-					log.Printf("Warning: Failed to load secrets with prefix %s: %v", prefix, err)
+					apilog.Printf("Warning: Failed to load secrets with prefix %s: %v", prefix, err)
 				}
 			}
 		}
@@ -63,7 +63,7 @@ func Init() *storage.Store {
 	// Load .env file (will be overridden by secrets if they exist)
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("Warning: .env file not found, using environment variables")
+		apilog.Println("Warning: .env file not found, using environment variables")
 	}
 
 	initViper()
@@ -87,17 +87,17 @@ func Init() *storage.Store {
 		AppConfig.Server.Port = "8080"
 	}
 
-	log.Printf("Configuration loaded successfully for environment: %s", AppConfig.App.Environment)
-
 	if err := validateConfig(AppConfig); err != nil {
 		initLogFatalf("Configuration validation failed: %v", err)
 	}
 
+	apilog.Printf("Configuration loaded successfully for environment: %s", AppConfig.App.Environment)
+
 	// Log key configuration values (without sensitive data)
-	log.Printf("Server will start on port: %s", AppConfig.Server.Port)
-	log.Printf("Database host: %s:%s", AppConfig.Database.Host, AppConfig.Database.Port)
-	log.Printf("Redis URL configured: %t", AppConfig.Redis.URL != "")
-	log.Printf("S3 image storage configured: %t", AppConfig.S3.Bucket != "")
+	apilog.Printf("Server will start on port: %s", AppConfig.Server.Port)
+	apilog.Printf("Database host: %s:%s", AppConfig.Database.Host, AppConfig.Database.Port)
+	apilog.Printf("Redis URL configured: %t", AppConfig.Redis.URL != "")
+	apilog.Printf("S3 image storage configured: %t", AppConfig.S3.Bucket != "")
 
 	storage_config := storage.Config{
 		Host:        AppConfig.Database.Host,
@@ -141,7 +141,7 @@ func initViper() {
 	configPaths := []string{}
 	if customConfigPath := os.Getenv("NIXOPUS_CONFIG_PATH"); customConfigPath != "" {
 		configPaths = append(configPaths, customConfigPath)
-		log.Printf("Using custom config path from NIXOPUS_CONFIG_PATH: %s", customConfigPath)
+		apilog.Printf("Using custom config path from NIXOPUS_CONFIG_PATH: %s", customConfigPath)
 	}
 
 	// default fallback paths
@@ -165,13 +165,13 @@ func initViper() {
 	if err := viper.ReadInConfig(); err != nil {
 		var configFileNotFoundError viper.ConfigFileNotFoundError
 		if errors.As(err, &configFileNotFoundError) {
-			log.Printf("Info: Config file '%s' not found, using environment variables", configName)
+			apilog.Printf("Info: Config file '%s' not found, using environment variables", configName)
 		} else {
-			log.Printf("Warning: Error reading config file: %v", err)
+			apilog.Printf("Warning: Error reading config file: %v", err)
 		}
-		log.Println("Using environment variables and defaults")
+		apilog.Println("Using environment variables and defaults")
 	} else {
-		log.Printf("Successfully loaded config file: %s", viper.ConfigFileUsed())
+		apilog.Printf("Successfully loaded config file: %s", viper.ConfigFileUsed())
 	}
 }
 
