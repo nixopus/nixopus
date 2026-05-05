@@ -102,7 +102,8 @@ func (router *Router) applyMiddleware(group *fuego.Server, cfg MiddlewareConfig)
 	}
 }
 
-// createServer initializes the Fuego server with global middleware and security settings
+// createServer initializes the Fuego server with global middleware and security settings.
+// HTTP limits use Fuego defaults ([http.Server] timeouts 30s; body cap matches [fuego.ReadOptions]).
 func (router *Router) createServer(port string) *fuego.Server {
 	return fuego.NewServer(
 		fuego.WithEngineOptions(
@@ -133,6 +134,7 @@ func (router *Router) createServer(port string) *fuego.Server {
 			},
 		}),
 		fuego.WithAddr(":"+port),
+		fuego.WithMaxBodySize(fuego.ReadOptions.MaxBodySize),
 		fuego.WithRouteOptions(openapi.RouteContractOption()),
 	)
 }

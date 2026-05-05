@@ -1,0 +1,75 @@
+# Workflow: Installer Tests
+# Runs the cross-distro installer test suite only when installer-related
+# files change. Each distro runs as a parallel matrix job.
+
+name: Test Nixopus Installer
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+    paths:
+      - 'installer/**'
+      - '.github/workflows/installer-test.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      installer: ${{ steps.filter.outputs.installer }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            installer:
+              - 'installer/**'
+              - '.github/workflows/installer-test.yaml'
+
+  test:
+    needs: detect-changes
+    if: |
+      always() &&
+      (needs.detect-changes.result == 'skipped' || needs.detect-changes.outputs.installer == 'true')
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - ubuntu:22.04
+          - ubuntu:24.04
+          - debian:12
+          - rockylinux:9
+          - alpine:3.20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set safe distro label
+        run: echo "DISTRO_LABEL=$(echo '${{ matrix.distro }}' | tr ':/' '-')" >> "$GITHUB_ENV"
+
+      - name: Run installer tests (${{ matrix.distro }})
+        run: bash installer/test/run-tests.sh "${{ matrix.distro }}"
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-test-logs-${{ env.DISTRO_LABEL }}
+          path: /tmp/nixopus-test-*.log
+          if-no-files-found: ignore

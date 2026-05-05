@@ -86,12 +86,12 @@ func TestValidateCreateProjectRequest_PublicGit(t *testing.T) {
 
 func TestValidateDeploymentRequest_PublicGit(t *testing.T) {
 	req := &types.CreateDeploymentRequest{
-		Name:       "sample-app",
-		Repository: "https://github.com/nixopus/sample-app.git",
-		Source:     shared_types.SourcePublicGit,
-		Branch:     "main",
-		Port:       3000,
-		BuildPack:  "dockerfile",
+		Name:        "sample-app",
+		Repository:  "https://github.com/nixopus/sample-app.git",
+		Source:      shared_types.SourcePublicGit,
+		Branch:      "main",
+		Port:        3000,
+		BuildPack:   "dockerfile",
 		Environment: "production",
 	}
 
