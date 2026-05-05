@@ -413,6 +413,57 @@ cmd_admin_bootstrap() {
     return 1
 }
 
+# Strip ANSI and redact secrets from an installer transcript (used by cmd_report).
+redact_install_log_lines() {
+    sed $'s/\e\[[0-9;]*m//g' \
+    | sed -E \
+        's/^(ADMIN_PASSWORD|DB_PASSWORD|REDIS_PASSWORD|AUTH_SERVICE_SECRET|JWT_SECRET|OPENROUTER_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|GOOGLE_GENERATIVE_AI_API_KEY|DEEPSEEK_API_KEY|GROQ_API_KEY)=.*/\1=<redacted>/' \
+    | sed -E 's/^(DATABASE_URL|REDIS_URL)=.*/\1=<redacted>/' \
+    | sed -E '/Password:/s/^(.*Password:[[:space:]]+).*/\1<redacted>/'
+}
+
+# cmd_report prints a single paste-friendly bundle (installer log + .env redacted for pasting).
+cmd_report() {
+    load_env
+    echo "=== Nixopus support report $(date -u +"%Y-%m-%dT%H:%M:%SZ") ==="
+    echo "Version: ${NIXOPUS_VERSION:-unknown}"
+    echo "Home:    $NIXOPUS_HOME"
+    echo ""
+    if [ -f "$NIXOPUS_HOME/install.log" ]; then
+        echo "=== Installer log (last 400 lines, secrets redacted) ==="
+        tail -n 400 "$NIXOPUS_HOME/install.log" 2>/dev/null | redact_install_log_lines || echo "(unreadable)"
+        echo ""
+    fi
+    echo "=== uname -a ==="
+    uname -a 2>/dev/null || true
+    if [ -f /etc/os-release ]; then
+        echo ""
+        echo "=== /etc/os-release ==="
+        cat /etc/os-release
+    fi
+    echo ""
+    echo "=== docker version (summary) ==="
+    docker version 2>/dev/null | head -40 || echo "docker not available"
+    echo ""
+    echo "=== docker compose ps -a ==="
+    dc ps -a 2>&1 || true
+    echo ""
+    echo "=== compose logs (last 120 lines, all services) ==="
+    dc logs --tail 120 --no-color 2>&1 || dc logs --tail 120 2>&1 || true
+    echo ""
+    echo "=== Redacted .env ==="
+    if [ -f "$NIXOPUS_HOME/.env" ]; then
+        sed -E \
+            's/^(ADMIN_PASSWORD|DB_PASSWORD|REDIS_PASSWORD|AUTH_SERVICE_SECRET|JWT_SECRET|OPENROUTER_API_KEY|OPENAI_API_KEY|ANTHROPIC_API_KEY|GOOGLE_GENERATIVE_AI_API_KEY|DEEPSEEK_API_KEY|GROQ_API_KEY)=.*/\1=<redacted>/' \
+            "$NIXOPUS_HOME/.env" | sed -E 's/^(DATABASE_URL|REDIS_URL)=.*/\1=<redacted>/'
+    else
+        echo "(no .env)"
+    fi
+    echo ""
+    echo "=== End of report ==="
+    echo "Tip: sudo nixopus report > /tmp/nixopus-report.txt — safe to share; review compose logs for app secrets."
+}
+
 cmd_help() {
     echo "Usage: nixopus <command> [args]"
     echo ""
@@ -433,6 +484,7 @@ cmd_help() {
     echo "  backup              Backup database and config"
     echo "  info                Show install info and status"
     echo "  admin-bootstrap     Create admin account via auth API (uses ADMIN_EMAIL/ADMIN_PASSWORD)"
+    echo "  report              Print support bundle (installer log + .env redacted)"
     echo "  help                Show this help"
 }
 
@@ -450,6 +502,7 @@ case "${1:-help}" in
     backup)    cmd_backup ;;
     info)      cmd_info ;;
     admin-bootstrap) shift; cmd_admin_bootstrap "$@" ;;
+    report) cmd_report ;;
     help|--help|-h) cmd_help ;;
     *)         echo "Unknown command: $1"; cmd_help; exit 1 ;;
 esac

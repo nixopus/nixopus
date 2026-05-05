@@ -367,6 +367,18 @@ docker exec -i nixopus-db psql -U nixopus nixopus < /opt/nixopus/backups/<timest
 
 ## Troubleshooting
 
+### Reporting install or runtime issues
+
+The installer writes a full transcript to `/opt/nixopus/install.log` (and shows the path on failure). Attach that file when asking for help, or generate a paste-friendly bundle with **`sudo nixopus report`** (redacts the installer log tail and `.env`; compose logs may still contain secrets — review before sharing):
+
+```bash
+sudo nixopus report
+# or save to a file:
+sudo nixopus report > /tmp/nixopus-report.txt
+```
+
+Installer logs may still contain API keys or passwords echoed during the run — review before sharing.
+
 ### Services fail to start after reinstall
 
 **Symptom:** `nixopus-auth` or `nixopus-api` crash-loop with database authentication errors.

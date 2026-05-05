@@ -8,6 +8,16 @@ NIXOPUS_REPO="${NIXOPUS_REPO:-nixopus/nixopus}"
 NIXOPUS_BRANCH="${NIXOPUS_BRANCH:-master}"
 REPO_RAW="${NIXOPUS_REPO_RAW:-https://raw.githubusercontent.com/${NIXOPUS_REPO}/${NIXOPUS_BRANCH}/installer}"
 INSTALL_START=$(date +%s)
+# Set in main(); full installer transcript for support (tee). On failure, path is under /tmp.
+INSTALL_LOG=""
+
+start_install_session_log() {
+    INSTALL_LOG="/tmp/nixopus-install-$(date +%Y%m%dT%H%M%S)-$$.log"
+    : >"$INSTALL_LOG"
+    chmod 600 "$INSTALL_LOG" || true
+    # Duplicate stdout/stderr to a file for copy-paste debugging.
+    exec > >(tee "$INSTALL_LOG") 2>&1
+}
 
 PREVIEW_PR=""
 PREVIEW_FORK=""
@@ -133,6 +143,18 @@ TOTAL_STEPS=6
 
 fail() {
     log_error "$1"
+    if [ -n "${INSTALL_LOG:-}" ] && [ -f "$INSTALL_LOG" ]; then
+        local log_path="$INSTALL_LOG"
+        if [ -d "${NIXOPUS_HOME:-}" ]; then
+            if cp -f "$INSTALL_LOG" "$NIXOPUS_HOME/install.log" 2>/dev/null; then
+                chmod 600 "$NIXOPUS_HOME/install.log" 2>/dev/null || true
+                log_path="$NIXOPUS_HOME/install.log"
+                rm -f "$INSTALL_LOG" 2>/dev/null || true
+            fi
+        fi
+        log_error "Installer log: $log_path"
+        log_error "Attach when asking for help (may include secrets — redact before sharing)."
+    fi
     send_telemetry "install_failure" "$1" || true
     exit 1
 }
@@ -983,6 +1005,15 @@ show_banner() {
     echo ""
 }
 
+finalize_install_session_log() {
+    [ -n "${INSTALL_LOG:-}" ] && [ -f "$INSTALL_LOG" ] || return 0
+    [ -d "${NIXOPUS_HOME:-}" ] || return 0
+    if cp -f "$INSTALL_LOG" "$NIXOPUS_HOME/install.log" 2>/dev/null; then
+        chmod 600 "$NIXOPUS_HOME/install.log" 2>/dev/null || true
+        rm -f "$INSTALL_LOG" 2>/dev/null || true
+    fi
+}
+
 show_complete() {
     local duration=$(( $(date +%s) - INSTALL_START ))
     echo ""
@@ -1035,10 +1066,13 @@ show_complete() {
     if [ "${NIXOPUS_TELEMETRY:-on}" != "off" ] && [ "${DO_NOT_TRACK:-0}" != "1" ]; then
         echo -e "  ${DIM}Anonymous telemetry enabled. Disable: NIXOPUS_TELEMETRY=off or DO_NOT_TRACK=1${NC}"
     fi
+    echo -e "  ${DIM}Problems? Attach $NIXOPUS_HOME/install.log or run: sudo nixopus report${NC}"
     echo ""
+    finalize_install_session_log
 }
 
 main() {
+    start_install_session_log
     show_banner
     send_telemetry "install_started" || true
 
