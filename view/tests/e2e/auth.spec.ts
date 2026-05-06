@@ -56,10 +56,10 @@ test.describe('Unauthenticated — login form', () => {
     await expect(link).toHaveAttribute('href', '/auth/reset-password');
   });
 
-  test('shows "Sign up" link pointing to /register', async ({ page }) => {
-    const link = page.getByRole('link', { name: /sign up/i });
-    await expect(link).toBeVisible();
-    await expect(link).toHaveAttribute('href', '/register');
+  test('does not show "Sign up" link when admin is already registered', async ({ page }) => {
+    // LoginForm receives hideRegistration={isAdminRegistered}. Since global.setup.ts
+    // seeds an admin before any test runs, the link is always hidden in this stack.
+    await expect(page.getByRole('link', { name: /sign up/i })).not.toBeVisible();
   });
 });
 
@@ -151,7 +151,7 @@ test.describe('Unauthenticated — register page', () => {
     page
   }) => {
     await page.goto('/register');
-    await expect(page.getByText(/already registered|admin account/i)).toBeVisible({
+    await expect(page.getByText('Admin Registration Already Exists')).toBeVisible({
       timeout: 15_000
     });
   });
@@ -230,6 +230,10 @@ test.describe('Unauthenticated — forgot-password page', () => {
   });
 
   test('submitting empty email shows "Email is required"', async ({ page }) => {
+    // The input carries the HTML `required` attribute, so the browser blocks form
+    // submission before the JS handler runs. Strip it first to let the React
+    // validation path execute.
+    await page.locator('input[type="email"]').evaluate((el) => el.removeAttribute('required'));
     await page.getByRole('button', { name: 'Send Reset Link' }).click();
     await expect(page.getByRole('alert').filter({ hasText: 'Email is required' })).toBeVisible();
   });
@@ -281,9 +285,8 @@ test.describe('Unauthenticated — verify-email page', () => {
 
   test('without ?token shows "Invalid verification link"', async ({ page }) => {
     await page.goto('/verify-email');
-    await expect(page.getByRole('heading', { name: 'Email Verification' })).toBeVisible({
-      timeout: 10_000
-    });
+    // CardTitle renders as <div>, not an h1–h6, so use getByText rather than getByRole('heading')
+    await expect(page.getByText('Email Verification')).toBeVisible({ timeout: 10_000 });
     await expect(page.getByText('Invalid verification link')).toBeVisible();
 
     /**
@@ -303,16 +306,13 @@ test.describe('Unauthenticated — organization-invite page', () => {
 
   test('renders the "Organization Invitation" card', async ({ page }) => {
     await page.goto('/auth/organization-invite');
-    await expect(page.getByRole('heading', { name: 'Organization Invitation' })).toBeVisible({
-      timeout: 10_000
-    });
+    // CardTitle renders as <div>, not an h1–h6, so use getByText
+    await expect(page.getByText('Organization Invitation')).toBeVisible({ timeout: 10_000 });
   });
 
   test('without a valid token shows an error state', async ({ page }) => {
     await page.goto('/auth/organization-invite');
-    await expect(page.getByRole('heading', { name: 'Organization Invitation' })).toBeVisible({
-      timeout: 10_000
-    });
+    await expect(page.getByText('Organization Invitation')).toBeVisible({ timeout: 10_000 });
     // No orgId or token in the URL — hook resolves to the error branch
     await expect(page.getByRole('button', { name: 'Back to Login' })).toBeVisible({
       timeout: 10_000
