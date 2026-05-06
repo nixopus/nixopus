@@ -77,7 +77,6 @@ test.describe('Unauthenticated — client-side validation', () => {
   test('empty form submit shows "Email is required"', async ({ page }) => {
     await page.getByRole('button', { name: 'Login' }).click();
     await expect(page.getByRole('alert').filter({ hasText: /email is required/i })).toBeVisible();
-    // No navigation — stays on /auth
     await expect(page).toHaveURL(/\/auth/);
   });
 
@@ -144,17 +143,14 @@ test.describe('Unauthenticated — register page', () => {
 
   test('/register renders without crashing', async ({ page }) => {
     await page.goto('/register');
-    // Page either shows the registration form OR the "admin already registered"
-    // state — both are valid since this is a real stack with a seeded test user.
-    // We assert the page shell is present and no error boundary has triggered.
     await expect(page.locator('body')).not.toBeEmpty();
     await expect(page.locator('text=Something went wrong')).not.toBeVisible({ timeout: 10_000 });
   });
 
-  test('/register with admin already registered shows the blocked state', async ({ page }) => {
+  test('/register shows blocked state because global.setup.ts already seeded the admin', async ({
+    page
+  }) => {
     await page.goto('/register');
-    // The seeded admin (from global.setup.ts) means admin IS registered.
-    // The page should show the "admin already registered" component, not the form.
     await expect(page.getByText(/already registered|admin account/i)).toBeVisible({
       timeout: 15_000
     });
@@ -203,8 +199,6 @@ test.describe('Authenticated — page health', () => {
 
     await page.reload();
 
-    // After reload the middleware must still see the session cookie and keep
-    // the user on /chats rather than redirecting to /auth.
     await expect(page).toHaveURL(/\/chats/, { timeout: 10_000 });
     await expect(page.locator('body')).not.toBeEmpty();
   });
@@ -221,17 +215,11 @@ test.describe('Authenticated — logout', () => {
     await page.goto('/chats');
     await expect(page).toHaveURL(/\/chats/, { timeout: 10_000 });
 
-    // Open the user menu (avatar button in the sidebar)
     await page.getByTestId('user-menu-trigger').click();
-
-    // Click "Log out" in the dropdown (exact label from user-menu.tsx)
     await page.getByRole('menuitem', { name: /log out/i }).click();
-
-    // Confirm logout in the dialog (dialog title: "Confirm Logout", button: "Logout")
     await expect(page.getByRole('dialog')).toBeVisible({ timeout: 5_000 });
     await page.getByRole('button', { name: 'Logout' }).click();
 
-    // Session cookie must be cleared — middleware redirects to /auth
     await expect(page).toHaveURL(/\/auth/, { timeout: 15_000 });
   });
 
@@ -245,7 +233,6 @@ test.describe('Authenticated — logout', () => {
     await page.getByRole('button', { name: 'Logout' }).click();
     await expect(page).toHaveURL(/\/auth/, { timeout: 15_000 });
 
-    // Now navigate to a private route — must be redirected back to /auth
     await page.goto('/chats');
     await expect(page).toHaveURL(/\/auth/, { timeout: 10_000 });
   });
