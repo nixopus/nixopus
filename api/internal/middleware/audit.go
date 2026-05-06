@@ -23,21 +23,21 @@ func AuditMiddleware(next http.Handler, app *storage.App, l logger.Logger, resou
 
 		user, ok := r.Context().Value(types.UserContextKey).(*types.User)
 		if !ok {
-			l.Log(logger.Debug, "middleware audit: skipped: no user in context", fmt.Sprintf("path=%s", r.URL.Path))
+			l.LogCtx(r.Context(), logger.Debug, "middleware audit: skipped: no user in context", fmt.Sprintf("path=%s", r.URL.Path))
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		orgIDStr, ok := r.Context().Value(types.OrganizationIDKey).(string)
 		if !ok {
-			l.Log(logger.Debug, "middleware audit: skipped: no organization in context", fmt.Sprintf("path=%s user_id=%s", r.URL.Path, user.ID))
+			l.LogCtx(r.Context(), logger.Debug, "middleware audit: skipped: no organization in context", fmt.Sprintf("path=%s user_id=%s", r.URL.Path, user.ID))
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		orgID, err := uuid.Parse(orgIDStr)
 		if err != nil {
-			l.Log(logger.Warning, "middleware audit: skipped: invalid organization id", fmt.Sprintf("path=%s user_id=%s org_id=%s error=%v", r.URL.Path, user.ID, orgIDStr, err))
+			l.LogCtx(r.Context(), logger.Warning, "middleware audit: skipped: invalid organization id", fmt.Sprintf("path=%s user_id=%s org_id=%s error=%v", r.URL.Path, user.ID, orgIDStr, err))
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -92,12 +92,13 @@ func AuditMiddleware(next http.Handler, app *storage.App, l logger.Logger, resou
 			}
 
 			// Fire audit logging asynchronously to not affect API response time
+			reqCtx := r.Context()
 			go func() {
 				if err := auditService.LogAction(auditReq); err != nil {
-					l.Log(logger.Warning, "middleware audit: failed to persist log", fmt.Sprintf("path=%s method=%s user_id=%s org_id=%s error=%v",
+					l.LogCtx(reqCtx, logger.Warning, "middleware audit: failed to persist log", fmt.Sprintf("path=%s method=%s user_id=%s org_id=%s error=%v",
 						r.URL.Path, r.Method, user.ID, orgID, err))
 				} else {
-					l.Log(logger.Debug, "middleware audit: log created", fmt.Sprintf("path=%s method=%s user_id=%s org_id=%s",
+					l.LogCtx(reqCtx, logger.Debug, "middleware audit: log created", fmt.Sprintf("path=%s method=%s user_id=%s org_id=%s",
 						r.URL.Path, r.Method, user.ID, orgID))
 				}
 			}()

@@ -1,8 +1,9 @@
 package types
 
 import (
-	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"os"
+
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 )
 
 type TimescaleConfig struct {
@@ -151,6 +152,7 @@ const AuthTokenKey ClientContext = "auth_token"
 const DBContextKey ClientContext = "db"
 const OrganizationIDKey contextKey = "organization_id"
 const ServerIDKey contextKey = "server_id"
+const RequestIDKey contextKey = "request_id"
 
 type AvailableActions string
 

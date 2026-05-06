@@ -30,8 +30,9 @@ type client struct {
 }
 
 type rateLimitResponse struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	Title  string `json:"title"`
+	Status int    `json:"status"`
+	Detail string `json:"detail"`
 }
 
 func StartCleanupTask() {
@@ -111,8 +112,9 @@ func RateLimiter(next http.Handler) http.Handler {
 			w.Header().Set("Retry-After", "1")
 			w.WriteHeader(http.StatusTooManyRequests)
 			json.NewEncoder(w).Encode(&rateLimitResponse{
-				Code:    "rate_limited",
-				Message: "The API is at capacity, try again later.",
+				Title:  "Too Many Requests",
+				Status: http.StatusTooManyRequests,
+				Detail: "The API is at capacity, try again later.",
 			})
 			return
 		}
@@ -176,8 +178,9 @@ func NewRateLimiterWithConfig(rps float64, burst int) func(http.Handler) http.Ha
 				w.Header().Set("Retry-After", "1")
 				w.WriteHeader(http.StatusTooManyRequests)
 				json.NewEncoder(w).Encode(&rateLimitResponse{
-					Code:    "rate_limited",
-					Message: "Too many requests, try again later.",
+					Title:  "Too Many Requests",
+					Status: http.StatusTooManyRequests,
+					Detail: "Too many requests, try again later.",
 				})
 				return
 			}

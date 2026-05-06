@@ -1,6 +1,9 @@
 package logger
 
 import (
+	"context"
+
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -41,28 +44,45 @@ func NewLogger() Logger {
 	}
 }
 
-// Log records a log entry with the specified severity, message, and data
+// Log records a log entry with the specified severity, message, and data.
 func (l *Logger) Log(sev Severity, msg, data string) {
+	l.logWithEntry(logrus.NewEntry(logrus.StandardLogger()), sev, msg, data)
+}
+
+// LogCtx records a log entry and automatically attaches the request_id from
+// the context set by RequestIDMiddleware. Use this instead of Log in any code
+// that has access to a request context (handlers, middleware, services called
+// from a request path).
+func (l *Logger) LogCtx(ctx context.Context, sev Severity, msg, data string) {
+	entry := logrus.NewEntry(logrus.StandardLogger())
+	if ctx != nil {
+		if id, ok := ctx.Value(types.RequestIDKey).(string); ok && id != "" {
+			entry = entry.WithField("request_id", id)
+		}
+	}
+	l.logWithEntry(entry, sev, msg, data)
+}
+
+func (l *Logger) logWithEntry(entry *logrus.Entry, sev Severity, msg, data string) {
 	l.Severity, l.Message, l.Data = sev, msg, data
 	logEntry := l.Message + " " + l.Data
 
 	if l.Env == Development {
-		switch l.Severity {
+		switch sev {
 		case Debug:
-			logrus.Debug(logEntry)
+			entry.Debug(logEntry)
 		case Info:
-			logrus.Info(logEntry)
+			entry.Info(logEntry)
 		case Warning:
-			logrus.Warn(logEntry)
+			entry.Warn(logEntry)
 		case Error:
-			logrus.Error(logEntry)
+			entry.Error(logEntry)
 		case Fatal:
-			logrus.Fatal(logEntry)
+			entry.Fatal(logEntry)
 		default:
-			logrus.Info(logEntry)
+			entry.Info(logEntry)
 		}
 	} else if l.Env == Production {
-		// here we probably need to store in a database
-		logrus.Info(l.Message)
+		entry.Info(l.Message)
 	}
 }

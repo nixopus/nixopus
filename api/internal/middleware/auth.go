@@ -126,7 +126,7 @@ func AuthMiddleware(next http.Handler, app *storage.App, c *cache.Cache, l applo
 
 		sessionResp, err := verifySessionCached(r, sessionCache)
 		if err != nil {
-			l.Log(applogger.Error, fmt.Sprintf("middleware auth: verify session failed: %v", err), fmt.Sprintf("path=%s", r.URL.Path))
+			l.LogCtx(r.Context(), applogger.Error, fmt.Sprintf("middleware auth: verify session failed: %v", err), fmt.Sprintf("path=%s", r.URL.Path))
 			utils.SendErrorResponse(w, "Unauthorized: "+err.Error(), http.StatusUnauthorized)
 			return
 		}
@@ -135,7 +135,7 @@ func AuthMiddleware(next http.Handler, app *storage.App, c *cache.Cache, l applo
 
 		userIDUUID, err := uuid.Parse(betterAuthUserID)
 		if err != nil {
-			l.Log(applogger.Error, "middleware auth: invalid Better Auth user id format", fmt.Sprintf("user_id=%s path=%s", betterAuthUserID, r.URL.Path))
+			l.LogCtx(r.Context(), applogger.Error, "middleware auth: invalid Better Auth user id format", fmt.Sprintf("user_id=%s path=%s", betterAuthUserID, r.URL.Path))
 			utils.SendErrorResponse(w, "Invalid user ID", http.StatusUnauthorized)
 			return
 		}
@@ -156,11 +156,11 @@ func AuthMiddleware(next http.Handler, app *storage.App, c *cache.Cache, l applo
 
 			if err != nil {
 				if err == sql.ErrNoRows {
-					l.Log(applogger.Error, "middleware auth: user not found in database", fmt.Sprintf("user_id=%s path=%s", betterAuthUserID, r.URL.Path))
+					l.LogCtx(r.Context(), applogger.Error, "middleware auth: user not found in database", fmt.Sprintf("user_id=%s path=%s", betterAuthUserID, r.URL.Path))
 					utils.SendErrorResponse(w, "User not found", http.StatusUnauthorized)
 					return
 				}
-				l.Log(applogger.Error, fmt.Sprintf("middleware auth: user lookup failed: %v", err), fmt.Sprintf("user_id=%s path=%s", betterAuthUserID, r.URL.Path))
+				l.LogCtx(r.Context(), applogger.Error, fmt.Sprintf("middleware auth: user lookup failed: %v", err), fmt.Sprintf("user_id=%s path=%s", betterAuthUserID, r.URL.Path))
 				utils.SendErrorResponse(w, "Failed to fetch user", http.StatusInternalServerError)
 				return
 			}
@@ -178,7 +178,7 @@ func AuthMiddleware(next http.Handler, app *storage.App, c *cache.Cache, l applo
 		if !isAuthEndpoint(r.URL.Path) {
 			organizationID, err := resolveAndVerifyOrganization(ctx, r, c, app, betterAuthUserID, sessionResp, l)
 			if err != nil {
-				l.Log(applogger.Error, fmt.Sprintf("middleware auth: resolve organization failed: %v", err), fmt.Sprintf("path=%s user_id=%s", r.URL.Path, betterAuthUserID))
+				l.LogCtx(r.Context(), applogger.Error, fmt.Sprintf("middleware auth: resolve organization failed: %v", err), fmt.Sprintf("path=%s user_id=%s", r.URL.Path, betterAuthUserID))
 				statusCode := http.StatusBadRequest
 				if strings.Contains(err.Error(), "does not belong") {
 					statusCode = http.StatusForbidden
@@ -208,20 +208,20 @@ func tryM2MJWTAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, 
 
 	orgID, err := validateM2MJWT(ctx, token, r.Header.Get("X-Organization-Id"))
 	if err != nil {
-		l.Log(applogger.Info, "middleware auth: M2M JWT validation failed, using session auth", fmt.Sprintf("path=%s error=%v", r.URL.Path, err))
+		l.LogCtx(r.Context(), applogger.Info, "middleware auth: M2M JWT validation failed, using session auth", fmt.Sprintf("path=%s error=%v", r.URL.Path, err))
 		return false
 	}
 
 	userIDStr := r.Header.Get("X-User-Id")
 	if userIDStr == "" {
-		l.Log(applogger.Error, "middleware auth: M2M request missing X-User-Id", fmt.Sprintf("path=%s", r.URL.Path))
+		l.LogCtx(r.Context(), applogger.Error, "middleware auth: M2M request missing X-User-Id", fmt.Sprintf("path=%s", r.URL.Path))
 		utils.SendErrorResponse(w, "M2M requests require X-User-Id header", http.StatusUnauthorized)
 		return true
 	}
 
 	userUUID, err := uuid.Parse(userIDStr)
 	if err != nil {
-		l.Log(applogger.Error, "middleware auth: invalid X-User-Id", fmt.Sprintf("user_id=%q path=%s", userIDStr, r.URL.Path))
+		l.LogCtx(r.Context(), applogger.Error, "middleware auth: invalid X-User-Id", fmt.Sprintf("user_id=%q path=%s", userIDStr, r.URL.Path))
 		utils.SendErrorResponse(w, "Invalid X-User-Id format", http.StatusUnauthorized)
 		return true
 	}
@@ -229,7 +229,7 @@ func tryM2MJWTAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, 
 	var user types.User
 	err = app.Store.DB.NewSelect().Model(&user).Where("id = ?", userUUID).Scan(ctx)
 	if err != nil {
-		l.Log(applogger.Error, fmt.Sprintf("middleware auth: M2M user lookup failed: %v", err), fmt.Sprintf("user_id=%s path=%s", userIDStr, r.URL.Path))
+		l.LogCtx(r.Context(), applogger.Error, fmt.Sprintf("middleware auth: M2M user lookup failed: %v", err), fmt.Sprintf("user_id=%s path=%s", userIDStr, r.URL.Path))
 		utils.SendErrorResponse(w, "User not found", http.StatusUnauthorized)
 		return true
 	}
@@ -310,7 +310,7 @@ func resolveAndVerifyOrganization(
 				Limit(1).
 				Scan(ctx)
 			if dbErr == nil && member.OrganizationID != uuid.Nil {
-				l.Log(applogger.Info, "middleware auth: resolved org from DB (session missing activeOrganizationId)", fmt.Sprintf("user_id=%s organization_id=%s", betterAuthUserID, member.OrganizationID))
+				l.LogCtx(ctx, applogger.Info, "middleware auth: resolved org from DB (session missing activeOrganizationId)", fmt.Sprintf("user_id=%s organization_id=%s", betterAuthUserID, member.OrganizationID))
 				return member.OrganizationID.String(), nil
 			}
 		}
