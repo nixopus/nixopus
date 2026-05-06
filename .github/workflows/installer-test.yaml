@@ -1,0 +1,102 @@
+# Workflow: Installer Tests
+# Jobs:
+#   unit-test  — bats unit tests (fast, no Docker, runs on every installer change)
+#   test       — cross-distro integration matrix (Docker-in-Docker, 5 distros)
+
+name: Test Nixopus Installer
+
+on:
+  pull_request:
+    branches: [master]
+    paths:
+      - 'installer/**'
+      - '.github/workflows/installer-test.yaml'
+  push:
+    branches: [master]
+    paths:
+      - 'installer/**'
+      - '.github/workflows/installer-test.yaml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      installer: ${{ steps.filter.outputs.installer }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            installer:
+              - 'installer/**'
+              - '.github/workflows/installer-test.yaml'
+
+  unit-test:
+    needs: detect-changes
+    if: |
+      always() &&
+      (needs.detect-changes.result == 'skipped' || needs.detect-changes.outputs.installer == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y bats
+
+      - name: Run bats unit tests
+        run: bash installer/test/run-unit-tests.sh
+
+  test:
+    needs: [detect-changes, unit-test]
+    if: |
+      always() &&
+      needs.unit-test.result == 'success' &&
+      (needs.detect-changes.result == 'skipped' || needs.detect-changes.outputs.installer == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        distro:
+          - ubuntu:22.04
+          - ubuntu:24.04
+          - debian:12
+          - rockylinux:9
+          - alpine:3.20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set safe distro label
+        run: echo "DISTRO_LABEL=$(echo '${{ matrix.distro }}' | tr ':/' '-')" >> "$GITHUB_ENV"
+
+      - name: Run installer tests (${{ matrix.distro }})
+        run: bash installer/test/run-tests.sh "${{ matrix.distro }}"
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-test-logs-${{ env.DISTRO_LABEL }}
+          path: /tmp/nixopus-test-*.log
+          if-no-files-found: ignore
+          retention-days: 14

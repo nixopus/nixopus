@@ -1,10 +1,11 @@
 package queue
 
 import (
-	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestReplyMux_RegisterAndRemoveWaiter(t *testing.T) {

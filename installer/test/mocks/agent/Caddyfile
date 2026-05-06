@@ -1,4 +1,6 @@
 :4090 {
+    # External Caddy proxies /agent/* preserving the path segment.
+    respond /agent/healthz `{"status":"ok"}` 200
     respond /healthz `{"status":"ok"}` 200
     respond /readyz `{"status":"ready","checks":{"database":{"ok":true}}}` 200
     respond * `{"mock":"nixopus-agent"}` 200
