@@ -253,7 +253,7 @@ load_fn() {
 @test "gen_password: contains special character" {
     load_fn
     pw=$(gen_password)
-    [[ "$pw" =~ [!@#%^\&*] ]]
+    [[ "$pw" =~ [@#%!^*] ]]
 }
 
 @test "gen_password: two calls produce different passwords" {

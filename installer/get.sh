@@ -336,14 +336,15 @@ gen_secret() { openssl rand -hex 32; }
 # validation rules (>=8 chars, 1 upper, 1 lower, 1 digit, 1 special).
 # Special set is restricted to characters that are JSON- and shell-safe so
 # the resulting value can be embedded in .env and curl payloads without
-# escaping headaches.
+# escaping headaches.  Exclude & ; | etc. — unquoted .env lines must remain
+# valid when sourced by nixopus.sh under set -u (see load_env).
 gen_password() {
     local upper lower digit special rest combined
     upper=$(LC_ALL=C tr -dc 'A-Z'             </dev/urandom 2>/dev/null | head -c 1)
     lower=$(LC_ALL=C tr -dc 'a-z'             </dev/urandom 2>/dev/null | head -c 1)
     digit=$(LC_ALL=C tr -dc '0-9'             </dev/urandom 2>/dev/null | head -c 1)
-    special=$(LC_ALL=C tr -dc '!@#%^&*'       </dev/urandom 2>/dev/null | head -c 1)
-    rest=$(LC_ALL=C tr -dc 'A-Za-z0-9!@#%^&*' </dev/urandom 2>/dev/null | head -c 12)
+    special=$(LC_ALL=C tr -dc '!@#%^*'       </dev/urandom 2>/dev/null | head -c 1)
+    rest=$(LC_ALL=C tr -dc 'A-Za-z0-9!@#%^*' </dev/urandom 2>/dev/null | head -c 12)
     combined="${upper}${lower}${digit}${special}${rest}"
     echo "$combined" | fold -w1 | shuf | tr -d '\n'
 }
