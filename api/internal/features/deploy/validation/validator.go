@@ -79,6 +79,9 @@ func validateDeploymentRequest(req *types.CreateDeploymentRequest) error {
 	if req.BuildPack == "" {
 		return errors.New("build_pack is required")
 	}
+	if !shared_types.IsValidBuildPack(string(req.BuildPack)) {
+		return types.ErrInvalidBuildPack
+	}
 	if req.Repository == "" {
 		return errors.New("repository is required")
 	}
@@ -105,6 +108,9 @@ func validateDeploymentRequest(req *types.CreateDeploymentRequest) error {
 }
 
 func validateUpdateDeploymentRequest(req *types.UpdateDeploymentRequest) error {
+	if req.ID == uuid.Nil {
+		return types.ErrMissingID
+	}
 	if req.Name != "" {
 		if len(req.Name) < 3 {
 			return errors.New("name must be at least 3 characters")

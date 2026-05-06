@@ -306,6 +306,289 @@ func TestFetchPaginatedRepositories_BadJSON(t *testing.T) {
 // sortRepositories
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// fetchAllAndFilter — additional coverage
+// ---------------------------------------------------------------------------
+
+func TestFetchAllAndFilter_APIError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("internal error"))
+	}))
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	_, _, err := api.fetchAllAndFilter("tok", 1, 10, "search", "", "")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "GitHub API error")
+}
+
+func TestFetchAllAndFilter_BadJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("not valid json {"))
+	}))
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	_, _, err := api.fetchAllAndFilter("tok", 1, 10, "search", "", "")
+	assert.Error(t, err)
+}
+
+// TestFetchAllAndFilter_MultiPage triggers the currentPage++ path by returning a full
+// page (100 repos) with total_count > 100, forcing a second request.
+func TestFetchAllAndFilter_MultiPage(t *testing.T) {
+	repos := make([]shared_types.GithubRepository, 100)
+	for i := range repos {
+		repos[i] = shared_types.GithubRepository{ID: uint64(i + 1), Name: "repo"}
+	}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"total_count":  101,
+			"repositories": repos,
+		})
+	}))
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	got, total, err := api.fetchAllAndFilter("tok", 1, 10, "repo", "", "")
+	assert.NoError(t, err)
+	assert.Equal(t, 200, total) // two pages × 100 repos, all match "repo"
+	assert.Len(t, got, 10)
+}
+
+// TestFetchAllAndFilter_DescriptionMatch covers the description-based filter branch.
+func TestFetchAllAndFilter_DescriptionMatch(t *testing.T) {
+	desc := "find-me"
+	repos := []shared_types.GithubRepository{
+		{ID: 1, Name: "no-match-name", Description: &desc},
+		{ID: 2, Name: "also-no-match"},
+	}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"total_count":  2,
+			"repositories": repos,
+		})
+	}))
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	got, total, err := api.fetchAllAndFilter("tok", 1, 10, "find-me", "", "")
+	assert.NoError(t, err)
+	assert.Equal(t, 1, total)
+	assert.Len(t, got, 1)
+	assert.Equal(t, "no-match-name", got[0].Name)
+}
+
+// TestFetchAllAndFilter_RequestCreationError covers the http.NewRequest error path
+// by using a URL with a control byte, which url.Parse rejects.
+func TestFetchAllAndFilter_RequestCreationError(t *testing.T) {
+	prev := APIBaseURL
+	SetAPIBaseURL("\x00://invalid")
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	_, _, err := api.fetchAllAndFilter("tok", 1, 10, "search", "", "")
+	assert.Error(t, err)
+}
+
+// TestFetchAllAndFilter_ClientDoError covers the client.Do network-error path.
+func TestFetchAllAndFilter_ClientDoError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	srv.Close() // close immediately so all connections are refused
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	_, _, err := api.fetchAllAndFilter("tok", 1, 10, "search", "", "")
+	assert.Error(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// fetchAllSortAndPaginate — additional coverage
+// ---------------------------------------------------------------------------
+
+func TestFetchAllSortAndPaginate_APIError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("server error"))
+	}))
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	_, _, err := api.fetchAllSortAndPaginate("tok", 1, 10, "name", "asc")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "GitHub API error")
+}
+
+func TestFetchAllSortAndPaginate_BadJSON(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("not valid json {"))
+	}))
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	_, _, err := api.fetchAllSortAndPaginate("tok", 1, 10, "name", "asc")
+	assert.Error(t, err)
+}
+
+// TestFetchAllSortAndPaginate_MultiPage triggers the currentPage++ path.
+func TestFetchAllSortAndPaginate_MultiPage(t *testing.T) {
+	repos := make([]shared_types.GithubRepository, 100)
+	for i := range repos {
+		repos[i] = shared_types.GithubRepository{ID: uint64(i + 1), Name: "repo"}
+	}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"total_count":  101,
+			"repositories": repos,
+		})
+	}))
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	got, total, err := api.fetchAllSortAndPaginate("tok", 1, 10, "name", "asc")
+	assert.NoError(t, err)
+	assert.Equal(t, 200, total)
+	assert.Len(t, got, 10)
+}
+
+// TestFetchAllSortAndPaginate_StartBeyondTotal covers the start>totalCount clamping.
+func TestFetchAllSortAndPaginate_StartBeyondTotal(t *testing.T) {
+	repos := []shared_types.GithubRepository{{ID: 1, Name: "alpha"}, {ID: 2, Name: "beta"}}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"total_count":  2,
+			"repositories": repos,
+		})
+	}))
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	got, total, err := api.fetchAllSortAndPaginate("tok", 100, 10, "name", "asc")
+	assert.NoError(t, err)
+	assert.Equal(t, 2, total)
+	assert.Empty(t, got)
+}
+
+func TestFetchAllSortAndPaginate_RequestCreationError(t *testing.T) {
+	prev := APIBaseURL
+	SetAPIBaseURL("\x00://invalid")
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	_, _, err := api.fetchAllSortAndPaginate("tok", 1, 10, "name", "asc")
+	assert.Error(t, err)
+}
+
+func TestFetchAllSortAndPaginate_ClientDoError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	_, _, err := api.fetchAllSortAndPaginate("tok", 1, 10, "name", "asc")
+	assert.Error(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// fetchPaginatedRepositories — additional coverage
+// ---------------------------------------------------------------------------
+
+func TestFetchPaginatedRepositories_RequestCreationError(t *testing.T) {
+	prev := APIBaseURL
+	SetAPIBaseURL("\x00://invalid")
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	_, _, err := api.fetchPaginatedRepositories("tok", 1, 10)
+	assert.Error(t, err)
+}
+
+func TestFetchPaginatedRepositories_ClientDoError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	api := &API{Logger: testutil.NewLogger()}
+	_, _, err := api.fetchPaginatedRepositories("tok", 1, 10)
+	assert.Error(t, err)
+}
+
+// ---------------------------------------------------------------------------
+// GetRepositoriesPaginated — connector-found-but-empty-installation edge case
+// ---------------------------------------------------------------------------
+
+// TestGetRepositoriesPaginated_ConnectorIDFoundButEmptyInstallation covers the path
+// where a connector is matched by specific ID but has an empty InstallationID.
+func TestGetRepositoriesPaginated_ConnectorIDFoundButEmptyInstallation(t *testing.T) {
+	userID := uuid.New()
+	connector := connectorWithInstall(userID)
+	connector.InstallationID = "" // matched by ID but has no installation
+
+	mockSt := testutil.NewMockGithubConnectorStorage()
+	mockSt.On("GetAllConnectors", userID.String()).Return([]shared_types.GithubConnector{connector}, nil)
+
+	api := newAPI(mockSt)
+	_, _, err := api.GetRepositoriesPaginated(userID.String(), 1, 10, connector.ID.String(), "", "", "")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "connector has no installation_id")
+	mockSt.AssertExpectations(t)
+}
+
+// ---------------------------------------------------------------------------
+// sortRepositories
+// ---------------------------------------------------------------------------
+
 func TestSortRepositories_Empty(t *testing.T) {
 	a := &API{}
 	assert.Empty(t, a.sortRepositories(nil, "name", "asc"))

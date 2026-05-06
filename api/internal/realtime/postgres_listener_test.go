@@ -145,17 +145,25 @@ func TestHandleNotifications_invalidJSON_skips(t *testing.T) {
 
 func TestHandleNotifications_liveDev(t *testing.T) {
 	s := newTestSocketServer()
-	var gotCh, gotPay string
+	type pair struct{ ch, pay string }
+	done := make(chan pair, 1)
 	s.SetLiveDevHandler(func(ch, pay string) {
-		gotCh, gotPay = ch, pay
+		select {
+		case done <- pair{ch, pay}:
+		default:
+		}
 	})
 	ch := make(chan *PostgresNotification, 1)
 	go s.handleNotifications(ch)
 	ch <- &PostgresNotification{Channel: "live_dev_logs", Payload: "hello"}
 	close(ch)
-	time.Sleep(20 * time.Millisecond)
-	if gotCh != "live_dev_logs" || gotPay != "hello" {
-		t.Fatalf("got %q %q", gotCh, gotPay)
+	select {
+	case got := <-done:
+		if got.ch != "live_dev_logs" || got.pay != "hello" {
+			t.Fatalf("got %q %q", got.ch, got.pay)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timeout waiting for live dev handler")
 	}
 }
 

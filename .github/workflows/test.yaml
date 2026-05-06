@@ -1,6 +1,6 @@
 # Workflow: Go Tests
-# Runs all Go unit and integration tests using docker-compose-test.yml
-# for Postgres, Redis, and Better Auth services
+# Quality gate (vet + race unit tests + coverage) is temporarily disabled.
+# Runs full integration tests against Postgres, Redis, and Better Auth services.
 
 name: Test Nixopus API
 
@@ -46,6 +46,51 @@ jobs:
               - 'docker-compose-test.yml'
               - '.github/workflows/test.yaml'
 
+  # Fast quality gate — no infrastructure required.
+  # Disabled temporarily; restore needs + test.if check below when re-enabled.
+  quality-gate:
+    if: false
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          check-latest: true
+          cache: true
+          cache-dependency-path: api/go.sum
+
+      - name: Vet
+        working-directory: api
+        run: go vet ./...
+
+      - name: Unit tests (race detector + coverage)
+        working-directory: api
+        run: |
+          go test -race -coverprofile=coverage.out -covermode=atomic \
+            ./internal/features/... \
+            -count=1 -timeout 300s
+
+      - name: Enforce coverage threshold (≥80%)
+        working-directory: api
+        run: |
+          TOTAL=$(go tool cover -func=coverage.out | tail -1 | awk '{print $3}' | tr -d '%')
+          echo "Unit test coverage: ${TOTAL}%"
+          if awk "BEGIN {exit !(${TOTAL} + 0 < 80)}"; then
+            echo "FAIL: coverage ${TOTAL}% is below the 80% threshold"
+            exit 1
+          fi
+          echo "PASS: coverage ${TOTAL}% meets the 80% threshold"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: api/coverage.out
+          retention-days: 7
+
   test:
     needs: detect-changes
     if: |
@@ -61,7 +106,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.25'
           check-latest: true
           cache: true
           cache-dependency-path: api/go.sum
@@ -104,7 +149,7 @@ jobs:
             exit 1
           fi
 
-      - name: Run tests
+      - name: Run integration tests (race detector)
         working-directory: api
         env:
           DB_HOST: localhost
@@ -114,7 +159,7 @@ jobs:
           DB_NAME: nixopus_test
           REDIS_URL: redis://localhost:6379
           AUTH_SERVICE_URL: http://localhost:9090
-        run: go test -p 1 ./... -v -count=1
+        run: go test -race -p 1 ./... -v -count=1
 
       - name: Collect logs on failure
         if: failure()

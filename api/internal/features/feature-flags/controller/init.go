@@ -60,6 +60,10 @@ func (c *FeatureFlagController) UpdateFeatureFlag(f fuego.ContextWithBody[shared
 		return nil, err
 	}
 
+	if len(req.FeatureName) > 255 {
+		return nil, fuego.BadRequestError{Detail: "feature_name must not exceed 255 characters"}
+	}
+
 	ctxStr = fmt.Sprintf("org_id=%s feature_name=%s is_enabled=%t", organizationID, req.FeatureName, req.IsEnabled)
 	if err = c.service.UpdateFeatureFlag(organizationID, req); err != nil {
 		c.logger.Log(logger.Error, fmt.Sprintf("feature flags: UpdateFeatureFlag: %v", err), ctxStr)

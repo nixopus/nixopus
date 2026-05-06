@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/config"
 	"github.com/nixopus/nixopus/api/internal/features/github-connector/testutil"
 	gctypes "github.com/nixopus/nixopus/api/internal/features/github-connector/types"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
@@ -300,6 +301,59 @@ func TestGetAllConnectors_Passthrough(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, connectors, got)
 	mockSt.AssertExpectations(t)
+}
+
+// ---------------------------------------------------------------------------
+// Config-fallback coverage for CreateConnector and GenerateJwt
+// ---------------------------------------------------------------------------
+
+// TestCreateConnector_FallbackToConfig covers connectors.go lines 35-40: the path
+// where the request has empty AppID/Pem but global config provides them.
+func TestCreateConnector_FallbackToConfig(t *testing.T) {
+	prevGH := config.AppConfig.GitHub
+	t.Cleanup(func() { config.AppConfig.GitHub = prevGH })
+	config.AppConfig.GitHub = shared_types.GitHubConfig{
+		AppID:         "fallback-app",
+		Pem:           "fallback-pem",
+		Slug:          "fallback-slug",
+		ClientID:      "fallback-cid",
+		ClientSecret:  "fallback-cs",
+		WebhookSecret: "fallback-ws",
+	}
+
+	userID := uuid.New().String()
+	mockSt := testutil.NewMockGithubConnectorStorage()
+	mockSt.On("CreateConnector", mock.AnythingOfType("*types.GithubConnector")).Return(nil)
+
+	api := newAPI(mockSt)
+	err := api.CreateConnector(&gctypes.CreateGithubConnectorRequest{
+		InstallationID: "install-99",
+		// AppID and Pem intentionally empty → falls back to config
+	}, userID)
+	assert.NoError(t, err)
+
+	created := mockSt.LastConnector()
+	assert.Equal(t, "fallback-app", created.AppID)
+	assert.Equal(t, "fallback-pem", created.Pem)
+	assert.Equal(t, "fallback-slug", created.Slug)
+	assert.Equal(t, "fallback-cid", created.ClientID)
+	assert.Equal(t, "fallback-cs", created.ClientSecret)
+	assert.Equal(t, "fallback-ws", created.WebhookSecret)
+	mockSt.AssertExpectations(t)
+}
+
+// TestGenerateJwt_FallbackToConfig covers jwt.go lines 69-70: when the connector has
+// empty credentials, GenerateJwt falls back to global config.
+func TestGenerateJwt_FallbackToConfig(t *testing.T) {
+	prevGH := config.AppConfig.GitHub
+	t.Cleanup(func() { config.AppConfig.GitHub = prevGH })
+	config.AppConfig.GitHub = shared_types.GitHubConfig{
+		AppID: "config-app-id",
+		Pem:   generateTestPrivateKey(),
+	}
+
+	token := GenerateJwt(&shared_types.GithubConnector{AppID: "", Pem: ""})
+	assert.NotEmpty(t, token)
 }
 
 func TestGetAllConnectors_Error(t *testing.T) {

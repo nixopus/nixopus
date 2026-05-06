@@ -310,11 +310,82 @@ func TestDispatcher_isAgentEnabledForOrg(t *testing.T) {
 	ctx := context.Background()
 	orgID := uuid.New()
 	insertOrgSettingsAI(t, db, orgID, true)
+	orgDisabled := uuid.New()
+	insertOrgSettingsAI(t, db, orgDisabled, false)
 	d := NewDispatcher(db, ctx, logger.NewLogger(), nil)
 
 	assert.False(t, d.isAgentEnabledForOrg("not-a-uuid"))
 	assert.False(t, d.isAgentEnabledForOrg(uuid.New().String()))
 	assert.True(t, d.isAgentEnabledForOrg(orgID.String()))
+	assert.False(t, d.isAgentEnabledForOrg(orgDisabled.String()))
+}
+
+func TestCreateSMTPConfigRequest_String(t *testing.T) {
+	orgID := uuid.New()
+	r := CreateSMTPConfigRequest{
+		Host:           "smtp.example.com",
+		Port:           587,
+		Username:       "user@example.com",
+		FromName:       "Nixopus",
+		FromEmail:      "noreply@example.com",
+		OrganizationID: orgID,
+	}
+	s := r.String()
+	assert.Contains(t, s, "smtp.example.com")
+	assert.Contains(t, s, "587")
+	assert.Contains(t, s, "user@example.com")
+	assert.Contains(t, s, orgID.String())
+}
+
+func TestNewSMTPConfig(t *testing.T) {
+	userID := uuid.New()
+	orgID := uuid.New()
+
+	t.Run("with_from_email_and_from_name", func(t *testing.T) {
+		req := &CreateSMTPConfigRequest{
+			Host:           "smtp.example.com",
+			Port:           587,
+			Username:       "user@example.com",
+			Password:       "secret",
+			FromName:       "Nixopus",
+			FromEmail:      "noreply@example.com",
+			OrganizationID: orgID,
+		}
+		cfg := NewSMTPConfig(req, userID)
+		assert.Equal(t, "noreply@example.com", cfg.FromEmail)
+		assert.Equal(t, "Nixopus", cfg.FromName)
+		assert.Equal(t, userID, cfg.UserID)
+		assert.Equal(t, orgID, cfg.OrganizationID)
+	})
+
+	t.Run("defaults_from_email_to_username", func(t *testing.T) {
+		req := &CreateSMTPConfigRequest{
+			Host:           "smtp.example.com",
+			Port:           587,
+			Username:       "user@example.com",
+			Password:       "secret",
+			OrganizationID: orgID,
+		}
+		cfg := NewSMTPConfig(req, userID)
+		assert.Equal(t, "user@example.com", cfg.FromEmail)
+		assert.Equal(t, "user", cfg.FromName)
+	})
+}
+
+func TestCategory_OpenAPI(t *testing.T) {
+	var c Category = ActivityCategory
+
+	schemaTypes := c.OpenAPISchemaType()
+	assert.Equal(t, []string{"string"}, schemaTypes)
+
+	enums := c.OpenAPISchemaEnum()
+	assert.Contains(t, enums, string(ActivityCategory))
+	assert.Contains(t, enums, string(SecurityCategory))
+	assert.Contains(t, enums, string(UpdateCategory))
+
+	desc := c.Description()
+	assert.NotEmpty(t, desc)
+	assert.Contains(t, desc, "activity")
 }
 
 func TestDispatcher_SendDirect(t *testing.T) {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/github-connector/service/git"
 	"github.com/nixopus/nixopus/api/internal/features/github-connector/testutil"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/ssh"
@@ -15,6 +16,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+type mockGitClient struct {
+	removeErr error
+}
+
+func (m *mockGitClient) Clone(string, string) error                       { return nil }
+func (m *mockGitClient) Pull(string, string) error                        { return nil }
+func (m *mockGitClient) SetHeadToCommitHash(string, string, string) error { return nil }
+func (m *mockGitClient) SwitchBranch(string, string) error                { return nil }
+func (m *mockGitClient) HasUncommittedChanges(string) (bool, error)       { return false, nil }
+func (m *mockGitClient) Stash(string) (string, error)                     { return "", nil }
+func (m *mockGitClient) ApplyStash(string, string) error                  { return nil }
+func (m *mockGitClient) ResetHard(string) error                           { return nil }
+func (m *mockGitClient) RemoveRepository(string) error                    { return m.removeErr }
 
 // ---------------------------------------------------------------------------
 // NewGithubConnectorService / init wiring
@@ -41,6 +56,24 @@ func TestRemoveRepository_ErrorWithoutContext(t *testing.T) {
 	svc := NewGithubConnectorService(nil, context.Background(), logger.NewLogger(), testutil.NewMockGithubConnectorStorage())
 	err := svc.RemoveRepository(context.Background(), "/some/path")
 	assert.Error(t, err)
+}
+
+func TestRemoveRepository_UsesProvidedGitClient(t *testing.T) {
+	svc := NewGithubConnectorService(nil, context.Background(), logger.NewLogger(), testutil.NewMockGithubConnectorStorage())
+	svc.gitClientProvider = func(context.Context) (git.Git, error) {
+		return &mockGitClient{}, nil
+	}
+
+	err := svc.RemoveRepository(context.Background(), "/some/path")
+	require.NoError(t, err)
+}
+
+func TestCreateAuthenticatedRepoURL_DelegatesToGithubPackage(t *testing.T) {
+	svc := NewGithubConnectorService(nil, context.Background(), logger.NewLogger(), testutil.NewMockGithubConnectorStorage())
+
+	got, err := svc.CreateAuthenticatedRepoURL("https://github.com/nixopus/nixopus.git", "token-123")
+	require.NoError(t, err)
+	assert.Equal(t, "https://oauth2:token-123@github.com/nixopus/nixopus.git", got)
 }
 
 // ---------------------------------------------------------------------------

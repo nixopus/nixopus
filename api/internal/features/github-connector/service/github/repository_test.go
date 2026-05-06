@@ -492,6 +492,210 @@ func TestGetRepositoryFileContent_NumericRepoID(t *testing.T) {
 // LatestCommitHash
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// GetRepositoryBranches — numeric repo ID path
+// ---------------------------------------------------------------------------
+
+// TestGetRepositoryBranches_NumericIDSuccess covers the path where repositoryName is a
+// numeric string; GetRepositoryByID is called and repoFullName is set from the result.
+func TestGetRepositoryBranches_NumericIDSuccess(t *testing.T) {
+	userID := uuid.New().String()
+	connector := makeConnectorAt(uuid.MustParse(userID))
+	connector.InstallationID = "67890"
+	repo := shared_types.GithubRepository{ID: 42, FullName: "owner/test-repo", Name: "test-repo"}
+	expectedBranches := []shared_types.GithubRepositoryBranch{{Name: "main"}}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/app/installations/67890/access_tokens" {
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(map[string]string{"token": "tok"})
+			return
+		}
+		if r.URL.Path == "/repositories/42" {
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(repo)
+			return
+		}
+		if r.URL.Path == "/repos/owner/test-repo/branches" {
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(expectedBranches)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	mockSt := testutil.NewMockGithubConnectorStorage()
+	// GetRepositoryBranches itself + inner GetRepositoryByID each call GetAllConnectors.
+	mockSt.On("GetAllConnectors", userID).Return([]shared_types.GithubConnector{connector}, nil).Times(2)
+
+	api := newAPI(mockSt)
+	branches, err := api.GetRepositoryBranches(userID, "42")
+	assert.NoError(t, err)
+	assert.Equal(t, expectedBranches, branches)
+	mockSt.AssertExpectations(t)
+}
+
+// TestGetRepositoryBranches_NumericIDGetRepoError covers the error path when
+// GetRepositoryByID fails for a numeric repositoryName.
+func TestGetRepositoryBranches_NumericIDGetRepoError(t *testing.T) {
+	userID := uuid.New().String()
+	connector := makeConnectorAt(uuid.MustParse(userID))
+	connector.InstallationID = "67890"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/app/installations/67890/access_tokens" {
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(map[string]string{"token": "tok"})
+			return
+		}
+		if r.URL.Path == "/repositories/42" {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(map[string]string{"message": "Not Found"})
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	mockSt := testutil.NewMockGithubConnectorStorage()
+	mockSt.On("GetAllConnectors", userID).Return([]shared_types.GithubConnector{connector}, nil).Times(2)
+
+	api := newAPI(mockSt)
+	_, err := api.GetRepositoryBranches(userID, "42")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get repository details")
+	mockSt.AssertExpectations(t)
+}
+
+// ---------------------------------------------------------------------------
+// GetRepositoryFileContent — additional error paths
+// ---------------------------------------------------------------------------
+
+// TestGetRepositoryFileContent_TokenFailure covers the InstallationToken error path
+// inside GetRepositoryFileContent (connector has a valid PEM, but the server returns 401).
+func TestGetRepositoryFileContent_TokenFailure(t *testing.T) {
+	userID := uuid.New()
+	connector := makeConnector(userID)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	mockSt := testutil.NewMockGithubConnectorStorage()
+	mockSt.On("GetAllConnectors", userID.String()).Return([]shared_types.GithubConnector{connector}, nil)
+
+	api := newAPI(mockSt)
+	_, err := api.GetRepositoryFileContent(userID.String(), "owner/repo", "main", "file.txt")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get installation token")
+	mockSt.AssertExpectations(t)
+}
+
+// TestGetRepositoryFileContent_NumericIDGetRepoError covers the GetRepositoryByID
+// failure path when a numeric repository ID is provided.
+func TestGetRepositoryFileContent_NumericIDGetRepoError(t *testing.T) {
+	userID := uuid.New()
+	connector := makeConnector(userID)
+
+	srv := tokenServer(func(mux *http.ServeMux) {
+		mux.HandleFunc("/repositories/99", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		})
+	})
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	mockSt := testutil.NewMockGithubConnectorStorage()
+	// GetRepositoryFileContent + inner GetRepositoryByID both call GetAllConnectors.
+	mockSt.On("GetAllConnectors", userID.String()).Return([]shared_types.GithubConnector{connector}, nil).Times(2)
+
+	api := newAPI(mockSt)
+	_, err := api.GetRepositoryFileContent(userID.String(), "99", "main", "file.txt")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to resolve repository ID")
+	mockSt.AssertExpectations(t)
+}
+
+// TestGetRepositoryFileContent_BadJSONBody covers the JSON decode error path when the
+// GitHub Contents API returns 200 with a non-JSON body.
+func TestGetRepositoryFileContent_BadJSONBody(t *testing.T) {
+	userID := uuid.New()
+	connector := makeConnector(userID)
+
+	srv := tokenServer(func(mux *http.ServeMux) {
+		mux.HandleFunc("/repos/owner/repo/contents/file.txt", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("not valid json"))
+		})
+	})
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	mockSt := testutil.NewMockGithubConnectorStorage()
+	mockSt.On("GetAllConnectors", userID.String()).Return([]shared_types.GithubConnector{connector}, nil)
+
+	api := newAPI(mockSt)
+	_, err := api.GetRepositoryFileContent(userID.String(), "owner/repo", "main", "file.txt")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to decode GitHub response")
+	mockSt.AssertExpectations(t)
+}
+
+// TestGetRepositoryFileContent_BadBase64Content covers the base64 decode error path
+// when the API returns encoding=base64 but the content is not valid base64.
+func TestGetRepositoryFileContent_BadBase64Content(t *testing.T) {
+	userID := uuid.New()
+	connector := makeConnector(userID)
+
+	srv := tokenServer(func(mux *http.ServeMux) {
+		mux.HandleFunc("/repos/owner/repo/contents/file.txt", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(map[string]string{
+				"content":  "this is !!!! not valid base64 data !!!!",
+				"encoding": "base64",
+			})
+		})
+	})
+	defer srv.Close()
+
+	prev := APIBaseURL
+	SetAPIBaseURL(srv.URL)
+	defer SetAPIBaseURL(prev)
+
+	mockSt := testutil.NewMockGithubConnectorStorage()
+	mockSt.On("GetAllConnectors", userID.String()).Return([]shared_types.GithubConnector{connector}, nil)
+
+	api := newAPI(mockSt)
+	_, err := api.GetRepositoryFileContent(userID.String(), "owner/repo", "main", "file.txt")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to decode base64 content")
+	mockSt.AssertExpectations(t)
+}
+
+// ---------------------------------------------------------------------------
+// LatestCommitHash
+// ---------------------------------------------------------------------------
+
 func TestLatestCommitHash_InvalidURL(t *testing.T) {
 	_, err := LatestCommitHash(logger.NewLogger(), "notaurl", "tok")
 	assert.Error(t, err)

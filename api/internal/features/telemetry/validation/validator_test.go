@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/telemetry/types"
 	"github.com/nixopus/nixopus/api/internal/features/telemetry/validation"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,19 @@ import (
 func TestNewValidator(t *testing.T) {
 	v := validation.NewValidator()
 	require.NotNil(t, v)
+}
+
+func TestNewValidatorWithLogger(t *testing.T) {
+	l := logger.NewLogger()
+	v := validation.NewValidatorWithLogger(&l)
+	require.NotNil(t, v)
+}
+
+func TestValidateRequest_unknownType_withLogger(t *testing.T) {
+	l := logger.NewLogger()
+	v := validation.NewValidatorWithLogger(&l)
+	err := v.ValidateRequest("not a known type")
+	assert.Equal(t, types.ErrInvalidRequestType, err)
 }
 
 func TestValidateRequest_unknownType(t *testing.T) {

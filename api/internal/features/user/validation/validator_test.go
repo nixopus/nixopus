@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/user/types"
 	"github.com/nixopus/nixopus/api/internal/features/user/validation"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
@@ -16,6 +17,21 @@ import (
 func TestNewValidator(t *testing.T) {
 	v := validation.NewValidator()
 	require.NotNil(t, v)
+}
+
+func TestNewValidatorWithLogger(t *testing.T) {
+	l := logger.NewLogger()
+	v := validation.NewValidatorWithLogger(&l)
+	require.NotNil(t, v)
+	assert.NotNil(t, v.Logger)
+}
+
+func TestValidateRequest_WithLogger_InvalidType(t *testing.T) {
+	l := logger.NewLogger()
+	v := validation.NewValidatorWithLogger(&l)
+	user := shared_types.User{}
+	err := v.ValidateRequest(struct{}{}, user)
+	assert.ErrorIs(t, err, types.ErrInvalidRequestType)
 }
 
 func TestValidateRequest(t *testing.T) {
