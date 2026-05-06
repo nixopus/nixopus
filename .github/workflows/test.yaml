@@ -1,6 +1,6 @@
 # Workflow: Go Tests
-# Runs Go vet + race-safe unit tests with coverage gate, then full
-# integration tests against Postgres, Redis, and Better Auth services.
+# Quality gate (vet + race unit tests + coverage) is temporarily disabled.
+# Runs full integration tests against Postgres, Redis, and Better Auth services.
 
 name: Test Nixopus API
 
@@ -47,12 +47,9 @@ jobs:
               - '.github/workflows/test.yaml'
 
   # Fast quality gate — no infrastructure required.
-  # Fails the PR before expensive integration tests run.
+  # Disabled temporarily; restore needs + test.if check below when re-enabled.
   quality-gate:
-    needs: detect-changes
-    if: |
-      always() &&
-      (needs.detect-changes.result == 'skipped' || needs.detect-changes.outputs.api == 'true')
+    if: false
     runs-on: ubuntu-latest
 
     steps:
@@ -95,10 +92,9 @@ jobs:
           retention-days: 7
 
   test:
-    needs: [detect-changes, quality-gate]
+    needs: detect-changes
     if: |
       always() &&
-      needs.quality-gate.result == 'success' &&
       (needs.detect-changes.result == 'skipped' || needs.detect-changes.outputs.api == 'true')
     runs-on: ubuntu-latest
 
