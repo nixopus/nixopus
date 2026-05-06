@@ -12,6 +12,10 @@
 
 # testing
 /coverage
+/playwright-report
+/test-results
+# auth state files contain session tokens — never commit
+/tests/e2e/.auth/*.json
 
 # next.js
 /.next/
@@ -33,6 +37,7 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 !.env.sample
+!.env.test.example
 
 # vercel
 .vercel
