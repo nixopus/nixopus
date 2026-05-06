@@ -310,11 +310,13 @@ test.describe('Unauthenticated — organization-invite page', () => {
     await expect(page.getByText('Organization Invitation')).toBeVisible({ timeout: 10_000 });
   });
 
-  test('without a valid token shows an error state', async ({ page }) => {
+  test('unauthenticated visitor sees "Sign In to Accept Invitation"', async ({ page }) => {
     await page.goto('/auth/organization-invite');
     await expect(page.getByText('Organization Invitation')).toBeVisible({ timeout: 10_000 });
-    // No orgId or token in the URL — hook resolves to the error branch
-    await expect(page.getByRole('button', { name: 'Back to Login' })).toBeVisible({
+    // Hook calls authClient.getSession() first. With no session cookie the hook
+    // sets status='needs-auth', which renders the "Sign In to Accept Invitation" button —
+    // not the error branch. The error branch is only reached when authenticated + no token.
+    await expect(page.getByRole('button', { name: 'Sign In to Accept Invitation' })).toBeVisible({
       timeout: 10_000
     });
   });
