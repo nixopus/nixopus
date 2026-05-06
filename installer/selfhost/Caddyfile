@@ -7,6 +7,10 @@
         reverse_proxy nixopus-api:8443
     }
 
+    handle /api/auth/* {
+        reverse_proxy nixopus-auth:9090
+    }
+
     handle /ws {
         reverse_proxy nixopus-api:8443
     }

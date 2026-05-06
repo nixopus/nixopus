@@ -336,14 +336,15 @@ gen_secret() { openssl rand -hex 32; }
 # validation rules (>=8 chars, 1 upper, 1 lower, 1 digit, 1 special).
 # Special set is restricted to characters that are JSON- and shell-safe so
 # the resulting value can be embedded in .env and curl payloads without
-# escaping headaches.
+# escaping headaches.  Exclude & ; | etc. — unquoted .env lines must remain
+# valid when sourced by nixopus.sh under set -u (see load_env).
 gen_password() {
     local upper lower digit special rest combined
     upper=$(LC_ALL=C tr -dc 'A-Z'             </dev/urandom 2>/dev/null | head -c 1)
     lower=$(LC_ALL=C tr -dc 'a-z'             </dev/urandom 2>/dev/null | head -c 1)
     digit=$(LC_ALL=C tr -dc '0-9'             </dev/urandom 2>/dev/null | head -c 1)
-    special=$(LC_ALL=C tr -dc '!@#%^&*'       </dev/urandom 2>/dev/null | head -c 1)
-    rest=$(LC_ALL=C tr -dc 'A-Za-z0-9!@#%^&*' </dev/urandom 2>/dev/null | head -c 12)
+    special=$(LC_ALL=C tr -dc '!@#%^*'       </dev/urandom 2>/dev/null | head -c 1)
+    rest=$(LC_ALL=C tr -dc 'A-Za-z0-9!@#%^*' </dev/urandom 2>/dev/null | head -c 12)
     combined="${upper}${lower}${digit}${special}${rest}"
     echo "$combined" | fold -w1 | shuf | tr -d '\n'
 }
@@ -781,6 +782,10 @@ write_caddyfile() {
         reverse_proxy nixopus-api:8443
     }
 
+    handle /api/auth/* {
+        reverse_proxy nixopus-auth:9090
+    }
+
     handle /ws {
         reverse_proxy nixopus-api:8443
     }
@@ -922,7 +927,8 @@ bootstrap_admin() {
             -d "$payload" 2>/dev/null || echo "000")
 
         body=$(cat "$tmp" 2>/dev/null || true)
-        code=$(printf '%s' "$body" | grep -oE '"code"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n1 | sed -E 's/.*"code"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
+        # Avoid pipefail errexit when the body has no "code" (e.g. HTML from wrong route).
+        code=$(printf '%s' "$body" | grep -oE '"code"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n1 | sed -E 's/.*"code"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)
 
         case "$http_code" in
             200|201)
