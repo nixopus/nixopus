@@ -124,6 +124,7 @@ func (router *Router) createServer(port string) *fuego.Server {
 		fuego.WithGlobalMiddlewares(
 			middleware.RecoveryMiddleware(router.logger),
 			middleware.RequestIDMiddleware,
+			middleware.SecurityHeadersMiddleware,
 			middleware.CorsMiddleware,
 			middleware.LoggingMiddleware,
 			api.VersionMiddleware,

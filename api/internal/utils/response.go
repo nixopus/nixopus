@@ -2,8 +2,9 @@ package utils
 
 import (
 	"encoding/json"
-	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"net/http"
+
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 )
 
 type jsonSuccessResponse struct {
@@ -12,10 +13,12 @@ type jsonSuccessResponse struct {
 	Data    json.RawMessage `json:"data,omitempty"`
 }
 
+// jsonErrorResponse matches the Fuego HTTPError wire format so all error
+// responses from middleware and Fuego handlers share a single envelope shape.
 type jsonErrorResponse struct {
-	Code    string            `json:"code"`
-	Message string            `json:"message"`
-	Details map[string]string `json:"details,omitempty"`
+	Title  string `json:"title"`
+	Status int    `json:"status"`
+	Detail string `json:"detail"`
 }
 
 // SendJSONResponse writes a JSON response to the given http.ResponseWriter.
@@ -34,8 +37,9 @@ func SendJSONResponse(w http.ResponseWriter, status string, message string, data
 			apilog.Printf("Error marshaling response data: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			_ = json.NewEncoder(w).Encode(jsonErrorResponse{
-				Code:    "internal_error",
-				Message: "failed to encode response data",
+				Title:  http.StatusText(http.StatusInternalServerError),
+				Status: http.StatusInternalServerError,
+				Detail: "failed to encode response data",
 			})
 			return
 		}
@@ -48,35 +52,16 @@ func SendJSONResponse(w http.ResponseWriter, status string, message string, data
 }
 
 // SendErrorResponse writes an error response to the given http.ResponseWriter.
+// The JSON shape matches Fuego's HTTPError so clients see one consistent envelope.
 func SendErrorResponse(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	response := jsonErrorResponse{
-		Code:    errorCodeFromStatus(statusCode),
-		Message: message,
+		Title:  http.StatusText(statusCode),
+		Status: statusCode,
+		Detail: message,
 	}
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		apilog.Printf("Error encoding error response: %v", err)
-	}
-}
-
-func errorCodeFromStatus(statusCode int) string {
-	switch statusCode {
-	case 400:
-		return "invalid_request"
-	case 401:
-		return "unauthorized"
-	case 403:
-		return "forbidden"
-	case 404:
-		return "not_found"
-	case 409:
-		return "conflict"
-	case 422:
-		return "unprocessable_entity"
-	case 429:
-		return "rate_limited"
-	default:
-		return "internal_error"
 	}
 }

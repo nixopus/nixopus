@@ -38,25 +38,25 @@ func InitRBACCache(c *cache.Cache) {
 func RBACMiddleware(next http.Handler, app *appStorage.App, resource string, l applogger.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requiredPermission := buildRequiredPermission(resource, r.Method)
-		l.Log(applogger.Debug, "middleware rbac: required permission", fmt.Sprintf("method=%s path=%s permission=%s", r.Method, r.URL.Path, requiredPermission))
+		l.LogCtx(r.Context(), applogger.Debug, "middleware rbac: required permission", fmt.Sprintf("method=%s path=%s permission=%s", r.Method, r.URL.Path, requiredPermission))
 
 		organizationID := extractOrganizationID(w, r, l)
 		if organizationID == "" {
-			l.Log(applogger.Debug, "middleware rbac: blocked: missing org", fmt.Sprintf("method=%s path=%s", r.Method, r.URL.Path))
+			l.LogCtx(r.Context(), applogger.Debug, "middleware rbac: blocked: missing org", fmt.Sprintf("method=%s path=%s", r.Method, r.URL.Path))
 			return
 		}
 
 		// Get user from context (set by AuthMiddleware)
 		userAny := r.Context().Value(types.UserContextKey)
 		if userAny == nil {
-			l.Log(applogger.Debug, "middleware rbac: blocked: no user in context", fmt.Sprintf("method=%s path=%s", r.Method, r.URL.Path))
+			l.LogCtx(r.Context(), applogger.Debug, "middleware rbac: blocked: no user in context", fmt.Sprintf("method=%s path=%s", r.Method, r.URL.Path))
 			utils.SendErrorResponse(w, "User not found in context", http.StatusUnauthorized)
 			return
 		}
 
 		user, ok := userAny.(*types.User)
 		if !ok {
-			l.Log(applogger.Debug, "middleware rbac: blocked: invalid user in context", fmt.Sprintf("method=%s path=%s", r.Method, r.URL.Path))
+			l.LogCtx(r.Context(), applogger.Debug, "middleware rbac: blocked: invalid user in context", fmt.Sprintf("method=%s path=%s", r.Method, r.URL.Path))
 			utils.SendErrorResponse(w, "Invalid user type in context", http.StatusUnauthorized)
 			return
 		}
@@ -66,12 +66,12 @@ func RBACMiddleware(next http.Handler, app *appStorage.App, resource string, l a
 
 		// Validate permission
 		if !validateUserPermission(ctx, user, organizationID, requiredPermission, app, l) {
-			l.Log(applogger.Debug, "middleware rbac: blocked: insufficient permission", fmt.Sprintf("method=%s path=%s user_id=%s permission=%s org_id=%s", r.Method, r.URL.Path, user.ID, requiredPermission, organizationID))
+			l.LogCtx(r.Context(), applogger.Debug, "middleware rbac: blocked: insufficient permission", fmt.Sprintf("method=%s path=%s user_id=%s permission=%s org_id=%s", r.Method, r.URL.Path, user.ID, requiredPermission, organizationID))
 			utils.SendErrorResponse(w, fmt.Sprintf("User lacks permission %s for organization %s", requiredPermission, organizationID), http.StatusForbidden)
 			return
 		}
 
-		l.Log(applogger.Debug, "middleware rbac: allowed", fmt.Sprintf("method=%s path=%s user_id=%s org_id=%s", r.Method, r.URL.Path, user.ID, organizationID))
+		l.LogCtx(r.Context(), applogger.Debug, "middleware rbac: allowed", fmt.Sprintf("method=%s path=%s user_id=%s org_id=%s", r.Method, r.URL.Path, user.ID, organizationID))
 		next.ServeHTTP(w, r)
 	})
 }
@@ -80,11 +80,11 @@ func RBACMiddleware(next http.Handler, app *appStorage.App, resource string, l a
 func validateUserPermission(ctx context.Context, user *types.User, organizationID, requiredPermission string, app *appStorage.App, l applogger.Logger) bool {
 	// Try cache first
 	if result := validateCachedPermissions(user.ID.String(), organizationID, requiredPermission); result != nil {
-		l.Log(applogger.Debug, "middleware rbac: cache hit", fmt.Sprintf("user_id=%s org_id=%s has_perm=%v", user.ID, organizationID, *result))
+		l.LogCtx(ctx, applogger.Debug, "middleware rbac: cache hit", fmt.Sprintf("user_id=%s org_id=%s has_perm=%v", user.ID, organizationID, *result))
 		return *result
 	}
 
-	l.Log(applogger.Debug, "middleware rbac: cache miss", fmt.Sprintf("user_id=%s org_id=%s", user.ID, organizationID))
+	l.LogCtx(ctx, applogger.Debug, "middleware rbac: cache miss", fmt.Sprintf("user_id=%s org_id=%s", user.ID, organizationID))
 	// Cache miss: fetch from database
 	return validateAndCachePermissions(ctx, user, organizationID, requiredPermission, app, l)
 }
@@ -122,12 +122,12 @@ func validateAndCachePermissions(ctx context.Context, user *types.User, organiza
 	// Get user's role from Better Auth organization membership
 	member, err := getBetterAuthOrganizationMember(ctx, httpReq, user.ID.String(), organizationID, l)
 	if err != nil || member == nil {
-		l.Log(applogger.Debug, "middleware rbac: list-members failed", fmt.Sprintf("user_id=%s org_id=%s error=%v", user.ID, organizationID, err))
+		l.LogCtx(ctx, applogger.Debug, "middleware rbac: list-members failed", fmt.Sprintf("user_id=%s org_id=%s error=%v", user.ID, organizationID, err))
 		// If we can't verify membership, deny access
 		return false
 	}
 
-	l.Log(applogger.Debug, "middleware rbac: member resolved", fmt.Sprintf("user_id=%s org_id=%s role=%v", user.ID, organizationID, member.Role))
+	l.LogCtx(ctx, applogger.Debug, "middleware rbac: member resolved", fmt.Sprintf("user_id=%s org_id=%s role=%v", user.ID, organizationID, member.Role))
 
 	// Extract role from Better Auth member data
 	// Better Auth can return role as string or array
@@ -150,7 +150,7 @@ func validateAndCachePermissions(ctx context.Context, user *types.User, organiza
 	roles := []string{role}
 	permissions := getPermissionsForRole(role)
 
-	l.Log(applogger.Debug, "middleware rbac: role resolved", fmt.Sprintf("role=%s permission_count=%d has_required=%v", role, len(permissions), hasPermission(permissions, requiredPermission)))
+	l.LogCtx(ctx, applogger.Debug, "middleware rbac: role resolved", fmt.Sprintf("role=%s permission_count=%d has_required=%v", role, len(permissions), hasPermission(permissions, requiredPermission)))
 
 	// Cache permissions
 	cachePermissions(user.ID.String(), organizationID, roles, permissions)
@@ -228,7 +228,7 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 		// If that fails, try as object with data/members field
 		var responseObj map[string]interface{}
 		if err2 := json.Unmarshal(body, &responseObj); err2 != nil {
-			l.Log(applogger.Debug, "middleware rbac: list-members parse failed", fmt.Sprintf("expected_array_or_object body=%s", string(body)))
+			l.LogCtx(ctx, applogger.Debug, "middleware rbac: list-members parse failed", fmt.Sprintf("expected_array_or_object body=%s", string(body)))
 			return nil, fmt.Errorf("failed to parse response: %w (also tried object format: %v)", err, err2)
 		}
 
@@ -237,13 +237,13 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 			// Convert to []BetterAuthMember
 			dataBytes, _ := json.Marshal(data)
 			if err := json.Unmarshal(dataBytes, &members); err != nil {
-				l.Log(applogger.Debug, "middleware rbac: list-members data field parse failed", fmt.Sprintf("data=%s", string(dataBytes)))
+				l.LogCtx(ctx, applogger.Debug, "middleware rbac: list-members data field parse failed", fmt.Sprintf("data=%s", string(dataBytes)))
 				return nil, fmt.Errorf("failed to parse data array: %w", err)
 			}
 		} else if membersData, ok := responseObj["members"]; ok {
 			membersBytes, _ := json.Marshal(membersData)
 			if err := json.Unmarshal(membersBytes, &members); err != nil {
-				l.Log(applogger.Debug, "middleware rbac: list-members members field parse failed", fmt.Sprintf("members=%s", string(membersBytes)))
+				l.LogCtx(ctx, applogger.Debug, "middleware rbac: list-members members field parse failed", fmt.Sprintf("members=%s", string(membersBytes)))
 				return nil, fmt.Errorf("failed to parse members array: %w", err)
 			}
 		} else {
@@ -252,7 +252,7 @@ func getBetterAuthOrganizationMember(ctx context.Context, originalReq *http.Requ
 			if err := json.Unmarshal(body, &singleMember); err == nil && singleMember.UserID != "" {
 				members = []BetterAuthMember{singleMember}
 			} else {
-				l.Log(applogger.Debug, "middleware rbac: list-members unexpected shape", fmt.Sprintf("body=%s", string(body)))
+				l.LogCtx(ctx, applogger.Debug, "middleware rbac: list-members unexpected shape", fmt.Sprintf("body=%s", string(body)))
 				return nil, fmt.Errorf("response does not contain array or single member: %s", string(body))
 			}
 		}

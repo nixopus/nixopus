@@ -252,6 +252,20 @@ func TestNewRateLimiterWithConfig_exhausted(t *testing.T) {
 	require.Fail(t, "expected 429 from config limiter")
 }
 
+func TestSecurityHeadersMiddleware(t *testing.T) {
+	h := SecurityHeadersMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	require.Equal(t, "nosniff", rec.Header().Get("X-Content-Type-Options"))
+	require.Equal(t, "DENY", rec.Header().Get("X-Frame-Options"))
+	require.Equal(t, "no-referrer", rec.Header().Get("Referrer-Policy"))
+	require.Equal(t, "none", rec.Header().Get("X-Permitted-Cross-Domain-Policies"))
+}
+
 func Test_isWebSocketUpgrade(t *testing.T) {
 	r := httptest.NewRequest(http.MethodGet, "/", nil)
 	require.False(t, isWebSocketUpgrade(r))

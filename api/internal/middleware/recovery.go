@@ -17,10 +17,10 @@ func RecoveryMiddleware(l logger.Logger) func(http.Handler) http.Handler {
 					if r != nil && r.URL != nil {
 						data = fmt.Sprintf("path=%s", r.URL.Path)
 					}
-					l.Log(logger.Error, fmt.Sprintf("middleware: panic recovered: %v", err), data)
+					l.LogCtx(r.Context(), logger.Error, fmt.Sprintf("middleware: panic recovered: %v", err), data)
 					w.Header().Set("Content-Type", "application/json")
 					w.WriteHeader(http.StatusInternalServerError)
-					w.Write([]byte(`{"code":"internal_error","message":"Internal server error"}`))
+					w.Write([]byte(`{"title":"Internal Server Error","status":500,"detail":"Internal server error"}`))
 				}
 			}()
 
