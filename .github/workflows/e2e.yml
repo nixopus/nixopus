@@ -46,23 +46,61 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    # -------------------------------------------------------------------------
+    # Native service containers start BEFORE any step runs — their startup time
+    # is absorbed by checkout and toolchain setup instead of blocking the job.
+    # -------------------------------------------------------------------------
+    services:
+      postgres:
+        image: postgres:14-alpine
+        ports:
+          - 5433:5432
+        env:
+          POSTGRES_USER: nixopus
+          POSTGRES_PASSWORD: nixopus
+          POSTGRES_DB: nixopus_test
+        options: >-
+          --health-cmd "pg_isready -U nixopus -d nixopus_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       # -----------------------------------------------------------------------
-      # Infrastructure — same stack as api/test.yaml
+      # Start auth service immediately after checkout — its 30 s start_period
+      # runs in the background while Go / Node setup and builds happen below.
+      # --network host lets it reach postgres on localhost:5433 and redis:6379.
       # -----------------------------------------------------------------------
-      - name: Start test infrastructure
-        env:
-          NIXOPUS_AUTH_IMAGE: ghcr.io/nixopus/auth:latest
+      - name: Start Better Auth service
         run: |
-          docker compose -f docker-compose-test.yml up -d --wait --wait-timeout 180
-          docker compose -f docker-compose-test.yml ps
+          docker run -d \
+            --name nixopus-test-auth \
+            --network host \
+            -e DATABASE_URL=postgresql://nixopus:nixopus@localhost:5433/nixopus_test \
+            -e REDIS_URL=redis://localhost:6379 \
+            -e PORT=9090 \
+            -e NODE_ENV=test \
+            -e BETTER_AUTH_SECRET=test-secret-for-ci \
+            -e BETTER_AUTH_URL=http://localhost:9090 \
+            -e APP_URL=http://localhost:3000 \
+            "${NIXOPUS_AUTH_IMAGE:-ghcr.io/nixopus/auth:latest}"
 
       # -----------------------------------------------------------------------
-      # API server — same build pattern as api/test.yaml
+      # Toolchain setup with caching — runs while auth service is warming up
       # -----------------------------------------------------------------------
       - uses: actions/setup-go@v5
         with:
@@ -71,6 +109,15 @@ jobs:
           cache: true
           cache-dependency-path: api/go.sum
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: view/package-lock.json
+
+      # -----------------------------------------------------------------------
+      # Go API — build and start; auth service still warming up in background
+      # -----------------------------------------------------------------------
       - name: Build and start API server
         working-directory: api
         env:
@@ -88,33 +135,33 @@ jobs:
           ./bin/nixopus-api &
           echo $! > /tmp/api-server.pid
 
-          for i in {1..15}; do
-            if curl -sf http://localhost:8080/api/v1/health >/dev/null 2>&1; then
-              echo "API server ready"
-              break
-            fi
-            echo "Waiting for API server... attempt $i"
-            sleep 2
-          done
-          curl -sf http://localhost:8080/api/v1/health || { echo "API server never became ready"; exit 1; }
-
       # -----------------------------------------------------------------------
-      # Next.js — build once; playwright.config.ts webServer runs `next start`
+      # Node deps + Playwright browser binary (cached across runs)
       # -----------------------------------------------------------------------
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: view/package-lock.json
-
-      - name: Install dependencies
+      - name: Install Node dependencies
         working-directory: view
         run: npm ci --legacy-peer-deps
 
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('view/package-lock.json') }}
+
       - name: Install Playwright browsers
         working-directory: view
-        run: npx playwright install chromium --with-deps
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" != "true" ]; then
+            npx playwright install chromium --with-deps
+          else
+            # System deps only — browser binary served from cache
+            npx playwright install-deps chromium
+          fi
 
+      # -----------------------------------------------------------------------
+      # Build Next.js — longest step; auth service should be healthy by the end
+      # -----------------------------------------------------------------------
       - name: Build Next.js
         working-directory: view
         env:
@@ -126,7 +173,34 @@ jobs:
         run: npm run build
 
       # -----------------------------------------------------------------------
-      # E2E — playwright.config.ts webServer auto-starts `next start`
+      # Gate: confirm both services are healthy before running tests
+      # -----------------------------------------------------------------------
+      - name: Wait for Better Auth service
+        run: |
+          for i in {1..20}; do
+            if curl -sf http://localhost:9090/api/auth/ok >/dev/null 2>&1; then
+              echo "Auth service ready (attempt $i)"
+              break
+            fi
+            echo "Waiting for auth service... attempt $i/20"
+            sleep 3
+          done
+          curl -sf http://localhost:9090/api/auth/ok || { echo "Auth service never became ready"; exit 1; }
+
+      - name: Wait for API server
+        run: |
+          for i in {1..15}; do
+            if curl -sf http://localhost:8080/api/v1/health >/dev/null 2>&1; then
+              echo "API server ready (attempt $i)"
+              break
+            fi
+            echo "Waiting for API server... attempt $i"
+            sleep 2
+          done
+          curl -sf http://localhost:8080/api/v1/health || { echo "API server never became ready"; exit 1; }
+
+      # -----------------------------------------------------------------------
+      # E2E — webServer in playwright.config.ts auto-starts `next start`
       # -----------------------------------------------------------------------
       - name: Run E2E tests
         working-directory: view
@@ -162,11 +236,11 @@ jobs:
           retention-days: 7
 
       # -----------------------------------------------------------------------
-      # Cleanup
+      # Diagnostics and cleanup
       # -----------------------------------------------------------------------
       - name: Collect infrastructure logs on failure
         if: failure()
-        run: docker compose -f docker-compose-test.yml logs
+        run: docker logs nixopus-test-auth 2>&1 || true
 
       - name: Cleanup
         if: always()
@@ -174,4 +248,5 @@ jobs:
           if [ -f /tmp/api-server.pid ]; then
             kill "$(cat /tmp/api-server.pid)" 2>/dev/null || true
           fi
-          docker compose -f docker-compose-test.yml down -v
+          docker stop nixopus-test-auth 2>/dev/null || true
+          docker rm nixopus-test-auth 2>/dev/null || true

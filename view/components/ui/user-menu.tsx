@@ -49,6 +49,7 @@ export function UserMenu({ user, onLogout }: UserMenuProps) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
+          data-testid="user-menu-trigger"
           className="relative h-9 w-9 rounded-full hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
         >
           <Avatar className="h-9 w-9">
