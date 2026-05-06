@@ -130,15 +130,19 @@ func NewRateLimiterWithConfig(rps float64, burst int) func(http.Handler) http.Ha
 		rlClients = make(map[string]*client)
 		rlMtx     sync.Mutex
 		once      sync.Once
+		// Snapshot globals once per middleware factory so background cleanup never races
+		// tests that mutate package vars and restore them in t.Cleanup.
+		cleanupTick = rateLimiterCleanupTick
+		staleAfter  = rateLimiterStaleClientAfter
 	)
 
 	startCleanup := func() {
 		go func() {
 			for {
-				time.Sleep(rateLimiterCleanupTick)
+				time.Sleep(cleanupTick)
 				rlMtx.Lock()
 				for ip, c := range rlClients {
-					if time.Since(c.lastSeen) > rateLimiterStaleClientAfter {
+					if time.Since(c.lastSeen) > staleAfter {
 						delete(rlClients, ip)
 					}
 				}

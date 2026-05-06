@@ -1,7 +1,6 @@
 package types
 
 import (
-	"regexp"
 	"time"
 
 	"github.com/google/uuid"
@@ -176,10 +175,12 @@ const (
 
 type Environment string
 
-var validEnvironmentRegex = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
-
 func IsValidEnvironment(env string) bool {
-	return len(env) >= 1 && len(env) <= 50 && validEnvironmentRegex.MatchString(env)
+	switch env {
+	case "development", "staging", "production":
+		return true
+	}
+	return false
 }
 
 type ProxyServer string

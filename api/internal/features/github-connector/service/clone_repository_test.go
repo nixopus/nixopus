@@ -624,6 +624,91 @@ func TestCloneRepository_WithPinnedCommitHash(t *testing.T) {
 	assert.True(t, mockGit.cloneCalled)
 }
 
+// TestCloneRepository_GetConnectorsErrorAfterRepoFetch covers clone_repository.go:35-38:
+// the error path for GetAllConnectors inside CloneRepository itself (after GetRepositoryByID
+// has already succeeded using a separate GetAllConnectors call).
+func TestCloneRepository_GetConnectorsErrorAfterRepoFetch(t *testing.T) {
+	userID := uuid.New().String()
+	repo := shared_types.GithubRepository{
+		ID:       9,
+		CloneURL: "https://github.com/owner/test.git",
+		FullName: "owner/test",
+	}
+	connector := makeConnector(uuid.MustParse(userID))
+	connector.InstallationID = "67890"
+
+	srv := testCloneHTTPServer(t, repo, connector.InstallationID)
+	defer srv.Close()
+
+	prev := gh.APIBaseURL
+	gh.SetAPIBaseURL(srv.URL)
+	defer gh.SetAPIBaseURL(prev)
+
+	mockSt := testutil.NewMockGithubConnectorStorage()
+	// First call: GetAllConnectors inside GetRepositoryByID — succeeds.
+	mockSt.On("GetAllConnectors", userID).Return([]shared_types.GithubConnector{connector}, nil).Once()
+	// Second call: GetAllConnectors in CloneRepository body (line 34) — fails.
+	mockSt.On("GetAllConnectors", userID).Return(nil, errors.New("db error")).Once()
+
+	svc := NewGithubConnectorService(nil, context.Background(), logger.NewLogger(), mockSt)
+	_, err := svc.CloneRepository(context.Background(), CloneRepositoryConfig{
+		RepoID:        9,
+		UserID:        userID,
+		Environment:   "prod",
+		ApplicationID: "app",
+	}, nil)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "db error")
+}
+
+// TestCloneRepository_InstallationTokenErrorInClone covers clone_repository.go:49-52:
+// InstallationToken fails on the second call (CloneRepository's own token exchange)
+// while GetRepositoryByID succeeded using the first call.
+func TestCloneRepository_InstallationTokenErrorInClone(t *testing.T) {
+	userID := uuid.New().String()
+	repo := shared_types.GithubRepository{
+		ID:       9,
+		CloneURL: "https://github.com/owner/test.git",
+		FullName: "owner/test",
+	}
+	connector := makeConnector(uuid.MustParse(userID))
+	connector.InstallationID = "67890"
+
+	var tokenCallCount int
+	mux := http.NewServeMux()
+	mux.HandleFunc("/app/installations/67890/access_tokens", func(w http.ResponseWriter, r *http.Request) {
+		tokenCallCount++
+		if tokenCallCount == 1 {
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(map[string]string{"token": "tok123"})
+		} else {
+			w.WriteHeader(http.StatusUnauthorized)
+		}
+	})
+	mux.HandleFunc("/repositories/9", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(repo)
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	prev := gh.APIBaseURL
+	gh.SetAPIBaseURL(srv.URL)
+	defer gh.SetAPIBaseURL(prev)
+
+	mockSt := testutil.NewMockGithubConnectorStorage()
+	mockSt.On("GetAllConnectors", userID).Return([]shared_types.GithubConnector{connector}, nil).Twice()
+
+	svc := NewGithubConnectorService(nil, context.Background(), logger.NewLogger(), mockSt)
+	_, err := svc.CloneRepository(context.Background(), CloneRepositoryConfig{
+		RepoID:        9,
+		UserID:        userID,
+		Environment:   "prod",
+		ApplicationID: "app",
+	}, nil)
+	require.Error(t, err)
+}
+
 func TestCloneRepository_StorageErrorOnConnectors(t *testing.T) {
 	userID := uuid.New().String()
 	repo := shared_types.GithubRepository{

@@ -2,9 +2,10 @@ package queue
 
 import (
 	"context"
-	apilog "github.com/nixopus/nixopus/api/internal/log"
 	"strings"
 	"sync"
+
+	apilog "github.com/nixopus/nixopus/api/internal/log"
 )
 
 const replyChannelPrefix = "machine:reply:"
@@ -23,13 +24,15 @@ func NewReplyMultiplexerWithPrefix(prefix string) *ReplyMultiplexer {
 }
 
 func (m *ReplyMultiplexer) Start(ctx context.Context) {
-	if redisClient == nil {
+	// Snapshot so tests (or init) can restore the global without racing this goroutine.
+	rdb := redisClient
+	if rdb == nil {
 		apilog.Println("[reply-mux] Redis client not initialized, skipping PSUBSCRIBE")
 		return
 	}
 
 	go func() {
-		pubsub := redisClient.PSubscribe(ctx, m.prefix+"*")
+		pubsub := rdb.PSubscribe(ctx, m.prefix+"*")
 		defer pubsub.Close()
 
 		ch := pubsub.Channel()

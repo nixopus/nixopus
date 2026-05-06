@@ -171,3 +171,30 @@ func Test_extDomainsKey_and_pendingRemovalKey_format(t *testing.T) {
 	assert.Equal(t, "caddy:ext_domains:"+id.String(), extDomainsKey(id))
 	assert.Equal(t, "caddy:pending_removals:"+id.String(), pendingRemovalKey(id))
 }
+
+func Test_extractUpstreamsFromRoute_invalidHandlerJSON(t *testing.T) {
+	// Raw handler that is invalid JSON → json.Unmarshal fails → continue (skip handler).
+	r := caddyhttp.Route{HandlersRaw: []json.RawMessage{json.RawMessage(`{bad}`)}}
+	assert.Empty(t, extractUpstreamsFromRoute(r))
+}
+
+func Test_extractUpstreamsFromRoute_invalidUpstreamsJSON(t *testing.T) {
+	// Handler is valid JSON with handler=reverse_proxy but upstreams is not an array.
+	hRaw, err := json.Marshal(map[string]interface{}{
+		"handler":   "reverse_proxy",
+		"upstreams": "not-an-array",
+	})
+	require.NoError(t, err)
+	r := caddyhttp.Route{HandlersRaw: []json.RawMessage{hRaw}}
+	assert.Empty(t, extractUpstreamsFromRoute(r))
+}
+
+func Test_extractDomainRoutes_noNixopusServer(t *testing.T) {
+	// Config has an HTTP app but no "nixopus" server key → returns nil.
+	cfgJSON := []byte(`{"apps":{"http":{"servers":{"other":{"routes":[]}}}}}`)
+	var cfg caddy.Config
+	require.NoError(t, json.Unmarshal(cfgJSON, &cfg))
+	routes, err := extractDomainRoutes(&cfg)
+	require.NoError(t, err)
+	assert.Nil(t, routes)
+}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/features/telemetry/storage"
 	"github.com/nixopus/nixopus/api/internal/features/telemetry/types"
 	"github.com/stretchr/testify/assert"
@@ -82,6 +83,38 @@ func TestCreateInstallEvent_dbError(t *testing.T) {
 	db, ctx := sqliteTelemetryDB(t)
 	require.NoError(t, db.Close())
 	s := storage.NewTelemetryStorage(db, ctx, nil)
+
+	err := s.CreateInstallEvent(&types.CliInstallation{ID: uuid.New()})
+	require.Error(t, err)
+}
+
+func TestCreateInstallEvent_withLogger(t *testing.T) {
+	t.Parallel()
+	db, ctx := sqliteTelemetryDB(t)
+	l := logger.NewLogger()
+	s := storage.NewTelemetryStorage(db, ctx, &l)
+
+	event := &types.CliInstallation{
+		ID:        uuid.New(),
+		EventType: "install_success",
+		OS:        "ubuntu",
+		Arch:      "amd64",
+		Version:   "1.0.0",
+		Duration:  30,
+		IPHash:    "abc123deadbeef",
+		CreatedAt: time.Now(),
+	}
+
+	err := s.CreateInstallEvent(event)
+	require.NoError(t, err)
+}
+
+func TestCreateInstallEvent_dbError_withLogger(t *testing.T) {
+	t.Parallel()
+	db, ctx := sqliteTelemetryDB(t)
+	l := logger.NewLogger()
+	require.NoError(t, db.Close())
+	s := storage.NewTelemetryStorage(db, ctx, &l)
 
 	err := s.CreateInstallEvent(&types.CliInstallation{ID: uuid.New()})
 	require.Error(t, err)

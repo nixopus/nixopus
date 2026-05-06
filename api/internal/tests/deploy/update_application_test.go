@@ -75,8 +75,8 @@ func TestUpdateApplication(t *testing.T) {
 				Name: "updated-app",
 				Port: 3001,
 			},
-			expectedStatus: http.StatusInternalServerError,
-			description:    "Should return 500 when application ID is missing",
+			expectedStatus: http.StatusBadRequest,
+			description:    "Should return 400 when application ID is missing",
 		},
 		{
 			name:           "Update application that doesn't exist",

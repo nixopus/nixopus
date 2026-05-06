@@ -178,3 +178,124 @@ func TestBuildMultiUpstreamRoutes_multi_hostsEmpty_fallsBackToSingleUpstream(t *
 	assert.Equal(t, "skip.me", got[0].Domain)
 	assert.Equal(t, "host:1", got[0].UpstreamDial)
 }
+
+// Test_resolveServerHosts_singleServerNoProxyHost exercises the else branch:
+// single server (multiServer=false) where ProxyHost is nil/empty → falls back to Host.
+func Test_resolveServerHosts_singleServerNoProxyHost(t *testing.T) {
+	l := logger.NewLogger()
+
+	// Single server, no ProxyHost → else branch: host = *srv.Server.Host
+	h := "direct.host"
+	srv := shared_types.ApplicationServer{
+		IsPrimary: true,
+		Server: &shared_types.SSHKey{
+			Host:      strPtr(h),
+			ProxyHost: nil,
+			IsDefault: false,
+		},
+	}
+	hosts, primaryIdx := resolveServerHosts([]shared_types.ApplicationServer{srv}, &l)
+	require.Len(t, hosts, 1)
+	assert.Equal(t, h, hosts[0])
+	assert.Equal(t, 0, primaryIdx)
+
+	// Single server with empty ProxyHost → also falls to else.
+	emptyProxy := ""
+	srv2 := shared_types.ApplicationServer{
+		Server: &shared_types.SSHKey{
+			Host:      strPtr("raw.host"),
+			ProxyHost: &emptyProxy,
+			IsDefault: false,
+		},
+	}
+	hosts2, _ := resolveServerHosts([]shared_types.ApplicationServer{srv2}, &l)
+	require.Len(t, hosts2, 1)
+	assert.Equal(t, "raw.host", hosts2[0])
+}
+
+func TestBuildMultiUpstreamRoutes_primaryFailover(t *testing.T) {
+	l := logger.NewLogger()
+	hA, hB := "10.0.0.1", "10.0.0.2"
+	app := shared_types.Application{
+		ID:              uuid.New(),
+		BuildPack:       shared_types.DockerFile,
+		RoutingStrategy: shared_types.RoutingStrategyPrimaryFailover,
+	}
+	stub := &deployRepoTestStub{
+		servers: []shared_types.ApplicationServer{
+			{Server: &shared_types.SSHKey{Host: strPtr(hA), IsDefault: false}},
+			{IsPrimary: true, Server: &shared_types.SSHKey{Host: strPtr(hB), IsDefault: false}},
+		},
+	}
+	doms := []shared_types.ApplicationDomain{{Domain: "failover.example"}}
+
+	got := BuildMultiUpstreamRoutes(context.Background(), stub, &l, app, doms, "fallback", 5000)
+	require.Len(t, got, 1)
+	assert.Equal(t, "first", got[0].LBPolicy)
+	// Primary (hB) should be first after reordering.
+	require.Len(t, got[0].Upstreams, 2)
+	assert.Equal(t, hB+":5000", got[0].Upstreams[0])
+}
+
+func TestBuildMultiUpstreamRoutes_dockerCompose_validPort(t *testing.T) {
+	l := logger.NewLogger()
+	port := 3001
+	app := shared_types.Application{
+		ID:        uuid.New(),
+		BuildPack: shared_types.DockerCompose,
+	}
+	stub := &deployRepoTestStub{
+		servers: []shared_types.ApplicationServer{
+			{Server: &shared_types.SSHKey{Host: strPtr("h1"), IsDefault: false}},
+			{Server: &shared_types.SSHKey{Host: strPtr("h2"), IsDefault: false}},
+		},
+	}
+	doms := []shared_types.ApplicationDomain{
+		{Domain: "compose.lb", Port: &port},
+	}
+
+	got := BuildMultiUpstreamRoutes(context.Background(), stub, &l, app, doms, "unused", 0)
+	require.Len(t, got, 1)
+	assert.Equal(t, "compose.lb", got[0].Domain)
+	require.Len(t, got[0].Upstreams, 2)
+	assert.True(t, strings.HasSuffix(got[0].Upstreams[0], ":3001"))
+}
+
+func TestBuildMultiUpstreamRoutes_dockerCompose_zeroPort_skipped(t *testing.T) {
+	l := logger.NewLogger()
+	app := shared_types.Application{
+		ID:        uuid.New(),
+		BuildPack: shared_types.DockerCompose,
+	}
+	stub := &deployRepoTestStub{
+		servers: []shared_types.ApplicationServer{
+			{Server: &shared_types.SSHKey{Host: strPtr("h1"), IsDefault: false}},
+			{Server: &shared_types.SSHKey{Host: strPtr("h2"), IsDefault: false}},
+		},
+	}
+	// Domain has no ComposeService and no Port → ResolvePort() == 0 → skipped.
+	doms := []shared_types.ApplicationDomain{{Domain: "orphan.compose"}}
+
+	got := BuildMultiUpstreamRoutes(context.Background(), stub, &l, app, doms, "unused", 0)
+	assert.Empty(t, got)
+}
+
+func TestBuildMultiUpstreamRoutes_emptyDomain_skipped(t *testing.T) {
+	l := logger.NewLogger()
+	app := shared_types.Application{
+		ID:        uuid.New(),
+		BuildPack: shared_types.DockerFile,
+	}
+	stub := &deployRepoTestStub{
+		servers: []shared_types.ApplicationServer{
+			{Server: &shared_types.SSHKey{Host: strPtr("h1"), IsDefault: false}},
+			{Server: &shared_types.SSHKey{Host: strPtr("h2"), IsDefault: false}},
+		},
+	}
+	// First domain is empty string → should be skipped.
+	doms := []shared_types.ApplicationDomain{{Domain: ""}, {Domain: "real.example"}}
+
+	got := BuildMultiUpstreamRoutes(context.Background(), stub, &l, app, doms, "unused", 8080)
+	require.Len(t, got, 1)
+	assert.Equal(t, "real.example", got[0].Domain)
+}

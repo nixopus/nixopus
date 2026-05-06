@@ -56,8 +56,8 @@ func TestGetApplicationByID(t *testing.T) {
 			cookies:        cookies,
 			organizationID: orgID,
 			applicationID:  "invalid-uuid",
-			expectedStatus: http.StatusInternalServerError,
-			description:    "Should return 500 when application ID format is invalid",
+			expectedStatus: http.StatusBadRequest,
+			description:    "Should return 400 when application ID format is invalid",
 		},
 		{
 			name:           "Get application by ID that doesn't exist",

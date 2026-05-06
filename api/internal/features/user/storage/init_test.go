@@ -3,6 +3,7 @@ package storage_test
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"testing"
 	"time"
 
@@ -324,6 +325,38 @@ func TestUpdateUserSettings_dbError(t *testing.T) {
 	require.Error(t, err)
 }
 
+func TestUpdateUserSettings_createsDefaultsWhenMissing(t *testing.T) {
+	t.Parallel()
+	db, ctx := newTestUserDB(t)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
+
+	userID := uuid.New()
+	settings, err := s.UpdateUserSettings(userID.String(), map[string]interface{}{
+		"theme":      "dark",
+		"updated_at": time.Now(),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, settings)
+	assert.Equal(t, userID, settings.UserID)
+	assert.Equal(t, "dark", settings.Theme)
+}
+
+func TestUpdateUserSettings_emptyUpdates_returnsError(t *testing.T) {
+	t.Parallel()
+	db, ctx := newTestUserDB(t)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
+
+	userID := uuid.New()
+	_, err := db.ExecContext(ctx,
+		`INSERT INTO user_settings (id, user_id, font_family, font_size, theme, language, auto_update) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		uuid.New().String(), userID.String(), "system-ui", 14, "light", "en", 0,
+	)
+	require.NoError(t, err)
+
+	_, err = s.UpdateUserSettings(userID.String(), map[string]interface{}{})
+	require.Error(t, err)
+}
+
 // — UpdateUserAvatar —
 
 func TestUpdateUserAvatar_dbError(t *testing.T) {
@@ -334,6 +367,40 @@ func TestUpdateUserAvatar_dbError(t *testing.T) {
 
 	err := s.UpdateUserAvatar(ctx, uuid.New().String(), "data:image/png;base64,abc")
 	require.Error(t, err)
+}
+
+func TestUpdateUserAvatar_success(t *testing.T) {
+	t.Parallel()
+	db, ctx := newTestUserDB(t)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
+	user := insertTestUser(t, db, ctx)
+
+	err := s.UpdateUserAvatar(ctx, user.ID.String(), "data:image/png;base64,abc")
+	require.NoError(t, err)
+
+	var image sql.NullString
+	err = db.NewRaw(`SELECT image FROM "user" WHERE id = ?`, user.ID.String()).Scan(ctx, &image)
+	require.NoError(t, err)
+	require.True(t, image.Valid)
+	assert.Equal(t, "data:image/png;base64,abc", image.String)
+}
+
+func TestUpdateUserAvatar_clearAvatar(t *testing.T) {
+	t.Parallel()
+	db, ctx := newTestUserDB(t)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
+	user := insertTestUser(t, db, ctx)
+
+	_, err := db.ExecContext(ctx, `UPDATE "user" SET image = ? WHERE id = ?`, "existing-avatar", user.ID.String())
+	require.NoError(t, err)
+
+	err = s.UpdateUserAvatar(ctx, user.ID.String(), "")
+	require.NoError(t, err)
+
+	var image sql.NullString
+	err = db.NewRaw(`SELECT image FROM "user" WHERE id = ?`, user.ID.String()).Scan(ctx, &image)
+	require.NoError(t, err)
+	assert.False(t, image.Valid)
 }
 
 // — GetUserPreferences —
@@ -417,6 +484,38 @@ func TestUpdateUserPreferences_dbError(t *testing.T) {
 
 	_, err := s.UpdateUserPreferences(uuid.New().String(), shared_types.UserPreferencesData{})
 	require.Error(t, err)
+}
+
+func TestUpdateUserPreferences_createsDefaultsWhenMissing(t *testing.T) {
+	t.Parallel()
+	db, ctx := newTestUserDB(t)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
+
+	userID := uuid.New()
+	updated := shared_types.UserPreferencesData{
+		DebugMode:           true,
+		ShowApiErrorDetails: true,
+	}
+
+	prefs, err := s.UpdateUserPreferences(userID.String(), updated)
+	require.NoError(t, err)
+	require.NotNil(t, prefs)
+	assert.Equal(t, userID, prefs.UserID)
+	assert.True(t, prefs.Preferences.DebugMode)
+	assert.True(t, prefs.Preferences.ShowApiErrorDetails)
+}
+
+func TestUpdateUserPreferences_noRowsUpdated(t *testing.T) {
+	t.Parallel()
+	db, ctx := newTestUserDB(t)
+	s := user_storage.CreateNewUserStorage(db, ctx, nil)
+
+	// Uppercase UUID triggers parse/insert for defaults, but UPDATE ... WHERE user_id = <uppercase>
+	// can miss the canonical lowercase row in sqlite text comparison.
+	userIDUpper := strings.ToUpper(uuid.New().String())
+	_, err := s.UpdateUserPreferences(userIDUpper, shared_types.UserPreferencesData{DebugMode: true})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no rows updated")
 }
 
 // — GetIsOnboarded —

@@ -282,6 +282,36 @@ func TestFeatureFlagService_GetFeatureFlags_commitError(t *testing.T) {
 	assert.Contains(t, err.Error(), "failed to commit transaction")
 }
 
+func TestFeatureFlagService_UpdateFeatureFlag_success(t *testing.T) {
+	ctx := context.Background()
+	orgID := uuid.New()
+	repo := &mockFeatureRepo{
+		updateFlag: func(org uuid.UUID, featureName string, isEnabled bool) error {
+			assert.Equal(t, orgID, org)
+			assert.Equal(t, "terminal", featureName)
+			assert.True(t, isEnabled)
+			return nil
+		},
+	}
+	svc := NewFeatureFlagService(repo, logger.NewLogger(), ctx)
+	err := svc.UpdateFeatureFlag(orgID, types.UpdateFeatureFlagRequest{FeatureName: "terminal", IsEnabled: true})
+	require.NoError(t, err)
+}
+
+func TestFeatureFlagService_IsFeatureEnabled_storageError(t *testing.T) {
+	ctx := context.Background()
+	orgID := uuid.New()
+	repo := &mockFeatureRepo{
+		isEnabled: func(org uuid.UUID, featureName string) (bool, error) {
+			return false, errors.New("db unavailable")
+		},
+	}
+	svc := NewFeatureFlagService(repo, logger.NewLogger(), ctx)
+	_, err := svc.IsFeatureEnabled(orgID, "domain")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "db unavailable")
+}
+
 func TestFeatureFlagService_GetFeatureFlags_returnsExistingRows(t *testing.T) {
 	ctx := context.Background()
 	orgID := uuid.New()

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/internal/features/ssh"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,6 +24,20 @@ func newTestGit(runFn func(string) (string, error)) Git {
 func TestNewGit(t *testing.T) {
 	c := NewGit(logger.NewLogger(), nil)
 	assert.NotNil(t, c)
+}
+
+func TestRun_UsesSSHManagerWhenRunCmdNotProvided(t *testing.T) {
+	manager := ssh.NewSSHManager()
+	defer manager.Close()
+
+	c := &sshGit{
+		logger:  logger.NewLogger(),
+		manager: manager,
+	}
+
+	_, err := c.run("echo hello")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to get SSH session")
 }
 
 func TestClone_InvalidRepoURL(t *testing.T) {
