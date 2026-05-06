@@ -205,6 +205,122 @@ test.describe('Authenticated — page health', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Unauthenticated — /auth/reset-password (forgot-password form, no token)
+// ---------------------------------------------------------------------------
+test.describe('Unauthenticated — forgot-password page', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/auth/reset-password');
+    await expect(page.getByRole('heading', { name: 'Forgot Password' })).toBeVisible({
+      timeout: 10_000
+    });
+  });
+
+  test('renders email input and "Send Reset Link" button', async ({ page }) => {
+    await expect(page.locator('input[type="email"]')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Send Reset Link' })).toBeVisible();
+  });
+
+  test('"Back to Login" link points to /auth', async ({ page }) => {
+    await expect(page.getByRole('link', { name: 'Back to Login' })).toHaveAttribute(
+      'href',
+      '/auth'
+    );
+  });
+
+  test('submitting empty email shows "Email is required"', async ({ page }) => {
+    await page.getByRole('button', { name: 'Send Reset Link' }).click();
+    await expect(page.getByRole('alert').filter({ hasText: 'Email is required' })).toBeVisible();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Unauthenticated — /auth/reset-password?token=x (reset-password form)
+// ---------------------------------------------------------------------------
+test.describe('Unauthenticated — reset-password form', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/auth/reset-password?token=fake-token-for-ui-test');
+    await expect(page.getByRole('heading', { name: 'Reset Password' })).toBeVisible({
+      timeout: 10_000
+    });
+  });
+
+  test('renders two password inputs and "Reset Password" button', async ({ page }) => {
+    await expect(page.locator('input[type="password"]').first()).toBeVisible();
+    await expect(page.locator('input[type="password"]').nth(1)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Reset Password' })).toBeVisible();
+  });
+
+  test('password shorter than 8 characters shows minLength error', async ({ page }) => {
+    await page.locator('input[type="password"]').first().fill('short');
+    await page.locator('input[type="password"]').nth(1).fill('short');
+    await page.getByRole('button', { name: 'Reset Password' }).click();
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Password must be at least 8 characters' })
+    ).toBeVisible();
+  });
+
+  test('mismatched passwords shows "Passwords don\'t match"', async ({ page }) => {
+    await page.locator('input[type="password"]').first().fill('ValidPass1!');
+    await page.locator('input[type="password"]').nth(1).fill('DifferentPass1!');
+    await page.getByRole('button', { name: 'Reset Password' }).click();
+    await expect(
+      page.getByRole('alert').filter({ hasText: "Passwords don't match" })
+    ).toBeVisible();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Unauthenticated — /verify-email (no token → immediate error state)
+// ---------------------------------------------------------------------------
+test.describe('Unauthenticated — verify-email page', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('without ?token shows "Invalid verification link"', async ({ page }) => {
+    await page.goto('/verify-email');
+    await expect(page.getByRole('heading', { name: 'Email Verification' })).toBeVisible({
+      timeout: 10_000
+    });
+    await expect(page.getByText('Invalid verification link')).toBeVisible();
+
+    /**
+     * BUG FOUND: the "Back to Login" button calls router.push('/login') but
+     * the application login route is /auth, not /login. The button will 404.
+     * This must be fixed in app/verify-email/page.tsx line 72.
+     */
+    await expect(page.getByRole('button', { name: /back to login/i })).toBeVisible();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Unauthenticated — /auth/organization-invite (no valid token)
+// ---------------------------------------------------------------------------
+test.describe('Unauthenticated — organization-invite page', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('renders the "Organization Invitation" card', async ({ page }) => {
+    await page.goto('/auth/organization-invite');
+    await expect(page.getByRole('heading', { name: 'Organization Invitation' })).toBeVisible({
+      timeout: 10_000
+    });
+  });
+
+  test('without a valid token shows an error state', async ({ page }) => {
+    await page.goto('/auth/organization-invite');
+    await expect(page.getByRole('heading', { name: 'Organization Invitation' })).toBeVisible({
+      timeout: 10_000
+    });
+    // No orgId or token in the URL — hook resolves to the error branch
+    await expect(page.getByRole('button', { name: 'Back to Login' })).toBeVisible({
+      timeout: 10_000
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Authenticated — logout flow
 // ---------------------------------------------------------------------------
 test.describe('Authenticated — logout', () => {
