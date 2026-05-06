@@ -14,7 +14,11 @@
     "analyze": "ANALYZE=true next build",
     "prepare": "cd .. && husky",
     "commitlint": "commitlint --edit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report"
   },
   "dependencies": {
     "@better-auth/passkey": "^1.4.18",
@@ -93,6 +97,7 @@
     "@commitlint/config-conventional": "^20.2.0",
     "@eslint/eslintrc": "^3",
     "@eslint/js": "^9.21.0",
+    "@playwright/test": "^1.59.1",
     "@svgr/webpack": "^8.1.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.1",
