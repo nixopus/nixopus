@@ -636,6 +636,8 @@ load_fn() {
     grep -q "nixopus-api" "$tmp_home/Caddyfile"
     grep -q "nixopus-view" "$tmp_home/Caddyfile"
     grep -q "nixopus-agent" "$tmp_home/Caddyfile"
+    grep -qF "handle /api/auth/*" "$tmp_home/Caddyfile"
+    grep -q "nixopus-auth:9090" "$tmp_home/Caddyfile"
     rm -rf "$tmp_home"
 }
 
