@@ -28,6 +28,13 @@
       "description": "The page you're looking for doesn't exist or has been moved.",
       "goHome": "Go to Dashboard",
       "goBack": "Go Back"
+    },
+    "error": {
+      "title": "Something went wrong",
+      "description": "An unexpected error occurred. Please try again or go back to the dashboard.",
+      "tryAgain": "Try again",
+      "goHome": "Go to Dashboard",
+      "errorCode": "Error code"
     }
   }
 }
