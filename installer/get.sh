@@ -781,6 +781,10 @@ write_caddyfile() {
         reverse_proxy nixopus-api:8443
     }
 
+    handle /api/auth/* {
+        reverse_proxy nixopus-auth:9090
+    }
+
     handle /ws {
         reverse_proxy nixopus-api:8443
     }
@@ -922,7 +926,8 @@ bootstrap_admin() {
             -d "$payload" 2>/dev/null || echo "000")
 
         body=$(cat "$tmp" 2>/dev/null || true)
-        code=$(printf '%s' "$body" | grep -oE '"code"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n1 | sed -E 's/.*"code"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/')
+        # Avoid pipefail errexit when the body has no "code" (e.g. HTML from wrong route).
+        code=$(printf '%s' "$body" | grep -oE '"code"[[:space:]]*:[[:space:]]*"[^"]+"' | head -n1 | sed -E 's/.*"code"[[:space:]]*:[[:space:]]*"([^"]+)".*/\1/' || true)
 
         case "$http_code" in
             200|201)
