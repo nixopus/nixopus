@@ -1,3 +1,5 @@
+'use client';
+
 import { Skeleton } from '@nixopus/ui';
 
 export function ChatSkeleton() {
