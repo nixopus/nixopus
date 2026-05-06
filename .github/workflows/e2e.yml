@@ -1,0 +1,177 @@
+name: E2E Tests (View)
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+    paths:
+      - 'view/**'
+      - 'api/**'
+      - 'docker-compose-test.yml'
+      - '.github/workflows/e2e.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.filter.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            relevant:
+              - 'view/**'
+              - 'api/**'
+              - 'docker-compose-test.yml'
+              - '.github/workflows/e2e.yml'
+
+  e2e:
+    needs: detect-changes
+    if: |
+      always() &&
+      (needs.detect-changes.result == 'skipped' || needs.detect-changes.outputs.relevant == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # -----------------------------------------------------------------------
+      # Infrastructure — same stack as api/test.yaml
+      # -----------------------------------------------------------------------
+      - name: Start test infrastructure
+        env:
+          NIXOPUS_AUTH_IMAGE: ghcr.io/nixopus/auth:latest
+        run: |
+          docker compose -f docker-compose-test.yml up -d --wait --wait-timeout 180
+          docker compose -f docker-compose-test.yml ps
+
+      # -----------------------------------------------------------------------
+      # API server — same build pattern as api/test.yaml
+      # -----------------------------------------------------------------------
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          check-latest: true
+          cache: true
+          cache-dependency-path: api/go.sum
+
+      - name: Build and start API server
+        working-directory: api
+        env:
+          PORT: '8080'
+          DATABASE_URL: postgresql://nixopus:nixopus@localhost:5433/nixopus_test
+          REDIS_URL: redis://localhost:6379
+          AUTH_SERVICE_URL: http://localhost:9090
+          AUTH_SERVICE_SECRET: test-secret-for-ci
+          ALLOWED_ORIGIN: http://localhost:3000,http://localhost:8080
+          CADDY_PORT: '2019'
+          ENV: test
+          PASSWORD_LOGIN_ENABLED: 'true'
+        run: |
+          go build -o bin/nixopus-api
+          ./bin/nixopus-api &
+          echo $! > /tmp/api-server.pid
+
+          for i in {1..15}; do
+            if curl -sf http://localhost:8080/api/v1/health >/dev/null 2>&1; then
+              echo "API server ready"
+              break
+            fi
+            echo "Waiting for API server... attempt $i"
+            sleep 2
+          done
+          curl -sf http://localhost:8080/api/v1/health || { echo "API server never became ready"; exit 1; }
+
+      # -----------------------------------------------------------------------
+      # Next.js — build once; playwright.config.ts webServer runs `next start`
+      # -----------------------------------------------------------------------
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: view/package-lock.json
+
+      - name: Install dependencies
+        working-directory: view
+        run: npm ci --legacy-peer-deps
+
+      - name: Install Playwright browsers
+        working-directory: view
+        run: npx playwright install chromium --with-deps
+
+      - name: Build Next.js
+        working-directory: view
+        env:
+          API_URL: http://localhost:8080/api
+          AUTH_SERVICE_URL: http://localhost:9090
+          WEBSOCKET_URL: ws://localhost:8080/ws
+          PASSWORD_LOGIN_ENABLED: 'true'
+          NEXT_PUBLIC_BASE_PATH: ''
+        run: npm run build
+
+      # -----------------------------------------------------------------------
+      # E2E — playwright.config.ts webServer auto-starts `next start`
+      # -----------------------------------------------------------------------
+      - name: Run E2E tests
+        working-directory: view
+        env:
+          CI: 'true'
+          E2E_BASE_URL: http://localhost:3000
+          API_URL: http://localhost:8080/api
+          AUTH_SERVICE_URL: http://localhost:9090
+          WEBSOCKET_URL: ws://localhost:8080/ws
+          E2E_TEST_EMAIL: e2e-test@nixopus.test
+          E2E_TEST_PASSWORD: Test@E2E!2026
+          PASSWORD_LOGIN_ENABLED: 'true'
+          NEXT_PUBLIC_BASE_PATH: ''
+        run: npx playwright test
+
+      # -----------------------------------------------------------------------
+      # Artifacts — always upload so failures can be debugged
+      # -----------------------------------------------------------------------
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: view/playwright-report/
+          retention-days: 14
+
+      - name: Upload test traces and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-traces
+          path: view/test-results/
+          retention-days: 7
+
+      # -----------------------------------------------------------------------
+      # Cleanup
+      # -----------------------------------------------------------------------
+      - name: Collect infrastructure logs on failure
+        if: failure()
+        run: docker compose -f docker-compose-test.yml logs
+
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ -f /tmp/api-server.pid ]; then
+            kill "$(cat /tmp/api-server.pid)" 2>/dev/null || true
+          fi
+          docker compose -f docker-compose-test.yml down -v
