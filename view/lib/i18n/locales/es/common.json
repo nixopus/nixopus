@@ -27,6 +27,13 @@
       "description": "La página que buscas no existe o ha sido movida.",
       "goHome": "Ir al Panel",
       "goBack": "Volver"
+    },
+    "error": {
+      "title": "Algo salió mal",
+      "description": "Ocurrió un error inesperado. Por favor, inténtalo de nuevo o regresa al panel.",
+      "tryAgain": "Intentar de nuevo",
+      "goHome": "Ir al Panel",
+      "errorCode": "Código de error"
     }
   }
 }

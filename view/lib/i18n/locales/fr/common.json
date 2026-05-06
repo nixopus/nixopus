@@ -28,6 +28,13 @@
       "description": "La page que vous recherchez n'existe pas ou a été déplacée.",
       "goHome": "Aller au Tableau de Bord",
       "goBack": "Retour"
+    },
+    "error": {
+      "title": "Une erreur s'est produite",
+      "description": "Une erreur inattendue s'est produite. Veuillez réessayer ou retourner au tableau de bord.",
+      "tryAgain": "Réessayer",
+      "goHome": "Aller au Tableau de Bord",
+      "errorCode": "Code d'erreur"
     }
   }
 }
