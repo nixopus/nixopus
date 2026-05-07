@@ -1,11 +1,13 @@
-# [0.1.0-alpha.166](https://github.com/nixopus/nixopus/compare/v0.1.0-alpha.165...v0.1.0-alpha.166) (2026-05-07)
+# Changelog
 
+All notable changes to [Nixopus](https://github.com/nixopus/nixopus) are documented in this file.
 
-### Bug Fixes
+This changelog is grouped by month. For the full commit history, see the [compare view on GitHub](https://github.com/nixopus/nixopus/commits/master).
 
-* **installer:** piped install access URL & provider log ([#1316](https://github.com/nixopus/nixopus/issues/1316)) ([4037588](https://github.com/nixopus/nixopus/commit/4037588a03d884556fa1aa4768c71ab4cb17981f))
-* **view:** update yarn lock file ([dd4e207](https://github.com/nixopus/nixopus/commit/dd4e207a48290d8b775580ce07ee9a54c3eb5921))
+---
 
+## [May 2026](https://github.com/nixopus/nixopus/compare/v0.1.0-alpha.166...v0.1.0-alpha.166)
+> `0.1.0-alpha.166` (1 release)
 
 ### Features
 
@@ -17,5 +19,9 @@
 * **view:** add route-level loading.tsx Suspense fallbacks ([#1328](https://github.com/nixopus/nixopus/issues/1328)) ([5df8a6c](https://github.com/nixopus/nixopus/commit/5df8a6cb242d01b82c22aad523a8bd517fc231e4))
 * **view:** add security headers to next.config.ts ([#1329](https://github.com/nixopus/nixopus/issues/1329)) ([c250cc5](https://github.com/nixopus/nixopus/commit/c250cc55a6b356b96e5199597866e040405b87e3))
 
+### Bug Fixes
+
+* **installer:** piped install access URL & provider log ([#1316](https://github.com/nixopus/nixopus/issues/1316)) ([4037588](https://github.com/nixopus/nixopus/commit/4037588a03d884556fa1aa4768c71ab4cb17981f))
+* **view:** update yarn lock file ([dd4e207](https://github.com/nixopus/nixopus/commit/dd4e207a48290d8b775580ce07ee9a54c3eb5921))
 
 
