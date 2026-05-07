@@ -28,7 +28,6 @@ export async function GET() {
     webhookUrl: process.env.WEBHOOK_URL || derived.webhookUrl,
     port: process.env.NEXT_PUBLIC_PORT || '7443',
     passwordLoginEnabled: process.env.PASSWORD_LOGIN_ENABLED !== 'false',
-    agentUrl: process.env.AGENT_URL || '',
     githubAppSlug: process.env.GITHUB_APP_SLUG || '',
     selfHosted: isSelfHosted,
     posthogKey: process.env.POSTHOG_KEY || '',

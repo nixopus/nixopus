@@ -73,6 +73,15 @@ services:
       DEPLOY_DOMAIN: "${DOMAIN:-${HOST_IP}}"
       APP_VERSION: "${NIXOPUS_VERSION:-latest}"
       SECRET_MANAGER_ENABLED: "false"
+      AGENT_URL: "http://nixopus-api:8443"
+      OPENROUTER_API_KEY: "${OPENROUTER_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      GOOGLE_GENERATIVE_AI_API_KEY: "${GOOGLE_GENERATIVE_AI_API_KEY:-}"
+      DEEPSEEK_API_KEY: "${DEEPSEEK_API_KEY:-}"
+      GROQ_API_KEY: "${GROQ_API_KEY:-}"
+      AGENT_MODEL: "${AGENT_MODEL:-}"
+      AGENT_LIGHT_MODEL: "${AGENT_LIGHT_MODEL:-}"
     volumes:
       - ${NIXOPUS_HOME:-/opt/nixopus}:/etc/nixopus
       - /var/run/docker.sock:/var/run/docker.sock

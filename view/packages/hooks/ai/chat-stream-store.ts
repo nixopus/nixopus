@@ -25,13 +25,9 @@ export interface SessionSnapshot {
 interface SessionInternal {
   snapshot: SessionSnapshot;
   abortController: AbortController | null;
-  needsStepSeparator: boolean;
-  needsNewTextPart: boolean;
   firstTextDeltaTime: number | null;
-  pendingApproval: boolean;
-  omStatusCache: OmStatus | null;
   assistantMessageId: string | null;
-  runId: string;
+  threadId: string;
 }
 
 type Listener = () => void;
@@ -42,53 +38,6 @@ const EMPTY_SNAPSHOT: SessionSnapshot = Object.freeze({
   pendingToolApproval: null,
   omStatus: null
 });
-
-function extractUsageFromPayload(payload: unknown): TokenUsage | null {
-  if (!payload || typeof payload !== 'object') return null;
-  const p = payload as Record<string, unknown>;
-
-  const output = p.output as Record<string, unknown> | undefined;
-  const outputUsage = output?.usage as Record<string, unknown> | undefined;
-
-  const metadata = p.metadata as Record<string, unknown> | undefined;
-  const providerMeta = metadata?.providerMetadata as Record<string, unknown> | undefined;
-  const orMeta = providerMeta?.openrouter as Record<string, unknown> | undefined;
-  const orUsage = orMeta?.usage as Record<string, unknown> | undefined;
-
-  const usage = outputUsage ?? orUsage;
-  if (!usage) return null;
-
-  const prompt = (usage.promptTokens as number) ?? (usage.inputTokens as number) ?? undefined;
-  const completion =
-    (usage.completionTokens as number) ?? (usage.outputTokens as number) ?? undefined;
-
-  if (typeof prompt !== 'number' && typeof completion !== 'number') return null;
-
-  const promptTokens = prompt ?? 0;
-  const completionTokens = completion ?? 0;
-  const costUsd = typeof orUsage?.cost === 'number' ? (orUsage.cost as number) : undefined;
-
-  return {
-    promptTokens,
-    completionTokens,
-    totalTokens:
-      typeof (usage.totalTokens as number) === 'number'
-        ? (usage.totalTokens as number)
-        : promptTokens + completionTokens,
-    costUsd
-  };
-}
-
-const DELEGATION_FORWARD_TYPES = new Set([
-  'text-delta',
-  'text-end',
-  'text-start',
-  'tool-call',
-  'tool-call-start',
-  'tool-result'
-]);
-
-const HIDDEN_TOOLS = new Set(['search_tools', 'load_tool']);
 
 class ChatStreamStore {
   private sessions = new Map<string, SessionInternal>();
@@ -104,43 +53,13 @@ class ChatStreamStore {
       s = {
         snapshot: { messages: [], isStreaming: false, pendingToolApproval: null, omStatus: null },
         abortController: null,
-        needsStepSeparator: false,
-        needsNewTextPart: false,
         firstTextDeltaTime: null,
-        pendingApproval: false,
-        omStatusCache: null,
         assistantMessageId: null,
-        runId: ''
+        threadId
       };
       this.sessions.set(threadId, s);
     }
     return s;
-  }
-
-  private accumulateUsage(s: SessionInternal, messageId: string, usage: TokenUsage) {
-    s.snapshot = {
-      ...s.snapshot,
-      messages: s.snapshot.messages.map((m) => {
-        if (m.id !== messageId) return m;
-        const existing = m.usage;
-        if (existing) {
-          const costUsd =
-            existing.costUsd != null || usage.costUsd != null
-              ? (existing.costUsd ?? 0) + (usage.costUsd ?? 0)
-              : undefined;
-          return {
-            ...m,
-            usage: {
-              promptTokens: existing.promptTokens + usage.promptTokens,
-              completionTokens: existing.completionTokens + usage.completionTokens,
-              totalTokens: existing.totalTokens + usage.totalTokens,
-              costUsd
-            }
-          };
-        }
-        return { ...m, usage };
-      })
-    };
   }
 
   subscribe = (threadId: string | null, listener: Listener): (() => void) => {
@@ -185,11 +104,7 @@ class ChatStreamStore {
     const s = this.getOrCreate(threadId);
     s.abortController = abortController;
     s.assistantMessageId = assistantMessageId;
-    s.runId = '';
-    s.needsStepSeparator = false;
-    s.needsNewTextPart = false;
     s.firstTextDeltaTime = null;
-    s.pendingApproval = false;
     s.snapshot = {
       ...s.snapshot,
       messages: [
@@ -215,141 +130,72 @@ class ChatStreamStore {
 
     if (s.abortController?.signal.aborted) return;
 
-    if (chunk.type === 'tool-output') {
-      const p = chunk.payload as Record<string, unknown> | undefined;
-      const output = p?.output as StreamChunk | undefined;
-      if (output?.type && DELEGATION_FORWARD_TYPES.has(output.type)) {
-        this.handleChunk(threadId, output);
-      }
-      return;
-    }
-
-    if (chunk.type === 'start' && chunk.runId) {
-      s.runId = chunk.runId;
-      return;
-    }
-
-    if (chunk.type === 'text-delta') {
-      if (s.firstTextDeltaTime === null) {
-        s.firstTextDeltaTime = Date.now();
-      }
-      const text = (chunk.payload as Record<string, unknown> | undefined)?.text as
-        | string
-        | undefined;
-      if (!text) return;
-
-      const insertSep = s.needsStepSeparator;
-      const startNewPart = s.needsNewTextPart;
-      s.needsStepSeparator = false;
-      s.needsNewTextPart = false;
-
-      s.snapshot = {
-        ...s.snapshot,
-        messages: s.snapshot.messages.map((m) => {
-          if (m.id !== amId) return m;
-          const sep = insertSep && m.content.length > 0 ? '\n\n' : '';
-          const newContent = m.content + sep + text;
-
-          let parts = [...(m.parts || [])];
-          parts = parts.map((p) =>
-            p.type === 'tool-call' && p.status === 'running' ? { ...p, status: 'done' as const } : p
-          );
-          const lastPart = parts[parts.length - 1];
-          if (!startNewPart && lastPart?.type === 'text') {
-            parts[parts.length - 1] = { ...lastPart, content: lastPart.content + text };
-          } else {
-            parts.push({ type: 'text' as const, content: text });
-          }
-
-          return { ...m, content: newContent, parts };
-        })
-      };
-      this.notify(threadId);
-      return;
-    }
-
-    if (chunk.type === 'step-finish') {
-      s.needsStepSeparator = true;
-      s.needsNewTextPart = true;
-      const stepUsage = extractUsageFromPayload(chunk.payload);
-      if (stepUsage) {
-        this.accumulateUsage(s, amId, stepUsage);
-        this.notify(threadId);
-      }
-      return;
-    }
-
-    if (chunk.type === 'text-end') {
-      s.needsStepSeparator = true;
-      s.needsNewTextPart = true;
-      return;
-    }
-
-    if (
-      chunk.type === 'tool-call' ||
-      chunk.type === 'tool-call-start' ||
-      chunk.type === 'tool-call-approval'
-    ) {
-      const p = chunk.payload as Record<string, unknown> | undefined;
-      const toolCallId = (p?.toolCallId ?? p?.id) as string | undefined;
-      const toolName = (p?.toolName as string) ?? 'tool';
-
-      if (toolName === 'ask_user' || toolName === 'askUser') return;
-
-      const isHidden = HIDDEN_TOOLS.has(toolName);
-      if (isHidden && chunk.type !== 'tool-call-approval') return;
-
-      if (chunk.runId) {
-        s.runId = chunk.runId;
-      }
-
-      if (toolCallId) {
-        const tcId = String(toolCallId);
-
-        if (!isHidden) {
-          s.needsNewTextPart = true;
-          s.snapshot = {
-            ...s.snapshot,
-            messages: s.snapshot.messages.map((m) => {
-              if (m.id !== amId) return m;
-              const parts = [...(m.parts || [])];
-              if (!parts.some((pt) => pt.type === 'tool-call' && pt.toolCallId === tcId)) {
-                parts.push({
-                  type: 'tool-call' as const,
-                  toolName,
-                  toolCallId: tcId,
-                  args: p?.args,
-                  status: 'running' as const
-                });
-              }
-              return { ...m, parts };
-            })
-          };
+    switch (chunk.type) {
+      case 'content': {
+        if (s.firstTextDeltaTime === null) {
+          s.firstTextDeltaTime = Date.now();
         }
+        const text = typeof chunk.data === 'string' ? chunk.data : '';
+        if (!text) return;
 
-        if (chunk.type === 'tool-call-approval') {
-          s.pendingApproval = true;
-          s.snapshot = {
-            ...s.snapshot,
-            pendingToolApproval: {
-              runId: s.runId,
-              toolCallId: tcId,
-              toolName,
-              args: p?.args ?? {}
+        s.snapshot = {
+          ...s.snapshot,
+          messages: s.snapshot.messages.map((m) => {
+            if (m.id !== amId) return m;
+            const newContent = m.content + text;
+            const parts = [...(m.parts || [])];
+            const lastPart = parts[parts.length - 1];
+            if (lastPart?.type === 'text') {
+              parts[parts.length - 1] = { ...lastPart, content: lastPart.content + text };
+            } else {
+              parts.push({ type: 'text' as const, content: text });
             }
-          };
-        }
-
+            return { ...m, content: newContent, parts };
+          })
+        };
         this.notify(threadId);
+        return;
       }
-      return;
-    }
 
-    if (chunk.type === 'tool-result') {
-      const p = chunk.payload as Record<string, unknown> | undefined;
-      const tcId = p?.toolCallId as string | undefined;
-      if (tcId) {
-        s.needsNewTextPart = true;
+      case 'tool_calls': {
+        const toolCalls = Array.isArray(chunk.data) ? chunk.data : [];
+        s.snapshot = {
+          ...s.snapshot,
+          messages: s.snapshot.messages.map((m) => {
+            if (m.id !== amId) return m;
+            const parts = [...(m.parts || [])];
+            for (const tc of toolCalls as Array<{
+              id?: string;
+              function?: { name?: string; arguments?: string };
+            }>) {
+              const toolCallId = tc.id || '';
+              const toolName = tc.function?.name || 'tool';
+              let args: unknown = undefined;
+              try {
+                args = tc.function?.arguments ? JSON.parse(tc.function.arguments) : undefined;
+              } catch {
+                args = tc.function?.arguments;
+              }
+              parts.push({
+                type: 'tool-call' as const,
+                toolName,
+                toolCallId,
+                args,
+                status: 'running' as const
+              });
+            }
+            return { ...m, parts };
+          })
+        };
+        this.notify(threadId);
+        return;
+      }
+
+      case 'tool_result': {
+        const result = chunk.data as { tool_call_id?: string; content?: string } | undefined;
+        const tcId = result?.tool_call_id;
+        if (!tcId) return;
+
         s.snapshot = {
           ...s.snapshot,
           messages: s.snapshot.messages.map((m) => {
@@ -363,105 +209,88 @@ class ChatStreamStore {
           })
         };
         this.notify(threadId);
-      }
-      return;
-    }
-
-    if (chunk.type === 'finish' && chunk.payload) {
-      const finishPayload = chunk.payload as Record<string, unknown>;
-
-      const payloadError = finishPayload.error;
-      if (payloadError) {
-        const kind = isRateLimitError(payloadError) ? 'rate-limited' : 'generic-error';
-        const errMsg =
-          ((payloadError as Record<string, unknown>).message as string | undefined) ??
-          'An unexpected error occurred';
-        this.finishStream(threadId, errMsg, kind);
         return;
       }
 
-      const msg = s.snapshot.messages.find((m) => m.id === amId);
-      if (!msg?.usage) {
-        const finishUsage = extractUsageFromPayload(finishPayload);
-        if (finishUsage) {
-          s.snapshot = {
-            ...s.snapshot,
-            messages: s.snapshot.messages.map((m) =>
-              m.id === amId ? { ...m, usage: finishUsage } : m
-            )
+      case 'done': {
+        const payload = chunk.data as {
+          content?: string;
+          usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+          thread_id?: string;
+          steps?: number;
+        } | null;
+
+        const usage = payload?.usage;
+        let tokenUsage: TokenUsage | undefined;
+        if (usage) {
+          tokenUsage = {
+            promptTokens: usage.prompt_tokens ?? 0,
+            completionTokens: usage.completion_tokens ?? 0,
+            totalTokens: usage.total_tokens ?? 0
           };
         }
-      }
 
-      const stepResult = finishPayload.stepResult as Record<string, unknown> | undefined;
-      const finishReason = (finishPayload.finishReason ?? stepResult?.reason) as string | undefined;
-      const sp = finishPayload.suspendPayload as Record<string, unknown> | undefined;
-      const runId = chunk.runId ?? (sp?.runId as string) ?? s.runId;
-      if (finishReason === 'suspended' && sp) {
-        s.pendingApproval = true;
+        const durationMs = s.firstTextDeltaTime ? Date.now() - s.firstTextDeltaTime : undefined;
+        s.firstTextDeltaTime = null;
+
         s.snapshot = {
           ...s.snapshot,
-          pendingToolApproval: {
-            runId: runId ?? '',
-            toolCallId: (sp.toolCallId as string) ?? '',
-            toolName: (sp.toolName as string) ?? 'tool',
-            args: sp.args ?? {}
-          }
+          isStreaming: false,
+          messages: s.snapshot.messages.map((m) => {
+            if (m.id !== amId) return m;
+            const parts = m.parts?.map((p) =>
+              p.type === 'tool-call' && p.status === 'running'
+                ? { ...p, status: 'done' as const }
+                : p
+            );
+            return {
+              ...m,
+              parts,
+              usage: tokenUsage ? { ...tokenUsage, durationMs } : m.usage
+            };
+          })
         };
+        s.abortController = null;
+        this.notify(threadId);
+        return;
       }
-      this.notify(threadId);
-      return;
-    }
 
-    if (chunk.type === 'data-om-status') {
-      const d = chunk.payload as Record<string, unknown> | undefined;
-      const windows = d?.windows as Record<string, unknown> | undefined;
-      const active = windows?.active as Record<string, unknown> | undefined;
-      if (active) {
-        const msgs = active.messages as Record<string, unknown> | undefined;
-        const obs = active.observations as Record<string, unknown> | undefined;
-        const next: OmStatus = {
-          messages: {
-            tokens: (msgs?.tokens as number) ?? 0,
-            threshold: (msgs?.threshold as number) ?? 30000
-          },
-          observations: {
-            tokens: (obs?.tokens as number) ?? 0,
-            threshold: (obs?.threshold as number) ?? 40000
-          },
-          isObserving: s.omStatusCache?.isObserving ?? false,
-          observationsText: s.omStatusCache?.observationsText ?? null
+      case 'cancelled': {
+        const durationMs = s.firstTextDeltaTime ? Date.now() - s.firstTextDeltaTime : undefined;
+        s.firstTextDeltaTime = null;
+
+        s.snapshot = {
+          ...s.snapshot,
+          isStreaming: false,
+          messages: s.snapshot.messages.map((m) => {
+            if (m.id !== amId) return m;
+            const parts = m.parts?.map((p) =>
+              p.type === 'tool-call' && p.status === 'running'
+                ? { ...p, status: 'done' as const }
+                : p
+            );
+            const usage = m.usage
+              ? { ...m.usage, durationMs }
+              : durationMs != null
+                ? { promptTokens: 0, completionTokens: 0, totalTokens: 0, durationMs }
+                : undefined;
+            return { ...m, parts, usage };
+          })
         };
-        s.omStatusCache = next;
-        s.snapshot = { ...s.snapshot, omStatus: next };
+        s.abortController = null;
         this.notify(threadId);
+        return;
       }
-      return;
-    }
 
-    if (chunk.type === 'data-om-observation-start') {
-      if (s.omStatusCache) {
-        const next = { ...s.omStatusCache, isObserving: true };
-        s.omStatusCache = next;
-        s.snapshot = { ...s.snapshot, omStatus: next };
-        this.notify(threadId);
+      case 'error': {
+        const payload = chunk.data as { message?: string } | string | null;
+        const errMsg =
+          typeof payload === 'string'
+            ? payload
+            : ((payload as { message?: string })?.message ?? 'An unexpected error occurred');
+        this.finishStream(threadId, errMsg, 'generic-error');
+        return;
       }
-      return;
-    }
-
-    if (chunk.type === 'data-om-observation-end' || chunk.type === 'data-om-activation') {
-      const d = chunk.payload as Record<string, unknown> | undefined;
-      if (s.omStatusCache) {
-        const next: OmStatus = {
-          ...s.omStatusCache,
-          isObserving: false,
-          observationsText: (d?.observations as string) ?? s.omStatusCache.observationsText
-        };
-        s.omStatusCache = next;
-        s.snapshot = { ...s.snapshot, omStatus: next };
-        this.notify(threadId);
-      }
-      return;
     }
   }
 
@@ -474,9 +303,7 @@ class ChatStreamStore {
     if (!s) return;
     const amId = s.assistantMessageId;
 
-    if (!s.pendingApproval) {
-      s.snapshot = { ...s.snapshot, isStreaming: false };
-    }
+    s.snapshot = { ...s.snapshot, isStreaming: false };
     s.abortController = null;
 
     if (amId) {
@@ -508,8 +335,6 @@ class ChatStreamStore {
       };
     }
 
-    s.needsStepSeparator = false;
-    s.needsNewTextPart = false;
     this.notify(threadId);
   }
 
@@ -518,56 +343,6 @@ class ChatStreamStore {
     if (!s) return;
     s.abortController?.abort();
     s.snapshot = { ...s.snapshot, isStreaming: false };
-    this.notify(threadId);
-  }
-
-  prepareApprovalStream(threadId: string): string | null {
-    const s = this.sessions.get(threadId);
-    if (!s) return null;
-    s.pendingApproval = false;
-    s.snapshot = { ...s.snapshot, pendingToolApproval: null };
-    const amId = s.snapshot.messages.filter((m) => m.role === 'assistant').pop()?.id ?? null;
-    s.assistantMessageId = amId;
-    this.notify(threadId);
-    return amId;
-  }
-
-  startApprovalStream(threadId: string, abortController: AbortController) {
-    const s = this.sessions.get(threadId);
-    if (!s) return;
-    s.abortController = abortController;
-    s.needsNewTextPart = true;
-  }
-
-  finishApprovalStream(threadId: string) {
-    const s = this.sessions.get(threadId);
-    if (!s) return;
-
-    if (!s.pendingApproval) {
-      s.snapshot = { ...s.snapshot, isStreaming: false };
-    }
-    s.abortController = null;
-    s.needsStepSeparator = false;
-    s.needsNewTextPart = false;
-
-    const amId = s.snapshot.messages.filter((m) => m.role === 'assistant').pop()?.id;
-    if (amId) {
-      s.snapshot = {
-        ...s.snapshot,
-        messages: s.snapshot.messages.map((m) => {
-          if (m.id !== amId || !m.parts) return m;
-          if (!m.parts.some((p) => p.type === 'tool-call' && p.status === 'running')) return m;
-          return {
-            ...m,
-            parts: m.parts.map((p) =>
-              p.type === 'tool-call' && p.status === 'running'
-                ? { ...p, status: 'done' as const }
-                : p
-            )
-          };
-        })
-      };
-    }
     this.notify(threadId);
   }
 
@@ -582,14 +357,6 @@ class ChatStreamStore {
         m.id === amId ? { ...m, content: m.content + text } : m
       )
     };
-    this.notify(threadId);
-  }
-
-  declineApproval(threadId: string) {
-    const s = this.sessions.get(threadId);
-    if (!s) return;
-    s.pendingApproval = false;
-    s.snapshot = { ...s.snapshot, pendingToolApproval: null, isStreaming: false };
     this.notify(threadId);
   }
 

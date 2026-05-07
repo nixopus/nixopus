@@ -36,7 +36,6 @@ Optional variables:
 
 | Variable | Description |
 |----------|-------------|
-| `AGENT_URL` | AI agent service URL (enables AI chat features) |
 | `BASE_PATH` | Next.js base path (e.g. `/app`) |
 | `ASSET_PREFIX` | CDN/asset prefix for static files |
 | `NEXT_PUBLIC_APP_URL` | Public app URL for GitHub App manifest |

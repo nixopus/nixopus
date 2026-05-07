@@ -1,0 +1,86 @@
+version: "3.8"
+
+# Agent probe test runner.
+#
+# Runs three tiers of agent tests:
+#   Tier 1 (always): ToolCallRecorder + ValidateToolArgs unit tests
+#   Tier 2 (always): Per-agent mock-LLM probe tests (no real LLM required)
+#   Tier 3 (opt-in): Live nonce probes against a real LLM (requires LLM_API_KEY)
+#
+# Usage:
+#
+#   # Tier 1 + 2 only (CI-safe, no API key needed):
+#   docker compose -f docker-compose-agent-probe.yml up --abort-on-container-exit
+#
+#   # All tiers including live LLM probes:
+#   LLM_API_KEY=sk-... docker compose -f docker-compose-agent-probe.yml up --abort-on-container-exit
+#
+#   # Target a specific model:
+#   LLM_API_KEY=sk-... LLM_MODEL=openai/gpt-4o docker compose -f docker-compose-agent-probe.yml up --abort-on-container-exit
+#
+#   # Use a custom LLM endpoint (self-hosted, vLLM, LiteLLM, etc.):
+#   LLM_API_KEY=... LLM_BASE_URL=http://my-vllm:8000/v1 LLM_MODEL=meta-llama/Llama-3-8B \
+#     docker compose -f docker-compose-agent-probe.yml up --abort-on-container-exit
+
+services:
+
+  # ── Tier 1 + 2: CI-safe probe runner ──────────────────────────────────────
+  agent-probe-ci:
+    image: golang:1.22-alpine
+    container_name: agent-probe-ci
+    working_dir: /app
+    volumes:
+      - ./api:/app
+      # Cache Go module downloads between runs
+      - agent-probe-gomod:/root/go/pkg/mod
+    environment:
+      - CGO_ENABLED=0
+      - GOFLAGS=-mod=mod
+    command: >
+      sh -c "
+        apk add --no-cache git ca-certificates &&
+        echo '=== Tier 1: ToolCallRecorder + ValidateToolArgs unit tests ===' &&
+        go test ./pkg/llm/...
+          -run 'TestToolCallRecorder|TestWrapWithRecorder|TestValidateToolArgs|TestAgent_WithRecorder'
+          -v -count=1 -timeout 60s &&
+        echo '=== Tier 2: Per-agent mock-LLM probe tests ===' &&
+        go test ./internal/features/agent/service/...
+          -run 'TestAgentProbe|TestNixopusAPISchema|TestHttpProbeSchema|TestGithubToolSchemas|TestGithubCommentOnPRSchema|TestGithubSetCommitStatusSchema|TestGithubCreateOrUpdateFileSchema|TestAllToolDefinitions'
+          -v -count=1 -timeout 60s &&
+        echo '=== All CI-safe probe tests passed ==='
+      "
+
+  # ── Tier 3: Live LLM nonce probes (opt-in) ────────────────────────────────
+  # Only runs when LLM_API_KEY is set. Container exits 0 if key absent.
+  agent-probe-live:
+    image: golang:1.22-alpine
+    container_name: agent-probe-live
+    working_dir: /app
+    volumes:
+      - ./api:/app
+      - agent-probe-gomod:/root/go/pkg/mod
+    environment:
+      - CGO_ENABLED=0
+      - GOFLAGS=-mod=mod
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_BASE_URL=${LLM_BASE_URL:-https://openrouter.ai/api/v1}
+      - LLM_MODEL=${LLM_MODEL:-openai/gpt-4o-mini}
+    depends_on:
+      agent-probe-ci:
+        condition: service_completed_successfully
+    command: >
+      sh -c "
+        if [ -z \"$$LLM_API_KEY\" ]; then
+          echo '=== Tier 3: SKIPPED (set LLM_API_KEY to enable live probes) ==='
+          exit 0
+        fi &&
+        apk add --no-cache git ca-certificates &&
+        echo '=== Tier 3: Live nonce probes (model: '$$LLM_MODEL') ===' &&
+        go test -tags agent_probe ./internal/features/agent/service/...
+          -run 'TestAgentLiveProbe'
+          -v -count=1 -timeout 120s &&
+        echo '=== Live probe tests passed ==='
+      "
+
+volumes:
+  agent-probe-gomod:

@@ -159,7 +159,6 @@ Internal services (Docker network only, not exposed to host):
 | `9090` | nixopus-auth |
 | `8443` | nixopus-api |
 | `7443` | nixopus-view |
-| `4090` | nixopus-agent |
 | `5432` | nixopus-db (bundled Postgres) |
 | `6379` | nixopus-redis (bundled Redis) |
 
@@ -201,7 +200,7 @@ If using custom ports, replace `80`/`443` with your values in all commands above
 
 ## AI Agent
 
-The installer includes an AI agent that assists with deployments, diagnostics, and infrastructure management. It runs as the `nixopus-agent` service.
+The installer includes an AI agent that assists with deployments, diagnostics, and infrastructure management. It runs as part of the `nixopus-api` service.
 
 ### LLM Provider
 
@@ -278,7 +277,6 @@ curl -fsSL install.nixopus.com | \
 | `NIXOPUS_API_IMAGE` | `ghcr.io/nixopus/nixopus-api:latest` | API container image |
 | `NIXOPUS_VIEW_IMAGE` | `ghcr.io/nixopus/nixopus-view:latest` | View container image |
 | `NIXOPUS_AUTH_IMAGE` | `ghcr.io/nixopus/auth:latest` | Auth container image |
-| `NIXOPUS_AGENT_IMAGE` | `ghcr.io/nixopus/agent:latest` | Agent container image |
 
 ### Preview image cleanup
 
@@ -313,7 +311,7 @@ sudo nixopus status
 | Command | Description |
 |---|---|
 | `nixopus status` | Show service health |
-| `nixopus logs [service]` | Tail logs (services: `nixopus-api`, `nixopus-auth`, `nixopus-view`, `nixopus-caddy`, `nixopus-agent`, `nixopus-db`, `nixopus-redis`) |
+| `nixopus logs [service]` | Tail logs (services: `nixopus-api`, `nixopus-auth`, `nixopus-view`, `nixopus-caddy`, `nixopus-db`, `nixopus-redis`) |
 | `nixopus update` | Pull latest images and restart |
 | `nixopus restart [service]` | Restart all or a specific service |
 | `nixopus stop` | Stop all services |

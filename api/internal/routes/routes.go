@@ -1,11 +1,13 @@
 package routes
 
 import (
+	"context"
 	"net/http"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	apilog "github.com/nixopus/nixopus/api/internal/log"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -14,6 +16,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/nixopus/nixopus/api/internal/cache"
 	"github.com/nixopus/nixopus/api/internal/config"
+	agentController "github.com/nixopus/nixopus/api/internal/features/agent/controller"
 	audit "github.com/nixopus/nixopus/api/internal/features/audit/controller"
 	authsession "github.com/nixopus/nixopus/api/internal/features/auth"
 	auth "github.com/nixopus/nixopus/api/internal/features/auth/controller"
@@ -48,6 +51,8 @@ import (
 	api "github.com/nixopus/nixopus/api/internal/version"
 )
 
+var timeNow = time.Now
+
 // Router holds the application dependencies for route handlers
 type Router struct {
 	app          *storage.App
@@ -62,6 +67,7 @@ type MiddlewareConfig struct {
 	RBAC         bool
 	FeatureFlag  string // empty string means no feature flag middleware
 	Audit        bool
+	CreditGate   bool   // when true, checks wallet credits for non-selfhosted deployments
 	ResourceName string // resource name for RBAC, audit, and feature flag
 }
 
@@ -94,6 +100,11 @@ func (router *Router) applyMiddleware(group *fuego.Server, cfg MiddlewareConfig)
 	if cfg.FeatureFlag != "" {
 		fuego.Use(group, func(next http.Handler) http.Handler {
 			return middleware.FeatureFlagMiddleware(next, router.app, cfg.FeatureFlag, router.cache)
+		})
+	}
+	if cfg.CreditGate {
+		fuego.Use(group, func(next http.Handler) http.Handler {
+			return middleware.CreditGateMiddleware(next, router.creditGateDeps(), router.logger)
 		})
 	}
 	if cfg.Audit {
@@ -427,6 +438,57 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		ResourceName: "mcp",
 	})
 	router.RegisterMCPRoutes(mcpGroup, mcpCtrl)
+
+	agentCtrl := agentController.NewAgentController(router.app.Store, router.app.Ctx, router.logger)
+	agentGroup := fuego.Group(server, apiV1.Path+"/agent", option.Tags("Agent"))
+	router.applyMiddleware(agentGroup, MiddlewareConfig{
+		RBAC:         true,
+		FeatureFlag:  "agent",
+		CreditGate:   true,
+		Audit:        true,
+		ResourceName: "agent",
+	})
+	router.RegisterAgentRoutes(agentGroup, agentCtrl)
+}
+
+func (router *Router) creditGateDeps() middleware.CreditGateDeps {
+	billingStorage := machine_storage.NewBillingStorage(router.app.Store.DB, router.app.Ctx)
+	return middleware.CreditGateDeps{
+		GetWalletBalance: func(ctx context.Context, orgID uuid.UUID) (int, error) {
+			return billingStorage.GetWalletBalance(orgID)
+		},
+		GetMachineStatus: func(ctx context.Context, orgID uuid.UUID) (*middleware.MachineStatusResult, error) {
+			billing, err := billingStorage.GetBillingByOrgID(orgID)
+			if err != nil || billing == nil {
+				return &middleware.MachineStatusResult{HasMachine: false}, nil
+			}
+			plan, _ := billingStorage.GetPlanByID(billing.MachinePlanID)
+			var planCost int
+			if plan != nil {
+				planCost = plan.MonthlyCostCents
+			}
+			var graceDeadline *string
+			if billing.GraceDeadline != nil {
+				s := billing.GraceDeadline.Format("2006-01-02T15:04:05Z")
+				graceDeadline = &s
+			}
+			var daysRemaining *int
+			if billing.GraceDeadline != nil {
+				days := int(billing.GraceDeadline.Sub(timeNow()).Hours() / 24)
+				if days < 0 {
+					days = 0
+				}
+				daysRemaining = &days
+			}
+			return &middleware.MachineStatusResult{
+				HasMachine:    true,
+				Status:        string(billing.Status),
+				GraceDeadline: graceDeadline,
+				DaysRemaining: daysRemaining,
+				PlanCostCents: planCost,
+			}, nil
+		},
+	}
 }
 
 func (router *Router) createAuthController() *auth.AuthController {
