@@ -43,7 +43,7 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
       "connect-src 'self' ws: wss: https: http:",
       'frame-src https://challenges.cloudflare.com',
-      'worker-src blob: https://challenges.cloudflare.com',
+      "worker-src 'self' blob: https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'"
