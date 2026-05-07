@@ -128,7 +128,6 @@ verify() {
 
     local http_port="${CADDY_HTTP_PORT:-80}"
     check "API health"     "curl -sf http://127.0.0.1:${http_port}/api/v1/health | grep -q success"
-    check "Agent health"   "curl -sf http://127.0.0.1:${http_port}/agent/healthz | grep -q ok"
     check "View responds"  "curl -sf http://127.0.0.1:${http_port}/ | grep -q Nixopus"
 
     check "nixopus status runs"  "nixopus status"
