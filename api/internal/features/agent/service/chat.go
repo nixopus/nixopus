@@ -251,16 +251,30 @@ func storedToMessages(stored []memory.StoredMessage) []llm.Message {
 }
 
 // buildContextPrefix assembles the preprocessed context blocks to prepend to user input.
+// Context injection behaviour is controlled by s.contextPolicy:
+//   - "first-only" (default): full user-context on first message, instance info on subsequent
+//   - "always": full user-context re-injected every turn
+//   - "never": skip user-context entirely (instance info still included)
 func (s *AgentService) buildContextPrefix(ctx context.Context, orgID string, history []memory.StoredMessage, currentInput string) string {
 	var blocks []string
 
-	// 1. User context: full context on first message, instance info always
-	if len(history) == 0 {
+	switch s.contextPolicy {
+	case ContextPolicyNever:
+		blocks = append(blocks, s.fetchInstanceContext())
+	case ContextPolicyAlways:
 		if uc := s.injectUserContext(ctx, orgID); uc != "" {
 			blocks = append(blocks, uc)
+		} else {
+			blocks = append(blocks, s.fetchInstanceContext())
 		}
-	} else {
-		blocks = append(blocks, s.fetchInstanceContext())
+	default: // ContextPolicyFirstOnly
+		if len(history) == 0 {
+			if uc := s.injectUserContext(ctx, orgID); uc != "" {
+				blocks = append(blocks, uc)
+			}
+		} else {
+			blocks = append(blocks, s.fetchInstanceContext())
+		}
 	}
 
 	// 2. Deploy flow: auto-inject on deploy intent so the LLM has full instructions
@@ -298,7 +312,17 @@ func (s *AgentService) buildContextPrefix(ctx context.Context, orgID string, his
 	if len(blocks) == 0 {
 		return ""
 	}
-	return strings.Join(blocks, "\n\n")
+
+	result := strings.Join(blocks, "\n\n")
+
+	// Token budget: cap total injected context at ~15K chars (~3.7K tokens)
+	// to prevent context explosion in long conversations with many apps/patterns.
+	const maxContextChars = 15_000
+	if len(result) > maxContextChars {
+		result = result[:maxContextChars] + "\n... [context truncated]"
+	}
+
+	return result
 }
 
 var deployIntentRe = regexp.MustCompile(`(?i)\b(deploy\w*|launch|ship|go\s+live|push\s+to\s+prod|put\s+(?:it\s+)?(?:on|up)|host|set\s*up)\b`)

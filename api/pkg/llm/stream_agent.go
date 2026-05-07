@@ -151,6 +151,13 @@ func (h *StreamHandler) runStreaming(ctx context.Context, w http.ResponseWriter,
 		messages = append(messages, *assembled)
 
 		if len(assembled.ToolCalls) == 0 {
+			if steps < h.agent.config.MaxSteps && looksLikeUnfinishedPlan(assembled.Content) {
+				messages = append(messages, Message{
+					Role:    RoleUser,
+					Content: "[system] You described your next action but didn't execute it. Proceed now — call the tool.",
+				})
+				continue
+			}
 			return &StreamRunResult{
 				Content:    assembled.Content,
 				Messages:   messages,

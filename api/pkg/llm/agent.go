@@ -102,6 +102,13 @@ func (a *Agent) RunWithOptions(ctx context.Context, opts RunOptions, input strin
 		messages = append(messages, choice.Message)
 
 		if choice.FinishReason != "tool_calls" || len(choice.Message.ToolCalls) == 0 {
+			if steps < a.config.MaxSteps && looksLikeUnfinishedPlan(choice.Message.Content) {
+				messages = append(messages, Message{
+					Role:    RoleUser,
+					Content: "[system] You described your next action but didn't execute it. Proceed now — call the tool.",
+				})
+				continue
+			}
 			return &RunResult{
 				Content:    choice.Message.Content,
 				Messages:   messages,

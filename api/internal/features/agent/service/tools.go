@@ -14,22 +14,13 @@ import (
 	"github.com/nixopus/nixopus/api/pkg/llm"
 )
 
-// buildDeployTools creates the core tool registry for the deploy agent.
-// Tools call back into the Nixopus API using the user's auth context.
-func (s *AgentService) buildDeployTools() *llm.ToolRegistry {
-	tools := llm.NewToolRegistry()
-
-	tools.Register(s.skills.Tool())
-	tools.Register(s.agents.DelegateTool(map[string]int{
-		"diagnostic":   8,
-		"github":       5,
-		"notification": 3,
-		"machine":      8,
-	}))
-
-	tools.Register(llm.ToolDefinition{
+// buildToolProfiles creates the profile builder with shared core tools and
+// profile-specific addons. Core tools (nixopus_api, read_skill, http_probe)
+// are registered once and shared across all agent profiles.
+func (s *AgentService) buildToolProfiles() *llm.ToolProfileBuilder {
+	nixopusAPIDef := llm.ToolDefinition{
 		Name:        "nixopus_api",
-		Description: "Call any Nixopus API endpoint. Use for managing applications, deployments, domains, containers, GitHub connectors, machines, and more.",
+		Description: "Call any Nixopus API endpoint. Use for managing applications, deployments, domains, containers, GitHub connectors, machines, and more. See [api-catalog] in the system prompt for all available operations, required fields, and types.",
 		Parameters: json.RawMessage(`{
 			"type": "object",
 			"properties": {
@@ -40,14 +31,14 @@ func (s *AgentService) buildDeployTools() *llm.ToolRegistry {
 			"required": ["method", "path"]
 		}`),
 		Handler: s.nixopusAPIHandler,
-	})
+	}
 
-	tools.Register(llm.ToolDefinition{
+	httpProbeDef := llm.ToolDefinition{
 		Name:        "http_probe",
 		Description: "Check if a URL is accessible and return status code, headers, and response time.",
 		Parameters:  json.RawMessage(`{"type":"object","properties":{"url":{"type":"string","description":"URL to probe"},"timeout_seconds":{"type":"integer","description":"Timeout in seconds (default 10)"}},"required":["url"]}`),
 		Handler:     httpProbeHandler,
-	})
+	}
 
 	deps := codebase.Deps{
 		AuthTokenFromCtx: func(ctx context.Context) string {
@@ -65,121 +56,49 @@ func (s *AgentService) buildDeployTools() *llm.ToolRegistry {
 		GetEnvOrDefault: getEnvOrDefault,
 	}
 
-	tools.Register(codebase.AnalyzeRepositoryTool(deps))
-	tools.Register(codebase.LoadRemoteRepositoryTool())
-
-	return tools
-}
-
-func (s *AgentService) buildDiagnosticTools() *llm.ToolRegistry {
-	tools := llm.NewToolRegistry()
-	tools.Register(s.skills.Tool())
-
-	tools.Register(llm.ToolDefinition{
-		Name:        "nixopus_api",
-		Description: "Call Nixopus API for diagnostic data (logs, healthchecks, container status).",
-		Parameters: json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"method": {"type": "string", "enum": ["GET", "POST"], "description": "HTTP method"},
-				"path": {"type": "string", "description": "API path"},
-				"body": {"type": "object", "description": "Request body"}
-			},
-			"required": ["method", "path"]
-		}`),
-		Handler: s.nixopusAPIHandler,
+	// Core tools shared by all profiles
+	pb := llm.NewToolProfileBuilder(func(reg *llm.ToolRegistry) {
+		reg.Register(s.skills.Tool())
+		reg.Register(nixopusAPIDef)
+		reg.Register(httpProbeDef)
 	})
 
-	tools.Register(llm.ToolDefinition{
-		Name:        "http_probe",
-		Description: "Probe a URL for health checking.",
-		Parameters:  json.RawMessage(`{"type":"object","properties":{"url":{"type":"string"},"timeout_seconds":{"type":"integer"}},"required":["url"]}`),
-		Handler:     httpProbeHandler,
+	// Deploy: core + delegation + codebase analysis
+	pb.RegisterProfile(llm.ProfileDeploy, func(reg *llm.ToolRegistry) {
+		reg.Register(s.agents.DelegateTool(map[string]int{
+			"diagnostic":   8,
+			"github":       5,
+			"notification": 3,
+			"machine":      8,
+		}))
+		reg.Register(codebase.AnalyzeRepositoryTool(deps))
+		reg.Register(codebase.LoadRemoteRepositoryTool())
 	})
 
-	return tools
-}
+	// Diagnostic: core only (nixopus_api + http_probe + read_skill)
 
-func (s *AgentService) buildGithubTools() *llm.ToolRegistry {
-	tools := llm.NewToolRegistry()
-	tools.Register(s.skills.Tool())
-
+	// GitHub: core + all github_* tools
 	gc := s.github
-
-	tools.Register(agentgithub.ListPullRequestsTool(gc))
-	tools.Register(agentgithub.ListIssuesTool(gc))
-	tools.Register(agentgithub.CommentOnPRTool(gc))
-	tools.Register(agentgithub.CommentOnIssueTool(gc))
-	tools.Register(agentgithub.CreateIssueTool(gc))
-	tools.Register(agentgithub.SetCommitStatusTool(gc))
-	tools.Register(agentgithub.CreateDeploymentStatusTool(gc))
-	tools.Register(agentgithub.SearchRepoContentTool(gc))
-	tools.Register(agentgithub.CreateOrUpdateFileTool(gc))
-	tools.Register(agentgithub.GetBranchTool(gc))
-	tools.Register(agentgithub.CreateBranchTool(gc))
-	tools.Register(agentgithub.CreatePullRequestTool(gc))
-	tools.Register(agentgithub.MergePullRequestTool(gc))
-	tools.Register(agentgithub.GetRepoFileTool(gc))
-
-	tools.Register(llm.ToolDefinition{
-		Name:        "nixopus_api",
-		Description: "Call Nixopus GitHub connector API.",
-		Parameters: json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"method": {"type": "string", "enum": ["GET", "POST", "DELETE"]},
-				"path": {"type": "string"},
-				"body": {"type": "object"}
-			},
-			"required": ["method", "path"]
-		}`),
-		Handler: s.nixopusAPIHandler,
+	pb.RegisterProfile(llm.ProfileGitHub, func(reg *llm.ToolRegistry) {
+		reg.Register(agentgithub.ListPullRequestsTool(gc))
+		reg.Register(agentgithub.ListIssuesTool(gc))
+		reg.Register(agentgithub.CommentOnPRTool(gc))
+		reg.Register(agentgithub.CommentOnIssueTool(gc))
+		reg.Register(agentgithub.CreateIssueTool(gc))
+		reg.Register(agentgithub.SetCommitStatusTool(gc))
+		reg.Register(agentgithub.CreateDeploymentStatusTool(gc))
+		reg.Register(agentgithub.SearchRepoContentTool(gc))
+		reg.Register(agentgithub.CreateOrUpdateFileTool(gc))
+		reg.Register(agentgithub.GetBranchTool(gc))
+		reg.Register(agentgithub.CreateBranchTool(gc))
+		reg.Register(agentgithub.CreatePullRequestTool(gc))
+		reg.Register(agentgithub.MergePullRequestTool(gc))
+		reg.Register(agentgithub.GetRepoFileTool(gc))
 	})
 
-	return tools
-}
+	// Notification and Machine profiles use core tools only (no addons)
 
-func (s *AgentService) buildNotificationTools() *llm.ToolRegistry {
-	tools := llm.NewToolRegistry()
-
-	tools.Register(llm.ToolDefinition{
-		Name:        "nixopus_api",
-		Description: "Send notifications via Nixopus API.",
-		Parameters: json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"method": {"type": "string", "enum": ["GET", "POST"]},
-				"path": {"type": "string"},
-				"body": {"type": "object"}
-			},
-			"required": ["method", "path"]
-		}`),
-		Handler: s.nixopusAPIHandler,
-	})
-
-	return tools
-}
-
-func (s *AgentService) buildMachineTools() *llm.ToolRegistry {
-	tools := llm.NewToolRegistry()
-	tools.Register(s.skills.Tool())
-
-	tools.Register(llm.ToolDefinition{
-		Name:        "nixopus_api",
-		Description: "Call Nixopus machine/server management API.",
-		Parameters: json.RawMessage(`{
-			"type": "object",
-			"properties": {
-				"method": {"type": "string", "enum": ["GET", "POST", "PUT", "DELETE"]},
-				"path": {"type": "string"},
-				"body": {"type": "object"}
-			},
-			"required": ["method", "path"]
-		}`),
-		Handler: s.nixopusAPIHandler,
-	})
-
-	return tools
+	return pb
 }
 
 // nixopusAPIHandler calls the Nixopus API on behalf of the user.

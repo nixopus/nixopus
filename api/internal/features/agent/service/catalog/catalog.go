@@ -1,8 +1,33 @@
 package catalog
 
-// Catalog is injected as a system message so the agent knows
-// all available Nixopus API operations it can call via the nixopus_api tool.
-const Catalog = `[api-catalog]
+import "sync"
+
+// Catalog is the LLM-visible API reference injected into every agent system
+// prompt. It is populated at boot by GenerateAndSet (from openapi.json).
+// If generation fails, FallbackCatalog is used instead.
+var Catalog = FallbackCatalog
+
+var catalogOnce sync.Once
+
+// GenerateAndSet generates the catalog from the OpenAPI spec and sets the
+// package-level Catalog variable. Safe to call multiple times; only the first
+// call has effect.
+func GenerateAndSet(specPath string) error {
+	var genErr error
+	catalogOnce.Do(func() {
+		generated, err := GenerateCatalog(specPath)
+		if err != nil {
+			genErr = err
+			return
+		}
+		Catalog = generated
+	})
+	return genErr
+}
+
+// FallbackCatalog is the hand-maintained catalog used when the OpenAPI spec
+// is not yet available (e.g. first boot before PostProcessSpec runs).
+const FallbackCatalog = `[api-catalog]
 Use nixopus_api(method, path, body) for ALL Nixopus API calls below.
 Pass the HTTP method and API path directly. For path params, embed them in the path string.
 

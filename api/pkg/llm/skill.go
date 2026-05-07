@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/fs"
 	"path"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -70,6 +71,25 @@ func (s *SkillStore) Catalog() []string {
 		catalog = append(catalog, entry)
 	}
 	return catalog
+}
+
+// FormattedCatalog returns a bullet-list string of all registered skills
+// suitable for injection into a system prompt. Each line is:
+//
+//   - name — description
+func (s *SkillStore) FormattedCatalog() string {
+	entries := s.Catalog()
+	if len(entries) == 0 {
+		return ""
+	}
+	sort.Strings(entries)
+	var sb strings.Builder
+	for _, e := range entries {
+		sb.WriteString("- ")
+		sb.WriteString(e)
+		sb.WriteString("\n")
+	}
+	return sb.String()
 }
 
 func (s *SkillStore) Count() int {
