@@ -1,168 +1,16 @@
-package service
+package github
 
 import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"strings"
-	"sync"
-	"time"
 
-	gh "github.com/nixopus/nixopus/api/internal/features/github-connector/service/github"
-	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/nixopus/nixopus/api/pkg/llm"
-	"github.com/uptrace/bun"
 )
 
-const (
-	maxResponseBody   = 50 * 1024 // 50KB truncation limit for file content
-	connectorCacheTTL = 5 * time.Minute
-	githubHTTPTimeout = 30 * time.Second
-)
-
-var sensitiveFilePatterns = []string{
-	".env", ".pem", ".key", ".p12", ".pfx", ".jks",
-	"credentials.json", "service-account.json",
-	"id_rsa", "id_ed25519", ".secret",
-}
-
-type cachedConnector struct {
-	connector *shared_types.GithubConnector
-	token     string
-	expiresAt time.Time
-}
-
-type githubClient struct {
-	db    *bun.DB
-	mu    sync.RWMutex
-	cache map[string]*cachedConnector
-}
-
-func newGithubClient(db *bun.DB) *githubClient {
-	return &githubClient{
-		db:    db,
-		cache: make(map[string]*cachedConnector),
-	}
-}
-
-func (gc *githubClient) getInstallationToken(ctx context.Context) (string, error) {
-	orgID, _ := ctx.Value(ctxKeyOrgID).(string)
-	cacheKey := orgID
-
-	gc.mu.RLock()
-	if cached, ok := gc.cache[cacheKey]; ok && time.Now().Before(cached.expiresAt) {
-		token := cached.token
-		gc.mu.RUnlock()
-		return token, nil
-	}
-	gc.mu.RUnlock()
-
-	connector, err := gc.resolveConnector(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	jwtStr := gh.GenerateJwt(connector)
-	if jwtStr == "" {
-		return "", fmt.Errorf("failed to generate GitHub App JWT: invalid credentials")
-	}
-
-	token, err := gh.InstallationToken(jwtStr, connector.InstallationID)
-	if err != nil {
-		return "", fmt.Errorf("get installation token: %w", err)
-	}
-
-	gc.mu.Lock()
-	gc.cache[cacheKey] = &cachedConnector{
-		connector: connector,
-		token:     token,
-		expiresAt: time.Now().Add(connectorCacheTTL),
-	}
-	gc.mu.Unlock()
-
-	return token, nil
-}
-
-func (gc *githubClient) resolveConnector(ctx context.Context) (*shared_types.GithubConnector, error) {
-	if gc.db == nil {
-		return nil, fmt.Errorf("no GitHub connector with valid credentials found")
-	}
-	var connectors []shared_types.GithubConnector
-	err := gc.db.NewSelect().
-		Model(&connectors).
-		Where("deleted_at IS NULL").
-		Where("installation_id != ''").
-		Where("pem != ''").
-		Where("app_id != ''").
-		Order("created_at DESC").
-		Limit(1).
-		Scan(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("query connectors: %w", err)
-	}
-	if len(connectors) == 0 {
-		return nil, fmt.Errorf("no GitHub connector with valid credentials found")
-	}
-	return &connectors[0], nil
-}
-
-func (gc *githubClient) doRequest(ctx context.Context, method, path string, body io.Reader) ([]byte, int, error) {
-	token, err := gc.getInstallationToken(ctx)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	url := gh.APIBaseURL + path
-	req, err := http.NewRequestWithContext(ctx, method, url, body)
-	if err != nil {
-		return nil, 0, fmt.Errorf("create request: %w", err)
-	}
-	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-	req.Header.Set("User-Agent", "nixopus-agent")
-	if body != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-
-	client := &http.Client{Timeout: githubHTTPTimeout}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, 0, fmt.Errorf("github api request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 256*1024))
-	return respBody, resp.StatusCode, nil
-}
-
-func (gc *githubClient) doJSON(ctx context.Context, method, path string, payload interface{}) (json.RawMessage, error) {
-	var body io.Reader
-	if payload != nil {
-		data, err := json.Marshal(payload)
-		if err != nil {
-			return nil, fmt.Errorf("marshal payload: %w", err)
-		}
-		body = strings.NewReader(string(data))
-	}
-
-	respBody, status, err := gc.doRequest(ctx, method, path, body)
-	if err != nil {
-		return nil, err
-	}
-
-	if status >= 400 {
-		return nil, fmt.Errorf("GitHub API %s %s returned %d: %s", method, path, status, truncate(string(respBody), 500))
-	}
-
-	return respBody, nil
-}
-
-// Tool definitions
-
-func (s *AgentService) githubListPullRequestsTool(gc *githubClient) llm.ToolDefinition {
+func ListPullRequestsTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_list_pull_requests",
 		Description: "List pull requests for a GitHub repository.",
@@ -194,12 +42,12 @@ func (s *AgentService) githubListPullRequestsTool(gc *githubClient) llm.ToolDefi
 			}
 
 			path := fmt.Sprintf("/repos/%s/%s/pulls?state=%s&per_page=%d", input.Owner, input.Repo, input.State, input.PerPage)
-			return gc.doJSON(ctx, "GET", path, nil)
+			return c.DoJSON(ctx, "GET", path, nil)
 		},
 	}
 }
 
-func (s *AgentService) githubListIssuesTool(gc *githubClient) llm.ToolDefinition {
+func ListIssuesTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_list_issues",
 		Description: "List issues for a repository (excludes pull requests).",
@@ -231,7 +79,7 @@ func (s *AgentService) githubListIssuesTool(gc *githubClient) llm.ToolDefinition
 			}
 
 			path := fmt.Sprintf("/repos/%s/%s/issues?state=%s&per_page=%d", input.Owner, input.Repo, input.State, input.PerPage)
-			data, err := gc.doJSON(ctx, "GET", path, nil)
+			data, err := c.DoJSON(ctx, "GET", path, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -252,7 +100,7 @@ func (s *AgentService) githubListIssuesTool(gc *githubClient) llm.ToolDefinition
 	}
 }
 
-func (s *AgentService) githubCommentOnPRTool(gc *githubClient) llm.ToolDefinition {
+func CommentOnPRTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_comment_on_pr",
 		Description: "Add a comment to a pull request.",
@@ -278,12 +126,12 @@ func (s *AgentService) githubCommentOnPRTool(gc *githubClient) llm.ToolDefinitio
 			}
 
 			path := fmt.Sprintf("/repos/%s/%s/issues/%d/comments", input.Owner, input.Repo, input.PRNumber)
-			return gc.doJSON(ctx, "POST", path, map[string]string{"body": input.Body})
+			return c.DoJSON(ctx, "POST", path, map[string]string{"body": input.Body})
 		},
 	}
 }
 
-func (s *AgentService) githubCommentOnIssueTool(gc *githubClient) llm.ToolDefinition {
+func CommentOnIssueTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_comment_on_issue",
 		Description: "Add a comment to an issue.",
@@ -309,12 +157,12 @@ func (s *AgentService) githubCommentOnIssueTool(gc *githubClient) llm.ToolDefini
 			}
 
 			path := fmt.Sprintf("/repos/%s/%s/issues/%d/comments", input.Owner, input.Repo, input.IssueNumber)
-			return gc.doJSON(ctx, "POST", path, map[string]string{"body": input.Body})
+			return c.DoJSON(ctx, "POST", path, map[string]string{"body": input.Body})
 		},
 	}
 }
 
-func (s *AgentService) githubCreateIssueTool(gc *githubClient) llm.ToolDefinition {
+func CreateIssueTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_create_issue",
 		Description: "Create a new issue in a repository.",
@@ -343,9 +191,7 @@ func (s *AgentService) githubCreateIssueTool(gc *githubClient) llm.ToolDefinitio
 				return nil, fmt.Errorf("invalid arguments: %w", err)
 			}
 
-			payload := map[string]interface{}{
-				"title": input.Title,
-			}
+			payload := map[string]interface{}{"title": input.Title}
 			if input.Body != "" {
 				payload["body"] = input.Body
 			}
@@ -357,12 +203,12 @@ func (s *AgentService) githubCreateIssueTool(gc *githubClient) llm.ToolDefinitio
 			}
 
 			path := fmt.Sprintf("/repos/%s/%s/issues", input.Owner, input.Repo)
-			return gc.doJSON(ctx, "POST", path, payload)
+			return c.DoJSON(ctx, "POST", path, payload)
 		},
 	}
 }
 
-func (s *AgentService) githubSetCommitStatusTool(gc *githubClient) llm.ToolDefinition {
+func SetCommitStatusTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_set_commit_status",
 		Description: "Set a commit status (pending, success, failure, error).",
@@ -393,9 +239,7 @@ func (s *AgentService) githubSetCommitStatusTool(gc *githubClient) llm.ToolDefin
 				return nil, fmt.Errorf("invalid arguments: %w", err)
 			}
 
-			payload := map[string]string{
-				"state": input.State,
-			}
+			payload := map[string]string{"state": input.State}
 			if input.Description != "" {
 				payload["description"] = input.Description
 			}
@@ -407,12 +251,12 @@ func (s *AgentService) githubSetCommitStatusTool(gc *githubClient) llm.ToolDefin
 			}
 
 			path := fmt.Sprintf("/repos/%s/%s/statuses/%s", input.Owner, input.Repo, input.SHA)
-			return gc.doJSON(ctx, "POST", path, payload)
+			return c.DoJSON(ctx, "POST", path, payload)
 		},
 	}
 }
 
-func (s *AgentService) githubCreateDeploymentStatusTool(gc *githubClient) llm.ToolDefinition {
+func CreateDeploymentStatusTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_create_deployment_status",
 		Description: "Create a GitHub deployment and set its status.",
@@ -450,7 +294,7 @@ func (s *AgentService) githubCreateDeploymentStatusTool(gc *githubClient) llm.To
 				"required_contexts": []string{},
 			}
 			deployPath := fmt.Sprintf("/repos/%s/%s/deployments", input.Owner, input.Repo)
-			deployResp, err := gc.doJSON(ctx, "POST", deployPath, deployPayload)
+			deployResp, err := c.DoJSON(ctx, "POST", deployPath, deployPayload)
 			if err != nil {
 				return nil, fmt.Errorf("create deployment: %w", err)
 			}
@@ -462,9 +306,7 @@ func (s *AgentService) githubCreateDeploymentStatusTool(gc *githubClient) llm.To
 				return nil, fmt.Errorf("parse deployment response: %w", err)
 			}
 
-			statusPayload := map[string]string{
-				"state": input.State,
-			}
+			statusPayload := map[string]string{"state": input.State}
 			if input.Description != "" {
 				statusPayload["description"] = input.Description
 			}
@@ -473,7 +315,7 @@ func (s *AgentService) githubCreateDeploymentStatusTool(gc *githubClient) llm.To
 			}
 
 			statusPath := fmt.Sprintf("/repos/%s/%s/deployments/%d/statuses", input.Owner, input.Repo, deployment.ID)
-			statusResp, err := gc.doJSON(ctx, "POST", statusPath, statusPayload)
+			statusResp, err := c.DoJSON(ctx, "POST", statusPath, statusPayload)
 			if err != nil {
 				return nil, fmt.Errorf("create deployment status: %w", err)
 			}
@@ -486,7 +328,7 @@ func (s *AgentService) githubCreateDeploymentStatusTool(gc *githubClient) llm.To
 	}
 }
 
-func (s *AgentService) githubSearchRepoContentTool(gc *githubClient) llm.ToolDefinition {
+func SearchRepoContentTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_search_repo_content",
 		Description: "Search for code in a repository.",
@@ -516,12 +358,12 @@ func (s *AgentService) githubSearchRepoContentTool(gc *githubClient) llm.ToolDef
 
 			q := fmt.Sprintf("%s+repo:%s/%s", input.Query, input.Owner, input.Repo)
 			path := fmt.Sprintf("/search/code?q=%s&per_page=%d", q, input.PerPage)
-			return gc.doJSON(ctx, "GET", path, nil)
+			return c.DoJSON(ctx, "GET", path, nil)
 		},
 	}
 }
 
-func (s *AgentService) githubCreateOrUpdateFileTool(gc *githubClient) llm.ToolDefinition {
+func CreateOrUpdateFileTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_create_or_update_file",
 		Description: "Create or update a file on a feature branch. Refuses writes to main/master and blocks sensitive file patterns.",
@@ -552,10 +394,10 @@ func (s *AgentService) githubCreateOrUpdateFileTool(gc *githubClient) llm.ToolDe
 				return nil, fmt.Errorf("invalid arguments: %w", err)
 			}
 
-			if isProtectedBranch(input.Branch) {
+			if IsProtectedBranch(input.Branch) {
 				return nil, fmt.Errorf("refused: cannot write to protected branch %q — use a feature branch", input.Branch)
 			}
-			if isSensitiveFile(input.Path) {
+			if IsSensitiveFile(input.Path) {
 				return nil, fmt.Errorf("refused: cannot write sensitive file %q", input.Path)
 			}
 
@@ -569,12 +411,12 @@ func (s *AgentService) githubCreateOrUpdateFileTool(gc *githubClient) llm.ToolDe
 			}
 
 			apiPath := fmt.Sprintf("/repos/%s/%s/contents/%s", input.Owner, input.Repo, input.Path)
-			return gc.doJSON(ctx, "PUT", apiPath, payload)
+			return c.DoJSON(ctx, "PUT", apiPath, payload)
 		},
 	}
 }
 
-func (s *AgentService) githubGetBranchTool(gc *githubClient) llm.ToolDefinition {
+func GetBranchTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_get_branch",
 		Description: "Get branch details including the HEAD commit SHA.",
@@ -598,12 +440,12 @@ func (s *AgentService) githubGetBranchTool(gc *githubClient) llm.ToolDefinition 
 			}
 
 			path := fmt.Sprintf("/repos/%s/%s/branches/%s", input.Owner, input.Repo, input.Branch)
-			return gc.doJSON(ctx, "GET", path, nil)
+			return c.DoJSON(ctx, "GET", path, nil)
 		},
 	}
 }
 
-func (s *AgentService) githubCreateBranchTool(gc *githubClient) llm.ToolDefinition {
+func CreateBranchTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_create_branch",
 		Description: "Create a new branch from a given SHA.",
@@ -634,12 +476,12 @@ func (s *AgentService) githubCreateBranchTool(gc *githubClient) llm.ToolDefiniti
 			}
 
 			path := fmt.Sprintf("/repos/%s/%s/git/refs", input.Owner, input.Repo)
-			return gc.doJSON(ctx, "POST", path, payload)
+			return c.DoJSON(ctx, "POST", path, payload)
 		},
 	}
 }
 
-func (s *AgentService) githubCreatePullRequestTool(gc *githubClient) llm.ToolDefinition {
+func CreatePullRequestTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_create_pull_request",
 		Description: "Create a pull request.",
@@ -681,12 +523,12 @@ func (s *AgentService) githubCreatePullRequestTool(gc *githubClient) llm.ToolDef
 			}
 
 			path := fmt.Sprintf("/repos/%s/%s/pulls", input.Owner, input.Repo)
-			return gc.doJSON(ctx, "POST", path, payload)
+			return c.DoJSON(ctx, "POST", path, payload)
 		},
 	}
 }
 
-func (s *AgentService) githubMergePullRequestTool(gc *githubClient) llm.ToolDefinition {
+func MergePullRequestTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_merge_pull_request",
 		Description: "Merge a pull request.",
@@ -718,9 +560,7 @@ func (s *AgentService) githubMergePullRequestTool(gc *githubClient) llm.ToolDefi
 				input.MergeMethod = "merge"
 			}
 
-			payload := map[string]string{
-				"merge_method": input.MergeMethod,
-			}
+			payload := map[string]string{"merge_method": input.MergeMethod}
 			if input.CommitTitle != "" {
 				payload["commit_title"] = input.CommitTitle
 			}
@@ -729,12 +569,12 @@ func (s *AgentService) githubMergePullRequestTool(gc *githubClient) llm.ToolDefi
 			}
 
 			path := fmt.Sprintf("/repos/%s/%s/pulls/%d/merge", input.Owner, input.Repo, input.PRNumber)
-			return gc.doJSON(ctx, "PUT", path, payload)
+			return c.DoJSON(ctx, "PUT", path, payload)
 		},
 	}
 }
 
-func (s *AgentService) githubGetRepoFileTool(gc *githubClient) llm.ToolDefinition {
+func GetRepoFileTool(c *Client) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "github_get_repo_file",
 		Description: "Read a file from a repository. Large content is truncated to 50KB.",
@@ -764,7 +604,7 @@ func (s *AgentService) githubGetRepoFileTool(gc *githubClient) llm.ToolDefinitio
 				apiPath += "?ref=" + input.Ref
 			}
 
-			data, err := gc.doJSON(ctx, "GET", apiPath, nil)
+			data, err := c.DoJSON(ctx, "GET", apiPath, nil)
 			if err != nil {
 				return nil, err
 			}
@@ -786,8 +626,8 @@ func (s *AgentService) githubGetRepoFileTool(gc *githubClient) llm.ToolDefinitio
 				if err == nil {
 					content := string(decoded)
 					truncated := false
-					if len(content) > maxResponseBody {
-						content = content[:maxResponseBody]
+					if len(content) > MaxResponseBody {
+						content = content[:MaxResponseBody]
 						truncated = true
 					}
 					return json.Marshal(map[string]interface{}{
@@ -804,28 +644,4 @@ func (s *AgentService) githubGetRepoFileTool(gc *githubClient) llm.ToolDefinitio
 			return data, nil
 		},
 	}
-}
-
-// Helpers
-
-func isProtectedBranch(branch string) bool {
-	b := strings.ToLower(strings.TrimSpace(branch))
-	return b == "main" || b == "master"
-}
-
-func isSensitiveFile(path string) bool {
-	lower := strings.ToLower(path)
-	for _, pattern := range sensitiveFilePatterns {
-		if strings.HasSuffix(lower, pattern) || strings.Contains(lower, pattern+"/") {
-			return true
-		}
-	}
-	return false
-}
-
-func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen] + "..."
 }

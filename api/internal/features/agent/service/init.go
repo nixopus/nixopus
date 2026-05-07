@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/nixopus/nixopus/api/internal/features/agent/service/catalog"
+	"github.com/nixopus/nixopus/api/internal/features/agent/service/deploy"
+	agentgithub "github.com/nixopus/nixopus/api/internal/features/agent/service/github"
+	"github.com/nixopus/nixopus/api/internal/features/agent/service/usage"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/storage"
 	"github.com/nixopus/nixopus/api/pkg/llm"
@@ -20,8 +24,10 @@ type AgentService struct {
 	memory    *memory.PostgresStore
 	skills    *llm.SkillStore
 	agents    *llm.AgentRegistry
-	usage     *UsageTracker
-	preflight *preflightValidator
+	usage     *usage.Tracker
+	preflight *catalog.Validator
+	patterns  *deploy.Store
+	github    *agentgithub.Client
 }
 
 func NewAgentService(store *storage.Store, ctx context.Context, l logger.Logger) *AgentService {
@@ -36,7 +42,14 @@ func NewAgentService(store *storage.Store, ctx context.Context, l logger.Logger)
 
 	agents := llm.NewAgentRegistry()
 
-	usage := NewUsageTracker(db, ctx, l)
+	usageTracker := usage.NewTracker(db, ctx, l)
+
+	patternStore := deploy.NewStore(db, l)
+
+	ghClient := agentgithub.NewClient(db, func(ctx context.Context) string {
+		v, _ := ctx.Value(ctxKeyOrgID).(string)
+		return v
+	})
 
 	svc := &AgentService{
 		store:     store,
@@ -46,12 +59,14 @@ func NewAgentService(store *storage.Store, ctx context.Context, l logger.Logger)
 		memory:    memStore,
 		skills:    skills,
 		agents:    agents,
-		usage:     usage,
-		preflight: newPreflightValidator("doc/openapi.json"),
+		usage:     usageTracker,
+		preflight: catalog.NewValidator("doc/openapi.json"),
+		patterns:  patternStore,
+		github:    ghClient,
 	}
 
 	svc.registerAgents(db)
-	svc.CreatePatternTables(ctx)
+	svc.patterns.CreateTables(ctx)
 	return svc
 }
 
@@ -105,7 +120,7 @@ func (s *AgentService) registerAgents(db *bun.DB) {
 		SystemPrompt: "Application and container debugger. Discover IDs via nixopus_api. No emojis. Plain text only.\n\n" +
 			"## API Access\n" +
 			"Use nixopus_api(method, path, body) for all Nixopus API calls. See [api-catalog] in context for available operations.\n" +
-			"Key operations: get_applications, get_application, get_application_deployments, get_deployment_logs, get_application_logs, list_containers, get_container, get_container_logs, get_compose_services, restart_deployment, redeploy_application.\n\n" + apiCatalog,
+			"Key operations: get_applications, get_application, get_application_deployments, get_deployment_logs, get_application_logs, list_containers, get_container, get_container_logs, get_compose_services, restart_deployment, redeploy_application.\n\n" + catalog.Catalog,
 		MaxSteps: 15,
 	})
 	s.agents.Register("diagnostic", diagnosticAgent)
@@ -119,7 +134,7 @@ func (s *AgentService) registerAgents(db *bun.DB) {
 			"NEVER merge PRs unless the user explicitly asks. Always return the PR URL.\n" +
 			"No destructive ops (force push, branch delete, PR close) without user approval.\n\n" +
 			"## API Access\n" +
-			"Use nixopus_api(method, path, body) for Nixopus API calls. For direct GitHub file/PR/issue operations, use the dedicated github_ tools.\n\n" + apiCatalog,
+			"Use nixopus_api(method, path, body) for Nixopus API calls. For direct GitHub file/PR/issue operations, use the dedicated github_ tools.\n\n" + catalog.Catalog,
 		MaxSteps: 10,
 	})
 	s.agents.Register("github", githubAgent)
@@ -130,7 +145,7 @@ func (s *AgentService) registerAgents(db *bun.DB) {
 		SystemPrompt: "Notification delivery specialist. Route alerts through configured channels. No emojis. Plain text only.\n\n" +
 			"## API Access\n" +
 			"Use nixopus_api(method, path, body) for all Nixopus API calls. See [api-catalog] in context for available operations.\n" +
-			"Key operations: send_notification (channel: slack|discord|email), get_notification_preferences, update_notification_preferences.\n\n" + apiCatalog,
+			"Key operations: send_notification (channel: slack|discord|email), get_notification_preferences, update_notification_preferences.\n\n" + catalog.Catalog,
 		MaxSteps: 5,
 	})
 	s.agents.Register("notification", notificationAgent)
@@ -141,7 +156,7 @@ func (s *AgentService) registerAgents(db *bun.DB) {
 		SystemPrompt: "Machine and server operations specialist. Manage infrastructure, containers, and compute resources. No emojis. Plain text only.\n\n" +
 			"## API Access\n" +
 			"Use nixopus_api(method, path, body) for all Nixopus API calls. See [api-catalog] in context for available operations.\n" +
-			"Key operations: get_machine_stats, host_exec, get_servers, get_servers_ssh_status, get_machine_metrics, restart_machine, pause_machine, resume_machine.\n\n" + apiCatalog,
+			"Key operations: get_machine_stats, host_exec, get_servers, get_servers_ssh_status, get_machine_metrics, restart_machine, pause_machine, resume_machine.\n\n" + catalog.Catalog,
 		MaxSteps: 10,
 	})
 	s.agents.Register("machine", machineAgent)
@@ -214,7 +229,7 @@ Do NOT mention "deploy patterns" or "cross-org learning" to the user — just us
 ## Nixopus Documentation
 When the user asks about Nixopus features, configuration, or product-level questions: read_skill("nixopus-docs") and follow the lookup workflow.
 
-` + apiCatalog
+` + catalog.Catalog
 }
 
 func loadSkills(skills *llm.SkillStore, l logger.Logger) {

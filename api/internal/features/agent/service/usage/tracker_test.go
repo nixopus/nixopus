@@ -1,4 +1,4 @@
-package service
+package usage
 
 import (
 	"context"
@@ -29,8 +29,8 @@ type usageMock struct {
 	insertErr    error
 }
 
-func (m *usageMock) deps() UsageDeps {
-	return UsageDeps{
+func (m *usageMock) deps() Deps {
+	return Deps{
 		DebitWallet: func(orgID uuid.UUID, amountCents int, reason string, referenceID string) (bool, error) {
 			m.debitCalled = true
 			m.debitOrgID = orgID
@@ -55,9 +55,9 @@ func TestTrackUsage_Success(t *testing.T) {
 
 	orgID := uuid.New()
 	mock := &usageMock{debitOK: true, balanceCents: 4200}
-	tracker := newUsageTrackerWithDeps(mock.deps(), testLogger())
+	tracker := NewTrackerWithDeps(mock.deps(), testLogger())
 
-	balance := tracker.TrackUsage(context.Background(), UsageTrackingParams{
+	balance := tracker.TrackUsage(context.Background(), TrackingParams{
 		OrgID:            orgID.String(),
 		ModelID:          "openai/gpt-4o",
 		PromptTokens:     100,
@@ -92,9 +92,9 @@ func TestTrackUsage_ZeroCost_NoDebit(t *testing.T) {
 
 	orgID := uuid.New()
 	mock := &usageMock{debitOK: true, balanceCents: 9999}
-	tracker := newUsageTrackerWithDeps(mock.deps(), testLogger())
+	tracker := NewTrackerWithDeps(mock.deps(), testLogger())
 
-	balance := tracker.TrackUsage(context.Background(), UsageTrackingParams{
+	balance := tracker.TrackUsage(context.Background(), TrackingParams{
 		OrgID:            orgID.String(),
 		ModelID:          "openai/gpt-4o-mini",
 		PromptTokens:     10,
@@ -116,9 +116,9 @@ func TestTrackUsage_SkippedForSelfHosted(t *testing.T) {
 	defer func() { config.AppConfig.App.SelfHosted = orig }()
 
 	mock := &usageMock{}
-	tracker := newUsageTrackerWithDeps(mock.deps(), testLogger())
+	tracker := NewTrackerWithDeps(mock.deps(), testLogger())
 
-	balance := tracker.TrackUsage(context.Background(), UsageTrackingParams{
+	balance := tracker.TrackUsage(context.Background(), TrackingParams{
 		OrgID:   uuid.New().String(),
 		ModelID: "openai/gpt-4o",
 		CostUsd: 1.0,
@@ -135,9 +135,9 @@ func TestTrackUsage_SkippedForEmptyOrgID(t *testing.T) {
 	defer func() { config.AppConfig.App.SelfHosted = orig }()
 
 	mock := &usageMock{}
-	tracker := newUsageTrackerWithDeps(mock.deps(), testLogger())
+	tracker := NewTrackerWithDeps(mock.deps(), testLogger())
 
-	balance := tracker.TrackUsage(context.Background(), UsageTrackingParams{
+	balance := tracker.TrackUsage(context.Background(), TrackingParams{
 		OrgID:   "",
 		ModelID: "openai/gpt-4o",
 		CostUsd: 0.50,
@@ -159,9 +159,9 @@ func TestTrackUsage_DebitFailure_StillLogs(t *testing.T) {
 		debitErr:     errors.New("db connection lost"),
 		balanceCents: 1000,
 	}
-	tracker := newUsageTrackerWithDeps(mock.deps(), testLogger())
+	tracker := NewTrackerWithDeps(mock.deps(), testLogger())
 
-	balance := tracker.TrackUsage(context.Background(), UsageTrackingParams{
+	balance := tracker.TrackUsage(context.Background(), TrackingParams{
 		OrgID:            orgID.String(),
 		ModelID:          "openai/gpt-4o",
 		PromptTokens:     200,
@@ -187,9 +187,9 @@ func TestTrackUsage_InsertFailure_ReturnsBalance(t *testing.T) {
 		balanceCents: 500,
 		insertErr:    errors.New("insert failed: unique constraint"),
 	}
-	tracker := newUsageTrackerWithDeps(mock.deps(), testLogger())
+	tracker := NewTrackerWithDeps(mock.deps(), testLogger())
 
-	balance := tracker.TrackUsage(context.Background(), UsageTrackingParams{
+	balance := tracker.TrackUsage(context.Background(), TrackingParams{
 		OrgID:   orgID.String(),
 		ModelID: "openai/gpt-4o",
 		CostUsd: 0.01,
@@ -210,9 +210,9 @@ func TestTrackUsage_BalanceError_ReturnsNegativeOne(t *testing.T) {
 		debitOK:    true,
 		balanceErr: errors.New("connection refused"),
 	}
-	tracker := newUsageTrackerWithDeps(mock.deps(), testLogger())
+	tracker := NewTrackerWithDeps(mock.deps(), testLogger())
 
-	balance := tracker.TrackUsage(context.Background(), UsageTrackingParams{
+	balance := tracker.TrackUsage(context.Background(), TrackingParams{
 		OrgID:   orgID.String(),
 		ModelID: "openai/gpt-4o",
 		CostUsd: 0.02,
@@ -228,9 +228,9 @@ func TestTrackUsage_CostCentsRoundsUp(t *testing.T) {
 	defer func() { config.AppConfig.App.SelfHosted = orig }()
 
 	mock := &usageMock{debitOK: true, balanceCents: 100}
-	tracker := newUsageTrackerWithDeps(mock.deps(), testLogger())
+	tracker := NewTrackerWithDeps(mock.deps(), testLogger())
 
-	tracker.TrackUsage(context.Background(), UsageTrackingParams{
+	tracker.TrackUsage(context.Background(), TrackingParams{
 		OrgID:   uuid.New().String(),
 		ModelID: "test",
 		CostUsd: 0.001, // 0.1 cents → rounds up to 1 cent
@@ -246,9 +246,9 @@ func TestTrackUsage_DefaultStatusIsSuccess(t *testing.T) {
 	defer func() { config.AppConfig.App.SelfHosted = orig }()
 
 	mock := &usageMock{balanceCents: 100}
-	tracker := newUsageTrackerWithDeps(mock.deps(), testLogger())
+	tracker := NewTrackerWithDeps(mock.deps(), testLogger())
 
-	tracker.TrackUsage(context.Background(), UsageTrackingParams{
+	tracker.TrackUsage(context.Background(), TrackingParams{
 		OrgID:   uuid.New().String(),
 		ModelID: "test",
 	})
@@ -263,9 +263,9 @@ func TestTrackUsage_CustomStatus(t *testing.T) {
 	defer func() { config.AppConfig.App.SelfHosted = orig }()
 
 	mock := &usageMock{balanceCents: 100}
-	tracker := newUsageTrackerWithDeps(mock.deps(), testLogger())
+	tracker := NewTrackerWithDeps(mock.deps(), testLogger())
 
-	tracker.TrackUsage(context.Background(), UsageTrackingParams{
+	tracker.TrackUsage(context.Background(), TrackingParams{
 		OrgID:        uuid.New().String(),
 		ModelID:      "test",
 		Status:       "error",
@@ -278,11 +278,11 @@ func TestTrackUsage_CustomStatus(t *testing.T) {
 }
 
 func TestResolveModelID(t *testing.T) {
-	assert.Equal(t, "custom/model", resolveModelID("custom/model"))
+	assert.Equal(t, "custom/model", ResolveModelID("custom/model"))
 
 	t.Setenv("AGENT_MODEL", "env/model")
-	assert.Equal(t, "env/model", resolveModelID(""))
+	assert.Equal(t, "env/model", ResolveModelID(""))
 
 	t.Setenv("AGENT_MODEL", "")
-	assert.Equal(t, "anthropic/claude-sonnet-4", resolveModelID(""))
+	assert.Equal(t, "anthropic/claude-sonnet-4", ResolveModelID(""))
 }

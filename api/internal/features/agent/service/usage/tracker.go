@@ -1,4 +1,4 @@
-package service
+package usage
 
 import (
 	"context"
@@ -37,7 +37,7 @@ type AIUsageLog struct {
 	CreatedAt        time.Time  `bun:"created_at,notnull,default:now()"`
 }
 
-type UsageTrackingParams struct {
+type TrackingParams struct {
 	OrgID            string
 	UserID           string
 	ModelID          string
@@ -52,21 +52,21 @@ type UsageTrackingParams struct {
 	ErrorMessage     string
 }
 
-type UsageDeps struct {
+type Deps struct {
 	DebitWallet      func(orgID uuid.UUID, amountCents int, reason string, referenceID string) (bool, error)
 	GetWalletBalance func(orgID uuid.UUID) (int, error)
 	InsertLog        func(ctx context.Context, log *AIUsageLog) error
 }
 
-type UsageTracker struct {
-	deps   UsageDeps
+type Tracker struct {
+	deps   Deps
 	logger logger.Logger
 }
 
-func NewUsageTracker(db *bun.DB, ctx context.Context, l logger.Logger) *UsageTracker {
+func NewTracker(db *bun.DB, ctx context.Context, l logger.Logger) *Tracker {
 	billing := billingstorage.NewBillingStorage(db, ctx)
-	return &UsageTracker{
-		deps: UsageDeps{
+	return &Tracker{
+		deps: Deps{
 			DebitWallet:      billing.DebitWallet,
 			GetWalletBalance: billing.GetWalletBalance,
 			InsertLog: func(ctx context.Context, log *AIUsageLog) error {
@@ -78,14 +78,14 @@ func NewUsageTracker(db *bun.DB, ctx context.Context, l logger.Logger) *UsageTra
 	}
 }
 
-func newUsageTrackerWithDeps(deps UsageDeps, l logger.Logger) *UsageTracker {
-	return &UsageTracker{deps: deps, logger: l}
+func NewTrackerWithDeps(deps Deps, l logger.Logger) *Tracker {
+	return &Tracker{deps: deps, logger: l}
 }
 
 // TrackUsage debits the organization wallet and inserts a usage log row.
 // Fault-tolerant: failures are logged but never propagated to the caller.
 // Returns the remaining balance in cents, or -1 if unknown/skipped.
-func (t *UsageTracker) TrackUsage(ctx context.Context, params UsageTrackingParams) int {
+func (t *Tracker) TrackUsage(ctx context.Context, params TrackingParams) int {
 	if config.AppConfig.App.SelfHosted {
 		return -1
 	}
@@ -149,7 +149,7 @@ func (t *UsageTracker) TrackUsage(ctx context.Context, params UsageTrackingParam
 	return balance
 }
 
-func resolveModelID(requestModel string) string {
+func ResolveModelID(requestModel string) string {
 	if requestModel != "" {
 		return requestModel
 	}

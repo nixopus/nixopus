@@ -18,8 +18,9 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
-	"time"
 
+	"github.com/nixopus/nixopus/api/internal/features/agent/service/codebase"
+	agentgithub "github.com/nixopus/nixopus/api/internal/features/agent/service/github"
 	"github.com/nixopus/nixopus/api/pkg/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -87,28 +88,23 @@ func TestHttpProbeSchema_RequiresURL(t *testing.T) {
 }
 
 func TestGithubToolSchemas_AllRequireOwnerAndRepo(t *testing.T) {
-	gc := &githubClient{
-		cache: map[string]*cachedConnector{
-			"": {token: "t", expiresAt: time.Now().Add(time.Hour)},
-		},
-	}
-	svc := &AgentService{}
+	gc := agentgithub.NewProbeClient("t", nil)
 
 	toolsNeedingOwnerRepo := []llm.ToolDefinition{
-		svc.githubListPullRequestsTool(gc),
-		svc.githubListIssuesTool(gc),
-		svc.githubCommentOnPRTool(gc),
-		svc.githubCommentOnIssueTool(gc),
-		svc.githubCreateIssueTool(gc),
-		svc.githubSetCommitStatusTool(gc),
-		svc.githubCreateDeploymentStatusTool(gc),
-		svc.githubSearchRepoContentTool(gc),
-		svc.githubCreateOrUpdateFileTool(gc),
-		svc.githubGetBranchTool(gc),
-		svc.githubCreateBranchTool(gc),
-		svc.githubCreatePullRequestTool(gc),
-		svc.githubMergePullRequestTool(gc),
-		svc.githubGetRepoFileTool(gc),
+		agentgithub.ListPullRequestsTool(gc),
+		agentgithub.ListIssuesTool(gc),
+		agentgithub.CommentOnPRTool(gc),
+		agentgithub.CommentOnIssueTool(gc),
+		agentgithub.CreateIssueTool(gc),
+		agentgithub.SetCommitStatusTool(gc),
+		agentgithub.CreateDeploymentStatusTool(gc),
+		agentgithub.SearchRepoContentTool(gc),
+		agentgithub.CreateOrUpdateFileTool(gc),
+		agentgithub.GetBranchTool(gc),
+		agentgithub.CreateBranchTool(gc),
+		agentgithub.CreatePullRequestTool(gc),
+		agentgithub.MergePullRequestTool(gc),
+		agentgithub.GetRepoFileTool(gc),
 	}
 
 	for _, tool := range toolsNeedingOwnerRepo {
@@ -126,9 +122,8 @@ func TestGithubToolSchemas_AllRequireOwnerAndRepo(t *testing.T) {
 }
 
 func TestGithubCommentOnPRSchema_RequiresPRNumber(t *testing.T) {
-	gc := &githubClient{cache: map[string]*cachedConnector{"": {token: "t", expiresAt: time.Now().Add(time.Hour)}}}
-	svc := &AgentService{}
-	tool := svc.githubCommentOnPRTool(gc)
+	gc := agentgithub.NewProbeClient("t", nil)
+	tool := agentgithub.CommentOnPRTool(gc)
 
 	// Missing pr_number
 	args, _ := json.Marshal(map[string]string{"owner": "o", "repo": "r", "body": "LGTM"})
@@ -140,9 +135,8 @@ func TestGithubCommentOnPRSchema_RequiresPRNumber(t *testing.T) {
 }
 
 func TestGithubSetCommitStatusSchema_StateEnum(t *testing.T) {
-	gc := &githubClient{cache: map[string]*cachedConnector{"": {token: "t", expiresAt: time.Now().Add(time.Hour)}}}
-	svc := &AgentService{}
-	tool := svc.githubSetCommitStatusTool(gc)
+	gc := agentgithub.NewProbeClient("t", nil)
+	tool := agentgithub.SetCommitStatusTool(gc)
 
 	base := map[string]interface{}{"owner": "o", "repo": "r", "sha": "abc123"}
 
@@ -158,9 +152,8 @@ func TestGithubSetCommitStatusSchema_StateEnum(t *testing.T) {
 }
 
 func TestGithubCreateOrUpdateFileSchema_RequiredFields(t *testing.T) {
-	gc := &githubClient{cache: map[string]*cachedConnector{"": {token: "t", expiresAt: time.Now().Add(time.Hour)}}}
-	svc := &AgentService{}
-	tool := svc.githubCreateOrUpdateFileTool(gc)
+	gc := agentgithub.NewProbeClient("t", nil)
+	tool := agentgithub.CreateOrUpdateFileTool(gc)
 
 	allRequired := map[string]interface{}{
 		"owner":   "o",
@@ -188,26 +181,25 @@ func TestGithubCreateOrUpdateFileSchema_RequiredFields(t *testing.T) {
 }
 
 func TestAllToolDefinitions_HaveValidSchemaJSON(t *testing.T) {
-	gc := &githubClient{cache: map[string]*cachedConnector{"": {token: "t", expiresAt: time.Now().Add(time.Hour)}}}
-	svc := &AgentService{}
+	gc := agentgithub.NewProbeClient("t", nil)
 
 	allTools := []llm.ToolDefinition{
-		svc.githubListPullRequestsTool(gc),
-		svc.githubListIssuesTool(gc),
-		svc.githubCommentOnPRTool(gc),
-		svc.githubCommentOnIssueTool(gc),
-		svc.githubCreateIssueTool(gc),
-		svc.githubSetCommitStatusTool(gc),
-		svc.githubCreateDeploymentStatusTool(gc),
-		svc.githubSearchRepoContentTool(gc),
-		svc.githubCreateOrUpdateFileTool(gc),
-		svc.githubGetBranchTool(gc),
-		svc.githubCreateBranchTool(gc),
-		svc.githubCreatePullRequestTool(gc),
-		svc.githubMergePullRequestTool(gc),
-		svc.githubGetRepoFileTool(gc),
-		svc.analyzeRepositoryTool(),
-		loadRemoteRepositoryTool(),
+		agentgithub.ListPullRequestsTool(gc),
+		agentgithub.ListIssuesTool(gc),
+		agentgithub.CommentOnPRTool(gc),
+		agentgithub.CommentOnIssueTool(gc),
+		agentgithub.CreateIssueTool(gc),
+		agentgithub.SetCommitStatusTool(gc),
+		agentgithub.CreateDeploymentStatusTool(gc),
+		agentgithub.SearchRepoContentTool(gc),
+		agentgithub.CreateOrUpdateFileTool(gc),
+		agentgithub.GetBranchTool(gc),
+		agentgithub.CreateBranchTool(gc),
+		agentgithub.CreatePullRequestTool(gc),
+		agentgithub.MergePullRequestTool(gc),
+		agentgithub.GetRepoFileTool(gc),
+		codebase.AnalyzeRepositoryTool(codebase.Deps{}),
+		codebase.LoadRemoteRepositoryTool(),
 	}
 
 	for _, tool := range allTools {

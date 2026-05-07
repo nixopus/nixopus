@@ -1,4 +1,4 @@
-package service
+package deploy
 
 import (
 	"testing"
@@ -9,12 +9,12 @@ import (
 )
 
 func TestExtractDeployState_NoHistory(t *testing.T) {
-	result := extractDeployState(nil)
+	result := ExtractDeployState(nil)
 	assert.Equal(t, "[deploy-state] no_active_deploy [/deploy-state]", result)
 }
 
 func TestExtractDeployState_EmptyHistory(t *testing.T) {
-	result := extractDeployState([]memory.StoredMessage{})
+	result := ExtractDeployState([]memory.StoredMessage{})
 	assert.Equal(t, "[deploy-state] no_active_deploy [/deploy-state]", result)
 }
 
@@ -33,7 +33,7 @@ func TestExtractDeployState_WithAnalyzeRepo(t *testing.T) {
 		},
 	}
 
-	result := extractDeployState(history)
+	result := ExtractDeployState(history)
 	assert.Contains(t, result, "repo_analyzed")
 	assert.Contains(t, result, "current_phase=repo_analyzed")
 }
@@ -78,7 +78,7 @@ func TestExtractDeployState_FullDeploy(t *testing.T) {
 		},
 	}
 
-	result := extractDeployState(history)
+	result := ExtractDeployState(history)
 	assert.Contains(t, result, "applicationId=app-123")
 	assert.Contains(t, result, "deploymentId=dep-456")
 	assert.Contains(t, result, "status=running")
@@ -104,7 +104,7 @@ func TestExtractDeployState_CreateProject(t *testing.T) {
 		},
 	}
 
-	result := extractDeployState(history)
+	result := ExtractDeployState(history)
 	assert.Contains(t, result, "project_created")
 	assert.Contains(t, result, "applicationId=proj-789")
 }
@@ -120,6 +120,6 @@ func TestExtractDeployStateFromMessages(t *testing.T) {
 		{Role: llm.RoleTool, Content: `{}`, ToolCallID: "tc1"},
 	}
 
-	result := extractDeployStateFromMessages(messages)
+	result := ExtractDeployStateFromMessages(messages)
 	assert.Contains(t, result, "repo_analyzed")
 }

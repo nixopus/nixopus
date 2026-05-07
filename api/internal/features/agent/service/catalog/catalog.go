@@ -1,8 +1,8 @@
-package service
+package catalog
 
-// apiCatalog is injected as a system message so the agent knows
+// Catalog is injected as a system message so the agent knows
 // all available Nixopus API operations it can call via the nixopus_api tool.
-const apiCatalog = `[api-catalog]
+const Catalog = `[api-catalog]
 Use nixopus_api(method, path, body) for ALL Nixopus API calls below.
 Pass the HTTP method and API path directly. For path params, embed them in the path string.
 

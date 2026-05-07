@@ -1,4 +1,4 @@
-package service
+package codebase
 
 import (
 	"context"
@@ -42,7 +42,16 @@ var binaryExts = map[string]bool{
 	".DS_Store": true, ".lock": true,
 }
 
-func (s *AgentService) analyzeRepositoryTool() llm.ToolDefinition {
+// Deps provides context extraction functions so this package doesn't depend
+// on service-level context key types.
+type Deps struct {
+	AuthTokenFromCtx func(ctx context.Context) string
+	OrgIDFromCtx     func(ctx context.Context) string
+	BaseURLFromCtx   func(ctx context.Context) string
+	GetEnvOrDefault  func(key, fallback string) string
+}
+
+func AnalyzeRepositoryTool(deps Deps) llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "analyze_repository",
 		Description: "Analyze a GitHub repository to detect ecosystem, framework, port, Dockerfile presence, and deployment hints. Uses the Nixopus GitHub connector for private repo access.",
@@ -56,11 +65,13 @@ func (s *AgentService) analyzeRepositoryTool() llm.ToolDefinition {
 			},
 			"required": ["owner", "repo"]
 		}`),
-		Handler: s.analyzeRepositoryHandler,
+		Handler: func(ctx context.Context, args json.RawMessage) (json.RawMessage, error) {
+			return analyzeRepositoryHandler(ctx, args, deps)
+		},
 	}
 }
 
-func (s *AgentService) analyzeRepositoryHandler(ctx context.Context, args json.RawMessage) (json.RawMessage, error) {
+func analyzeRepositoryHandler(ctx context.Context, args json.RawMessage, deps Deps) (json.RawMessage, error) {
 	var input struct {
 		Owner       string `json:"owner"`
 		Repo        string `json:"repo"`
@@ -74,11 +85,11 @@ func (s *AgentService) analyzeRepositoryHandler(ctx context.Context, args json.R
 		return nil, fmt.Errorf("owner and repo are required")
 	}
 
-	authToken, _ := ctx.Value(ctxKeyAuthToken).(string)
-	orgID, _ := ctx.Value(ctxKeyOrgID).(string)
-	baseURL, _ := ctx.Value(ctxKeyBaseURL).(string)
+	authToken := deps.AuthTokenFromCtx(ctx)
+	orgID := deps.OrgIDFromCtx(ctx)
+	baseURL := deps.BaseURLFromCtx(ctx)
 	if baseURL == "" {
-		baseURL = "http://localhost:" + getEnvOrDefault("PORT", "2089")
+		baseURL = "http://localhost:" + deps.GetEnvOrDefault("PORT", "2089")
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -165,7 +176,7 @@ func (s *AgentService) analyzeRepositoryHandler(ctx context.Context, args json.R
 	})
 }
 
-func loadRemoteRepositoryTool() llm.ToolDefinition {
+func LoadRemoteRepositoryTool() llm.ToolDefinition {
 	return llm.ToolDefinition{
 		Name:        "load_remote_repository",
 		Description: "Clone a public git repository and analyze it to detect ecosystem, framework, port, Dockerfile, and deployment configuration.",

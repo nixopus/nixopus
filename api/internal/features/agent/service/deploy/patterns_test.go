@@ -1,4 +1,4 @@
-package service
+package deploy
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ func TestDetectEcosystem_NextJS(t *testing.T) {
 	messages := []memory.StoredMessage{
 		{Role: llm.RoleUser, Content: "deploy my next.js app from github.com/org/frontend"},
 	}
-	eco := detectEcosystem(messages, "")
+	eco := DetectEcosystem(messages, "")
 	assert.Equal(t, "nextjs", eco)
 }
 
@@ -20,12 +20,12 @@ func TestDetectEcosystem_Django(t *testing.T) {
 	messages := []memory.StoredMessage{
 		{Role: llm.RoleUser, Content: "I have a Django project with manage.py"},
 	}
-	eco := detectEcosystem(messages, "")
+	eco := DetectEcosystem(messages, "")
 	assert.Equal(t, "django", eco)
 }
 
 func TestDetectEcosystem_Go(t *testing.T) {
-	eco := detectEcosystem(nil, "deploy my go.mod project with gin-gonic")
+	eco := DetectEcosystem(nil, "deploy my go.mod project with gin-gonic")
 	assert.Equal(t, "go", eco)
 }
 
@@ -33,17 +33,17 @@ func TestDetectEcosystem_Rust(t *testing.T) {
 	messages := []memory.StoredMessage{
 		{Role: llm.RoleTool, Content: `{"files":["Cargo.toml","src/main.rs"]}`},
 	}
-	eco := detectEcosystem(messages, "")
+	eco := DetectEcosystem(messages, "")
 	assert.Equal(t, "rust", eco)
 }
 
 func TestDetectEcosystem_NoMatch(t *testing.T) {
-	eco := detectEcosystem(nil, "hello world")
+	eco := DetectEcosystem(nil, "hello world")
 	assert.Equal(t, "", eco)
 }
 
 func TestDetectEcosystem_FromCurrentInput(t *testing.T) {
-	eco := detectEcosystem(nil, "deploy my nuxt.config.ts app")
+	eco := DetectEcosystem(nil, "deploy my nuxt.config.ts app")
 	assert.Equal(t, "nuxt", eco)
 }
 
@@ -51,12 +51,12 @@ func TestDetectEcosystemFromLLM(t *testing.T) {
 	messages := []llm.Message{
 		{Role: llm.RoleUser, Content: "deploy vite.config.ts project"},
 	}
-	eco := detectEcosystemFromLLM(messages, "")
+	eco := DetectEcosystemFromLLM(messages, "")
 	assert.Equal(t, "vite", eco)
 }
 
 func TestFormatPatterns_Empty(t *testing.T) {
-	result := formatPatterns("nextjs", nil)
+	result := FormatPatterns("nextjs", nil)
 	assert.Equal(t, "", result)
 }
 
@@ -72,7 +72,7 @@ func TestFormatPatterns_WithFixes(t *testing.T) {
 			MissCount:   1,
 		},
 	}
-	result := formatPatterns("nextjs", patterns)
+	result := FormatPatterns("nextjs", patterns)
 	assert.Contains(t, result, "[deploy-patterns] ecosystem:nextjs")
 	assert.Contains(t, result, "known_fixes:")
 	assert.Contains(t, result, "ENOENT .next/standalone")
@@ -88,25 +88,25 @@ func TestFormatPatterns_MultiplTypes(t *testing.T) {
 		{PatternType: "pitfall", Signature: "port conflict", Resolution: "use 3000", Confidence: 0.7, HitCount: 2, MissCount: 1},
 		{PatternType: "fast_path", Signature: "has dockerfile", Resolution: "skip buildpack detection", Confidence: 0.95, HitCount: 10, MissCount: 0},
 	}
-	result := formatPatterns("react", patterns)
+	result := FormatPatterns("react", patterns)
 	assert.Contains(t, result, "known_fixes:")
 	assert.Contains(t, result, "pitfalls:")
 	assert.Contains(t, result, "fast_paths:")
 }
 
 func TestClassifyOutcome_Success(t *testing.T) {
-	result := classifyOutcome("running", nil)
+	result := ClassifyOutcome("running", nil)
 	assert.Equal(t, "success", result)
 
-	result = classifyOutcome("active", nil)
+	result = ClassifyOutcome("active", nil)
 	assert.Equal(t, "success", result)
 }
 
 func TestClassifyOutcome_Failed(t *testing.T) {
-	result := classifyOutcome("build_failed", nil)
+	result := ClassifyOutcome("build_failed", nil)
 	assert.Equal(t, "failed", result)
 
-	result = classifyOutcome("failed", nil)
+	result = ClassifyOutcome("failed", nil)
 	assert.Equal(t, "failed", result)
 }
 
@@ -114,7 +114,7 @@ func TestClassifyOutcome_FromMessages(t *testing.T) {
 	messages := []memory.StoredMessage{
 		{Role: llm.RoleAssistant, Content: "The application is now live at https://app.example.com"},
 	}
-	result := classifyOutcome("", messages)
+	result := ClassifyOutcome("", messages)
 	assert.Equal(t, "success", result)
 }
 
@@ -122,7 +122,7 @@ func TestClassifyOutcome_RollbackFromMessages(t *testing.T) {
 	messages := []memory.StoredMessage{
 		{Role: llm.RoleAssistant, Content: "I've initiated a rollback to the previous version"},
 	}
-	result := classifyOutcome("", messages)
+	result := ClassifyOutcome("", messages)
 	assert.Equal(t, "rollback", result)
 }
 
@@ -130,7 +130,7 @@ func TestClassifyOutcome_Unknown(t *testing.T) {
 	messages := []memory.StoredMessage{
 		{Role: llm.RoleAssistant, Content: "Sure, let me check that for you."},
 	}
-	result := classifyOutcome("", messages)
+	result := ClassifyOutcome("", messages)
 	assert.Equal(t, "", result)
 }
 
@@ -159,13 +159,13 @@ func TestJSONMap_ValueAndScan(t *testing.T) {
 }
 
 func TestNilIfEmpty(t *testing.T) {
-	assert.Nil(t, nilIfEmpty(""))
-	result := nilIfEmpty("hello")
+	assert.Nil(t, NilIfEmpty(""))
+	result := NilIfEmpty("hello")
 	assert.NotNil(t, result)
 	assert.Equal(t, "hello", *result)
 }
 
 func TestTruncateStr(t *testing.T) {
-	assert.Equal(t, "hello", truncateStr("hello", 10))
-	assert.Equal(t, "hel", truncateStr("hello", 3))
+	assert.Equal(t, "hello", TruncateStr("hello", 10))
+	assert.Equal(t, "hel", TruncateStr("hello", 3))
 }

@@ -27,6 +27,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/nixopus/nixopus/api/internal/features/agent/service/catalog"
+	agentgithub "github.com/nixopus/nixopus/api/internal/features/agent/service/github"
 	"github.com/nixopus/nixopus/api/pkg/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -70,7 +72,7 @@ func TestAgentLiveProbe_DeployAgent_Nonce(t *testing.T) {
 	wrapped := llm.WrapWithRecorder(base, rec)
 	agent := llm.NewAgent(provider, wrapped, llm.AgentConfig{
 		Model:        getLiveModel(),
-		SystemPrompt: "You are a deploy assistant. Use nixopus_api to answer questions. Be concise.\n\n" + apiCatalog,
+		SystemPrompt: "You are a deploy assistant. Use nixopus_api to answer questions. Be concise.\n\n" + catalog.Catalog,
 		MaxSteps:     5,
 	})
 
@@ -151,7 +153,7 @@ func TestAgentLiveProbe_DiagnosticAgent_Nonce(t *testing.T) {
 	wrapped := llm.WrapWithRecorder(base, rec)
 	agent := llm.NewAgent(provider, wrapped, llm.AgentConfig{
 		Model:        getLiveModel(),
-		SystemPrompt: "You are a diagnostic assistant. Use nixopus_api to fetch data. Be concise.\n\n" + apiCatalog,
+		SystemPrompt: "You are a diagnostic assistant. Use nixopus_api to fetch data. Be concise.\n\n" + catalog.Catalog,
 		MaxSteps:     5,
 	})
 
@@ -203,12 +205,14 @@ func TestAgentLiveProbe_GithubAgent_ListPRs(t *testing.T) {
 	})
 	ghSrv := httptest.NewServer(mux)
 	defer ghSrv.Close()
+	restore := agentgithub.RedirectAPIToTestServer(ghSrv.URL)
+	defer restore()
 
-	gc, prevURL := setupGithubTestServer(t, mux)
-	_ = prevURL
-
-	svc := &AgentService{}
-	tool := svc.githubListPullRequestsTool(gc)
+	gc := agentgithub.NewProbeClient("test-token", func(ctx context.Context) string {
+		v, _ := ctx.Value(ctxKeyOrgID).(string)
+		return v
+	})
+	tool := agentgithub.ListPullRequestsTool(gc)
 
 	base := llm.NewToolRegistry()
 	base.Register(tool)
@@ -343,7 +347,7 @@ func TestAgentLiveProbe_MachineAgent_Stats(t *testing.T) {
 	wrapped := llm.WrapWithRecorder(base, rec)
 	agent := llm.NewAgent(provider, wrapped, llm.AgentConfig{
 		Model:        getLiveModel(),
-		SystemPrompt: "You are a machine management assistant. Use nixopus_api to get server information. Be concise.\n\n" + apiCatalog,
+		SystemPrompt: "You are a machine management assistant. Use nixopus_api to get server information. Be concise.\n\n" + catalog.Catalog,
 		MaxSteps:     5,
 	})
 
@@ -588,7 +592,7 @@ func TestCatalogLiveProbe_AllOps(t *testing.T) {
 			rec := &llm.ToolCallRecorder{}
 			agent := llm.NewAgent(provider, llm.WrapWithRecorder(base, rec), llm.AgentConfig{
 				Model:        getLiveModel(),
-				SystemPrompt: "You are a Nixopus assistant. Use nixopus_api to answer questions. Be concise.\n\n" + apiCatalog,
+				SystemPrompt: "You are a Nixopus assistant. Use nixopus_api to answer questions. Be concise.\n\n" + catalog.Catalog,
 				MaxSteps:     6,
 			})
 

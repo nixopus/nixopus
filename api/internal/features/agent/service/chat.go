@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nixopus/nixopus/api/internal/features/agent/service/deploy"
+	"github.com/nixopus/nixopus/api/internal/features/agent/service/usage"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/pkg/llm"
 	"github.com/nixopus/nixopus/api/pkg/llm/memory"
@@ -72,8 +74,7 @@ func (s *AgentService) Chat(ctx context.Context, req ChatRequest, authToken, use
 		s.logger.Log(logger.Error, "Failed to persist messages", err.Error())
 	}
 
-	// Post-process: record deploy outcome
-	go s.recordDeployOutcome(ctx, orgID, history)
+	go s.patterns.RecordDeployOutcome(ctx, orgID, history)
 
 	resp := &ChatResponse{
 		ThreadID: threadID,
@@ -81,9 +82,9 @@ func (s *AgentService) Chat(ctx context.Context, req ChatRequest, authToken, use
 		Usage:    result.TotalUsage,
 	}
 
-	balance := s.usage.TrackUsage(ctx, UsageTrackingParams{
+	balance := s.usage.TrackUsage(ctx, usage.TrackingParams{
 		OrgID:            orgID,
-		ModelID:          resolveModelID(req.Model),
+		ModelID:          usage.ResolveModelID(req.Model),
 		PromptTokens:     result.TotalUsage.PromptTokens,
 		CompletionTokens: result.TotalUsage.CompletionTokens,
 		TotalTokens:      result.TotalUsage.TotalTokens,
@@ -161,9 +162,9 @@ func (s *AgentService) StreamChat(parentCtx context.Context, w http.ResponseWrit
 		_ = s.memory.AppendMessages(bgCtx, threadID, toStore)
 
 		latencyMs := int(time.Since(start).Milliseconds())
-		balance := s.usage.TrackUsage(bgCtx, UsageTrackingParams{
+		balance := s.usage.TrackUsage(bgCtx, usage.TrackingParams{
 			OrgID:            orgID,
-			ModelID:          resolveModelID(req.Model),
+			ModelID:          usage.ResolveModelID(req.Model),
 			PromptTokens:     result.TotalUsage.PromptTokens,
 			CompletionTokens: result.TotalUsage.CompletionTokens,
 			TotalTokens:      result.TotalUsage.TotalTokens,
@@ -176,7 +177,7 @@ func (s *AgentService) StreamChat(parentCtx context.Context, w http.ResponseWrit
 			w.Header().Set("X-Credits-Remaining", fmt.Sprintf("%d", balance))
 		}
 
-		go s.recordDeployOutcome(bgCtx, orgID, history)
+		go s.patterns.RecordDeployOutcome(bgCtx, orgID, history)
 	}
 
 	body, _ := json.Marshal(struct {
@@ -280,16 +281,16 @@ func (s *AgentService) buildContextPrefix(ctx context.Context, orgID string, his
 	}
 
 	// 4. Deploy state: always include
-	deployStateBlock := extractDeployState(history)
+	deployStateBlock := deploy.ExtractDeployState(history)
 	if deployStateBlock != "" {
 		blocks = append(blocks, deployStateBlock)
 	}
 
 	// 5. Deploy patterns: include when ecosystem is detected
-	ecosystem := detectEcosystem(history, currentInput)
+	ecosystem := deploy.DetectEcosystem(history, currentInput)
 	if ecosystem != "" {
-		patterns := s.GetPatterns(ctx, ecosystem)
-		if patternsBlock := formatPatterns(ecosystem, patterns); patternsBlock != "" {
+		patterns := s.patterns.GetPatterns(ctx, ecosystem)
+		if patternsBlock := deploy.FormatPatterns(ecosystem, patterns); patternsBlock != "" {
 			blocks = append(blocks, patternsBlock)
 		}
 	}

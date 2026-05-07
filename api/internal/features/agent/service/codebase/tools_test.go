@@ -1,4 +1,4 @@
-package service
+package codebase
 
 import (
 	"context"
@@ -14,6 +14,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func testDeps(baseURL string) Deps {
+	return Deps{
+		AuthTokenFromCtx: func(ctx context.Context) string { return "test-token" },
+		OrgIDFromCtx:     func(ctx context.Context) string { return "org-1" },
+		BaseURLFromCtx:   func(ctx context.Context) string { return baseURL },
+		GetEnvOrDefault:  func(key, fallback string) string { return fallback },
+	}
+}
 
 func TestAnalyzeRepositoryHandler_Success(t *testing.T) {
 	treeResponse := map[string]interface{}{
@@ -42,17 +51,14 @@ func TestAnalyzeRepositoryHandler_Success(t *testing.T) {
 	server := httptest.NewServer(mux)
 	defer server.Close()
 
-	svc := &AgentService{}
-	ctx := context.WithValue(context.Background(), ctxKeyAuthToken, "test-token")
-	ctx = context.WithValue(ctx, ctxKeyOrgID, "org-1")
-	ctx = context.WithValue(ctx, ctxKeyBaseURL, server.URL)
+	tool := AnalyzeRepositoryTool(testDeps(server.URL))
 
 	args, _ := json.Marshal(map[string]string{
 		"owner": "testowner",
 		"repo":  "testrepo",
 	})
 
-	result, err := svc.analyzeRepositoryHandler(ctx, args)
+	result, err := tool.Handler(context.Background(), args)
 	require.NoError(t, err)
 
 	var resp map[string]interface{}
@@ -83,21 +89,19 @@ func TestAnalyzeRepositoryHandler_WithBranch(t *testing.T) {
 	server := httptest.NewServer(mux)
 	defer server.Close()
 
-	svc := &AgentService{}
-	ctx := context.WithValue(context.Background(), ctxKeyBaseURL, server.URL)
+	tool := AnalyzeRepositoryTool(testDeps(server.URL))
 
 	args, _ := json.Marshal(map[string]string{"owner": "o", "repo": "r", "branch": "develop"})
-	_, err := svc.analyzeRepositoryHandler(ctx, args)
+	_, err := tool.Handler(context.Background(), args)
 	require.NoError(t, err)
 	assert.Equal(t, "develop", capturedBranch)
 }
 
 func TestAnalyzeRepositoryHandler_MissingOwnerRepo(t *testing.T) {
-	svc := &AgentService{}
-	ctx := context.Background()
+	tool := AnalyzeRepositoryTool(testDeps(""))
 
 	args, _ := json.Marshal(map[string]string{"owner": "", "repo": ""})
-	_, err := svc.analyzeRepositoryHandler(ctx, args)
+	_, err := tool.Handler(context.Background(), args)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "required")
 }
@@ -111,11 +115,10 @@ func TestAnalyzeRepositoryHandler_NoConnectors(t *testing.T) {
 	server := httptest.NewServer(mux)
 	defer server.Close()
 
-	svc := &AgentService{}
-	ctx := context.WithValue(context.Background(), ctxKeyBaseURL, server.URL)
+	tool := AnalyzeRepositoryTool(testDeps(server.URL))
 	args, _ := json.Marshal(map[string]string{"owner": "o", "repo": "r"})
 
-	_, err := svc.analyzeRepositoryHandler(ctx, args)
+	_, err := tool.Handler(context.Background(), args)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "no GitHub connectors")
 }
@@ -133,11 +136,10 @@ func TestAnalyzeRepositoryHandler_TreeAPIError(t *testing.T) {
 	server := httptest.NewServer(mux)
 	defer server.Close()
 
-	svc := &AgentService{}
-	ctx := context.WithValue(context.Background(), ctxKeyBaseURL, server.URL)
+	tool := AnalyzeRepositoryTool(testDeps(server.URL))
 	args, _ := json.Marshal(map[string]string{"owner": "o", "repo": "r"})
 
-	result, err := svc.analyzeRepositoryHandler(ctx, args)
+	result, err := tool.Handler(context.Background(), args)
 	require.NoError(t, err)
 
 	var resp map[string]interface{}
@@ -162,11 +164,10 @@ func TestAnalyzeRepositoryHandler_NoFiles(t *testing.T) {
 	server := httptest.NewServer(mux)
 	defer server.Close()
 
-	svc := &AgentService{}
-	ctx := context.WithValue(context.Background(), ctxKeyBaseURL, server.URL)
+	tool := AnalyzeRepositoryTool(testDeps(server.URL))
 	args, _ := json.Marshal(map[string]string{"owner": "o", "repo": "r"})
 
-	result, err := svc.analyzeRepositoryHandler(ctx, args)
+	result, err := tool.Handler(context.Background(), args)
 	require.NoError(t, err)
 
 	var resp map[string]interface{}
@@ -188,7 +189,8 @@ func TestLoadRemoteRepositoryHandler_Success(t *testing.T) {
 		"repo_url": "file://" + repoDir,
 	})
 
-	result, err := loadRemoteRepositoryHandler(context.Background(), args)
+	tool := LoadRemoteRepositoryTool()
+	result, err := tool.Handler(context.Background(), args)
 	require.NoError(t, err)
 
 	var resp map[string]interface{}
@@ -220,7 +222,8 @@ func TestLoadRemoteRepositoryHandler_WithBranch(t *testing.T) {
 		"branch":   "feature",
 	})
 
-	result, err := loadRemoteRepositoryHandler(context.Background(), args)
+	tool := LoadRemoteRepositoryTool()
+	result, err := tool.Handler(context.Background(), args)
 	require.NoError(t, err)
 
 	var resp map[string]interface{}
@@ -229,22 +232,25 @@ func TestLoadRemoteRepositoryHandler_WithBranch(t *testing.T) {
 }
 
 func TestLoadRemoteRepositoryHandler_MissingURL(t *testing.T) {
+	tool := LoadRemoteRepositoryTool()
 	args, _ := json.Marshal(map[string]string{"repo_url": ""})
-	_, err := loadRemoteRepositoryHandler(context.Background(), args)
+	_, err := tool.Handler(context.Background(), args)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "required")
 }
 
 func TestLoadRemoteRepositoryHandler_NonHTTPS(t *testing.T) {
+	tool := LoadRemoteRepositoryTool()
 	args, _ := json.Marshal(map[string]string{"repo_url": "git@github.com:owner/repo.git"})
-	_, err := loadRemoteRepositoryHandler(context.Background(), args)
+	_, err := tool.Handler(context.Background(), args)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "HTTPS")
 }
 
 func TestLoadRemoteRepositoryHandler_InvalidURL(t *testing.T) {
+	tool := LoadRemoteRepositoryTool()
 	args, _ := json.Marshal(map[string]string{"repo_url": "https://example.com/nonexistent.git"})
-	_, err := loadRemoteRepositoryHandler(context.Background(), args)
+	_, err := tool.Handler(context.Background(), args)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "git clone failed")
 }
@@ -263,8 +269,9 @@ func TestLoadRemoteRepositoryHandler_BinaryOnlyRepo(t *testing.T) {
 	exec.Command("git", "-C", repoDir, "add", ".").Run()
 	exec.Command("git", "-C", repoDir, "commit", "-m", "binary").Run()
 
+	tool := LoadRemoteRepositoryTool()
 	args, _ := json.Marshal(map[string]string{"repo_url": "file://" + repoDir})
-	result, err := loadRemoteRepositoryHandler(context.Background(), args)
+	result, err := tool.Handler(context.Background(), args)
 	require.NoError(t, err)
 
 	var resp map[string]interface{}
@@ -377,9 +384,7 @@ func TestConfidenceMessage(t *testing.T) {
 }
 
 func TestToolDefinitions(t *testing.T) {
-	svc := &AgentService{}
-
-	analyzeTool := svc.analyzeRepositoryTool()
+	analyzeTool := AnalyzeRepositoryTool(testDeps(""))
 	assert.Equal(t, "analyze_repository", analyzeTool.Name)
 	assert.NotNil(t, analyzeTool.Handler)
 	assert.NotEmpty(t, analyzeTool.Description)
@@ -390,7 +395,7 @@ func TestToolDefinitions(t *testing.T) {
 	assert.Contains(t, props, "owner")
 	assert.Contains(t, props, "repo")
 
-	loadTool := loadRemoteRepositoryTool()
+	loadTool := LoadRemoteRepositoryTool()
 	assert.Equal(t, "load_remote_repository", loadTool.Name)
 	assert.NotNil(t, loadTool.Handler)
 	assert.NotEmpty(t, loadTool.Description)
@@ -401,14 +406,15 @@ func TestToolDefinitions(t *testing.T) {
 }
 
 func TestAnalyzeRepositoryHandler_InvalidJSON(t *testing.T) {
-	svc := &AgentService{}
-	_, err := svc.analyzeRepositoryHandler(context.Background(), json.RawMessage(`{bad`))
+	tool := AnalyzeRepositoryTool(testDeps(""))
+	_, err := tool.Handler(context.Background(), json.RawMessage(`{bad`))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid")
 }
 
 func TestLoadRemoteRepositoryHandler_InvalidJSON(t *testing.T) {
-	_, err := loadRemoteRepositoryHandler(context.Background(), json.RawMessage(`not json`))
+	tool := LoadRemoteRepositoryTool()
+	_, err := tool.Handler(context.Background(), json.RawMessage(`not json`))
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid")
 }

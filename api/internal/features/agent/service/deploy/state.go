@@ -1,4 +1,4 @@
-package service
+package deploy
 
 import (
 	"encoding/json"
@@ -9,32 +9,31 @@ import (
 	"github.com/nixopus/nixopus/api/pkg/llm/memory"
 )
 
-// Deploy phases tracked across conversation history.
 const (
-	phaseContextResolved = "context_resolved"
-	phaseRepoAnalyzed    = "repo_analyzed"
-	phaseProjectCreated  = "project_created"
-	phaseDeployStarted   = "deploy_started"
-	phaseStatusChecked   = "status_checked"
-	phaseLogsChecked     = "logs_checked"
-	phaseAppUpdated      = "app_updated"
+	PhaseContextResolved = "context_resolved"
+	PhaseRepoAnalyzed    = "repo_analyzed"
+	PhaseProjectCreated  = "project_created"
+	PhaseDeployStarted   = "deploy_started"
+	PhaseStatusChecked   = "status_checked"
+	PhaseLogsChecked     = "logs_checked"
+	PhaseAppUpdated      = "app_updated"
 )
 
-// toolPhaseMap maps tool names to the deploy phase they represent.
-var toolPhaseMap = map[string]string{
-	"resolve_context":             phaseContextResolved,
-	"analyze_repository":          phaseRepoAnalyzed,
-	"load_local_workspace":        phaseRepoAnalyzed,
-	"load_remote_repository":      phaseRepoAnalyzed,
-	"create_project":              phaseProjectCreated,
-	"quick_deploy":                phaseDeployStarted,
-	"deploy_project":              phaseDeployStarted,
-	"get_application_deployments": phaseStatusChecked,
-	"get_deployment_logs":         phaseLogsChecked,
-	"update_application":          phaseAppUpdated,
+// ToolPhaseMap maps tool names to the deploy phase they represent.
+var ToolPhaseMap = map[string]string{
+	"resolve_context":             PhaseContextResolved,
+	"analyze_repository":          PhaseRepoAnalyzed,
+	"load_local_workspace":        PhaseRepoAnalyzed,
+	"load_remote_repository":      PhaseRepoAnalyzed,
+	"create_project":              PhaseProjectCreated,
+	"quick_deploy":                PhaseDeployStarted,
+	"deploy_project":              PhaseDeployStarted,
+	"get_application_deployments": PhaseStatusChecked,
+	"get_deployment_logs":         PhaseLogsChecked,
+	"update_application":          PhaseAppUpdated,
 }
 
-type deployState struct {
+type State struct {
 	ApplicationID string
 	DeploymentID  string
 	Status        string
@@ -42,28 +41,28 @@ type deployState struct {
 	CurrentPhase  string
 }
 
-// extractDeployState scans conversation history to build the current deploy state.
-func extractDeployState(history []memory.StoredMessage) string {
-	state := &deployState{}
+// ExtractDeployState scans conversation history to build the current deploy state.
+func ExtractDeployState(history []memory.StoredMessage) string {
+	state := &State{}
 	seenPhases := map[string]bool{}
 
 	for _, msg := range history {
 		if msg.Role == llm.RoleAssistant && len(msg.ToolCalls) > 0 {
 			for _, tc := range msg.ToolCalls {
-				if phase, ok := toolPhaseMap[tc.Function.Name]; ok {
+				if phase, ok := ToolPhaseMap[tc.Function.Name]; ok {
 					if !seenPhases[phase] {
 						seenPhases[phase] = true
 						state.Completed = append(state.Completed, phase)
 					}
 					state.CurrentPhase = phase
 
-					extractIDsFromArgs(tc.Function.Arguments, state)
+					ExtractIDsFromArgs(tc.Function.Arguments, state)
 				}
 			}
 		}
 
 		if msg.Role == llm.RoleTool && msg.Content != "" {
-			extractIDsFromResult(msg.Content, state)
+			ExtractIDsFromResult(msg.Content, state)
 		}
 	}
 
@@ -90,8 +89,8 @@ func extractDeployState(history []memory.StoredMessage) string {
 	return sb.String()
 }
 
-// extractDeployStateFromMessages works with llm.Message slice (for stream handler).
-func extractDeployStateFromMessages(messages []llm.Message) string {
+// ExtractDeployStateFromMessages works with llm.Message slice (for stream handler).
+func ExtractDeployStateFromMessages(messages []llm.Message) string {
 	stored := make([]memory.StoredMessage, 0, len(messages))
 	for _, m := range messages {
 		stored = append(stored, memory.StoredMessage{
@@ -100,10 +99,10 @@ func extractDeployStateFromMessages(messages []llm.Message) string {
 			ToolCalls: m.ToolCalls,
 		})
 	}
-	return extractDeployState(stored)
+	return ExtractDeployState(stored)
 }
 
-func extractIDsFromArgs(args string, state *deployState) {
+func ExtractIDsFromArgs(args string, state *State) {
 	var parsed map[string]interface{}
 	if json.Unmarshal([]byte(args), &parsed) != nil {
 		return
@@ -116,13 +115,12 @@ func extractIDsFromArgs(args string, state *deployState) {
 	}
 }
 
-func extractIDsFromResult(content string, state *deployState) {
+func ExtractIDsFromResult(content string, state *State) {
 	var parsed map[string]interface{}
 	if json.Unmarshal([]byte(content), &parsed) != nil {
 		return
 	}
 
-	// Look for IDs in top-level or nested "data" object
 	sources := []map[string]interface{}{parsed}
 	if data, ok := parsed["data"].(map[string]interface{}); ok {
 		sources = append(sources, data)

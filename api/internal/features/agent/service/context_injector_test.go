@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	shared_types "github.com/nixopus/nixopus/api/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -91,6 +92,10 @@ func setupTestDB(t *testing.T) *bun.DB {
 	}
 
 	return db
+}
+
+func testLogger() logger.Logger {
+	return logger.NewLogger()
 }
 
 func TestInjectUserContext_InvalidOrgID(t *testing.T) {

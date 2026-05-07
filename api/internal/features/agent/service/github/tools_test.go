@@ -1,4 +1,4 @@
-package service
+package github
 
 import (
 	"context"
@@ -11,28 +11,33 @@ import (
 	"testing"
 	"time"
 
-	gh "github.com/nixopus/nixopus/api/internal/features/github-connector/service/github"
 	"github.com/nixopus/nixopus/api/pkg/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-// setupGithubTestServer creates a mock GitHub API server and returns a githubClient
+type ctxKeyTestOrgID struct{}
+
+func testCtxWithOrgID(ctx context.Context, orgID string) context.Context {
+	return context.WithValue(ctx, ctxKeyTestOrgID{}, orgID)
+}
+
+func testOrgIDFromCtx(ctx context.Context) string {
+	v, _ := ctx.Value(ctxKeyTestOrgID{}).(string)
+	return v
+}
+
+// setupGithubTestServer creates a mock GitHub API server and returns a Client
 // that bypasses connector resolution by pre-caching a token.
-func setupGithubTestServer(t *testing.T, handler http.Handler) (*githubClient, *httptest.Server) {
+func setupGithubTestServer(t *testing.T, handler http.Handler) (*Client, *httptest.Server) {
 	t.Helper()
 	srv := httptest.NewServer(handler)
 	t.Cleanup(srv.Close)
 
-	prev := gh.APIBaseURL
-	gh.SetAPIBaseURL(srv.URL)
-	t.Cleanup(func() { gh.SetAPIBaseURL(prev) })
+	restore := RedirectAPIToTestServer(srv.URL)
+	t.Cleanup(restore)
 
-	gc := &githubClient{
-		cache: map[string]*cachedConnector{
-			"": {token: "test-token", expiresAt: time.Now().Add(10 * time.Minute)},
-		},
-	}
+	gc := NewProbeClient("test-token", testOrgIDFromCtx)
 	return gc, srv
 }
 
@@ -52,8 +57,7 @@ func TestGithubListPullRequests_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubListPullRequestsTool(gc)
+	tool := ListPullRequestsTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "owner", "repo": "repo"})
 	result, err := tool.Handler(context.Background(), args)
@@ -74,8 +78,7 @@ func TestGithubListPullRequests_CustomState(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubListPullRequestsTool(gc)
+	tool := ListPullRequestsTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "owner", "repo": "repo", "state": "closed", "per_page": 50})
 	_, err := tool.Handler(context.Background(), args)
@@ -95,8 +98,7 @@ func TestGithubListIssues_FiltersPRs(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubListIssuesTool(gc)
+	tool := ListIssuesTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "owner", "repo": "repo"})
 	result, err := tool.Handler(context.Background(), args)
@@ -121,8 +123,7 @@ func TestGithubCommentOnPR_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubCommentOnPRTool(gc)
+	tool := CommentOnPRTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "owner", "repo": "repo", "pr_number": 42, "body": "Great work!"})
 	result, err := tool.Handler(context.Background(), args)
@@ -142,8 +143,7 @@ func TestGithubCommentOnIssue_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubCommentOnIssueTool(gc)
+	tool := CommentOnIssueTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "owner", "repo": "repo", "issue_number": 10, "body": "Noted"})
 	_, err := tool.Handler(context.Background(), args)
@@ -163,8 +163,7 @@ func TestGithubCreateIssue_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubCreateIssueTool(gc)
+	tool := CreateIssueTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{
 		"owner": "owner", "repo": "repo",
@@ -192,8 +191,7 @@ func TestGithubSetCommitStatus_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubSetCommitStatusTool(gc)
+	tool := SetCommitStatusTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{
 		"owner": "owner", "repo": "repo", "sha": "abc123",
@@ -221,8 +219,7 @@ func TestGithubCreateDeploymentStatus_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubCreateDeploymentStatusTool(gc)
+	tool := CreateDeploymentStatusTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{
 		"owner": "owner", "repo": "repo", "ref": "main",
@@ -249,8 +246,7 @@ func TestGithubSearchRepoContent_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubSearchRepoContentTool(gc)
+	tool := SearchRepoContentTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "owner", "repo": "repo", "query": "TODO"})
 	result, err := tool.Handler(context.Background(), args)
@@ -279,8 +275,7 @@ func TestGithubCreateOrUpdateFile_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubCreateOrUpdateFileTool(gc)
+	tool := CreateOrUpdateFileTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{
 		"owner": "owner", "repo": "repo", "path": "src/hello.go",
@@ -291,13 +286,13 @@ func TestGithubCreateOrUpdateFile_Success(t *testing.T) {
 }
 
 func TestGithubCreateOrUpdateFile_BlocksProtectedBranch(t *testing.T) {
-	gc := &githubClient{
+	gc := &Client{
 		cache: map[string]*cachedConnector{
 			"": {token: "t", expiresAt: time.Now().Add(time.Hour)},
 		},
+		OrgIDFromCtx: testOrgIDFromCtx,
 	}
-	svc := &AgentService{}
-	tool := svc.githubCreateOrUpdateFileTool(gc)
+	tool := CreateOrUpdateFileTool(gc)
 
 	for _, branch := range []string{"main", "master", "Main", "MASTER"} {
 		args, _ := json.Marshal(map[string]interface{}{
@@ -311,13 +306,13 @@ func TestGithubCreateOrUpdateFile_BlocksProtectedBranch(t *testing.T) {
 }
 
 func TestGithubCreateOrUpdateFile_BlocksSensitiveFiles(t *testing.T) {
-	gc := &githubClient{
+	gc := &Client{
 		cache: map[string]*cachedConnector{
 			"": {token: "t", expiresAt: time.Now().Add(time.Hour)},
 		},
+		OrgIDFromCtx: testOrgIDFromCtx,
 	}
-	svc := &AgentService{}
-	tool := svc.githubCreateOrUpdateFileTool(gc)
+	tool := CreateOrUpdateFileTool(gc)
 
 	sensitiveFiles := []string{
 		".env", "config/.env", "server.pem", "private.key",
@@ -343,8 +338,7 @@ func TestGithubCreateOrUpdateFile_AllowsNonSensitiveOnFeatureBranch(t *testing.T
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubCreateOrUpdateFileTool(gc)
+	tool := CreateOrUpdateFileTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{
 		"owner": "o", "repo": "r", "path": "readme.md",
@@ -364,8 +358,7 @@ func TestGithubGetBranch_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubGetBranchTool(gc)
+	tool := GetBranchTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "owner", "repo": "repo", "branch": "develop"})
 	result, err := tool.Handler(context.Background(), args)
@@ -389,8 +382,7 @@ func TestGithubCreateBranch_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubCreateBranchTool(gc)
+	tool := CreateBranchTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{
 		"owner": "owner", "repo": "repo", "branch": "feature-new", "sha": "abc123",
@@ -417,8 +409,7 @@ func TestGithubCreatePullRequest_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubCreatePullRequestTool(gc)
+	tool := CreatePullRequestTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{
 		"owner": "owner", "repo": "repo", "title": "Add feature",
@@ -443,8 +434,7 @@ func TestGithubMergePullRequest_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubMergePullRequestTool(gc)
+	tool := MergePullRequestTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{
 		"owner": "owner", "repo": "repo", "pr_number": 10, "merge_method": "squash",
@@ -474,8 +464,7 @@ func TestGithubGetRepoFile_Success(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubGetRepoFileTool(gc)
+	tool := GetRepoFileTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "owner", "repo": "repo", "path": "main.go"})
 	result, err := tool.Handler(context.Background(), args)
@@ -489,7 +478,7 @@ func TestGithubGetRepoFile_Success(t *testing.T) {
 }
 
 func TestGithubGetRepoFile_Truncation(t *testing.T) {
-	largeContent := strings.Repeat("x", maxResponseBody+1000)
+	largeContent := strings.Repeat("x", MaxResponseBody+1000)
 	encoded := base64.StdEncoding.EncodeToString([]byte(largeContent))
 
 	mux := http.NewServeMux()
@@ -505,8 +494,7 @@ func TestGithubGetRepoFile_Truncation(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubGetRepoFileTool(gc)
+	tool := GetRepoFileTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "owner", "repo": "repo", "path": "big.txt"})
 	result, err := tool.Handler(context.Background(), args)
@@ -515,7 +503,7 @@ func TestGithubGetRepoFile_Truncation(t *testing.T) {
 	var resp map[string]interface{}
 	require.NoError(t, json.Unmarshal(result, &resp))
 	assert.Equal(t, true, resp["truncated"])
-	assert.Len(t, resp["content"], maxResponseBody)
+	assert.Len(t, resp["content"], MaxResponseBody)
 }
 
 func TestGithubGetRepoFile_WithRef(t *testing.T) {
@@ -530,8 +518,7 @@ func TestGithubGetRepoFile_WithRef(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubGetRepoFileTool(gc)
+	tool := GetRepoFileTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "owner", "repo": "repo", "path": "f.txt", "ref": "develop"})
 	_, err := tool.Handler(context.Background(), args)
@@ -546,8 +533,7 @@ func TestGithubAPIError_Handling(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubListPullRequestsTool(gc)
+	tool := ListPullRequestsTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "owner", "repo": "repo"})
 	_, err := tool.Handler(context.Background(), args)
@@ -556,28 +542,27 @@ func TestGithubAPIError_Handling(t *testing.T) {
 }
 
 func TestGithubInvalidJSON_Args(t *testing.T) {
-	gc := &githubClient{
+	gc := &Client{
 		cache: map[string]*cachedConnector{
 			"": {token: "t", expiresAt: time.Now().Add(time.Hour)},
 		},
+		OrgIDFromCtx: testOrgIDFromCtx,
 	}
-	svc := &AgentService{}
-
 	tools := []llm.ToolDefinition{
-		svc.githubListPullRequestsTool(gc),
-		svc.githubListIssuesTool(gc),
-		svc.githubCommentOnPRTool(gc),
-		svc.githubCommentOnIssueTool(gc),
-		svc.githubCreateIssueTool(gc),
-		svc.githubSetCommitStatusTool(gc),
-		svc.githubCreateDeploymentStatusTool(gc),
-		svc.githubSearchRepoContentTool(gc),
-		svc.githubCreateOrUpdateFileTool(gc),
-		svc.githubGetBranchTool(gc),
-		svc.githubCreateBranchTool(gc),
-		svc.githubCreatePullRequestTool(gc),
-		svc.githubMergePullRequestTool(gc),
-		svc.githubGetRepoFileTool(gc),
+		ListPullRequestsTool(gc),
+		ListIssuesTool(gc),
+		CommentOnPRTool(gc),
+		CommentOnIssueTool(gc),
+		CreateIssueTool(gc),
+		SetCommitStatusTool(gc),
+		CreateDeploymentStatusTool(gc),
+		SearchRepoContentTool(gc),
+		CreateOrUpdateFileTool(gc),
+		GetBranchTool(gc),
+		CreateBranchTool(gc),
+		CreatePullRequestTool(gc),
+		MergePullRequestTool(gc),
+		GetRepoFileTool(gc),
 	}
 
 	for _, tool := range tools {
@@ -590,70 +575,73 @@ func TestGithubInvalidJSON_Args(t *testing.T) {
 }
 
 func TestIsProtectedBranch(t *testing.T) {
-	assert.True(t, isProtectedBranch("main"))
-	assert.True(t, isProtectedBranch("master"))
-	assert.True(t, isProtectedBranch("Main"))
-	assert.True(t, isProtectedBranch("MASTER"))
-	assert.True(t, isProtectedBranch(" main "))
-	assert.False(t, isProtectedBranch("develop"))
-	assert.False(t, isProtectedBranch("feature/main-page"))
-	assert.False(t, isProtectedBranch("release/v1"))
+	assert.True(t, IsProtectedBranch("main"))
+	assert.True(t, IsProtectedBranch("master"))
+	assert.True(t, IsProtectedBranch("Main"))
+	assert.True(t, IsProtectedBranch("MASTER"))
+	assert.True(t, IsProtectedBranch(" main "))
+	assert.False(t, IsProtectedBranch("develop"))
+	assert.False(t, IsProtectedBranch("feature/main-page"))
+	assert.False(t, IsProtectedBranch("release/v1"))
 }
 
 func TestIsSensitiveFile(t *testing.T) {
-	assert.True(t, isSensitiveFile(".env"))
-	assert.True(t, isSensitiveFile("config/.env"))
-	assert.True(t, isSensitiveFile("server.pem"))
-	assert.True(t, isSensitiveFile("private.key"))
-	assert.True(t, isSensitiveFile("credentials.json"))
-	assert.True(t, isSensitiveFile("id_rsa"))
-	assert.True(t, isSensitiveFile("id_ed25519"))
-	assert.True(t, isSensitiveFile("app.p12"))
-	assert.True(t, isSensitiveFile("cert.pfx"))
-	assert.True(t, isSensitiveFile("store.jks"))
-	assert.True(t, isSensitiveFile("my.secret"))
-	assert.False(t, isSensitiveFile("readme.md"))
-	assert.False(t, isSensitiveFile("src/main.go"))
-	assert.False(t, isSensitiveFile("package.json"))
-	assert.False(t, isSensitiveFile("Dockerfile"))
+	assert.True(t, IsSensitiveFile(".env"))
+	assert.True(t, IsSensitiveFile("config/.env"))
+	assert.True(t, IsSensitiveFile("server.pem"))
+	assert.True(t, IsSensitiveFile("private.key"))
+	assert.True(t, IsSensitiveFile("credentials.json"))
+	assert.True(t, IsSensitiveFile("id_rsa"))
+	assert.True(t, IsSensitiveFile("id_ed25519"))
+	assert.True(t, IsSensitiveFile("app.p12"))
+	assert.True(t, IsSensitiveFile("cert.pfx"))
+	assert.True(t, IsSensitiveFile("store.jks"))
+	assert.True(t, IsSensitiveFile("my.secret"))
+	assert.False(t, IsSensitiveFile("readme.md"))
+	assert.False(t, IsSensitiveFile("src/main.go"))
+	assert.False(t, IsSensitiveFile("package.json"))
+	assert.False(t, IsSensitiveFile("Dockerfile"))
 }
 
 func TestTruncate(t *testing.T) {
-	assert.Equal(t, "hello", truncate("hello", 10))
-	assert.Equal(t, "hel...", truncate("hello world", 3))
-	assert.Equal(t, "", truncate("", 5))
+	assert.Equal(t, "hello", Truncate("hello", 10))
+	assert.Equal(t, "hel...", Truncate("hello world", 3))
+	assert.Equal(t, "", Truncate("", 5))
 }
 
 func TestConnectorCache_Hit(t *testing.T) {
-	gc := &githubClient{
+	gc := &Client{
 		cache: map[string]*cachedConnector{
 			"org1": {token: "cached-token", expiresAt: time.Now().Add(5 * time.Minute)},
 		},
+		OrgIDFromCtx: testOrgIDFromCtx,
 	}
 
-	ctx := context.WithValue(context.Background(), ctxKeyOrgID, "org1")
-	token, err := gc.getInstallationToken(ctx)
+	ctx := testCtxWithOrgID(context.Background(), "org1")
+	token, err := gc.GetInstallationToken(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, "cached-token", token)
 }
 
 func TestConnectorCache_Expired(t *testing.T) {
-	gc := &githubClient{
+	gc := &Client{
 		cache: map[string]*cachedConnector{
 			"org1": {token: "old-token", expiresAt: time.Now().Add(-1 * time.Minute)},
 		},
+		OrgIDFromCtx: testOrgIDFromCtx,
 	}
 
-	ctx := context.WithValue(context.Background(), ctxKeyOrgID, "org1")
-	_, err := gc.getInstallationToken(ctx)
+	ctx := testCtxWithOrgID(context.Background(), "org1")
+	_, err := gc.GetInstallationToken(ctx)
 	// Should fail because db is nil and cache is expired, causing a panic-recovered error
 	// or a nil pointer. We just confirm it doesn't return a valid token.
 	require.Error(t, err)
 }
 
 func TestConnectorCache_NoDB(t *testing.T) {
-	gc := &githubClient{
-		cache: map[string]*cachedConnector{},
+	gc := &Client{
+		cache:        map[string]*cachedConnector{},
+		OrgIDFromCtx: testOrgIDFromCtx,
 	}
 	ctx := context.Background()
 	_, err := gc.resolveConnector(ctx)
@@ -662,26 +650,26 @@ func TestConnectorCache_NoDB(t *testing.T) {
 }
 
 func TestGithubToolDefinitions_HaveRequiredFields(t *testing.T) {
-	gc := &githubClient{
-		cache: map[string]*cachedConnector{},
+	gc := &Client{
+		cache:        map[string]*cachedConnector{},
+		OrgIDFromCtx: testOrgIDFromCtx,
 	}
-	svc := &AgentService{}
 
 	tools := []llm.ToolDefinition{
-		svc.githubListPullRequestsTool(gc),
-		svc.githubListIssuesTool(gc),
-		svc.githubCommentOnPRTool(gc),
-		svc.githubCommentOnIssueTool(gc),
-		svc.githubCreateIssueTool(gc),
-		svc.githubSetCommitStatusTool(gc),
-		svc.githubCreateDeploymentStatusTool(gc),
-		svc.githubSearchRepoContentTool(gc),
-		svc.githubCreateOrUpdateFileTool(gc),
-		svc.githubGetBranchTool(gc),
-		svc.githubCreateBranchTool(gc),
-		svc.githubCreatePullRequestTool(gc),
-		svc.githubMergePullRequestTool(gc),
-		svc.githubGetRepoFileTool(gc),
+		ListPullRequestsTool(gc),
+		ListIssuesTool(gc),
+		CommentOnPRTool(gc),
+		CommentOnIssueTool(gc),
+		CreateIssueTool(gc),
+		SetCommitStatusTool(gc),
+		CreateDeploymentStatusTool(gc),
+		SearchRepoContentTool(gc),
+		CreateOrUpdateFileTool(gc),
+		GetBranchTool(gc),
+		CreateBranchTool(gc),
+		CreatePullRequestTool(gc),
+		MergePullRequestTool(gc),
+		GetRepoFileTool(gc),
 	}
 
 	expectedNames := []string{
@@ -717,8 +705,7 @@ func TestGithubMergePullRequest_DefaultMethod(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubMergePullRequestTool(gc)
+	tool := MergePullRequestTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{"owner": "o", "repo": "r", "pr_number": 1})
 	_, err := tool.Handler(context.Background(), args)
@@ -733,8 +720,7 @@ func TestGithubCreateDeploymentStatus_DeploymentFails(t *testing.T) {
 	})
 
 	gc, _ := setupGithubTestServer(t, mux)
-	svc := &AgentService{}
-	tool := svc.githubCreateDeploymentStatusTool(gc)
+	tool := CreateDeploymentStatusTool(gc)
 
 	args, _ := json.Marshal(map[string]interface{}{
 		"owner": "o", "repo": "r", "ref": "main",

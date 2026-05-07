@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/nixopus/nixopus/api/internal/features/agent/service/codebase"
+	agentgithub "github.com/nixopus/nixopus/api/internal/features/agent/service/github"
 	"github.com/nixopus/nixopus/api/pkg/llm"
 )
 
@@ -47,8 +49,24 @@ func (s *AgentService) buildDeployTools() *llm.ToolRegistry {
 		Handler:     httpProbeHandler,
 	})
 
-	tools.Register(s.analyzeRepositoryTool())
-	tools.Register(loadRemoteRepositoryTool())
+	deps := codebase.Deps{
+		AuthTokenFromCtx: func(ctx context.Context) string {
+			v, _ := ctx.Value(ctxKeyAuthToken).(string)
+			return v
+		},
+		OrgIDFromCtx: func(ctx context.Context) string {
+			v, _ := ctx.Value(ctxKeyOrgID).(string)
+			return v
+		},
+		BaseURLFromCtx: func(ctx context.Context) string {
+			v, _ := ctx.Value(ctxKeyBaseURL).(string)
+			return v
+		},
+		GetEnvOrDefault: getEnvOrDefault,
+	}
+
+	tools.Register(codebase.AnalyzeRepositoryTool(deps))
+	tools.Register(codebase.LoadRemoteRepositoryTool())
 
 	return tools
 }
@@ -86,22 +104,22 @@ func (s *AgentService) buildGithubTools() *llm.ToolRegistry {
 	tools := llm.NewToolRegistry()
 	tools.Register(s.skills.Tool())
 
-	gc := newGithubClient(s.store.DB)
+	gc := s.github
 
-	tools.Register(s.githubListPullRequestsTool(gc))
-	tools.Register(s.githubListIssuesTool(gc))
-	tools.Register(s.githubCommentOnPRTool(gc))
-	tools.Register(s.githubCommentOnIssueTool(gc))
-	tools.Register(s.githubCreateIssueTool(gc))
-	tools.Register(s.githubSetCommitStatusTool(gc))
-	tools.Register(s.githubCreateDeploymentStatusTool(gc))
-	tools.Register(s.githubSearchRepoContentTool(gc))
-	tools.Register(s.githubCreateOrUpdateFileTool(gc))
-	tools.Register(s.githubGetBranchTool(gc))
-	tools.Register(s.githubCreateBranchTool(gc))
-	tools.Register(s.githubCreatePullRequestTool(gc))
-	tools.Register(s.githubMergePullRequestTool(gc))
-	tools.Register(s.githubGetRepoFileTool(gc))
+	tools.Register(agentgithub.ListPullRequestsTool(gc))
+	tools.Register(agentgithub.ListIssuesTool(gc))
+	tools.Register(agentgithub.CommentOnPRTool(gc))
+	tools.Register(agentgithub.CommentOnIssueTool(gc))
+	tools.Register(agentgithub.CreateIssueTool(gc))
+	tools.Register(agentgithub.SetCommitStatusTool(gc))
+	tools.Register(agentgithub.CreateDeploymentStatusTool(gc))
+	tools.Register(agentgithub.SearchRepoContentTool(gc))
+	tools.Register(agentgithub.CreateOrUpdateFileTool(gc))
+	tools.Register(agentgithub.GetBranchTool(gc))
+	tools.Register(agentgithub.CreateBranchTool(gc))
+	tools.Register(agentgithub.CreatePullRequestTool(gc))
+	tools.Register(agentgithub.MergePullRequestTool(gc))
+	tools.Register(agentgithub.GetRepoFileTool(gc))
 
 	tools.Register(llm.ToolDefinition{
 		Name:        "nixopus_api",
@@ -179,8 +197,6 @@ func (s *AgentService) nixopusAPIHandler(ctx context.Context, args json.RawMessa
 		return nil, fmt.Errorf("invalid arguments: %w", err)
 	}
 
-	// Pre-flight: validate required fields and known type rules before the API call.
-	// Returns a structured error message the LLM can read and immediately correct.
 	if s.preflight != nil {
 		if errMsg := s.preflight.Validate(input.Method, input.Path, input.Body); errMsg != "" {
 			return json.Marshal(map[string]interface{}{
