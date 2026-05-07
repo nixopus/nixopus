@@ -23,7 +23,8 @@ const securityHeaders = [
   // reduces attack surface; none of these are used by the Nixopus UI.
   {
     key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), browsing-topics=()'
+    value:
+      'camera=(), microphone=(), geolocation=(), browsing-topics=(), xr-spatial-tracking=(self "https://challenges.cloudflare.com")'
   },
   // Disable legacy XSS auditor. OWASP recommends '0' because '1; mode=block'
   // can itself be exploited as an XSS vector in some browsers.
@@ -36,11 +37,13 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
-      "style-src 'self' 'unsafe-inline'",
+      "script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com https://challenges.cloudflare.com https://eu-assets.i.posthog.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "img-src 'self' data: blob: https:",
-      "font-src 'self'",
-      "connect-src 'self' ws: wss: https:",
+      "font-src 'self' https://fonts.gstatic.com",
+      "connect-src 'self' ws: wss: https: http:",
+      'frame-src https://challenges.cloudflare.com',
+      "worker-src 'self' blob: https://challenges.cloudflare.com",
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'"
