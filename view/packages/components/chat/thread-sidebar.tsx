@@ -121,6 +121,7 @@ interface ThreadItemProps {
 function ThreadItem({ thread, isActive, onSelect, onDelete, onRename }: ThreadItemProps) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editValue, setEditValue] = React.useState(thread.title);
+  const [isHovered, setIsHovered] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -175,8 +176,6 @@ function ThreadItem({ thread, isActive, onSelect, onDelete, onRename }: ThreadIt
       </div>
     );
   }
-
-  const [isHovered, setIsHovered] = React.useState(false);
 
   return (
     <button

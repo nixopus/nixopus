@@ -110,8 +110,8 @@
 						"type": "string"
 					},
 					"repository": {
-						"description": "Git repository URL or identifier",
-						"example": "github.com/org/repo",
+						"description": "Numeric GitHub repository ID (get from GET /github-connector/repositories).",
+						"example": "912345678",
 						"type": "string"
 					}
 				},
@@ -2097,6 +2097,28 @@
 				],
 				"type": "object"
 			},
+			"CancelRequest": {
+				"description": "CancelRequest schema",
+				"properties": {
+					"thread_id": {
+						"format": "uuid",
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"CancelResponse": {
+				"description": "CancelResponse schema",
+				"properties": {
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"CategoriesResponse": {
 				"description": "CategoriesResponse schema",
 				"properties": {
@@ -2111,6 +2133,56 @@
 					},
 					"status": {
 						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ChatRequest": {
+				"description": "ChatRequest schema",
+				"properties": {
+					"input": {
+						"type": "string"
+					},
+					"model": {
+						"nullable": true,
+						"type": "string"
+					},
+					"thread_id": {
+						"format": "uuid",
+						"nullable": true,
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
+			"ChatResponse": {
+				"description": "ChatResponse schema",
+				"properties": {
+					"balance_cents": {
+						"nullable": true,
+						"type": "integer"
+					},
+					"response": {
+						"type": "string"
+					},
+					"thread_id": {
+						"format": "uuid",
+						"type": "string"
+					},
+					"usage": {
+						"nullable": true,
+						"properties": {
+							"completion_tokens": {
+								"type": "integer"
+							},
+							"prompt_tokens": {
+								"type": "integer"
+							},
+							"total_tokens": {
+								"type": "integer"
+							}
+						},
+						"type": "object"
 					}
 				},
 				"type": "object"
@@ -2437,8 +2509,8 @@
 						"type": "string"
 					},
 					"repository": {
-						"description": "Git repository URL or identifier",
-						"example": "github.com/org/repo",
+						"description": "Numeric GitHub repository ID (get from GET /github-connector/repositories). Do NOT pass owner/repo slug — it will fail at parse time.",
+						"example": "912345678",
 						"type": "string"
 					},
 					"routing_strategy": {
@@ -2814,8 +2886,8 @@
 						"type": "string"
 					},
 					"repository": {
-						"description": "Git repository URL or identifier",
-						"example": "github.com/org/repo",
+						"description": "Numeric GitHub repository ID (get from GET /github-connector/repositories). Do NOT pass owner/repo slug — it will fail at parse time.",
+						"example": "912345678",
 						"type": "string"
 					},
 					"routing_strategy": {
@@ -7734,8 +7806,8 @@
 						"type": "string"
 					},
 					"repository": {
-						"description": "Git repository URL or identifier",
-						"example": "github.com/org/repo",
+						"description": "Numeric GitHub repository ID (get from GET /github-connector/repositories).",
+						"example": "912345678",
 						"type": "string"
 					}
 				},
@@ -9290,6 +9362,21 @@
 				],
 				"type": "object"
 			},
+			"ThreadResponse": {
+				"description": "ThreadResponse schema",
+				"properties": {
+					"data": {
+						"nullable": true
+					},
+					"message": {
+						"type": "string"
+					},
+					"status": {
+						"type": "string"
+					}
+				},
+				"type": "object"
+			},
 			"ToggleHealthCheckRequest": {
 				"description": "ToggleHealthCheckRequest schema",
 				"properties": {
@@ -10651,6 +10738,814 @@
 	},
 	"openapi": "3.1.0",
 	"paths": {
+		"/api/v1/agent/chat": {
+			"post": {
+				"description": "Chat with agent (blocking).\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "chatWithAgentBlocking",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"input": "string",
+								"model": "string",
+								"thread_id": "00000000-0000-0000-0000-000000000000"
+							},
+							"schema": {
+								"$ref": "#/components/schemas/ChatRequest"
+							}
+						}
+					},
+					"description": "Request body for service.ChatRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"balance_cents": 1,
+									"response": "string",
+									"thread_id": "00000000-0000-0000-0000-000000000000",
+									"usage": {}
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ChatResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"balance_cents": 1,
+									"response": "string",
+									"thread_id": "00000000-0000-0000-0000-000000000000",
+									"usage": {}
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ChatResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Chat with agent (blocking)"
+			}
+		},
+		"/api/v1/agent/chat/cancel": {
+			"post": {
+				"description": "Cancel an active streaming response.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "cancelAnActiveStreamingResponse",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"content": {
+						"*/*": {
+							"example": {
+								"thread_id": "00000000-0000-0000-0000-000000000000"
+							},
+							"schema": {
+								"$ref": "#/components/schemas/CancelRequest"
+							}
+						}
+					},
+					"description": "Request body for controller.CancelRequest",
+					"required": true
+				},
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/CancelResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/CancelResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Cancel an active streaming response"
+			}
+		},
+		"/api/v1/agent/chat/stream": {
+			"post": {
+				"description": "Chat with agent (streaming SSE).\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "chatWithAgentStreamingSSE",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/unknown-interface"
+								}
+							},
+							"application/xml": {
+								"schema": {
+									"$ref": "#/components/schemas/unknown-interface"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Chat with agent (streaming SSE)"
+			}
+		},
+		"/api/v1/agent/threads": {
+			"get": {
+				"description": "List conversation threads.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "listConversationThreads",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ThreadResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ThreadResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "List conversation threads"
+			},
+			"post": {
+				"description": "Create a new conversation thread.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "createANewConversationThread",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ThreadResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ThreadResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Create a new conversation thread"
+			}
+		},
+		"/api/v1/agent/threads/{threadId}": {
+			"delete": {
+				"description": "Delete a conversation thread.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "deleteAConversationThread",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "threadId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ThreadResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ThreadResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Delete a conversation thread"
+			},
+			"patch": {
+				"description": "Update thread title.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: May mutate server state.",
+				"operationId": "updateThreadTitle",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "threadId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ThreadResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ThreadResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Update thread title"
+			}
+		},
+		"/api/v1/agent/threads/{threadId}/messages": {
+			"get": {
+				"description": "Get thread messages.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
+				"operationId": "getThreadMessages",
+				"parameters": [
+					{
+						"in": "header",
+						"name": "Accept",
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "path",
+						"name": "threadId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"responses": {
+					"200": {
+						"content": {
+							"application/json": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ThreadResponse"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"data": null,
+									"message": "string",
+									"status": "string"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ThreadResponse"
+								}
+							}
+						},
+						"description": "OK"
+					},
+					"400": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "invalid_request",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Bad Request _(validation or deserialization error)_"
+					},
+					"500": {
+						"content": {
+							"application/json": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							},
+							"application/xml": {
+								"example": {
+									"code": "internal_error",
+									"details": {},
+									"message": "Request failed"
+								},
+								"schema": {
+									"$ref": "#/components/schemas/ErrorEnvelope"
+								}
+							}
+						},
+						"description": "Internal Server Error _(panics)_"
+					},
+					"default": {
+						"description": ""
+					}
+				},
+				"summary": "Get thread messages"
+			}
+		},
 		"/api/v1/audit/logs": {
 			"get": {
 				"description": "List audit logs.\n\nAuth: Required (bearer token).\nScope: Organization-scoped in authenticated context.\nSide effects: Read-only operation.",
@@ -12581,7 +13476,7 @@
 								"post_run_command": "npm run seed",
 								"pre_run_command": "npm run migrate",
 								"primary_server_id": "550e8400-e29b-41d4-a716-446655440000",
-								"repository": "github.com/org/repo",
+								"repository": "912345678",
 								"routing_strategy": "round-robin",
 								"server_ids": [],
 								"source": "github",
@@ -13986,7 +14881,7 @@
 								"base_path": "/",
 								"branch": "main",
 								"dockerfile_path": "Dockerfile",
-								"repository": "github.com/org/repo"
+								"repository": "912345678"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/PreviewComposeRequest"
@@ -14110,7 +15005,7 @@
 								"post_run_command": "npm run seed",
 								"pre_run_command": "npm run migrate",
 								"primary_server_id": "550e8400-e29b-41d4-a716-446655440000",
-								"repository": "github.com/org/repo",
+								"repository": "912345678",
 								"routing_strategy": "round-robin",
 								"server_ids": [],
 								"source": "github"
@@ -14239,7 +15134,7 @@
 								"port": 8080,
 								"post_run_command": "npm run seed",
 								"pre_run_command": "npm run migrate",
-								"repository": "github.com/org/repo"
+								"repository": "912345678"
 							},
 							"schema": {
 								"$ref": "#/components/schemas/AddApplicationToFamilyRequest"

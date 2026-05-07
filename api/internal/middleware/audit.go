@@ -117,6 +117,12 @@ func (rw *auditResponseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
+func (rw *auditResponseWriter) Flush() {
+	if flusher, ok := rw.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
+	}
+}
+
 // getAuditActionFromMethod maps HTTP methods to audit actions
 func getAuditActionFromMethod(method string) types.AuditAction {
 	switch method {

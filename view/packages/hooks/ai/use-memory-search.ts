@@ -1,9 +1,6 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useAppSelector } from '@/redux/hooks';
-import { authClient } from '@/packages/lib/auth-client';
-import { createAgentClient, AGENT_ID } from '@/packages/lib/agent-client';
 
 export interface MemorySearchResult {
   id: string;
@@ -14,65 +11,27 @@ export interface MemorySearchResult {
   threadTitle?: string;
 }
 
-async function getAuthHeaders(
-  token: string | null,
-  organizationId: string | undefined | null
-): Promise<Record<string, string>> {
-  const headers: Record<string, string> = {};
-  let authToken = token;
-  if (!authToken) {
-    try {
-      const session = await authClient.getSession();
-      authToken = session?.data?.session?.token ?? null;
-    } catch {
-      /* ignore */
-    }
-  }
-  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-  if (organizationId) headers['X-Organization-Id'] = organizationId;
-  return headers;
-}
-
-export function useMemorySearch(resourceId: string | undefined) {
+/**
+ * Memory search hook - currently a stub.
+ * The Go agent does not expose a search endpoint yet.
+ * This preserves the interface so existing UI components continue to compile.
+ */
+export function useMemorySearch(_resourceId: string | undefined) {
   const [results, setResults] = useState<MemorySearchResult[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [isSearching] = useState(false);
   const [query, setQuery] = useState('');
 
-  const token = useAppSelector((state) => state.auth.token);
-  const activeOrg = useAppSelector((state) => state.user.activeOrganization);
-  const organizationId = activeOrg?.id;
-
-  const search = useCallback(
-    async (searchQuery: string) => {
-      const q = searchQuery.trim();
-      if (!q || !resourceId) {
-        setResults([]);
-        setQuery('');
-        return;
-      }
-
-      setIsSearching(true);
-      setQuery(q);
-
-      try {
-        const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
-        const client = createAgentClient(headers);
-        const response = await client.searchMemory({
-          agentId: AGENT_ID,
-          resourceId,
-          searchQuery: q
-        });
-
-        const raw = (response as { results?: MemorySearchResult[] })?.results ?? [];
-        setResults(raw);
-      } catch {
-        setResults([]);
-      } finally {
-        setIsSearching(false);
-      }
-    },
-    [resourceId, token, organizationId]
-  );
+  const search = useCallback(async (searchQuery: string) => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setResults([]);
+      setQuery('');
+      return;
+    }
+    setQuery(q);
+    // TODO: implement when Go API exposes /api/v1/agent/threads/search
+    setResults([]);
+  }, []);
 
   const clear = useCallback(() => {
     setResults([]);

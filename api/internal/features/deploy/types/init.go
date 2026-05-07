@@ -36,7 +36,7 @@ type CreateDeploymentRequest struct {
 	ComposeDomains       []ComposeDomain              `json:"compose_domains,omitempty" description:"Domain-to-service mappings for compose deployments"`
 	Environment          shared_types.Environment     `json:"environment" validate:"required" description:"Deployment environment" example:"production"`
 	BuildPack            shared_types.BuildPack       `json:"build_pack" validate:"required" description:"Build strategy for the application" example:"dockerfile"`
-	Repository           string                       `json:"repository" validate:"required" description:"Git repository URL or identifier" example:"github.com/org/repo"`
+	Repository           string                       `json:"repository" validate:"required" description:"Numeric GitHub repository ID (get from GET /github-connector/repositories). Do NOT pass owner/repo slug — it will fail at parse time." example:"912345678"`
 	Branch               string                       `json:"branch" validate:"required" description:"Git branch to deploy" example:"main"`
 	PreRunCommand        string                       `json:"pre_run_command" description:"Command to run before the application starts" example:"npm run migrate"`
 	PostRunCommand       string                       `json:"post_run_command" description:"Command to run after the application starts" example:"npm run seed"`
@@ -60,7 +60,7 @@ type CreateProjectRequest struct {
 	ComposeServices      []PreviewComposeService      `json:"compose_services,omitempty" description:"Compose services configuration"`
 	Environment          shared_types.Environment     `json:"environment,omitempty" description:"Deployment environment. Defaults to production if not specified" example:"production"`
 	BuildPack            shared_types.BuildPack       `json:"build_pack,omitempty" description:"Build strategy. Defaults to dockerfile if not specified" example:"dockerfile"`
-	Repository           string                       `json:"repository" validate:"required" description:"Git repository URL or identifier" example:"github.com/org/repo"`
+	Repository           string                       `json:"repository" validate:"required" description:"Numeric GitHub repository ID (get from GET /github-connector/repositories). Do NOT pass owner/repo slug — it will fail at parse time." example:"912345678"`
 	Branch               string                       `json:"branch,omitempty" description:"Git branch to deploy. Defaults to main if not specified" example:"main"`
 	PreRunCommand        string                       `json:"pre_run_command,omitempty" description:"Command to run before the application starts" example:"npm run migrate"`
 	PostRunCommand       string                       `json:"post_run_command,omitempty" description:"Command to run after the application starts" example:"npm run seed"`
@@ -76,7 +76,7 @@ type CreateProjectRequest struct {
 }
 
 type PreviewComposeRequest struct {
-	Repository     string `json:"repository" validate:"required" description:"Git repository URL or identifier" example:"github.com/org/repo"`
+	Repository     string `json:"repository" validate:"required" description:"Numeric GitHub repository ID (get from GET /github-connector/repositories)." example:"912345678"`
 	Branch         string `json:"branch" validate:"required" description:"Git branch to preview" example:"main"`
 	BasePath       string `json:"base_path,omitempty" description:"Base path within the repository" example:"/"`
 	DockerfilePath string `json:"dockerfile_path,omitempty" description:"Path to the Dockerfile" example:"Dockerfile"`
@@ -163,7 +163,7 @@ type AddApplicationToFamilyRequest struct {
 	FamilyID             *uuid.UUID               `json:"family_id,omitempty" description:"Family ID to add the application to. Creates new family if not provided" example:"550e8400-e29b-41d4-a716-446655440000"`
 	Name                 string                   `json:"name" validate:"required" description:"Application name" example:"my-api"`
 	Path                 string                   `json:"path" description:"Base path for the application. Defaults to /" example:"api/"`
-	Repository           string                   `json:"repository" validate:"required" description:"Git repository URL or identifier" example:"github.com/org/repo"`
+	Repository           string                   `json:"repository" validate:"required" description:"Numeric GitHub repository ID (get from GET /github-connector/repositories)." example:"912345678"`
 	Branch               string                   `json:"branch,omitempty" description:"Git branch. Defaults to main if not specified" example:"main"`
 	Environment          shared_types.Environment `json:"environment,omitempty" description:"Deployment environment. Defaults to development if not specified" example:"development"`
 	BuildPack            shared_types.BuildPack   `json:"build_pack,omitempty" description:"Build strategy. Defaults to dockerfile if not specified" example:"dockerfile"`

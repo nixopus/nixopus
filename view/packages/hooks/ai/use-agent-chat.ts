@@ -4,11 +4,9 @@ import { useState, useRef, useEffect, useCallback, useSyncExternalStore } from '
 import { useAppSelector } from '@/redux/hooks';
 import { authClient } from '@/packages/lib/auth-client';
 import {
-  createAgentClient,
-  AGENT_ID,
   streamAgent,
-  approveAgentToolCall,
-  declineAgentToolCall,
+  cancelStream,
+  getThreadMessages,
   type StreamChunk
 } from '@/packages/lib/agent-client';
 import { type ChatContext, formatContextsForAgent } from './chat-context';
@@ -83,92 +81,6 @@ async function getAuthHeaders(
   return headers;
 }
 
-function extractText(content: unknown): string {
-  if (typeof content === 'string') return content;
-  if (Array.isArray(content)) {
-    return content
-      .filter((p: { type?: string; text?: string }) => p.type === 'text' && p.text)
-      .map((p: { text: string }) => p.text)
-      .join('');
-  }
-  if (content && typeof content === 'object') {
-    const obj = content as { content?: string; parts?: { type?: string; text?: string }[] };
-    if (typeof obj.content === 'string') return obj.content;
-    if (Array.isArray(obj.parts)) return extractText(obj.parts);
-  }
-  return '';
-}
-
-function extractMessageParts(content: unknown): { text: string; parts: MessagePart[] } {
-  if (typeof content === 'string') return { text: content, parts: [] };
-  if (!content || typeof content !== 'object') return { text: '', parts: [] };
-
-  const obj = content as {
-    format?: number;
-    content?: string;
-    parts?: Array<Record<string, unknown>>;
-    toolInvocations?: Array<{
-      toolCallId?: string;
-      toolName?: string;
-      args?: unknown;
-      state?: string;
-    }>;
-  };
-
-  const parts: MessagePart[] = [];
-  let text = '';
-
-  if (Array.isArray(obj.parts)) {
-    for (const part of obj.parts) {
-      if (part.type === 'text') {
-        const t = (part.text as string) || (part.content as string) || '';
-        if (t) {
-          text += t;
-          parts.push({ type: 'text', content: t });
-        }
-      } else if (part.type === 'tool-invocation') {
-        const inv = part.toolInvocation as
-          | {
-              toolCallId?: string;
-              toolName?: string;
-              args?: unknown;
-              state?: string;
-            }
-          | undefined;
-        if (inv) {
-          parts.push({
-            type: 'tool-call',
-            toolName: inv.toolName || 'tool',
-            toolCallId: inv.toolCallId || '',
-            args: inv.args,
-            status: 'done'
-          });
-        }
-      }
-    }
-  }
-
-  if (parts.every((p) => p.type === 'tool-call') && Array.isArray(obj.toolInvocations)) {
-    for (const inv of obj.toolInvocations) {
-      if (!parts.some((p) => p.type === 'tool-call' && p.toolCallId === inv.toolCallId)) {
-        parts.push({
-          type: 'tool-call',
-          toolName: inv.toolName || 'tool',
-          toolCallId: inv.toolCallId || '',
-          args: inv.args,
-          status: 'done'
-        });
-      }
-    }
-  }
-
-  if (!text && typeof obj.content === 'string') {
-    text = obj.content;
-  }
-
-  return { text, parts };
-}
-
 export interface AgentQuestionFieldOption {
   label: string;
   value: string;
@@ -207,15 +119,12 @@ export interface OmStatus {
 export function useAgentChat({
   threadId,
   resourceId,
-  agentId: overrideAgentId,
   readOnly = false,
   contexts = [],
-  autoRunTools = true,
   model,
   onFirstMessage,
   waitForThread
 }: UseAgentChatOptions) {
-  const effectiveAgentId = overrideAgentId || AGENT_ID;
   const subscribe = useCallback(
     (cb: () => void) => chatStreamStore.subscribe(threadId, cb),
     [threadId]
@@ -226,14 +135,13 @@ export function useAgentChat({
     chatStreamStore.getEmptySnapshot
   );
 
-  const { messages, isStreaming, pendingToolApproval, omStatus } = snapshot;
+  const { messages, isStreaming } = snapshot;
 
   const [inputValue, setInputValue] = useState('');
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [activeQuestion, setActiveQuestion] = useState<AgentQuestion | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const lastAutoApprovedRef = useRef<string | null>(null);
 
   const token = useAppSelector((state) => state.auth.token);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
@@ -266,41 +174,24 @@ export function useAgentChat({
         if (cancelled) return;
 
         const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
-        const client = createAgentClient(headers);
-        const thread = client.getMemoryThread({ threadId, agentId: effectiveAgentId });
-        const result = await thread.listMessages({
-          resourceId: resourceId || threadId
-        });
+        const rawMessages = await getThreadMessages(threadId, headers);
 
         if (cancelled) return;
         if (chatStreamStore.hasActiveStream(threadId)) return;
 
         const msgs: ChatMessage[] = [];
-        const rawMessages = result?.messages ?? [];
         for (const msg of rawMessages) {
           const role = msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'assistant' : null;
           if (!role) continue;
+          const text = msg.content || '';
+          if (!text) continue;
 
-          if (role === 'assistant') {
-            const { text, parts } = extractMessageParts(msg.content);
-            if (!text && parts.length === 0) continue;
-            msgs.push({
-              id: msg.id,
-              role,
-              content: text,
-              ...(parts.length > 0 ? { parts } : {}),
-              timestamp: msg.createdAt ? new Date(msg.createdAt) : new Date()
-            });
-          } else {
-            const text = extractText(msg.content);
-            if (!text) continue;
-            msgs.push({
-              id: msg.id,
-              role,
-              content: text,
-              timestamp: msg.createdAt ? new Date(msg.createdAt) : new Date()
-            });
-          }
+          msgs.push({
+            id: msg.id,
+            role,
+            content: text,
+            timestamp: msg.created_at ? new Date(msg.created_at) : new Date()
+          });
         }
         chatStreamStore.setMessages(threadId, msgs);
       } catch {
@@ -313,11 +204,13 @@ export function useAgentChat({
     return () => {
       cancelled = true;
     };
-  }, [threadId, resourceId, effectiveAgentId, token, organizationId, waitForThread]);
+  }, [threadId, resourceId, token, organizationId, waitForThread]);
 
   const streamResponse = useCallback(
     async (userContent: string) => {
       if (!threadId) return;
+
+      if (waitForThread) await waitForThread(threadId);
 
       const abortController = new AbortController();
       const assistantMessageId = uuid();
@@ -332,8 +225,7 @@ export function useAgentChat({
           resourceId || threadId,
           headers,
           abortController.signal,
-          model,
-          !autoRunTools
+          model
         );
 
         for await (const chunk of stream) {
@@ -350,74 +242,14 @@ export function useAgentChat({
         );
         return;
       }
-      chatStreamStore.finishStream(threadId);
-    },
-    [threadId, resourceId, token, organizationId, contexts, model, autoRunTools]
-  );
 
-  const handleApproveToolCall = useCallback(async () => {
-    if (!threadId) return;
-    const snap = chatStreamStore.getSnapshot(threadId);
-    const pending = snap.pendingToolApproval;
-    if (!pending) return;
-
-    const assistantMessageId = chatStreamStore.prepareApprovalStream(threadId);
-    if (!assistantMessageId) {
-      chatStreamStore.stopStream(threadId);
-      return;
-    }
-
-    const abortController = new AbortController();
-    chatStreamStore.startApprovalStream(threadId, abortController);
-
-    try {
-      const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
-      const stream = approveAgentToolCall(
-        { runId: pending.runId, toolCallId: pending.toolCallId },
-        headers,
-        abortController.signal
-      );
-
-      for await (const chunk of stream) {
-        chatStreamStore.handleChunk(threadId, chunk);
+      const snap = chatStreamStore.getSnapshot(threadId);
+      if (snap.isStreaming) {
+        chatStreamStore.finishStream(threadId);
       }
-    } catch {
-      chatStreamStore.appendErrorToLastAssistant(threadId, '\n\n_Tool execution failed._');
-    }
-    chatStreamStore.finishApprovalStream(threadId);
-  }, [threadId, token, organizationId]);
-
-  const handleDeclineToolCall = useCallback(async () => {
-    if (!threadId) return;
-    const snap = chatStreamStore.getSnapshot(threadId);
-    const pending = snap.pendingToolApproval;
-    if (!pending) return;
-
-    chatStreamStore.declineApproval(threadId);
-
-    try {
-      const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
-      await declineAgentToolCall({ runId: pending.runId, toolCallId: pending.toolCallId }, headers);
-      chatStreamStore.appendErrorToLastAssistant(threadId, '\n\n_Tool call was declined._');
-    } catch {
-      // ignore
-    }
-  }, [threadId, token, organizationId]);
-
-  useEffect(() => {
-    if (!pendingToolApproval) {
-      lastAutoApprovedRef.current = null;
-      return;
-    }
-    const isInternalTool =
-      pendingToolApproval.toolName === 'search_tools' ||
-      pendingToolApproval.toolName === 'load_tool';
-    if (!autoRunTools && !isInternalTool) return;
-    const key = `${pendingToolApproval.runId}-${pendingToolApproval.toolCallId}`;
-    if (lastAutoApprovedRef.current === key) return;
-    lastAutoApprovedRef.current = key;
-    handleApproveToolCall();
-  }, [pendingToolApproval, autoRunTools, handleApproveToolCall]);
+    },
+    [threadId, resourceId, token, organizationId, contexts, model, waitForThread]
+  );
 
   const handleSubmit = useCallback(
     (e?: React.FormEvent) => {
@@ -513,9 +345,16 @@ export function useAgentChat({
     setActiveQuestion(null);
   }, []);
 
-  const stopStreaming = useCallback(() => {
-    if (threadId) chatStreamStore.stopStream(threadId);
-  }, [threadId]);
+  const stopStreaming = useCallback(async () => {
+    if (!threadId) return;
+    chatStreamStore.stopStream(threadId);
+    try {
+      const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
+      await cancelStream(threadId, headers);
+    } catch {
+      // best-effort cancel on server
+    }
+  }, [threadId, token, organizationId]);
 
   return {
     messages,
@@ -524,17 +363,17 @@ export function useAgentChat({
     isStreaming,
     isLoadingHistory,
     readOnly,
-    pendingToolApproval,
+    pendingToolApproval: null as PendingToolApproval | null,
     activeQuestion,
-    omStatus,
+    omStatus: null as OmStatus | null,
     scrollRef,
     textareaRef,
     handleSubmit,
     handleKeyDown,
     handleSuggestionClick,
     handleInputChange,
-    handleApproveToolCall,
-    handleDeclineToolCall,
+    handleApproveToolCall: () => {},
+    handleDeclineToolCall: () => {},
     submitQuestionResponse,
     dismissQuestion,
     stopStreaming

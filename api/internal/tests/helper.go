@@ -454,6 +454,31 @@ func GetAuditLogsURL() string {
 	return baseURL + "/audit/logs"
 }
 
+// Agent
+func GetAgentChatURL() string {
+	return baseURL + "/agent/chat"
+}
+
+func GetAgentStreamURL() string {
+	return baseURL + "/agent/chat/stream"
+}
+
+func GetAgentCancelURL() string {
+	return baseURL + "/agent/chat/cancel"
+}
+
+func GetAgentThreadsURL() string {
+	return baseURL + "/agent/threads"
+}
+
+func GetAgentThreadURL(threadID string) string {
+	return baseURL + "/agent/threads/" + threadID
+}
+
+func GetAgentThreadMessagesURL(threadID string) string {
+	return baseURL + "/agent/threads/" + threadID + "/messages"
+}
+
 // Telemetry
 func GetTelemetryURL() string {
 	return baseURL + "/cli/telemetry"

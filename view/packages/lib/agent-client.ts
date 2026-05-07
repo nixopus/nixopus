@@ -1,82 +1,37 @@
-import { MastraClient } from '@mastra/client-js';
+import { getBaseUrl } from '@/redux/conf';
 
 export const AGENT_ID = 'deploy-agent';
-export const INCIDENT_AGENT_ID = 'incidentAgent';
 
-let cachedAgentBaseUrl: string | null = null;
-let agentBaseUrlPromise: Promise<string> | null = null;
-const APP_BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || '';
+let cachedApiBaseUrl = '';
 
-function withBasePath(path: string): string {
-  if (!APP_BASE_PATH) return path;
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return `${APP_BASE_PATH}${normalizedPath}`.replace(/\/{2,}/g, '/');
-}
-
-const AGENT_PROXY_BASE_PATH = withBasePath('/api/agent');
-
-async function getAgentBaseUrl(): Promise<string> {
-  if (cachedAgentBaseUrl !== null) {
-    return cachedAgentBaseUrl;
-  }
-
-  if (!agentBaseUrlPromise) {
-    agentBaseUrlPromise = fetch(withBasePath('/api/config'))
-      .then(async (res) => {
-        if (!res.ok) {
-          throw new Error(`Failed to load config (${res.status})`);
-        }
-        return res.json() as Promise<{ agentUrl?: unknown; selfHosted?: boolean }>;
-      })
-      .then((cfg) => {
-        if (cfg.selfHosted) {
-          cachedAgentBaseUrl = '';
-          return '';
-        }
-        const agentUrl = typeof cfg.agentUrl === 'string' ? cfg.agentUrl : '';
-        if (agentUrl) {
-          cachedAgentBaseUrl = agentUrl;
-        }
-        return agentUrl;
-      })
-      .finally(() => {
-        agentBaseUrlPromise = null;
-      });
-  }
-
-  return agentBaseUrlPromise;
-}
-
-export function createAgentClient(authHeaders: Record<string, string> = {}): MastraClient {
-  return new MastraClient({
-    baseUrl: withBasePath('/api/agent/'),
-    headers: authHeaders
-  });
+async function getApiBaseUrl(): Promise<string> {
+  if (cachedApiBaseUrl) return cachedApiBaseUrl;
+  const url = await getBaseUrl();
+  cachedApiBaseUrl = url.replace(/\/+$/, '');
+  return cachedApiBaseUrl;
 }
 
 export interface StreamChunk {
   type: string;
-  runId?: string;
-  payload?: Record<string, unknown>;
+  data?: unknown;
 }
 
-function parseSseLine(line: string): StreamChunk | null {
-  const trimmed = line.trim();
-  if (!trimmed || !trimmed.startsWith('data: ')) return null;
+function parseNamedEvent(eventType: string, dataLine: string): StreamChunk | null {
   try {
-    return JSON.parse(trimmed.slice(6));
+    return { type: eventType, data: JSON.parse(dataLine) };
   } catch {
-    return null;
+    return { type: eventType, data: dataLine };
   }
 }
 
-async function* readSseStream(
+export async function* readSseStream(
   body: ReadableStream<Uint8Array>,
   signal?: AbortSignal
 ): AsyncGenerator<StreamChunk> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
+  let currentEvent = '';
 
   try {
     for (;;) {
@@ -89,13 +44,31 @@ async function* readSseStream(
       buffer = lines.pop() ?? '';
 
       for (const line of lines) {
-        const chunk = parseSseLine(line);
-        if (chunk) yield chunk;
+        const trimmed = line.trim();
+        if (trimmed === '') {
+          currentEvent = '';
+          continue;
+        }
+        if (trimmed.startsWith('event: ')) {
+          currentEvent = trimmed.slice(7).trim();
+          continue;
+        }
+        if (trimmed.startsWith('data: ')) {
+          const dataContent = trimmed.slice(6);
+          const eventType = currentEvent || 'message';
+          const chunk = parseNamedEvent(eventType, dataContent);
+          if (chunk) yield chunk;
+        }
       }
     }
     if (buffer.trim()) {
-      const chunk = parseSseLine(buffer);
-      if (chunk) yield chunk;
+      const trimmed = buffer.trim();
+      if (trimmed.startsWith('data: ')) {
+        const dataContent = trimmed.slice(6);
+        const eventType = currentEvent || 'message';
+        const chunk = parseNamedEvent(eventType, dataContent);
+        if (chunk) yield chunk;
+      }
     }
   } finally {
     reader.releaseLock();
@@ -104,95 +77,148 @@ async function* readSseStream(
 
 async function agentFetch(
   path: string,
-  body: Record<string, unknown>,
-  headers: Record<string, string>,
-  signal?: AbortSignal,
-  queryParams?: Record<string, string>
-): Promise<Response> {
-  const baseUrl = await getAgentBaseUrl().catch(() => '');
-  let url = baseUrl
-    ? (() => {
-        const normalizedBase = baseUrl.replace(/\/$/, '');
-        return normalizedBase.endsWith('/api')
-          ? `${normalizedBase}${path}`
-          : `${normalizedBase}/api${path}`;
-      })()
-    : `${AGENT_PROXY_BASE_PATH}/api${path}`;
-
-  if (queryParams) {
-    const params = new URLSearchParams(queryParams);
-    url += `?${params.toString()}`;
+  options: {
+    method?: string;
+    body?: Record<string, unknown>;
+    headers: Record<string, string>;
+    signal?: AbortSignal;
   }
+): Promise<Response> {
+  const baseUrl = await getApiBaseUrl();
+  const url = `${baseUrl}/v1/agent${path}`;
 
   const reqHeaders: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'text/event-stream'
+    'Content-Type': 'application/json'
   };
-  if (headers['Authorization']) {
-    reqHeaders['Authorization'] = headers['Authorization'];
+  if (options.headers['Authorization']) {
+    reqHeaders['Authorization'] = options.headers['Authorization'];
+  }
+  if (options.headers['X-Organization-Id']) {
+    reqHeaders['X-Organization-Id'] = options.headers['X-Organization-Id'];
+  }
+  if (options.headers['X-Model-Id']) {
+    reqHeaders['X-Model-Id'] = options.headers['X-Model-Id'];
   }
 
-  const response = await fetch(url, {
-    method: 'POST',
+  const init: RequestInit = {
+    method: options.method || 'POST',
     headers: reqHeaders,
-    body: JSON.stringify(body),
-    signal
-  });
+    signal: options.signal
+  };
+
+  if (options.body && init.method !== 'GET') {
+    init.body = JSON.stringify(options.body);
+  }
+
+  const response = await fetch(url, init);
 
   if (!response.ok) {
     const text = await response.text().catch(() => 'Unknown error');
     throw new Error(`Agent request failed (${response.status}): ${text}`);
   }
-  if (!response.body) {
-    throw new Error('No response body from agent');
-  }
 
   return response;
 }
 
-/**
- * Stream a message to the agent using the configured agent URL from /api/config.
- */
 export async function* streamAgent(
   content: string,
   threadId: string,
-  resourceId: string,
+  _resourceId: string,
   headers: Record<string, string>,
   signal?: AbortSignal,
-  model?: string,
-  requireToolApproval?: boolean
+  model?: string
 ): AsyncGenerator<StreamChunk> {
-  const query = model ? { model } : undefined;
   const body: Record<string, unknown> = {
-    messages: [{ role: 'user', content }],
-    memory: { thread: threadId, resource: resourceId }
+    input: content,
+    thread_id: threadId
   };
-  if (requireToolApproval) {
-    body.requireToolApproval = true;
+  if (model) {
+    body.model = model;
   }
-  const response = await agentFetch(`/agents/${AGENT_ID}/stream`, body, headers, signal, query);
 
-  yield* readSseStream(response.body!, signal);
+  const response = await agentFetch('/chat/stream', { body, headers, signal });
+
+  if (!response.body) {
+    throw new Error('No response body from agent');
+  }
+
+  yield* readSseStream(response.body, signal);
 }
 
-export async function* approveAgentToolCall(
-  params: { runId: string; toolCallId: string },
+export async function cancelStream(
+  threadId: string,
+  headers: Record<string, string>
+): Promise<{ status: string; message: string }> {
+  const response = await agentFetch('/chat/cancel', {
+    body: { thread_id: threadId },
+    headers
+  });
+  return response.json();
+}
+
+export interface AgentThread {
+  id: string;
+  title: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function createThread(
   headers: Record<string, string>,
-  signal?: AbortSignal
-): AsyncGenerator<StreamChunk> {
-  const response = await agentFetch(
-    `/agents/${AGENT_ID}/approve-tool-call`,
-    params,
-    headers,
-    signal
-  );
-
-  yield* readSseStream(response.body!, signal);
+  opts?: { id?: string; title?: string }
+): Promise<AgentThread> {
+  const response = await agentFetch('/threads', {
+    body: { id: opts?.id, title: opts?.title },
+    headers
+  });
+  const result = await response.json();
+  return result.data;
 }
 
-export async function declineAgentToolCall(
-  params: { runId: string; toolCallId: string },
+export async function listThreads(headers: Record<string, string>): Promise<AgentThread[]> {
+  const response = await agentFetch('/threads', { method: 'GET', headers });
+  const result = await response.json();
+  return result.data ?? [];
+}
+
+export async function getThreadMessages(
+  threadId: string,
+  headers: Record<string, string>
+): Promise<
+  Array<{
+    id: string;
+    thread_id: string;
+    role: string;
+    content: string;
+    tool_calls?: unknown[];
+    created_at: string;
+    seq: number;
+  }>
+> {
+  const response = await agentFetch(`/threads/${threadId}/messages`, {
+    method: 'GET',
+    headers
+  });
+  const result = await response.json();
+  return result.data ?? [];
+}
+
+export async function updateThread(
+  threadId: string,
+  title: string,
   headers: Record<string, string>
 ): Promise<void> {
-  await agentFetch(`/agents/${AGENT_ID}/decline-tool-call`, params, headers);
+  await agentFetch(`/threads/${threadId}`, {
+    method: 'PATCH',
+    body: { title },
+    headers
+  });
+}
+
+export async function deleteThread(
+  threadId: string,
+  headers: Record<string, string>
+): Promise<void> {
+  await agentFetch(`/threads/${threadId}`, { method: 'DELETE', headers });
 }

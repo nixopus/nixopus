@@ -3,7 +3,13 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAppSelector } from '@/redux/hooks';
 import { authClient } from '@/packages/lib/auth-client';
-import { createAgentClient, AGENT_ID, INCIDENT_AGENT_ID } from '@/packages/lib/agent-client';
+import {
+  createThread as apiCreateThread,
+  listThreads as apiListThreads,
+  updateThread as apiUpdateThread,
+  deleteThread as apiDeleteThread,
+  type AgentThread
+} from '@/packages/lib/agent-client';
 import { v4 as uuid } from 'uuid';
 
 export interface ChatThread {
@@ -54,38 +60,13 @@ async function getAuthHeaders(
   return headers;
 }
 
-function mapThreads(
-  raw: unknown,
-  incident: boolean,
-  agent: string,
-  resource: string
-): ChatThread[] {
-  const list = Array.isArray(raw)
-    ? raw
-    : (((raw as Record<string, unknown>)?.threads ?? []) as Array<{
-        id: string;
-        title?: string;
-        createdAt: string | Date;
-        updatedAt: string | Date;
-      }>);
-  return list.map((t) => {
-    let title = t.title || 'New Chat';
-    if (incident && !t.title) {
-      const parts = t.id.replace(/^incident-/, '').split('-');
-      const source = parts[0] || 'unknown';
-      const eventId = parts.slice(1).join('-') || t.id;
-      title = `${source}: ${eventId}`;
-    }
-    return {
-      id: t.id,
-      title,
-      createdAt: new Date(t.createdAt),
-      updatedAt: new Date(t.updatedAt),
-      agentId: agent,
-      threadResourceId: resource,
-      ...(incident ? { isIncident: true } : {})
-    };
-  });
+function mapApiThreads(raw: AgentThread[]): ChatThread[] {
+  return raw.map((t) => ({
+    id: t.id,
+    title: t.title || 'New Chat',
+    createdAt: new Date(t.created_at),
+    updatedAt: new Date(t.updated_at)
+  }));
 }
 
 export function useChatThreads() {
@@ -121,27 +102,11 @@ export function useChatThreads() {
     (async () => {
       try {
         const headers = await getAuthHeaders(token ?? null, organizationId ?? null);
-        const client = createAgentClient(headers);
-
-        const [chatResult, incidentResult] = await Promise.all([
-          client.listMemoryThreads({ resourceId, agentId: AGENT_ID }),
-          organizationId
-            ? client
-                .listMemoryThreads({ resourceId: organizationId, agentId: INCIDENT_AGENT_ID })
-                .catch(() => [])
-            : Promise.resolve([])
-        ]);
+        const rawThreads = await apiListThreads(headers);
 
         if (cancelled) return;
 
-        const EMPTY_TITLES = new Set(['new chat', 'untitled chat']);
-        const all = [
-          ...mapThreads(chatResult, false, AGENT_ID, resourceId),
-          ...mapThreads(incidentResult, true, INCIDENT_AGENT_ID, organizationId!)
-        ].filter((t) => {
-          if (!EMPTY_TITLES.has(t.title.toLowerCase())) return true;
-          return Math.abs(t.updatedAt.getTime() - t.createdAt.getTime()) > 1000;
-        });
+        const all = mapApiThreads(rawThreads);
         all.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
         setThreads(all);
       } catch {
@@ -189,13 +154,7 @@ export function useChatThreads() {
 
       const creationPromise = (async () => {
         try {
-          const client = createAgentClient(headersRef.current);
-          await client.createMemoryThread({
-            threadId,
-            title: thread.title,
-            resourceId,
-            agentId: AGENT_ID
-          });
+          await apiCreateThread(headersRef.current, { id: threadId, title: title || 'New Chat' });
         } catch {
           // will be created automatically on first message
         } finally {
@@ -206,7 +165,7 @@ export function useChatThreads() {
 
       return thread;
     },
-    [resourceId, setActiveThreadId]
+    [setActiveThreadId]
   );
 
   const deleteThread = useCallback(
@@ -223,9 +182,7 @@ export function useChatThreads() {
 
       (async () => {
         try {
-          const client = createAgentClient(headersRef.current);
-          const thread = client.getMemoryThread({ threadId: id, agentId: AGENT_ID });
-          await thread.delete();
+          await apiDeleteThread(id, headersRef.current);
         } catch {
           // ignore
         }
@@ -234,26 +191,21 @@ export function useChatThreads() {
     [activeThreadId, setActiveThreadId]
   );
 
-  const updateThreadTitle = useCallback(
-    (id: string, title: string) => {
-      setThreads((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, title, updatedAt: new Date() } : t))
-      );
+  const updateThreadTitle = useCallback((id: string, title: string) => {
+    setThreads((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, title, updatedAt: new Date() } : t))
+    );
 
-      (async () => {
-        try {
-          const pending = threadCreationPromises.current.get(id);
-          if (pending) await pending;
-          const client = createAgentClient(headersRef.current);
-          const thread = client.getMemoryThread({ threadId: id, agentId: AGENT_ID });
-          await thread.update({ title, metadata: {}, resourceId });
-        } catch {
-          // ignore
-        }
-      })();
-    },
-    [resourceId]
-  );
+    (async () => {
+      try {
+        const pending = threadCreationPromises.current.get(id);
+        if (pending) await pending;
+        await apiUpdateThread(id, title, headersRef.current);
+      } catch {
+        // non-critical — title persists locally even if backend call fails
+      }
+    })();
+  }, []);
 
   const touchThread = useCallback((id: string) => {
     setThreads((prev) => prev.map((t) => (t.id === id ? { ...t, updatedAt: new Date() } : t)));
