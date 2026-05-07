@@ -48,7 +48,6 @@ ADMIN_PASSWORD=Abc1!TestPass9
 SELF_HOSTED=true
 NIXOPUS_TELEMETRY=off
 LOG_LEVEL=debug
-USE_AGENT=true
 LLM_PROVIDER=openrouter
 OPENROUTER_API_KEY=sk-or-test
 OPENAI_API_KEY=
@@ -61,13 +60,11 @@ AGENT_LIGHT_MODEL=openrouter/openai/gpt-4o-mini
 NIXOPUS_API_IMAGE=
 NIXOPUS_VIEW_IMAGE=
 NIXOPUS_AUTH_IMAGE=
-NIXOPUS_AGENT_IMAGE=
 EOF
     chmod 600 "$home/.env"
     touch "$home/docker-compose.yml"
     touch "$home/docker-compose.db.yml"
     touch "$home/docker-compose.redis.yml"
-    touch "$home/docker-compose.agent.yml"
 }
 
 # Source nixopus.sh with the root check and case-dispatch disabled so we can call functions directly
@@ -150,7 +147,7 @@ load_nixopus() {
     tmp_home=$(mktemp -d)
     make_env "$tmp_home"
     NIXOPUS_HOME="$tmp_home"
-    USE_BUNDLED_DB=true USE_BUNDLED_REDIS=true USE_AGENT=true
+    USE_BUNDLED_DB=true USE_BUNDLED_REDIS=true
     result=$(compose_files)
     [[ "$result" == *"docker-compose.yml"* ]]
     rm -rf "$tmp_home"
@@ -162,7 +159,7 @@ load_nixopus() {
     tmp_home=$(mktemp -d)
     make_env "$tmp_home"
     NIXOPUS_HOME="$tmp_home"
-    USE_BUNDLED_DB=false USE_BUNDLED_REDIS=true USE_AGENT=false
+    USE_BUNDLED_DB=false USE_BUNDLED_REDIS=true
     result=$(compose_files)
     [[ "$result" != *"docker-compose.db.yml"* ]]
     rm -rf "$tmp_home"
@@ -174,33 +171,9 @@ load_nixopus() {
     tmp_home=$(mktemp -d)
     make_env "$tmp_home"
     NIXOPUS_HOME="$tmp_home"
-    USE_BUNDLED_DB=true USE_BUNDLED_REDIS=false USE_AGENT=false
+    USE_BUNDLED_DB=true USE_BUNDLED_REDIS=false
     result=$(compose_files)
     [[ "$result" != *"docker-compose.redis.yml"* ]]
-    rm -rf "$tmp_home"
-}
-
-@test "compose_files (nixopus.sh): omits agent when USE_AGENT=false" {
-    load_nixopus
-    local tmp_home
-    tmp_home=$(mktemp -d)
-    make_env "$tmp_home"
-    NIXOPUS_HOME="$tmp_home"
-    USE_BUNDLED_DB=false USE_BUNDLED_REDIS=false USE_AGENT=false
-    result=$(compose_files)
-    [[ "$result" != *"docker-compose.agent.yml"* ]]
-    rm -rf "$tmp_home"
-}
-
-@test "compose_files (nixopus.sh): includes agent when USE_AGENT=true and file exists" {
-    load_nixopus
-    local tmp_home
-    tmp_home=$(mktemp -d)
-    make_env "$tmp_home"
-    NIXOPUS_HOME="$tmp_home"
-    USE_BUNDLED_DB=false USE_BUNDLED_REDIS=false USE_AGENT=true
-    result=$(compose_files)
-    [[ "$result" == *"docker-compose.agent.yml"* ]]
     rm -rf "$tmp_home"
 }
 

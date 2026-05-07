@@ -474,11 +474,11 @@ load_fn() {
     USE_BUNDLED_DB=true USE_BUNDLED_REDIS=true
     ADMIN_EMAIL="admin@test.com" ADMIN_PASSWORD="Abc1!xyz0987654"
     NIXOPUS_TELEMETRY="off" LOG_LEVEL="debug"
-    USE_AGENT=true LLM_PROVIDER="openrouter"
+    LLM_PROVIDER="openrouter"
     OPENROUTER_API_KEY="" OPENAI_API_KEY="" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="" AGENT_LIGHT_MODEL=""
-    NIXOPUS_API_IMAGE="" NIXOPUS_VIEW_IMAGE="" NIXOPUS_AUTH_IMAGE="" NIXOPUS_AGENT_IMAGE=""
+    NIXOPUS_API_IMAGE="" NIXOPUS_VIEW_IMAGE="" NIXOPUS_AUTH_IMAGE=""
 
     write_env
 
@@ -509,11 +509,11 @@ load_fn() {
     USE_BUNDLED_DB=true USE_BUNDLED_REDIS=true
     ADMIN_EMAIL="" ADMIN_PASSWORD=""
     NIXOPUS_TELEMETRY="off" LOG_LEVEL="debug"
-    USE_AGENT=true LLM_PROVIDER="openrouter"
+    LLM_PROVIDER="openrouter"
     OPENROUTER_API_KEY="" OPENAI_API_KEY="" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="" AGENT_LIGHT_MODEL=""
-    NIXOPUS_API_IMAGE="" NIXOPUS_VIEW_IMAGE="" NIXOPUS_AUTH_IMAGE="" NIXOPUS_AGENT_IMAGE=""
+    NIXOPUS_API_IMAGE="" NIXOPUS_VIEW_IMAGE="" NIXOPUS_AUTH_IMAGE=""
 
     write_env
     [ -f "$tmp_home/.env.bak" ]
@@ -539,11 +539,11 @@ load_fn() {
     USE_BUNDLED_DB=true USE_BUNDLED_REDIS=true
     ADMIN_EMAIL="" ADMIN_PASSWORD=""
     NIXOPUS_TELEMETRY="off" LOG_LEVEL="debug"
-    USE_AGENT=true LLM_PROVIDER="openrouter"
+    LLM_PROVIDER="openrouter"
     OPENROUTER_API_KEY="" OPENAI_API_KEY="" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="" AGENT_LIGHT_MODEL=""
-    NIXOPUS_API_IMAGE="" NIXOPUS_VIEW_IMAGE="" NIXOPUS_AUTH_IMAGE="" NIXOPUS_AGENT_IMAGE=""
+    NIXOPUS_API_IMAGE="" NIXOPUS_VIEW_IMAGE="" NIXOPUS_AUTH_IMAGE=""
 
     write_env
     perms=$(stat -c "%a" "$tmp_home/.env" 2>/dev/null || stat -f "%Lp" "$tmp_home/.env")
@@ -560,12 +560,11 @@ load_fn() {
     local tmp_home
     tmp_home=$(mktemp -d)
     NIXOPUS_HOME="$tmp_home"
-    USE_BUNDLED_DB=true USE_BUNDLED_REDIS=true USE_AGENT=true
+    USE_BUNDLED_DB=true USE_BUNDLED_REDIS=true
     # create stub files so -f checks pass
     touch "$tmp_home/docker-compose.yml"
     touch "$tmp_home/docker-compose.db.yml"
     touch "$tmp_home/docker-compose.redis.yml"
-    touch "$tmp_home/docker-compose.agent.yml"
     result=$(compose_files)
     [[ "$result" == *"docker-compose.yml"* ]]
     rm -rf "$tmp_home"
@@ -576,7 +575,7 @@ load_fn() {
     local tmp_home
     tmp_home=$(mktemp -d)
     NIXOPUS_HOME="$tmp_home"
-    USE_BUNDLED_DB=false USE_BUNDLED_REDIS=true USE_AGENT=false
+    USE_BUNDLED_DB=false USE_BUNDLED_REDIS=true
     touch "$tmp_home/docker-compose.yml"
     result=$(compose_files)
     [[ "$result" != *"docker-compose.db.yml"* ]]
@@ -588,36 +587,11 @@ load_fn() {
     local tmp_home
     tmp_home=$(mktemp -d)
     NIXOPUS_HOME="$tmp_home"
-    USE_BUNDLED_DB=true USE_BUNDLED_REDIS=false USE_AGENT=false
+    USE_BUNDLED_DB=true USE_BUNDLED_REDIS=false
     touch "$tmp_home/docker-compose.yml"
     touch "$tmp_home/docker-compose.db.yml"
     result=$(compose_files)
     [[ "$result" != *"docker-compose.redis.yml"* ]]
-    rm -rf "$tmp_home"
-}
-
-@test "compose_files (get.sh): omits agent file when USE_AGENT=false" {
-    load_fn
-    local tmp_home
-    tmp_home=$(mktemp -d)
-    NIXOPUS_HOME="$tmp_home"
-    USE_BUNDLED_DB=false USE_BUNDLED_REDIS=false USE_AGENT=false
-    touch "$tmp_home/docker-compose.yml"
-    result=$(compose_files)
-    [[ "$result" != *"docker-compose.agent.yml"* ]]
-    rm -rf "$tmp_home"
-}
-
-@test "compose_files (get.sh): includes agent file when USE_AGENT=true and file exists" {
-    load_fn
-    local tmp_home
-    tmp_home=$(mktemp -d)
-    NIXOPUS_HOME="$tmp_home"
-    USE_BUNDLED_DB=false USE_BUNDLED_REDIS=false USE_AGENT=true
-    touch "$tmp_home/docker-compose.yml"
-    touch "$tmp_home/docker-compose.agent.yml"
-    result=$(compose_files)
-    [[ "$result" == *"docker-compose.agent.yml"* ]]
     rm -rf "$tmp_home"
 }
 
@@ -635,7 +609,6 @@ load_fn() {
     grep -q "reverse_proxy" "$tmp_home/Caddyfile"
     grep -q "nixopus-api" "$tmp_home/Caddyfile"
     grep -q "nixopus-view" "$tmp_home/Caddyfile"
-    grep -q "nixopus-agent" "$tmp_home/Caddyfile"
     grep -qF "handle /api/auth/*" "$tmp_home/Caddyfile"
     grep -q "nixopus-auth:9090" "$tmp_home/Caddyfile"
     rm -rf "$tmp_home"
@@ -674,7 +647,6 @@ load_fn() {
     touch "$tmp_src/selfhost/docker-compose.yml"
     touch "$tmp_src/selfhost/docker-compose.db.yml"
     touch "$tmp_src/selfhost/docker-compose.redis.yml"
-    touch "$tmp_src/selfhost/docker-compose.agent.yml"
     NIXOPUS_HOME="$tmp_home"
     NIXOPUS_INSTALLER_DIR="$tmp_src"
 
@@ -682,29 +654,6 @@ load_fn() {
     [ -f "$tmp_home/docker-compose.yml" ]
     [ -f "$tmp_home/docker-compose.db.yml" ]
     [ -f "$tmp_home/docker-compose.redis.yml" ]
-    [ -f "$tmp_home/docker-compose.agent.yml" ]
-    rm -rf "$tmp_home" "$tmp_src"
-}
-
-@test "copy_compose: copies from local dir without agent file when it does not exist" {
-    load_fn
-    local tmp_home tmp_src
-    tmp_home=$(mktemp -d)
-    tmp_src=$(mktemp -d)
-    mkdir -p "$tmp_src/selfhost"
-    touch "$tmp_src/selfhost/docker-compose.yml"
-    touch "$tmp_src/selfhost/docker-compose.db.yml"
-    touch "$tmp_src/selfhost/docker-compose.redis.yml"
-    # no agent file — copy_compose returns 1 from the &&-guarded agent copy
-    NIXOPUS_HOME="$tmp_home"
-    NIXOPUS_INSTALLER_DIR="$tmp_src"
-
-    # Use run so we capture the non-zero exit from the optional agent &&-guard
-    run copy_compose
-    [ -f "$tmp_home/docker-compose.yml" ]
-    [ -f "$tmp_home/docker-compose.db.yml" ]
-    [ -f "$tmp_home/docker-compose.redis.yml" ]
-    [ ! -f "$tmp_home/docker-compose.agent.yml" ]
     rm -rf "$tmp_home" "$tmp_src"
 }
 
@@ -755,7 +704,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=true LLM_PROVIDER="openrouter"
+    LLM_PROVIDER="openrouter"
     OPENROUTER_API_KEY="key" OPENAI_API_KEY="" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="m" AGENT_LIGHT_MODEL="lm"
@@ -781,7 +730,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=true LLM_PROVIDER="openrouter"
+    LLM_PROVIDER="openrouter"
     OPENROUTER_API_KEY="key" OPENAI_API_KEY="" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="m" AGENT_LIGHT_MODEL="lm"
@@ -807,7 +756,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=true LLM_PROVIDER="openrouter"
+    LLM_PROVIDER="openrouter"
     OPENROUTER_API_KEY="key" OPENAI_API_KEY="" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="m" AGENT_LIGHT_MODEL="lm"
@@ -832,7 +781,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=true LLM_PROVIDER="openrouter"
+    LLM_PROVIDER="openrouter"
     OPENROUTER_API_KEY="key" OPENAI_API_KEY="" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="m" AGENT_LIGHT_MODEL="lm"
@@ -856,7 +805,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=false LLM_PROVIDER="" OPENROUTER_API_KEY="" OPENAI_API_KEY=""
+    LLM_PROVIDER="" OPENROUTER_API_KEY="" OPENAI_API_KEY=""
     ANTHROPIC_API_KEY="" GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="" AGENT_LIGHT_MODEL=""
 
@@ -880,7 +829,7 @@ load_fn() {
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     DB_PASSWORD="x" REDIS_PASSWORD="x"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=false LLM_PROVIDER="" OPENROUTER_API_KEY="" OPENAI_API_KEY=""
+    LLM_PROVIDER="" OPENROUTER_API_KEY="" OPENAI_API_KEY=""
     ANTHROPIC_API_KEY="" GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="" AGENT_LIGHT_MODEL=""
 
@@ -903,7 +852,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:pass@external-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=false LLM_PROVIDER="" OPENROUTER_API_KEY="" OPENAI_API_KEY=""
+    LLM_PROVIDER="" OPENROUTER_API_KEY="" OPENAI_API_KEY=""
     ANTHROPIC_API_KEY="" GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="" AGENT_LIGHT_MODEL=""
 
@@ -926,7 +875,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=true LLM_PROVIDER=""
+    LLM_PROVIDER=""
     OPENROUTER_API_KEY="" OPENAI_API_KEY="sk-openai-key" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="" AGENT_LIGHT_MODEL=""
@@ -951,7 +900,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=true LLM_PROVIDER=""
+    LLM_PROVIDER=""
     OPENROUTER_API_KEY="" OPENAI_API_KEY="" ANTHROPIC_API_KEY="sk-ant"
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="" AGENT_LIGHT_MODEL=""
@@ -976,7 +925,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=true LLM_PROVIDER=""
+    LLM_PROVIDER=""
     OPENROUTER_API_KEY="" OPENAI_API_KEY="" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="google-key" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="" AGENT_LIGHT_MODEL=""
@@ -1001,7 +950,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=true LLM_PROVIDER=""
+    LLM_PROVIDER=""
     OPENROUTER_API_KEY="" OPENAI_API_KEY="" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="ds-key" GROQ_API_KEY=""
     AGENT_MODEL="" AGENT_LIGHT_MODEL=""
@@ -1026,7 +975,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=true LLM_PROVIDER=""
+    LLM_PROVIDER=""
     OPENROUTER_API_KEY="" OPENAI_API_KEY="" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY="groq-key"
     AGENT_MODEL="" AGENT_LIGHT_MODEL=""
@@ -1051,7 +1000,7 @@ load_fn() {
     DATABASE_URL="postgres://u:x@nixopus-db:5432/db"
     REDIS_URL="redis://default:x@nixopus-redis:6379"
     AUTH_SERVICE_SECRET="s" JWT_SECRET="j"
-    USE_AGENT=true LLM_PROVIDER="openai"
+    LLM_PROVIDER="openai"
     OPENROUTER_API_KEY="" OPENAI_API_KEY="sk-key" ANTHROPIC_API_KEY=""
     GOOGLE_GENERATIVE_AI_API_KEY="" DEEPSEEK_API_KEY="" GROQ_API_KEY=""
     AGENT_MODEL="openai/gpt-4-turbo" AGENT_LIGHT_MODEL="openai/gpt-4o-mini"

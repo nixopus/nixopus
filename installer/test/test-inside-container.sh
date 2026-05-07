@@ -72,7 +72,6 @@ run_installer() {
     NIXOPUS_API_IMAGE=nixopus-mock-api \
     NIXOPUS_AUTH_IMAGE=nixopus-mock-auth \
     NIXOPUS_VIEW_IMAGE=nixopus-mock-view \
-    NIXOPUS_AGENT_IMAGE=nixopus-mock-agent \
     LLM_PROVIDER=openrouter \
     OPENROUTER_API_KEY=sk-or-v1-test-key \
     HOST_IP=127.0.0.1 \
@@ -102,7 +101,6 @@ verify() {
     check "docker-compose.yml exists"      "[ -f /opt/nixopus/docker-compose.yml ]"
     check "docker-compose.db.yml exists"   "[ -f /opt/nixopus/docker-compose.db.yml ]"
     check "docker-compose.redis.yml exists" "[ -f /opt/nixopus/docker-compose.redis.yml ]"
-    check "docker-compose.agent.yml exists" "[ -f /opt/nixopus/docker-compose.agent.yml ]"
     check "Caddyfile exists"               "[ -f /opt/nixopus/Caddyfile ]"
     check "SSH key exists"            "[ -f /opt/nixopus/ssh/id_rsa ]"
     check "SSH pubkey exists"         "[ -f /opt/nixopus/ssh/id_rsa.pub ]"
@@ -114,7 +112,6 @@ verify() {
     check "AUTH_SERVICE_SECRET set"   "grep -q '^AUTH_SERVICE_SECRET=.\{32,\}' /opt/nixopus/.env"
     check "JWT_SECRET set"            "grep -q '^JWT_SECRET=.\{32,\}' /opt/nixopus/.env"
     check "SELF_HOSTED=true"          "grep -q '^SELF_HOSTED=true' /opt/nixopus/.env"
-    check "USE_AGENT set"            "grep -q '^USE_AGENT=' /opt/nixopus/.env"
     check "SSH_HOST set"              "grep -q '^SSH_HOST=' /opt/nixopus/.env"
     check "SSH_PORT set"              "grep -q '^SSH_PORT=' /opt/nixopus/.env"
     check "SSH_USER set"              "grep -q '^SSH_USER=' /opt/nixopus/.env"
@@ -126,7 +123,6 @@ verify() {
     check "nixopus-api running"      "docker ps --format '{{.Names}}' | grep -q nixopus-api"
     check "nixopus-view running"     "docker ps --format '{{.Names}}' | grep -q nixopus-view"
     check "nixopus-caddy running"    "docker ps --format '{{.Names}}' | grep -q nixopus-caddy"
-    check "nixopus-agent running"   "docker ps --format '{{.Names}}' | grep -q nixopus-agent"
 
     sleep 10
 

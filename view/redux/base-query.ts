@@ -83,7 +83,7 @@ async function getApiBaseQuery() {
   return apiBaseQuery;
 }
 
-const PROXIED_PREFIXES = ['/api/auth', '/api/credits', '/api/trail', '/api/agent'];
+const PROXIED_PREFIXES = ['/api/auth', '/api/credits', '/api/trail'];
 
 const customBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQueryError> = async (
   args,

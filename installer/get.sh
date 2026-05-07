@@ -522,7 +522,6 @@ gather_config() {
     AUTH_SERVICE_SECRET="${AUTH_SERVICE_SECRET:-$(gen_secret)}"
     JWT_SECRET="${JWT_SECRET:-$(gen_secret)}"
 
-    USE_AGENT="${USE_AGENT:-true}"
     LLM_PROVIDER="${LLM_PROVIDER:-}"
     OPENROUTER_API_KEY="${OPENROUTER_API_KEY:-}"
     OPENAI_API_KEY="${OPENAI_API_KEY:-}"
@@ -737,7 +736,6 @@ SELF_HOSTED=true
 NIXOPUS_TELEMETRY=${NIXOPUS_TELEMETRY:-on}
 LOG_LEVEL=${LOG_LEVEL:-debug}
 
-USE_AGENT=${USE_AGENT}
 LLM_PROVIDER=${LLM_PROVIDER:-openrouter}
 OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
 OPENAI_API_KEY=${OPENAI_API_KEY:-}
@@ -751,7 +749,6 @@ AGENT_LIGHT_MODEL=${AGENT_LIGHT_MODEL:-}
 NIXOPUS_API_IMAGE=${NIXOPUS_API_IMAGE:-}
 NIXOPUS_VIEW_IMAGE=${NIXOPUS_VIEW_IMAGE:-}
 NIXOPUS_AUTH_IMAGE=${NIXOPUS_AUTH_IMAGE:-}
-NIXOPUS_AGENT_IMAGE=${NIXOPUS_AGENT_IMAGE:-}
 EOF
     chmod 600 "$NIXOPUS_HOME/.env"
 }
@@ -762,12 +759,10 @@ copy_compose() {
         cp "$src/docker-compose.yml" "$NIXOPUS_HOME/"
         cp "$src/docker-compose.db.yml" "$NIXOPUS_HOME/"
         cp "$src/docker-compose.redis.yml" "$NIXOPUS_HOME/"
-        [ -f "$src/docker-compose.agent.yml" ] && cp "$src/docker-compose.agent.yml" "$NIXOPUS_HOME/"
     else
         curl -fsSL "$REPO_RAW/selfhost/docker-compose.yml" -o "$NIXOPUS_HOME/docker-compose.yml"
         curl -fsSL "$REPO_RAW/selfhost/docker-compose.db.yml" -o "$NIXOPUS_HOME/docker-compose.db.yml"
         curl -fsSL "$REPO_RAW/selfhost/docker-compose.redis.yml" -o "$NIXOPUS_HOME/docker-compose.redis.yml"
-        curl -fsSL "$REPO_RAW/selfhost/docker-compose.agent.yml" -o "$NIXOPUS_HOME/docker-compose.agent.yml"
     fi
 }
 
@@ -792,10 +787,6 @@ write_caddyfile() {
 
     handle /ws/* {
         reverse_proxy nixopus-api:8443
-    }
-
-    handle /agent/* {
-        reverse_proxy nixopus-agent:4090
     }
 
     handle {
@@ -825,7 +816,6 @@ compose_files() {
     local args="-f $NIXOPUS_HOME/docker-compose.yml"
     [ "$USE_BUNDLED_DB" = true ] && args="$args -f $NIXOPUS_HOME/docker-compose.db.yml"
     [ "$USE_BUNDLED_REDIS" = true ] && args="$args -f $NIXOPUS_HOME/docker-compose.redis.yml"
-    [ "${USE_AGENT:-true}" = true ] && [ -f "$NIXOPUS_HOME/docker-compose.agent.yml" ] && args="$args -f $NIXOPUS_HOME/docker-compose.agent.yml"
     echo "$args"
 }
 
@@ -837,7 +827,6 @@ start_services() {
     local expected=4
     [ "$USE_BUNDLED_DB" = true ] && expected=$((expected + 1))
     [ "$USE_BUNDLED_REDIS" = true ] && expected=$((expected + 1))
-    [ "${USE_AGENT:-true}" = true ] && expected=$((expected + 1))
 
     if [ "$USE_BUNDLED_DB" = false ]; then
         log_info "Using external database"
@@ -845,16 +834,8 @@ start_services() {
     if [ "$USE_BUNDLED_REDIS" = false ]; then
         log_info "Using external Redis"
     fi
-    if [ "${USE_AGENT:-true}" = true ]; then
-        case "${LLM_PROVIDER:-openrouter}" in
-            openrouter) log_info "Agent enabled with OpenRouter" ;;
-            openai) log_info "Agent enabled with OpenAI" ;;
-            anthropic) log_info "Agent enabled with Anthropic" ;;
-            google) log_info "Agent enabled with Google (Gemini)" ;;
-            deepseek) log_info "Agent enabled with DeepSeek" ;;
-            groq) log_info "Agent enabled with Groq" ;;
-            *) log_info "Agent enabled (LLM provider: ${LLM_PROVIDER:-openrouter})" ;;
-        esac
+    if has_any_llm_key; then
+        log_info "AI agent enabled (LLM provider: ${LLM_PROVIDER:-openrouter})"
     fi
 
     log_info "Pulling container images (this may take several minutes on first install)..."

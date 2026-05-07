@@ -97,7 +97,12 @@ func TestStreamHandler_BasicCompletion(t *testing.T) {
 	for _, e := range events {
 		switch e.Event {
 		case "content":
-			contentParts = append(contentParts, e.Data)
+			var s string
+			if err := json.Unmarshal([]byte(e.Data), &s); err != nil {
+				contentParts = append(contentParts, e.Data)
+			} else {
+				contentParts = append(contentParts, s)
+			}
 		case "done":
 			gotDone = true
 		}
