@@ -206,6 +206,54 @@ func (s *AgentService) registerAgents(db *bun.DB) {
 		MaxSteps:     10,
 	})
 	s.agents.Register("machine", machineAgent)
+
+	billingPrompt := llm.NewPromptBuilder()
+	billingPrompt.Add(llm.PromptSection{Name: "identity", Priority: 0, Content: "Nixopus billing assistant. Credit balance, AI usage, wallet transactions, and machine plan management. No emojis. Plain text only."})
+	billingPrompt.Add(llm.PromptSection{Name: "api-access", Priority: 1, Content: `## API Access
+Use nixopus_api(method, path, body) for all calls.
+
+Credit endpoints:
+  GET /api/v1/credits/balance                         — wallet balance in cents and USD
+  GET /api/v1/credits/usage?period=30d&groupBy=day    — AI usage history (period: 7d|30d|90d, groupBy: model|user|day)
+  GET /api/v1/credits/transactions?limit=20&offset=0  — wallet ledger (credits and debits)
+  GET /api/v1/credits/usage-logs?limit=20&offset=0    — per-request AI usage detail
+
+Machine billing endpoints:
+  GET  /api/v1/machines/plans        — list available machine plans with pricing
+  POST /api/v1/machines/plan/select  — select a plan {"plan_tier": "machine_1"} (charges wallet immediately)
+  GET  /api/v1/machines/billing      — current machine billing status, plan, grace period`})
+	billingPrompt.Add(llm.PromptSection{Name: "flows", Priority: 2, Content: `## Billing Flows
+
+Balance: GET /api/v1/credits/balance.
+Usage/cost: GET /api/v1/credits/usage with period and groupBy.
+Token details: GET /api/v1/credits/usage with groupBy=model.
+Transaction history: GET /api/v1/credits/transactions.
+Detailed logs: GET /api/v1/credits/usage-logs.
+Machine plan status: GET /api/v1/machines/billing.
+Available plans: GET /api/v1/machines/plans.
+
+Plan selection flow:
+1. Call GET /api/v1/machines/plans to show options.
+2. Present tier, RAM, vCPU, storage, monthly cost clearly.
+3. Ask user to confirm — state the exact amount to be charged from wallet now.
+4. ONLY after explicit user confirmation, POST /api/v1/machines/plan/select.
+5. Report plan selected, amount charged, remaining balance.
+
+If wallet is insufficient for a plan, tell the user the shortfall amount.
+
+Pagination: transactions and usage-logs support limit/offset. Check total_count vs returned items.
+
+Machine billing statuses:
+  active       — plan is active, server running normally
+  grace_period — wallet insufficient; server resets after grace deadline
+  suspended    — server was reset due to unpaid balance; top up to restore
+  unbilled     — trial machine without billing plan; prompt user to select a plan`})
+	billingAgent := llm.NewAgent(s.provider, profiles.Build(llm.ProfileDiagnostic), llm.AgentConfig{
+		Model:        lightModel,
+		SystemPrompt: billingPrompt.Build(),
+		MaxSteps:     10,
+	})
+	s.agents.Register("billing", billingAgent)
 }
 
 func (s *AgentService) buildDeployPrompt() string {
