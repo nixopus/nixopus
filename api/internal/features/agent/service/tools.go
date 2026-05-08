@@ -93,6 +93,7 @@ func (s *AgentService) buildToolProfiles() *llm.ToolProfileBuilder {
 			"github":       5,
 			"notification": 3,
 			"machine":      8,
+			"billing":      5,
 		}))
 		reg.Register(codebase.AnalyzeRepositoryTool(deps))
 		reg.Register(codebase.LoadRemoteRepositoryTool())

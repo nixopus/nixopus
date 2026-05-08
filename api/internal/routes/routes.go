@@ -23,6 +23,7 @@ import (
 	auth_service "github.com/nixopus/nixopus/api/internal/features/auth/service"
 	user_storage "github.com/nixopus/nixopus/api/internal/features/auth/storage"
 	container "github.com/nixopus/nixopus/api/internal/features/container/controller"
+	credits_controller "github.com/nixopus/nixopus/api/internal/features/credits/controller"
 	deploy "github.com/nixopus/nixopus/api/internal/features/deploy/controller"
 	domain "github.com/nixopus/nixopus/api/internal/features/domain/controller"
 	extension "github.com/nixopus/nixopus/api/internal/features/extension/controller"
@@ -449,6 +450,15 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 		ResourceName: "agent",
 	})
 	router.RegisterAgentRoutes(agentGroup, agentCtrl)
+
+	creditsCtrl := credits_controller.NewCreditsController(router.app.Store.DB, router.app.Ctx, router.logger)
+	creditsGroup := fuego.Group(server, apiV1.Path+"/credits", option.Tags("Credits"))
+	router.applyMiddleware(creditsGroup, MiddlewareConfig{
+		RBAC:         false,
+		Audit:        false,
+		ResourceName: "credits",
+	})
+	router.RegisterCreditsRoutes(creditsGroup, creditsCtrl)
 }
 
 func (router *Router) creditGateDeps() middleware.CreditGateDeps {
