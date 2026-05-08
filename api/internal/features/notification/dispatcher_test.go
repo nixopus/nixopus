@@ -275,6 +275,29 @@ func TestDispatcher_buildPlainTextBody(t *testing.T) {
 		})
 		assert.Contains(t, body, "critical")
 	})
+	t.Run("agent_schedule_run_body", func(t *testing.T) {
+		body := d.buildPlainTextBody(shared_types.NotificationEvent{
+			Type: shared_types.EventAgentScheduleRun,
+			Data: data("body", "Log summary: all quiet", "schedule_name", "Mon", "status", "succeeded"),
+		})
+		assert.Equal(t, "Log summary: all quiet", body)
+	})
+	t.Run("agent_schedule_run_fallback", func(t *testing.T) {
+		body := d.buildPlainTextBody(shared_types.NotificationEvent{
+			Type: shared_types.EventAgentScheduleRun,
+			Data: data("schedule_name", "logs", "status", "succeeded"),
+		})
+		assert.Contains(t, body, "logs")
+		assert.Contains(t, body, "succeeded")
+	})
+	t.Run("agent_schedule_disabled", func(t *testing.T) {
+		body := d.buildPlainTextBody(shared_types.NotificationEvent{
+			Type: shared_types.EventAgentScheduleDisabled,
+			Data: data("schedule_name", "Cron A", "reason", "too many errors"),
+		})
+		assert.Contains(t, body, "Cron A")
+		assert.Contains(t, body, "too many errors")
+	})
 	t.Run("default", func(t *testing.T) {
 		body := d.buildPlainTextBody(shared_types.NotificationEvent{
 			Type: shared_types.EventContainerCrashed,

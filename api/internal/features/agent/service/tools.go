@@ -11,6 +11,8 @@ import (
 
 	"github.com/nixopus/nixopus/api/internal/features/agent/service/codebase"
 	agentgithub "github.com/nixopus/nixopus/api/internal/features/agent/service/github"
+	"github.com/nixopus/nixopus/api/internal/features/agent/service/scheduler"
+	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/pkg/llm"
 )
 
@@ -56,6 +58,27 @@ func (s *AgentService) buildToolProfiles() *llm.ToolProfileBuilder {
 		GetEnvOrDefault: getEnvOrDefault,
 	}
 
+	schedDeps := scheduler.ToolDeps{
+		Store:     s.scheduleStore,
+		Scheduler: func() *scheduler.Scheduler { return s.scheduler },
+		Memory:    s.memory,
+		Logger:    s.logger,
+		UserID: func(ctx context.Context) string {
+			if uid, ok := ctx.Value(ctxKeySchedulerUserID).(string); ok && uid != "" {
+				return uid
+			}
+			// Scheduled agent runs set internal auth context, not the chat session key.
+			if uid, ok := ctx.Value(ctxKeyInternalUserID).(string); ok && uid != "" {
+				return uid
+			}
+			return ""
+		},
+		OrgID: func(ctx context.Context) string {
+			v, _ := ctx.Value(ctxKeyOrgID).(string)
+			return v
+		},
+	}
+
 	// Core tools shared by all profiles
 	pb := llm.NewToolProfileBuilder(func(reg *llm.ToolRegistry) {
 		reg.Register(s.skills.Tool())
@@ -63,7 +86,7 @@ func (s *AgentService) buildToolProfiles() *llm.ToolProfileBuilder {
 		reg.Register(httpProbeDef)
 	})
 
-	// Deploy: core + delegation + codebase analysis
+	// Deploy: core + delegation + codebase analysis + scheduling
 	pb.RegisterProfile(llm.ProfileDeploy, func(reg *llm.ToolRegistry) {
 		reg.Register(s.agents.DelegateTool(map[string]int{
 			"diagnostic":   8,
@@ -73,6 +96,11 @@ func (s *AgentService) buildToolProfiles() *llm.ToolProfileBuilder {
 		}))
 		reg.Register(codebase.AnalyzeRepositoryTool(deps))
 		reg.Register(codebase.LoadRemoteRepositoryTool())
+		reg.Register(scheduler.CreateScheduleTool(schedDeps))
+		reg.Register(scheduler.ListSchedulesTool(schedDeps))
+		reg.Register(scheduler.DeleteScheduleTool(schedDeps))
+		reg.Register(scheduler.PauseScheduleTool(schedDeps))
+		reg.Register(scheduler.ResumeScheduleTool(schedDeps))
 	})
 
 	// Diagnostic: core only (nixopus_api + http_probe + read_skill)
@@ -113,11 +141,17 @@ func (s *AgentService) nixopusAPIHandler(ctx context.Context, args json.RawMessa
 		Body   json.RawMessage `json:"body,omitempty"`
 	}
 	if err := json.Unmarshal(args, &input); err != nil {
+		s.logger.Log(logger.Error, "nixopus_api: failed to unmarshal args", err.Error())
 		return nil, fmt.Errorf("invalid arguments: %w", err)
 	}
 
+	s.logger.Log(logger.Debug, "nixopus_api: invoked",
+		fmt.Sprintf("method=%s path=%s body_len=%d", input.Method, input.Path, len(input.Body)))
+
 	if s.preflight != nil {
 		if errMsg := s.preflight.Validate(input.Method, input.Path, input.Body); errMsg != "" {
+			s.logger.Log(logger.Warning, "nixopus_api: preflight validation failed",
+				fmt.Sprintf("method=%s path=%s err=%s", input.Method, input.Path, errMsg))
 			return json.Marshal(map[string]interface{}{
 				"preflight_error": errMsg,
 				"action_required": "Fix the listed field errors and retry the nixopus_api call with a corrected body.",
@@ -128,6 +162,20 @@ func (s *AgentService) nixopusAPIHandler(ctx context.Context, args json.RawMessa
 	authToken, _ := ctx.Value(ctxKeyAuthToken).(string)
 	orgID, _ := ctx.Value(ctxKeyOrgID).(string)
 	baseURL, _ := ctx.Value(ctxKeyBaseURL).(string)
+
+	internalSig, _ := ctx.Value(ctxKeyInternalSig).(string)
+	internalUserID, _ := ctx.Value(ctxKeyInternalUserID).(string)
+
+	authMode := "none"
+	if internalSig != "" && internalUserID != "" {
+		authMode = "internal"
+	} else if authToken != "" {
+		authMode = "bearer"
+	}
+
+	s.logger.Log(logger.Debug, "nixopus_api: auth context",
+		fmt.Sprintf("auth_mode=%s org_id=%q base_url=%q has_token=%t internal_user=%q",
+			authMode, orgID, baseURL, authToken != "", internalUserID))
 
 	if baseURL == "" {
 		baseURL = "http://localhost:" + getEnvOrDefault("PORT", "2089")
@@ -140,19 +188,31 @@ func (s *AgentService) nixopusAPIHandler(ctx context.Context, args json.RawMessa
 
 	req, err := http.NewRequestWithContext(ctx, input.Method, baseURL+input.Path, bodyReader)
 	if err != nil {
+		s.logger.Log(logger.Error, "nixopus_api: failed to create HTTP request",
+			fmt.Sprintf("method=%s url=%s err=%s", input.Method, baseURL+input.Path, err.Error()))
 		return nil, fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	if authToken != "" {
+
+	if internalSig != "" && internalUserID != "" {
+		req.Header.Set("X-Nixopus-Internal-Sig", internalSig)
+		req.Header.Set("X-Internal-User-Id", internalUserID)
+		req.Header.Set("X-Organization-Id", orgID)
+	} else if authToken != "" {
 		req.Header.Set("Authorization", "Bearer "+authToken)
 	}
 	if orgID != "" {
 		req.Header.Set("X-Organization-ID", orgID)
 	}
 
+	start := time.Now()
 	client := &http.Client{Timeout: 30 * time.Second}
 	resp, err := client.Do(req)
+	elapsed := time.Since(start)
 	if err != nil {
+		s.logger.Log(logger.Error, "nixopus_api: HTTP call failed",
+			fmt.Sprintf("method=%s path=%s auth_mode=%s elapsed=%s err=%s",
+				input.Method, input.Path, authMode, elapsed, err.Error()))
 		return nil, fmt.Errorf("api call failed: %w", err)
 	}
 	defer resp.Body.Close()
@@ -160,6 +220,9 @@ func (s *AgentService) nixopusAPIHandler(ctx context.Context, args json.RawMessa
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 32*1024))
 
 	if resp.StatusCode >= 400 {
+		s.logger.Log(logger.Warning, "nixopus_api: HTTP error response",
+			fmt.Sprintf("method=%s path=%s status=%d auth_mode=%s elapsed=%s body=%s",
+				input.Method, input.Path, resp.StatusCode, authMode, elapsed, truncate(string(body), 500)))
 		return json.Marshal(map[string]interface{}{
 			"error":       fmt.Sprintf("API returned %d", resp.StatusCode),
 			"status_code": resp.StatusCode,
@@ -167,11 +230,22 @@ func (s *AgentService) nixopusAPIHandler(ctx context.Context, args json.RawMessa
 		})
 	}
 
+	s.logger.Log(logger.Debug, "nixopus_api: success",
+		fmt.Sprintf("method=%s path=%s status=%d elapsed=%s body_len=%d",
+			input.Method, input.Path, resp.StatusCode, elapsed, len(body)))
+
 	var result interface{}
 	if json.Unmarshal(body, &result) == nil {
 		return json.Marshal(result)
 	}
 	return json.Marshal(map[string]string{"response": string(body)})
+}
+
+func truncate(s string, maxLen int) string {
+	if len(s) <= maxLen {
+		return s
+	}
+	return s[:maxLen] + "..."
 }
 
 func httpProbeHandler(ctx context.Context, args json.RawMessage) (json.RawMessage, error) {
@@ -214,9 +288,10 @@ func httpProbeHandler(ctx context.Context, args json.RawMessage) (json.RawMessag
 type contextKey string
 
 const (
-	ctxKeyAuthToken contextKey = "auth_token"
-	ctxKeyOrgID     contextKey = "org_id"
-	ctxKeyBaseURL   contextKey = "base_url"
+	ctxKeyAuthToken       contextKey = "auth_token"
+	ctxKeyOrgID           contextKey = "org_id"
+	ctxKeyBaseURL         contextKey = "base_url"
+	ctxKeySchedulerUserID contextKey = "scheduler_user_id"
 )
 
 func jsonReader(data json.RawMessage) io.Reader {

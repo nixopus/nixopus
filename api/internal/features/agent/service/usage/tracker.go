@@ -4,12 +4,14 @@ import (
 	"context"
 	"math"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/config"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	billingstorage "github.com/nixopus/nixopus/api/internal/features/machine/storage"
+	"github.com/nixopus/nixopus/api/pkg/llm"
 	"github.com/uptrace/bun"
 )
 
@@ -157,4 +159,34 @@ func ResolveModelID(requestModel string) string {
 		return m
 	}
 	return "anthropic/claude-sonnet-4"
+}
+
+// billableTokens returns the token count we charge for: aggregated total from the
+// provider when positive, otherwise prompt + completion (some APIs omit total_tokens).
+func billableTokensFromUsage(u llm.Usage) int {
+	if u.TotalTokens > 0 {
+		return u.TotalTokens
+	}
+	return u.PromptTokens + u.CompletionTokens
+}
+
+// ScheduledRunCostUsdFromUsage converts agent-reported usage into dollars for TrackUsage.
+// Charge is linear: billableTokens × SCHEDULED_RUN_USD_PER_TOKEN.
+// Default rate is 1e-5 ($0.00001/token, i.e. $10 per 1M tokens). Set SCHEDULED_RUN_USD_PER_TOKEN=0 to skip debits.
+func ScheduledRunCostUsdFromUsage(u llm.Usage) float64 {
+	n := billableTokensFromUsage(u)
+	if n <= 0 {
+		return 0
+	}
+	per := 1e-5
+	if v, ok := os.LookupEnv("SCHEDULED_RUN_USD_PER_TOKEN"); ok {
+		f, err := strconv.ParseFloat(v, 64)
+		if err == nil && f >= 0 {
+			per = f
+		}
+	}
+	if per == 0 {
+		return 0
+	}
+	return float64(n) * per
 }

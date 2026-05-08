@@ -175,6 +175,13 @@ func (d *Dispatcher) buildMessage(event shared_types.NotificationEvent, chName s
 			msg.Subject = tmpl.Subject
 			msg.TemplateName = tmpl.Template
 			msg.TemplateData = event.Data
+		} else if event.Type == shared_types.EventAgentScheduleRun || event.Type == shared_types.EventAgentScheduleDisabled {
+			subj := getDataStr(event.Data, "subject")
+			if subj == "" {
+				subj = "Nixopus scheduled task"
+			}
+			msg.Subject = subj
+			msg.Body = d.buildPlainTextBody(event)
 		} else {
 			msg.Subject = "Notification from Nixopus"
 			msg.Body = fmt.Sprintf("Event: %s", event.Type)
@@ -221,17 +228,31 @@ func (d *Dispatcher) buildPlainTextBody(event shared_types.NotificationEvent) st
 	case shared_types.EventHealthCheckCritical:
 		return fmt.Sprintf("Health check critical for app %s endpoint %s (%s consecutive failures)",
 			getDataStr(event.Data, "app_id"), getDataStr(event.Data, "endpoint"), getDataStr(event.Data, "consecutive_fails"))
+	case shared_types.EventAgentScheduleRun:
+		body := getDataStr(event.Data, "body")
+		if body != "" {
+			return body
+		}
+		return fmt.Sprintf("Scheduled task %q finished (%s).", getDataStr(event.Data, "schedule_name"), getDataStr(event.Data, "status"))
+	case shared_types.EventAgentScheduleDisabled:
+		return fmt.Sprintf("Scheduled task %q was disabled: %s",
+			getDataStr(event.Data, "schedule_name"), getDataStr(event.Data, "reason"))
 	default:
 		return fmt.Sprintf("Notification: %s", event.Type)
 	}
 }
 
 func (d *Dispatcher) resolveUserEmail(userID string) (string, error) {
+	uid, err := uuid.Parse(userID)
+	if err != nil {
+		return "", fmt.Errorf("user not found: invalid user id: %w", err)
+	}
 	var email string
-	err := d.db.NewSelect().
-		Column("email").
-		TableExpr("user").
-		Where("id = ?", userID).
+	// Better Auth table is "user"; bare `user` is a reserved keyword / wrong relation in PostgreSQL.
+	err = d.db.NewSelect().
+		ColumnExpr("u.email").
+		TableExpr(`"user" AS u`).
+		Where("u.id = ?", uid).
 		Scan(d.ctx, &email)
 	if err != nil {
 		return "", fmt.Errorf("user not found: %w", err)

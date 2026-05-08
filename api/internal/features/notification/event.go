@@ -44,10 +44,12 @@ var systemEmailTemplateMap = map[shared_types.EventType]string{
 // skipPreferenceCheck lists event types where we always send regardless
 // of user preferences (e.g. password reset must always go through).
 var skipPreferenceCheck = map[shared_types.EventType]bool{
-	shared_types.EventPasswordReset:       true,
-	shared_types.EventVerificationEmail:   true,
-	shared_types.EventHealthCheckCritical: true,
-	shared_types.EventTrialExpired:        true,
+	shared_types.EventPasswordReset:         true,
+	shared_types.EventVerificationEmail:     true,
+	shared_types.EventHealthCheckCritical:   true,
+	shared_types.EventTrialExpired:          true,
+	shared_types.EventAgentScheduleRun:      true,
+	shared_types.EventAgentScheduleDisabled: true,
 }
 
 // defaultChannelsForEvent returns the channels to use when the event

@@ -33,6 +33,7 @@ type ChatResponse struct {
 func (s *AgentService) Chat(ctx context.Context, req ChatRequest, authToken, userID, orgID string) (*ChatResponse, error) {
 	ctx = context.WithValue(ctx, ctxKeyAuthToken, authToken)
 	ctx = context.WithValue(ctx, ctxKeyOrgID, orgID)
+	ctx = context.WithValue(ctx, ctxKeySchedulerUserID, userID)
 
 	threadID := req.ThreadID
 	if threadID == "" {
@@ -112,6 +113,7 @@ func (s *AgentService) StreamChat(parentCtx context.Context, w http.ResponseWrit
 
 	ctx = context.WithValue(ctx, ctxKeyAuthToken, authToken)
 	ctx = context.WithValue(ctx, ctxKeyOrgID, orgID)
+	ctx = context.WithValue(ctx, ctxKeySchedulerUserID, userID)
 
 	threadID := req.ThreadID
 	if threadID == "" {

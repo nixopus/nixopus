@@ -2,12 +2,14 @@ package middleware
 
 import (
 	"context"
+	"crypto/hmac"
 	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/google/uuid"
@@ -113,6 +115,10 @@ func verifySessionWithFallback(r *http.Request) (*betterauth.SessionResponse, er
 func AuthMiddleware(next http.Handler, app *storage.App, c *cache.Cache, l applogger.Logger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
+		if handled := tryInternalSchedulerAuth(ctx, w, r, next, app, l); handled {
+			return
+		}
 
 		if handled := tryM2MJWTAuth(ctx, w, r, next, app, l); handled {
 			return
@@ -240,6 +246,74 @@ func tryM2MJWTAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, 
 	r = r.WithContext(ctx)
 	next.ServeHTTP(w, r)
 	return true
+}
+
+// tryInternalSchedulerAuth handles requests from the internal scheduler.
+// The scheduler signs requests with an HMAC derived from AUTH_SERVICE_SECRET
+// and passes X-Internal-User-Id / X-Organization-Id headers.
+func tryInternalSchedulerAuth(ctx context.Context, w http.ResponseWriter, r *http.Request, next http.Handler, app *storage.App, l applogger.Logger) bool {
+	sig := r.Header.Get("X-Nixopus-Internal-Sig")
+	if sig == "" {
+		return false
+	}
+
+	userIDStr := r.Header.Get("X-Internal-User-Id")
+	orgIDStr := r.Header.Get("X-Organization-Id")
+	if userIDStr == "" || orgIDStr == "" {
+		utils.SendErrorResponse(w, "internal auth: missing user/org headers", http.StatusUnauthorized)
+		return true
+	}
+
+	if !verifyInternalSignature(sig, userIDStr, orgIDStr) {
+		l.LogCtx(ctx, applogger.Error, "middleware auth: invalid internal scheduler signature", fmt.Sprintf("path=%s user_id=%s", r.URL.Path, userIDStr))
+		utils.SendErrorResponse(w, "internal auth: invalid signature", http.StatusUnauthorized)
+		return true
+	}
+
+	userUUID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		utils.SendErrorResponse(w, "internal auth: invalid user ID", http.StatusUnauthorized)
+		return true
+	}
+
+	var user types.User
+	err = app.Store.DB.NewSelect().Model(&user).Where("id = ?", userUUID).Scan(ctx)
+	if err != nil {
+		l.LogCtx(ctx, applogger.Error, fmt.Sprintf("middleware auth: internal scheduler user lookup failed: %v", err), fmt.Sprintf("user_id=%s", userIDStr))
+		utils.SendErrorResponse(w, "internal auth: user not found", http.StatusUnauthorized)
+		return true
+	}
+	user.ComputeCompatibilityFields()
+
+	ctx = context.WithValue(ctx, types.UserContextKey, &user)
+	ctx = context.WithValue(ctx, types.OrganizationIDKey, orgIDStr)
+	r = r.WithContext(ctx)
+	next.ServeHTTP(w, r)
+	return true
+}
+
+func internalSecret() string {
+	if s := os.Getenv("AUTH_SERVICE_SECRET"); s != "" {
+		return s
+	}
+	return os.Getenv("BETTER_AUTH_SECRET")
+}
+
+func verifyInternalSignature(sig, userID, orgID string) bool {
+	secret := internalSecret()
+	if secret == "" {
+		return false
+	}
+	expected := ComputeInternalSignature(secret, userID, orgID)
+	return hmac.Equal([]byte(sig), []byte(expected))
+}
+
+// ComputeInternalSignature generates the HMAC signature for internal scheduler calls.
+// Exported so the scheduler can produce matching signatures.
+func ComputeInternalSignature(secret, userID, orgID string) string {
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(userID + ":" + orgID))
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 func isAuthEndpoint(path string) bool {
