@@ -146,6 +146,8 @@ Beyond these features, Nixopus also includes:
 
 > More features are being added as Nixopus evolves.
 
+For a complete and up-to-date list of every feature across all categories, see [FEATURES.md](./FEATURES.md).
+
 ---
 
 <div align="right">
