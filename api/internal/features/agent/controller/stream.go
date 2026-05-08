@@ -43,7 +43,10 @@ func (c *AgentController) StreamChat(f fuego.ContextNoBody) (any, error) {
 
 	// Disable the server's WriteTimeout for this long-lived SSE connection.
 	rc := http.NewResponseController(w)
-	rc.SetWriteDeadline(time.Time{})
+	if err := rc.SetWriteDeadline(time.Time{}); err != nil {
+		c.logger.Log(logger.Error, "failed to disable SSE write deadline: "+err.Error(), "")
+		// Continue anyway; SSE may still work with timeouts.
+	}
 
 	rw := unwrapFlusher(w)
 	rw.Header().Set("Content-Type", "text/event-stream")
