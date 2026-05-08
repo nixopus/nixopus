@@ -39,7 +39,7 @@ func TestAnalyzeRepositoryHandler_Success(t *testing.T) {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/v1/github-connector", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/v1/github-connector/all", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(connectorResponse)
 	})
 	mux.HandleFunc("/api/v1/github-connector/repository/tree", func(w http.ResponseWriter, r *http.Request) {
@@ -78,7 +78,7 @@ func TestAnalyzeRepositoryHandler_WithBranch(t *testing.T) {
 
 	var capturedBranch string
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/v1/github-connector", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/v1/github-connector/all", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode([]map[string]interface{}{{"id": "c1"}})
 	})
 	mux.HandleFunc("/api/v1/github-connector/repository/tree", func(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +108,7 @@ func TestAnalyzeRepositoryHandler_MissingOwnerRepo(t *testing.T) {
 
 func TestAnalyzeRepositoryHandler_NoConnectors(t *testing.T) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/v1/github-connector", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/v1/github-connector/all", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode([]interface{}{})
 	})
 
@@ -125,7 +125,7 @@ func TestAnalyzeRepositoryHandler_NoConnectors(t *testing.T) {
 
 func TestAnalyzeRepositoryHandler_TreeAPIError(t *testing.T) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/v1/github-connector", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/v1/github-connector/all", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode([]map[string]interface{}{{"id": "c1"}})
 	})
 	mux.HandleFunc("/api/v1/github-connector/repository/tree", func(w http.ResponseWriter, r *http.Request) {
@@ -154,7 +154,7 @@ func TestAnalyzeRepositoryHandler_NoFiles(t *testing.T) {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/api/v1/github-connector", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/v1/github-connector/all", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode([]map[string]interface{}{{"id": "c1"}})
 	})
 	mux.HandleFunc("/api/v1/github-connector/repository/tree", func(w http.ResponseWriter, r *http.Request) {
