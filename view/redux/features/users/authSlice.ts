@@ -32,16 +32,10 @@ export const initializeAuth = createAsyncThunk<
   AuthPayload | null,
   { forceRefresh?: boolean } | void,
   { rejectValue: string }
->('auth/initialize', async (args, { dispatch, rejectWithValue, getState }) => {
-  const forceRefresh = args && typeof args === 'object' ? args.forceRefresh : false;
-  const state = getState() as { auth: AuthState };
-  if (!forceRefresh && state.auth.isInitialized && state.auth.isAuthenticated) {
-    return {
-      user: state.auth.user,
-      token: state.auth.token,
-      refreshToken: state.auth.refreshToken
-    };
-  }
+>('auth/initialize', async (_args, { dispatch, rejectWithValue }) => {
+  // Never trust persisted Redux as proof of session: always verify with Better Auth.
+  // Skipping getSession() caused stale isAuthenticated after localStorage rehydrate,
+  // e.g. /register redirecting to /chats until users cleared site data.
   try {
     const sessionResult = await authClient.getSession();
 
@@ -195,6 +189,13 @@ export const authSlice = createSlice({
         state.isLoading = false;
       })
       .addCase(initializeAuth.rejected, (state) => {
+        ensureTwoFactor(state);
+        state.user = null;
+        state.token = undefined;
+        state.refreshToken = undefined;
+        state.isAuthenticated = false;
+        state.twoFactor.isRequired = false;
+        state.twoFactor.tempToken = undefined;
         state.isInitialized = true;
         state.isLoading = false;
       })
