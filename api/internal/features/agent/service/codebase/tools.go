@@ -352,7 +352,7 @@ func confidenceMessage(c codebase.Confidence) string {
 }
 
 func fetchDefaultConnectorID(ctx context.Context, client *http.Client, baseURL, authToken, orgID string) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/api/v1/github-connector", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", baseURL+"/api/v1/github-connector/all", nil)
 	if err != nil {
 		return "", err
 	}
