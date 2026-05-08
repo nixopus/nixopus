@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-fuego/fuego"
 	"github.com/google/uuid"
@@ -39,6 +40,10 @@ func (c *AgentController) StreamChat(f fuego.ContextNoBody) (any, error) {
 	}
 
 	authToken := extractToken(r.Header.Get("Authorization"))
+
+	// Disable the server's WriteTimeout for this long-lived SSE connection.
+	rc := http.NewResponseController(w)
+	rc.SetWriteDeadline(time.Time{})
 
 	rw := unwrapFlusher(w)
 	rw.Header().Set("Content-Type", "text/event-stream")
