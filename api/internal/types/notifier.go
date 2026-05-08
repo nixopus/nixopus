@@ -15,6 +15,9 @@ const (
 	EventUserAddedToOrg      EventType = "org.user_added"
 	EventUserRemovedFromOrg  EventType = "org.user_removed"
 	EventTrialExpired        EventType = "trail.trial_expired"
+	// Agent scheduled task completion (see agent scheduler deliver / notifyFailure).
+	EventAgentScheduleRun      EventType = "agent.schedule_run"
+	EventAgentScheduleDisabled EventType = "agent.schedule_disabled"
 )
 
 // NotificationEvent is the payload any service emits to trigger notifications.

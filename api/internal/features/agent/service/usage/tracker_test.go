@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/nixopus/nixopus/api/internal/config"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
+	"github.com/nixopus/nixopus/api/pkg/llm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -108,6 +109,32 @@ func TestTrackUsage_ZeroCost_NoDebit(t *testing.T) {
 	assert.False(t, mock.debitCalled, "debit should not be called for zero cost")
 	require.True(t, mock.insertCalled, "usage log should still be inserted")
 	assert.Equal(t, 15, mock.insertedLog.TotalTokens)
+}
+
+func TestScheduledRunCostUsdFromUsage(t *testing.T) {
+	t.Run("zero usage", func(t *testing.T) {
+		assert.Equal(t, 0.0, ScheduledRunCostUsdFromUsage(llm.Usage{}))
+	})
+	t.Run("linear on total_tokens", func(t *testing.T) {
+		u := llm.Usage{TotalTokens: 100, PromptTokens: 40, CompletionTokens: 60}
+		assert.InDelta(t, 100*1e-5, ScheduledRunCostUsdFromUsage(u), 1e-12)
+	})
+	t.Run("prefers total when both set", func(t *testing.T) {
+		u := llm.Usage{TotalTokens: 50, PromptTokens: 999, CompletionTokens: 999}
+		assert.InDelta(t, 50*1e-5, ScheduledRunCostUsdFromUsage(u), 1e-12)
+	})
+	t.Run("falls back to prompt+completion when total zero", func(t *testing.T) {
+		u := llm.Usage{PromptTokens: 10, CompletionTokens: 5}
+		assert.InDelta(t, 15*1e-5, ScheduledRunCostUsdFromUsage(u), 1e-12)
+	})
+	t.Run("env zero disables", func(t *testing.T) {
+		t.Setenv("SCHEDULED_RUN_USD_PER_TOKEN", "0")
+		assert.Equal(t, 0.0, ScheduledRunCostUsdFromUsage(llm.Usage{TotalTokens: 5000}))
+	})
+	t.Run("env override per token", func(t *testing.T) {
+		t.Setenv("SCHEDULED_RUN_USD_PER_TOKEN", "0.00002")
+		assert.InDelta(t, 1000*0.00002, ScheduledRunCostUsdFromUsage(llm.Usage{TotalTokens: 1000}), 1e-12)
+	})
 }
 
 func TestTrackUsage_SkippedForSelfHosted(t *testing.T) {

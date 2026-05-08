@@ -8,9 +8,11 @@ import (
 	"github.com/nixopus/nixopus/api/internal/features/agent/service/catalog"
 	"github.com/nixopus/nixopus/api/internal/features/agent/service/deploy"
 	agentgithub "github.com/nixopus/nixopus/api/internal/features/agent/service/github"
+	"github.com/nixopus/nixopus/api/internal/features/agent/service/scheduler"
 	"github.com/nixopus/nixopus/api/internal/features/agent/service/usage"
 	"github.com/nixopus/nixopus/api/internal/features/logger"
 	"github.com/nixopus/nixopus/api/internal/storage"
+	"github.com/nixopus/nixopus/api/internal/types"
 	"github.com/nixopus/nixopus/api/pkg/llm"
 	"github.com/nixopus/nixopus/api/pkg/llm/memory"
 	"github.com/uptrace/bun"
@@ -43,9 +45,12 @@ type AgentService struct {
 	patterns      *deploy.Store
 	github        *agentgithub.Client
 	contextPolicy ContextPolicy
+	scheduler     *scheduler.Scheduler
+	scheduleStore *scheduler.Store
+	notifier      types.Notifier
 }
 
-func NewAgentService(store *storage.Store, ctx context.Context, l logger.Logger) *AgentService {
+func NewAgentService(store *storage.Store, ctx context.Context, l logger.Logger, notifier ...types.Notifier) *AgentService {
 	db := store.DB
 
 	provider := buildProvider(l)
@@ -79,6 +84,13 @@ func NewAgentService(store *storage.Store, ctx context.Context, l logger.Logger)
 		ctxPolicy = ContextPolicyFirstOnly
 	}
 
+	var n types.Notifier
+	if len(notifier) > 0 && notifier[0] != nil {
+		n = notifier[0]
+	}
+
+	schedStore := scheduler.NewStore(db, l)
+
 	svc := &AgentService{
 		store:         store,
 		ctx:           ctx,
@@ -92,10 +104,18 @@ func NewAgentService(store *storage.Store, ctx context.Context, l logger.Logger)
 		patterns:      patternStore,
 		github:        ghClient,
 		contextPolicy: ctxPolicy,
+		scheduleStore: schedStore,
+		notifier:      n,
 	}
 
 	svc.registerAgents(db)
 	svc.patterns.CreateTables(ctx)
+	schedStore.CreateTables(ctx)
+
+	sched := scheduler.New(schedStore, memStore, svc, n, l)
+	svc.scheduler = sched
+	sched.Start(ctx)
+
 	return svc
 }
 
@@ -264,7 +284,15 @@ When present, CHECK the patterns before diagnosing. If a known fix matches, appl
 Do NOT mention "deploy patterns" or "cross-org learning" to the user — just use the knowledge silently.
 
 ## Nixopus Documentation
-When the user asks about Nixopus features, configuration, or product-level questions: read_skill("nixopus-docs") and follow the lookup workflow.`,
+When the user asks about Nixopus features, configuration, or product-level questions: read_skill("nixopus-docs") and follow the lookup workflow.
+
+## Scheduled Tasks
+You can create recurring scheduled tasks for users. When a user asks for periodic monitoring, alerts, or recurring actions:
+1. Parse their intent into a cron expression and a clear task prompt.
+2. Call create_schedule with the name, prompt, cron expression, and delivery channel.
+3. The prompt should be self-contained: specify which tools to call, what data to check, and what to report.
+4. Use list_schedules to show active schedules, pause_schedule/resume_schedule to toggle, delete_schedule to remove.
+Cron examples: "*/30 * * * *" (every 30 min), "0 9 * * *" (daily 9 AM), "0 */2 * * *" (every 2 hours), "@hourly", "@daily".`,
 	})
 
 	return b.Build()

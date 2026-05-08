@@ -18,4 +18,11 @@ func (router *Router) RegisterAgentRoutes(agentGroup *fuego.Server, controller *
 	fuego.Get(threadGroup, "/{threadId}/messages", controller.GetThreadMessages, fuego.OptionSummary("Get thread messages"))
 	fuego.Patch(threadGroup, "/{threadId}", controller.UpdateThread, fuego.OptionSummary("Update thread title"))
 	fuego.Delete(threadGroup, "/{threadId}", controller.DeleteThread, fuego.OptionSummary("Delete a conversation thread"))
+
+	scheduleGroup := fuego.Group(agentGroup, "/schedules", option.Tags("Agent"))
+	fuego.Get(scheduleGroup, "", controller.ListSchedules, fuego.OptionSummary("List scheduled tasks"))
+	fuego.Get(scheduleGroup, "/{scheduleId}", controller.GetSchedule, fuego.OptionSummary("Get a scheduled task"))
+	fuego.Get(scheduleGroup, "/{scheduleId}/runs", controller.GetScheduleRuns, fuego.OptionSummary("Get schedule run history"))
+	fuego.Patch(scheduleGroup, "/{scheduleId}", controller.UpdateScheduleStatus, fuego.OptionSummary("Update schedule status (pause/resume)"))
+	fuego.Delete(scheduleGroup, "/{scheduleId}", controller.DeleteSchedule, fuego.OptionSummary("Delete a scheduled task"))
 }

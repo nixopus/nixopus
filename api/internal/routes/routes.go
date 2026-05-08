@@ -439,7 +439,7 @@ func (router *Router) registerProtectedRoutes(server *fuego.Server, apiV1 api.Ve
 	})
 	router.RegisterMCPRoutes(mcpGroup, mcpCtrl)
 
-	agentCtrl := agentController.NewAgentController(router.app.Store, router.app.Ctx, router.logger)
+	agentCtrl := agentController.NewAgentController(router.app.Store, router.app.Ctx, router.logger, dispatcher)
 	agentGroup := fuego.Group(server, apiV1.Path+"/agent", option.Tags("Agent"))
 	router.applyMiddleware(agentGroup, MiddlewareConfig{
 		RBAC:         true,
