@@ -22,6 +22,7 @@ services:
       AUTH_SECURE_COOKIES: "${AUTH_SECURE_COOKIES:-false}"
       SELF_HOSTED: "true"
       ADMIN_EMAIL: "${ADMIN_EMAIL:-}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
       API_URL: "http://nixopus-api:8443"
       SECRET_MANAGER_ENABLED: "false"
       PASSWORD_LOGIN_ENABLED: "true"

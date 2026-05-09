@@ -388,6 +388,13 @@ cmd_admin_bootstrap() {
                 fi
                 ;;
             400|403)
+                # "Registration is disabled" (no code) means the auth service
+                # seeded the admin on startup — the credential already exists.
+                if printf '%s' "$body" | grep -q '"Registration is disabled"'; then
+                    rm -f "$tmp"
+                    echo "Admin account seeded by auth service — nothing to do."
+                    return 0
+                fi
                 case "$code" in
                     EMAIL_PASSWORD_SIGN_UP_DISABLED|INVALID_ORIGIN|MISSING_OR_NULL_ORIGIN|CROSS_SITE_NAVIGATION_LOGIN_BLOCKED|PASSWORD_TOO_SHORT|PASSWORD_TOO_LONG|INVALID_PASSWORD|INVALID_EMAIL)
                         rm -f "$tmp"
