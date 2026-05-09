@@ -926,6 +926,15 @@ bootstrap_admin() {
                 fi
                 ;;
             400|403)
+                # 403 with "Registration is disabled" (no code field) means the
+                # self-hosted guard blocked sign-up because the auth service
+                # already seeded the admin account on startup. Treat as success.
+                if printf '%s' "$body" | grep -q '"Registration is disabled"'; then
+                    rm -f "$tmp"
+                    log_info "Admin account seeded by auth service — skipping HTTP bootstrap"
+                    ADMIN_BOOTSTRAPPED=true
+                    return 0
+                fi
                 case "$code" in
                     EMAIL_PASSWORD_SIGN_UP_DISABLED)
                         rm -f "$tmp"
