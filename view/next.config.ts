@@ -1,7 +1,6 @@
 import type { NextConfig } from 'next';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import million from 'million/compiler';
 
 const nextConfigDir = path.dirname(fileURLToPath(import.meta.url));
 
@@ -80,4 +79,4 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default million.next(nextConfig as any, { auto: true });
+export default nextConfig;
