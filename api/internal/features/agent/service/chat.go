@@ -67,10 +67,8 @@ func (s *AgentService) Chat(ctx context.Context, req ChatRequest, authToken, use
 	latencyMs := int(time.Since(start).Milliseconds())
 
 	seq, _ := s.memory.GetMessageCount(ctx, threadID)
-	toStore := memory.MessagesFromLLM(threadID, []llm.Message{
-		{Role: llm.RoleUser, Content: req.Input},
-		{Role: llm.RoleAssistant, Content: result.Content},
-	}, seq)
+	newMessages := extractNewMessages(result.Messages, len(messages)+1, req.Input)
+	toStore := memory.MessagesFromLLM(threadID, newMessages, seq)
 	if err := s.memory.AppendMessages(ctx, threadID, toStore); err != nil {
 		s.logger.Log(logger.Error, "Failed to persist messages", err.Error())
 	}
@@ -157,10 +155,8 @@ func (s *AgentService) StreamChat(parentCtx context.Context, w http.ResponseWrit
 		bgCtx := context.Background()
 
 		seq, _ := s.memory.GetMessageCount(bgCtx, threadID)
-		toStore := memory.MessagesFromLLM(threadID, []llm.Message{
-			{Role: llm.RoleUser, Content: req.Input},
-			{Role: llm.RoleAssistant, Content: result.Content},
-		}, seq)
+		newMessages := extractNewMessages(result.Messages, len(messages)+1, req.Input)
+		toStore := memory.MessagesFromLLM(threadID, newMessages, seq)
 		_ = s.memory.AppendMessages(bgCtx, threadID, toStore)
 
 		latencyMs := int(time.Since(start).Milliseconds())
@@ -241,8 +237,9 @@ func storedToMessages(stored []memory.StoredMessage) []llm.Message {
 	messages := make([]llm.Message, 0, len(stored))
 	for _, m := range stored {
 		msg := llm.Message{
-			Role:    llm.Role(m.Role),
-			Content: m.Content,
+			Role:       llm.Role(m.Role),
+			Content:    m.Content,
+			ToolCallID: m.ToolCallID,
 		}
 		if len(m.ToolCalls) > 0 {
 			msg.ToolCalls = m.ToolCalls
@@ -250,6 +247,26 @@ func storedToMessages(stored []memory.StoredMessage) []llm.Message {
 		messages = append(messages, msg)
 	}
 	return messages
+}
+
+// extractNewMessages pulls out the new messages from a completed agent run.
+// buildMessages produces [system, ...history, user(augmented)], so everything
+// from index `offset` onward is new. The first new message is the user prompt
+// with the original (un-augmented) input text.
+func extractNewMessages(all []llm.Message, offset int, originalInput string) []llm.Message {
+	if offset >= len(all) {
+		return []llm.Message{
+			{Role: llm.RoleUser, Content: originalInput},
+		}
+	}
+
+	newMsgs := make([]llm.Message, 0, len(all)-offset+1)
+	newMsgs = append(newMsgs, llm.Message{Role: llm.RoleUser, Content: originalInput})
+
+	for _, m := range all[offset:] {
+		newMsgs = append(newMsgs, m)
+	}
+	return newMsgs
 }
 
 // buildContextPrefix assembles the preprocessed context blocks to prepend to user input.

@@ -182,20 +182,25 @@ export async function listThreads(headers: Record<string, string>): Promise<Agen
   return result.data ?? [];
 }
 
+export interface RawThreadMessage {
+  id: string;
+  thread_id: string;
+  role: string;
+  content: string;
+  tool_calls?: Array<{
+    id: string;
+    type: string;
+    function: { name: string; arguments: string };
+  }>;
+  tool_call_id?: string;
+  created_at: string;
+  seq: number;
+}
+
 export async function getThreadMessages(
   threadId: string,
   headers: Record<string, string>
-): Promise<
-  Array<{
-    id: string;
-    thread_id: string;
-    role: string;
-    content: string;
-    tool_calls?: unknown[];
-    created_at: string;
-    seq: number;
-  }>
-> {
+): Promise<RawThreadMessage[]> {
   const response = await agentFetch(`/threads/${threadId}/messages`, {
     method: 'GET',
     headers
