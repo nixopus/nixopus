@@ -7,7 +7,8 @@ import {
   streamAgent,
   cancelStream,
   getThreadMessages,
-  type StreamChunk
+  type StreamChunk,
+  type RawThreadMessage
 } from '@/packages/lib/agent-client';
 import { type ChatContext, formatContextsForAgent } from './chat-context';
 import { v4 as uuid } from 'uuid';
@@ -116,6 +117,84 @@ export interface OmStatus {
   observationsText: string | null;
 }
 
+/**
+ * Merge raw DB rows back into ChatMessages with `parts`, matching what
+ * the streaming path produces.  A single agent turn in the DB may look like:
+ *   assistant (tool_calls) → tool → tool → assistant (tool_calls) → tool → assistant (final text)
+ * We collapse that whole sequence into one ChatMessage with interleaved parts.
+ */
+function rebuildChatMessages(rawMessages: RawThreadMessage[]): ChatMessage[] {
+  const result: ChatMessage[] = [];
+  let i = 0;
+
+  while (i < rawMessages.length) {
+    const msg = rawMessages[i];
+
+    if (msg.role === 'user') {
+      result.push({
+        id: msg.id,
+        role: 'user',
+        content: msg.content || '',
+        timestamp: msg.created_at ? new Date(msg.created_at) : new Date()
+      });
+      i++;
+      continue;
+    }
+
+    if (msg.role === 'assistant') {
+      const parts: MessagePart[] = [];
+      let fullContent = '';
+      const firstId = msg.id;
+      const firstTs = msg.created_at;
+
+      while (i < rawMessages.length && rawMessages[i].role !== 'user') {
+        const cur = rawMessages[i];
+
+        if (cur.role === 'assistant') {
+          if (cur.content) {
+            parts.push({ type: 'text', content: cur.content });
+            fullContent += (fullContent ? '\n' : '') + cur.content;
+          }
+          for (const tc of cur.tool_calls ?? []) {
+            let args: unknown;
+            try {
+              args = tc.function.arguments ? JSON.parse(tc.function.arguments) : undefined;
+            } catch {
+              args = tc.function.arguments;
+            }
+            parts.push({
+              type: 'tool-call',
+              toolName: tc.function.name || 'tool',
+              toolCallId: tc.id,
+              args,
+              status: 'done' as const
+            });
+          }
+        }
+
+        i++;
+      }
+
+      if (!fullContent && parts.length === 0) continue;
+
+      const hasToolParts = parts.some((p) => p.type === 'tool-call');
+
+      result.push({
+        id: firstId,
+        role: 'assistant',
+        content: fullContent,
+        ...(hasToolParts ? { parts } : {}),
+        timestamp: firstTs ? new Date(firstTs) : new Date()
+      });
+      continue;
+    }
+
+    i++;
+  }
+
+  return result;
+}
+
 export function useAgentChat({
   threadId,
   resourceId,
@@ -179,20 +258,7 @@ export function useAgentChat({
         if (cancelled) return;
         if (chatStreamStore.hasActiveStream(threadId)) return;
 
-        const msgs: ChatMessage[] = [];
-        for (const msg of rawMessages) {
-          const role = msg.role === 'user' ? 'user' : msg.role === 'assistant' ? 'assistant' : null;
-          if (!role) continue;
-          const text = msg.content || '';
-          if (!text) continue;
-
-          msgs.push({
-            id: msg.id,
-            role,
-            content: text,
-            timestamp: msg.created_at ? new Date(msg.created_at) : new Date()
-          });
-        }
+        const msgs = rebuildChatMessages(rawMessages);
         chatStreamStore.setMessages(threadId, msgs);
       } catch {
         // thread may not exist on server yet
