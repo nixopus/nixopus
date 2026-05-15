@@ -943,76 +943,75 @@ export function MachinesView({
     </>
   );
 
-  if (machines.length === 0) {
-    if (isProvisioning || isRetrying) {
-      return (
-        <div className={className}>
-          {headerContent}
-          <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            <ProvisioningMachineCard progress={provisioningProgress} />
-          </div>
+  const emptyContent = machines.length === 0 && (
+    <>
+      {isProvisioning || isRetrying ? (
+        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+          <ProvisioningMachineCard progress={provisioningProgress} />
         </div>
-      );
-    }
-
-    return (
-      <div className={className}>
-        {headerContent}
-        <MachinesEmptyState
-          isProvisioning={false}
-          provisioningHasError={provisioningHasError}
-          onRetry={onRetryProvisioning}
-          canRetry={canRetry}
-          isRetrying={false}
-          retryCount={retryCount}
-          maxRetries={maxRetries}
-        />
-        {!provisioningHasError && (
-          <div className="flex justify-center mt-4">
-            <Button onClick={() => setIsWizardOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Add Machine
-            </Button>
-          </div>
-        )}
-        <AddMachineWizard open={isWizardOpen} onOpenChange={setIsWizardOpen} />
-      </div>
-    );
-  }
+      ) : (
+        <>
+          <MachinesEmptyState
+            isProvisioning={false}
+            provisioningHasError={provisioningHasError}
+            onRetry={onRetryProvisioning}
+            canRetry={canRetry}
+            isRetrying={false}
+            retryCount={retryCount}
+            maxRetries={maxRetries}
+          />
+          {!provisioningHasError && (
+            <div className="flex justify-center mt-4">
+              <Button onClick={() => setIsWizardOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Add Machine
+              </Button>
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
 
   return (
     <div className={className}>
       {headerContent}
-      {!showHeader && showSearch && (
-        <div className="mb-6">
-          <SearchBar
-            searchTerm={searchTerm}
-            handleSearchChange={handleSearchChange}
-            label={searchLabel}
-            isLoading={false}
-          />
-        </div>
-      )}
-
-      {viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {paginatedMachines.map((machine) => (
-            <MachineCard key={machine.id} machine={machine} />
-          ))}
-          <AddMachineCard onClick={() => setIsWizardOpen(true)} />
-        </div>
+      {machines.length === 0 ? (
+        emptyContent
       ) : (
-        <MachinesTable machines={paginatedMachines} tableClassName={tableClassName} />
-      )}
+        <>
+          {!showHeader && showSearch && (
+            <div className="mb-6">
+              <SearchBar
+                searchTerm={searchTerm}
+                handleSearchChange={handleSearchChange}
+                label={searchLabel}
+                isLoading={false}
+              />
+            </div>
+          )}
 
-      {totalPages > 1 && (
-        <div className="mt-8 flex justify-center">
-          <PaginationWrapper
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-          />
-        </div>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {paginatedMachines.map((machine) => (
+                <MachineCard key={machine.id} machine={machine} />
+              ))}
+              <AddMachineCard onClick={() => setIsWizardOpen(true)} />
+            </div>
+          ) : (
+            <MachinesTable machines={paginatedMachines} tableClassName={tableClassName} />
+          )}
+
+          {totalPages > 1 && (
+            <div className="mt-8 flex justify-center">
+              <PaginationWrapper
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
+        </>
       )}
       <AddMachineWizard open={isWizardOpen} onOpenChange={setIsWizardOpen} />
     </div>
