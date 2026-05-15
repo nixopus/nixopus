@@ -45,8 +45,7 @@ export const machinesApi = createApi({
         url: SERVERURLS.CREATE_MACHINE,
         method: 'POST',
         body: data
-      }),
-      invalidatesTags: ['Server']
+      })
     }),
     verifyMachine: builder.mutation<MachineVerifyResponse, string>({
       query: (id) => ({
