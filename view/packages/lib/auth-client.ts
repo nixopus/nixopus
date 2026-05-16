@@ -1,5 +1,6 @@
 import { createAuthClient } from 'better-auth/react';
-import { emailOTPClient, organizationClient, apiKeyClient } from 'better-auth/client/plugins';
+import { emailOTPClient, organizationClient } from 'better-auth/client/plugins';
+import { apiKeyClient } from '@better-auth/api-key/client';
 import { dodopaymentsClient } from '@dodopayments/better-auth';
 import { passkeyClient } from '@better-auth/passkey/client';
 
