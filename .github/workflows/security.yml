@@ -12,14 +12,18 @@ on:
   workflow_call:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   dependency-scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
       
+      # Pinned to v0.36.0 (supply chain)
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
         env:
           TRIVY_DISABLE_VEX_NOTICE: "1"
         with:
@@ -36,7 +40,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       
+      # Pinned to v3.95.3 (supply chain)
       - name: Run TruffleHog
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@37b77001d0174ebec2fcca2bd83ff83a6d45a3ab
         with:
           extra_args: --results=verified,unverified
