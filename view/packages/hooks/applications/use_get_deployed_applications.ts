@@ -128,7 +128,9 @@ function useGetDeployedApplications() {
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
   useEffect(() => {
-    getSelfHosted().then(setSelfHosted);
+    getSelfHosted()
+      .then(setSelfHosted)
+      .catch(() => setSelfHosted(false));
   }, []);
 
   useEffect(() => {
