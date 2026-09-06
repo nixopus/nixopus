@@ -1,5 +1,13 @@
-# [0.1.0-alpha.168](https://github.com/nixopus/nixopus/compare/v0.1.0-alpha.167...v0.1.0-alpha.168) (2026-09-06)
+# Changelog
 
+All notable changes to [Nixopus](https://github.com/nixopus/nixopus) are documented in this file.
+
+This changelog is grouped by month. For the full commit history, see the [compare view on GitHub](https://github.com/nixopus/nixopus/commits/master).
+
+---
+
+## [September 2026](https://github.com/nixopus/nixopus/compare/v0.1.0-alpha.168...v0.1.0-alpha.168)
+> `0.1.0-alpha.168` (1 release)
 
 ### Bug Fixes
 
@@ -9,6 +17,5 @@
 * **ci:** unblock Security Scan on master ([#1348](https://github.com/nixopus/nixopus/issues/1348)) ([cf05d97](https://github.com/nixopus/nixopus/commit/cf05d97a352f364bbe02870b140f2ccceba298d2))
 * **security:** bump dependencies flagged by Trivy and automate future bumps ([f205431](https://github.com/nixopus/nixopus/commit/f205431961e1bb7b875623760968129b1be14f80))
 * **view:** prevent wizard remount losing SSH key on machine create ([#1347](https://github.com/nixopus/nixopus/issues/1347)) ([3714cad](https://github.com/nixopus/nixopus/commit/3714cad5b4c56dfd6a5da0c3cb4caf33ad04a6fc))
-
 
 
