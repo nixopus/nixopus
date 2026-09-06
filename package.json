@@ -1,6 +1,6 @@
 {
   "name": "nixopus",
-  "version": "0.1.0-alpha.167",
+  "version": "0.1.0-alpha.168",
   "description": "A modern container management platform",
   "license": "AGPL-3.0-or-later",
   "private": false,
