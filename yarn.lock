@@ -29,13 +29,13 @@
     tinyexec "^1.0.0"
     yargs "^17.0.0"
 
-"@commitlint/config-conventional@^20.2.0":
-  version "20.2.0"
-  resolved "https://registry.npmjs.org/@commitlint/config-conventional/-/config-conventional-20.2.0.tgz"
-  integrity sha512-MsRac+yNIbTB4Q/psstKK4/ciVzACHicSwz+04Sxve+4DW+PiJeTjU0JnS4m/oOnulrXYN+yBPlKaBSGemRfgQ==
+"@commitlint/config-conventional@^21.2.2":
+  version "21.2.2"
+  resolved "https://registry.yarnpkg.com/@commitlint/config-conventional/-/config-conventional-21.2.2.tgz#c8902f3ea1e741f55ec0fc7c177bcdf28ffd0082"
+  integrity sha512-NxA37SZviusFUEYOQZ5hNnZ1h7O/KiemPkxjOlpzKJNnWxThiwc6/SaZhaPa8fyLvfRBAywhQhJJk8XESHWlpQ==
   dependencies:
-    "@commitlint/types" "^20.2.0"
-    conventional-changelog-conventionalcommits "^7.0.2"
+    "@commitlint/types" "^21.2.0"
+    conventional-changelog-conventionalcommits "^10.0.0"
 
 "@commitlint/config-validator@^20.4.3":
   version "20.4.3"
@@ -162,7 +162,7 @@
   dependencies:
     escalade "^3.2.0"
 
-"@commitlint/types@^20.2.0", "@commitlint/types@^20.4.3":
+"@commitlint/types@^20.4.3":
   version "20.4.3"
   resolved "https://registry.npmjs.org/@commitlint/types/-/types-20.4.3.tgz"
   integrity sha512-51OWa1Gi6ODOasPmfJPq6js4pZoomima4XLZZCrkldaH2V5Nb3bVhNXPeT6XV0gubbainSpTw4zi68NqAeCNCg==
@@ -170,10 +170,28 @@
     conventional-commits-parser "^6.3.0"
     picocolors "^1.1.1"
 
+"@commitlint/types@^21.2.0":
+  version "21.2.0"
+  resolved "https://registry.yarnpkg.com/@commitlint/types/-/types-21.2.0.tgz#da93897b416f788323f639cce6045310aeb03096"
+  integrity sha512-7zVFCDB2reMvJH5dmbKnOQPjZEvjdJTH8jc0U/PIPU1r3/+vf5pD1HlfitV2MWsWXrvu7u39iY1lyLUPOaN0Gw==
+  dependencies:
+    conventional-commits-parser "^7.0.0"
+    picocolors "^1.1.1"
+
+"@conventional-changelog/template@^1.4.0":
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/@conventional-changelog/template/-/template-1.4.0.tgz#30a8680f2ab8d3a60a08e86bebb33fe8f0f8f100"
+  integrity sha512-aalGyl7dbB5PArRebDIX43ZvBlXrYm9uWzGJ26t+4SzJVPsOuvfILGGbw5X4yX7i50YEmJ8zvbiWnqH/AAnZqg==
+
 "@simple-libs/stream-utils@^1.2.0":
   version "1.2.0"
   resolved "https://registry.npmjs.org/@simple-libs/stream-utils/-/stream-utils-1.2.0.tgz"
   integrity sha512-KxXvfapcixpz6rVEB6HPjOUZT22yN6v0vI0urQSk1L8MlEWPDFCZkhw2xmkyoTGYeFw7tWTZd7e3lVzRZRN/EA==
+
+"@simple-libs/stream-utils@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@simple-libs/stream-utils/-/stream-utils-2.0.0.tgz#758d2a0876b4d672dac1eae212cdbab452670d3c"
+  integrity sha512-fCTuZK4QBa+39Oz9l4OGfJfz+GpwCp3AqO7Zch3to99xHPgstVsRFpeQ8LNd2o1Gv8raL2mCFwiaHh7bFSp5DQ==
 
 ajv@^8.11.0, ajv@^8.17.2:
   version "8.20.0"
@@ -201,6 +219,11 @@ argparse@^2.0.1:
   version "2.0.1"
   resolved "https://registry.npmjs.org/argparse/-/argparse-2.0.1.tgz"
   integrity sha512-8+9WqebbFzpX9OR+Wa6O29asIogeRMzcGtAINdpMHHyAg10f05aSFVBbcEqGf/PXw1EjAZ+q2/bEBg3DvurK3Q==
+
+argue-cli@^3.1.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/argue-cli/-/argue-cli-3.2.0.tgz#15b9ff31e0ce316c9fd1ff1761188fa81995f1c5"
+  integrity sha512-VipTB0gXgGIFO2Rg9yEVN5wLt2AurJcZqDbgmYSwPwsykhLrQhs240/bfceev4w68lI8JshoOJIk9uW7tFzROw==
 
 array-ify@^1.0.0:
   version "1.0.0"
@@ -256,12 +279,12 @@ conventional-changelog-angular@^8.2.0:
   dependencies:
     compare-func "^2.0.0"
 
-conventional-changelog-conventionalcommits@^7.0.2:
-  version "7.0.2"
-  resolved "https://registry.npmjs.org/conventional-changelog-conventionalcommits/-/conventional-changelog-conventionalcommits-7.0.2.tgz"
-  integrity sha512-NKXYmMR/Hr1DevQegFB4MwfM5Vv0m4UIxKZTTYuD98lpTknaZlSRrDOG4X7wIXpGkfsYxZTghUN+Qq+T0YQI7w==
+conventional-changelog-conventionalcommits@^10.0.0:
+  version "10.4.0"
+  resolved "https://registry.yarnpkg.com/conventional-changelog-conventionalcommits/-/conventional-changelog-conventionalcommits-10.4.0.tgz#a75bb40f10731d66e0b4209dc1dd3ee0cf2925f3"
+  integrity sha512-Rriac6ZrAlVm6cy9Bz4NSp+WMHpwNXoPIYex+HjCgduAVUSbnew29DQjQw0C4g9u3HtSYzGiGY+pdBXAZo+4aA==
   dependencies:
-    compare-func "^2.0.0"
+    "@conventional-changelog/template" "^1.4.0"
 
 conventional-commits-parser@^6.3.0:
   version "6.3.0"
@@ -270,6 +293,14 @@ conventional-commits-parser@^6.3.0:
   dependencies:
     "@simple-libs/stream-utils" "^1.2.0"
     meow "^13.0.0"
+
+conventional-commits-parser@^7.0.0:
+  version "7.1.2"
+  resolved "https://registry.yarnpkg.com/conventional-commits-parser/-/conventional-commits-parser-7.1.2.tgz#4dca0779b338bab96fe994e864dfedf3c1908b03"
+  integrity sha512-O+x4N2yH+ijvqWlIyTHsXTAP+algNWgGbjY2duCe8w2vUMvUB95cLRslCPfTMQyLAKlet3bhZTdu6ozn4M+QJQ==
+  dependencies:
+    "@simple-libs/stream-utils" "^2.0.0"
+    argue-cli "^3.1.0"
 
 cosmiconfig-typescript-loader@^6.1.0:
   version "6.2.0"
