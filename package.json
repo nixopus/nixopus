@@ -15,7 +15,7 @@
   "devDependencies": {
     "@commitlint/cli": "^20.2.0",
     "@commitlint/config-conventional": "^20.2.0",
-    "commitlint": "^20.4.3"
+    "commitlint": "^21.2.2"
   },
   "overrides": {
     "fast-uri": "^3.1.6",
