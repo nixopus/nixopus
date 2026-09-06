@@ -6,6 +6,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { REHYDRATE } from 'redux-persist';
 import { authClient } from '@/packages/lib/auth-client';
+import { clearStaleAuthCookies } from '@/packages/lib/session-cleanup';
 import { setActiveOrganization } from './userSlice';
 import { fetchUserOrganizations } from './orgSlice';
 
@@ -77,6 +78,12 @@ export const logoutUser = createAsyncThunk('auth/logoutUser', async (_, { dispat
     await authClient.signOut();
   } catch (error) {
     console.error('Better Auth logout failed:', error);
+  }
+
+  try {
+    // Runs even when signOut() failed, and clears cookies its response could
+    // not reach: ones scoped to a domain or path the config does not target.
+    await clearStaleAuthCookies();
   } finally {
     if (typeof window !== 'undefined') {
       localStorage.clear();

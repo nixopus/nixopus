@@ -5,7 +5,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { store, persistor } from '@/redux/store';
 import { Toaster } from '@nixopus/ui';
 import { useAppDispatch, useAppSelector } from '@/redux/hooks';
-import { useEffect, useState, useMemo, Suspense } from 'react';
+import { useEffect, useState, useMemo, useRef, Suspense } from 'react';
 import { initializeAuth } from '@/redux/features/users/authSlice';
 import { preloadBaseUrl } from '@/redux/base-query';
 import { usePathname, useRouter } from 'next/navigation';
@@ -14,6 +14,7 @@ import { FeatureFlagsProvider } from '@/packages/hooks/shared/features_provider'
 import { SystemStatsProvider } from '@/packages/hooks/shared/system-stats-provider';
 import { palette } from '@/packages/utils/colors';
 import { authClient } from '@/packages/lib/auth-client';
+import { clearStaleAuthCookies } from '@/packages/lib/session-cleanup';
 import AppLayout from '@/packages/layouts/layout';
 import { SudoModeProvider } from '@/packages/hooks/security/use-sudo-mode';
 import { MachineProvider } from '@/packages/contexts/machine-context';
@@ -151,6 +152,7 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
   const authState = useAppSelector((state) => state.auth);
   const { isAuthenticated, isInitialized, user } = authState;
   const [isLoading, setIsLoading] = useState(true);
+  const hasPurgedStaleCookies = useRef(false);
 
   const isPublicRoute = useMemo(
     () => PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(route + '/')),
@@ -195,6 +197,11 @@ const ChildrenWrapper = ({ children }: { children: React.ReactNode }) => {
         const hasSession = !!session?.data?.session;
         if (hasSession && !isAuthenticated) {
           await dispatch(initializeAuth() as any);
+        } else if (!hasSession && !hasPurgedStaleCookies.current) {
+          // No valid session, so any Better Auth cookie left on this browser is
+          // stale. Clearing it here recovers users whose sign-out could not.
+          hasPurgedStaleCookies.current = true;
+          await clearStaleAuthCookies();
         }
       } catch {
         // Session check failed, rely on Redux state

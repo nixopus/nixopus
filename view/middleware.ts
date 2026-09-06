@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getSessionCookie } from 'better-auth/cookies';
 import { getPluginPrivatePaths, getPluginPublicPaths } from '@/plugins/registry';
 
-const AUTH_COOKIE = 'better-auth.session_token';
 const BASE_PATH = process.env.BASE_PATH || '';
 
 const CORE_PUBLIC_PATHS = ['/auth', '/login', '/register', '/reset-password', '/verify-email'];
@@ -41,15 +41,13 @@ function isPrivatePath(path: string) {
 
 export function middleware(request: NextRequest) {
   const path = getPath(request.nextUrl.pathname);
-  const hasAuth = !!request.cookies.get(AUTH_COOKIE)?.value;
-
-  const isAuthLanding =
-    path === '/' || path === '/auth' || path === '/login' || path === '/register';
-  if (hasAuth && isAuthLanding) {
-    const url = request.nextUrl.clone();
-    url.pathname = BASE_PATH ? `${BASE_PATH}/chats` : '/chats';
-    return NextResponse.redirect(url);
-  }
+  // A session cookie may be expired, revoked, or an orphan left at a scope
+  // sign-out cannot clear, so it only gates private pages — never redirects
+  // anyone off the login page, which would make a stale cookie loop
+  // /auth -> /chats -> /auth until the browser gives up. Sending a signed-in
+  // user to /chats is client-layout.tsx's job; it checks a verified session.
+  // getSessionCookie() also matches the __Secure- prefixed name.
+  const hasAuth = !!getSessionCookie(request);
 
   const isAuthBypass = AUTH_BYPASS_PATHS.some((p) => path === p || path.startsWith(p + '/'));
   if (!hasAuth && (path === '/' || isPrivatePath(path)) && !isPublicPath(path) && !isAuthBypass) {
