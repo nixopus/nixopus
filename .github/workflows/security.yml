@@ -42,6 +42,6 @@ jobs:
       
       # Pinned to v3.95.3 (supply chain)
       - name: Run TruffleHog
-        uses: trufflesecurity/trufflehog@37b77001d0174ebec2fcca2bd83ff83a6d45a3ab
+        uses: trufflesecurity/trufflehog@363923b901c911a9164f50b6c423f47c15372b1c
         with:
           extra_args: --results=verified,unverified
