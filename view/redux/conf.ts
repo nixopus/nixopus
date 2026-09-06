@@ -56,6 +56,10 @@ async function fetchConfig() {
         }
         configPromise = null;
         throw new Error('Invalid config: missing baseUrl');
+      })
+      .catch((err) => {
+        configPromise = null;
+        throw err;
       });
   }
   return configPromise;
