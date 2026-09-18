@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.27-alpine AS builder
 ARG API_PORT
 ARG TARGETOS
 ARG TARGETARCH
@@ -16,7 +16,7 @@ COPY . .
 # Build with cross-compilation
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} make build
 
-FROM alpine:3.18
+FROM alpine:3.24
 ARG API_PORT
 RUN apk add --no-cache --no-scripts ca-certificates bash docker-cli git
 
