@@ -1,10 +1,13 @@
 FROM node:26-alpine AS deps
 RUN apk add --no-cache libc6-compat
+# node:26-alpine ships neither yarn nor corepack
+RUN npm i -g yarn@1.22.22
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn install --frozen-lockfile --network-timeout 600000 --production=false
 
 FROM node:26-alpine AS builder
+RUN npm i -g yarn@1.22.22
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
