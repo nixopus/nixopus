@@ -16,7 +16,7 @@ COPY . .
 # Build with cross-compilation
 RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} make build
 
-FROM alpine:3.18
+FROM alpine:3.24
 ARG API_PORT
 RUN apk add --no-cache --no-scripts ca-certificates bash docker-cli git
 
