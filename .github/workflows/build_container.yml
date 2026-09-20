@@ -82,7 +82,7 @@ jobs:
 
       - name: Extract metadata for API
         id: meta-api
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.API_IMAGE }}
 
@@ -158,7 +158,7 @@ jobs:
 
       - name: Extract metadata for View
         id: meta-view
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}
 
@@ -234,7 +234,7 @@ jobs:
       - name: Extract metadata for API
         if: steps.check.outputs.has_digests == 'true'
         id: meta-api
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.API_IMAGE }}
           tags: |
@@ -299,7 +299,7 @@ jobs:
       - name: Extract metadata for View
         if: steps.check.outputs.has_digests == 'true'
         id: meta-view
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.VIEW_IMAGE }}
           tags: |
