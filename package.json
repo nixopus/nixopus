@@ -13,9 +13,9 @@
     "nixopus-0.1.45-1.x86_64.rpm"
   ],
   "devDependencies": {
-    "@commitlint/cli": "^21.2.2",
+    "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.2",
-    "commitlint": "^21.2.2"
+    "commitlint": "^21.2.3"
   },
   "overrides": {
     "fast-uri": "^3.1.6",
