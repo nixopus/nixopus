@@ -71,17 +71,14 @@ function useGetDeployedApplications() {
   const labelFilter = useLabelFilter(filteredAndSortedApplications);
 
   const totalPages = applications?.total_count ? Math.ceil(applications.total_count / limit) : 1;
-  const ITEMS_PER_PAGE = React.useMemo(() => 9, []);
   const activeOrg = useAppSelector((state) => state.user.activeOrganization);
 
-  const paginatedApplications = React.useMemo(
-    () =>
-      labelFilter.filteredApplications.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
-      ),
-    [currentPage, labelFilter.filteredApplications, ITEMS_PER_PAGE]
-  );
+  // The server already paginates (page/limit -> applications?.applications is
+  // exactly one page). Do not slice it again on the client: `currentPage` is
+  // the same page number already sent to the server, and filteredApplications
+  // only ever holds this one page's items, so a second slice here would cut
+  // an already-cut page instead of paginating the full dataset.
+  const paginatedApplications = labelFilter.filteredApplications;
 
   const handlePageChange = (pageNumber: number) => {
     setCurrentPage(pageNumber);
